@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import tech.lamprism.lampray.authentication.login.LoginTokenException;
+import tech.lamprism.lampray.security.authentication.adapter.TokenAuthenticationException;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.common.ParameterMissingException;
 import tech.lamprism.lampray.web.system.ErrorRecord;
@@ -225,7 +226,10 @@ public class LampSystemExceptionHandler {
         if (e instanceof InsufficientAuthenticationException) {
             return HttpResponseEntity.of(AuthErrorCode.ERROR_NOT_HAS_ROLE);
         }
-        logger.error("Auth Error: %s, type: %s".formatted(e.toString(), e.getClass().getCanonicalName()), e);
+        if (e instanceof TokenAuthenticationException tokenException) {
+            return HttpResponseEntity.of(tokenException.getErrorCode());
+        }
+        logger.warn("Auth Error: {}, type: {}", e.getMessage(), e.getClass().getCanonicalName());
         return HttpResponseEntity.of(AuthErrorCode.ERROR_NOT_HAS_ROLE);
     }
 
