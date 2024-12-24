@@ -21,7 +21,7 @@ import org.springframework.data.repository.query.Param
 import tech.lamprism.lampray.common.data.CommonDao
 import tech.lamprism.lampray.common.data.Dao
 import tech.lamprism.lampray.content.ContentType
-import java.util.*
+import java.util.Optional
 
 /**
  * @author RollW

@@ -63,7 +63,6 @@ import tech.rollw.common.web.system.SystemResourceOperatorProvider;
 import java.io.IOException;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -145,7 +144,6 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         }
     }
 
-
     private ErrorCode verifyToken(String token,
                                   AttributedUserDetails user,
                                   LoginStrategyType type) {
@@ -201,9 +199,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                 iter.getUsername(), iter.getPassword(),
                 iter.getEmail(), iter.getRole(), iter.getEnabled()
         );
-        OnUserRegistrationEvent event = new OnUserRegistrationEvent(
-                user, Locale.getDefault());
-        // TODO: get url from config
+        OnUserRegistrationEvent event = new OnUserRegistrationEvent(user, LocaleContextHolder.getLocale());
         eventPublisher.publishEvent(event);
 
         logger.info("Register username: {}, email: {}, role: {}, id: {}",
@@ -234,9 +230,8 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
     @Override
     public void resendRegisterToken(UserIdentity user) {
         AttributedUser attributedUser = retrieveUser(user);
-        Locale locale = LocaleContextHolder.getLocale();
         OnUserRegistrationEvent event = new OnUserRegistrationEvent(
-                attributedUser, locale
+                attributedUser, LocaleContextHolder.getLocale()
         );
         eventPublisher.publishEvent(event);
     }

@@ -19,8 +19,7 @@ import tech.lamprism.lampray.content.ContentMetadata
 import tech.lamprism.lampray.content.ContentTrait
 
 /**
- * Content metadata service. For internal service
- * use only.
+ * Content metadata service. For internal service use only.
  *
  * @author RollW
  */

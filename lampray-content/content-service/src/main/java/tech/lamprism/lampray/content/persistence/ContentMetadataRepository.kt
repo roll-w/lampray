@@ -19,7 +19,7 @@ package tech.lamprism.lampray.content.persistence
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
 import tech.lamprism.lampray.content.ContentTrait
-import java.util.*
+import java.util.Optional
 
 /**
  * @author RollW

@@ -20,9 +20,9 @@
  * <p>
  * Other basic content services:
  * <ul>
- *     <li>Review service: {@link tech.lamprism.lampray.web.domain.review}</li>
- *     <li>Report service: {@link tech.lamprism.lampray.web.domain.report}</li>
- *     <li>Comment service: {@link tech.lamprism.lampray.web.domain.comment}</li>
+ *     <li>Review service: {@link tech.lamprism.lampray.content.review}</li>
+ *     <li>Report service: {@link tech.lamprism.lampray.content.report}</li>
+ *     <li>Comment service: {@link tech.lamprism.lampray.content.comment}</li>
  * </ul>
  *
  * @author RollW

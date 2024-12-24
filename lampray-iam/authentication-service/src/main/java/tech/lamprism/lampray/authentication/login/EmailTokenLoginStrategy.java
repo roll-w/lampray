@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.mail.MailProperties;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.MessageSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMailMessage;
@@ -33,8 +32,8 @@ import org.springframework.stereotype.Component;
 import space.lingu.NonNull;
 import space.lingu.Nullable;
 import tech.lamprism.lampray.mail.util.MimeMailMessageBuilder;
-import tech.lamprism.lampray.user.AttributedUserDetails;
 import tech.lamprism.lampray.user.AttributedUser;
+import tech.lamprism.lampray.user.AttributedUserDetails;
 import tech.rollw.common.web.AuthErrorCode;
 import tech.rollw.common.web.ErrorCode;
 
@@ -56,16 +55,13 @@ public class EmailTokenLoginStrategy implements LoginStrategy {
     private static final String CACHE = "login-email-token";
 
     private final Cache cache;
-    private final MessageSource messageSource;
     private final MailProperties mailProperties;
     private final JavaMailSender mailSender;
 
     public EmailTokenLoginStrategy(CacheManager cacheManager,
-                                   MessageSource messageSource,
                                    MailProperties mailProperties,
                                    JavaMailSender mailSender) {
         this.cache = cacheManager.getCache(CACHE);
-        this.messageSource = messageSource;
         this.mailProperties = mailProperties;
         this.mailSender = mailSender;
     }

@@ -5,6 +5,6 @@ automatically filter content, and set content permissions.
 
 Other basic content services:
 
-- Review service: `tech.lamprism.lampray.web.domain.review`
-- Report service: `tech.lamprism.lampray.web.domain.report`
-- Comment service: `tech.lamprism.lampray.web.domain.comment`
+- Review service: `tech.lamprism.lampray.content.review`
+- Report service: `tech.lamprism.lampray.content.report`
+- Comment service: `tech.lamprism.lampray.content.comment`
