@@ -14,26 +14,10 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.fs;
+package tech.lamprism.lampray.storage.fs;
 
 /**
- * A file in the file server. It is a file that can be read and written.
- *
  * @author RollW
  */
-public interface ServerFile {
-    /**
-     * A qualified name is a unique identifier for a file.
-     * It is used to identify a file in the file server.
-     *
-     * @return qualified name of the file
-     */
-    String getQualifiedName();
-
-    /**
-     * Get the size of the file.
-     *
-     * @return size of the file
-     */
-    long getSize();
+public interface ServerFileProvider {
 }

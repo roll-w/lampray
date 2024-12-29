@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.fs;
-
-import java.io.IOException;
+package tech.lamprism.lampray.storage.fs;
 
 /**
+ * A file in the file server. It is a file that can be read and written.
+ *
  * @author RollW
  */
-public class FileServerException extends IOException {
-    public FileServerException(String message) {
-        super(message);
-    }
+public interface ServerFile {
+    /**
+     * A qualified name is a unique identifier for a file.
+     * It is used to identify a file in the file server.
+     *
+     * @return qualified name of the file
+     */
+    String getQualifiedName();
 
-    public FileServerException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    /**
+     * Get the size of the file.
+     *
+     * @return size of the file
+     */
+    long getSize();
 
-    public FileServerException(Throwable cause) {
-        super(cause);
-    }
+    String getServerName();
 }

@@ -14,10 +14,23 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.fs;
+package tech.lamprism.lampray.storage.fs;
+
+import java.io.IOException;
 
 /**
  * @author RollW
  */
-public interface ServerFileProvider {
+public class FileServerException extends IOException {
+    public FileServerException(String message) {
+        super(message);
+    }
+
+    public FileServerException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public FileServerException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.fs;
+package tech.lamprism.lampray.storage.fs;
 
+import space.lingu.NonNull;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -25,18 +28,20 @@ import java.io.OutputStream;
  * @author RollW
  */
 public interface FileServer {
-    default ServerFile uploadFile(InputStream inputStream)
-            throws FileServerException {
+    @NonNull
+    default ServerFile upload(@NonNull String qualifiedName, @NonNull InputStream inputStream)
+            throws IOException {
         throw new UnsupportedOperationException();
     }
 
-    default ServerFile uploadFile(String qualifiedName, InputStream inputStream)
-            throws FileServerException {
-        throw new UnsupportedOperationException();
-    }
+    void writeFileTo(@NonNull String qualifiedName,
+                     @NonNull OutputStream outputStream,
+                     long start, long length) throws IOException;
 
-    void downloadFile(String qualifiedName, OutputStream outputStream,
-                      long startBytes, long endBytes) throws FileServerException;
+    void writeFileTo(@NonNull String qualifiedName,
+                     @NonNull OutputStream outputStream) throws IOException;
 
-    void downloadFile(String qualifiedName, OutputStream outputStream) throws FileServerException;
+    String getName();
+
+    boolean supports(ServerFile file);
 }
