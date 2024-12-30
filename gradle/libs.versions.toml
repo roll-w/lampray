@@ -20,6 +20,8 @@ guava = "33.2.1-jre"
 jjwt= "0.11.5"
 rollw-web-common = "0.2.1"
 spring-shell = "3.3.3"
+sshd = "2.14.0"
+jline = "3.26.3"
 
 [libraries]
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
@@ -31,6 +33,8 @@ io-jsonwebtoken-jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref 
 io-jsonwebtoken-jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 rollw-web-common-core = { module = "tech.rollw.common:web-common-core", version.ref = "rollw-web-common" }
 rollw-web-common-spring-boot-starter = { module = "tech.rollw.common:web-common-spring-boot-starter", version.ref = "rollw-web-common" }
+sshd-core = { module = "org.apache.sshd:sshd-core", version.ref = "sshd" }
+jline-terminal-jna = { module = "org.jline:jline-terminal-jna", version.ref = "jline" }
 
 [bundles]
 
