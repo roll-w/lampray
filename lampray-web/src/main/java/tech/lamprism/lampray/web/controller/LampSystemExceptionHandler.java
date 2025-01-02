@@ -19,6 +19,7 @@ package tech.lamprism.lampray.web.controller;
 import com.google.common.base.Strings;
 import com.google.common.base.VerifyException;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -27,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.AuthenticationException;
@@ -36,10 +38,13 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import tech.lamprism.lampray.authentication.login.LoginTokenException;
 import tech.lamprism.lampray.security.authentication.adapter.TokenAuthenticationException;
+import tech.lamprism.lampray.security.authentication.registration.RegistrationException;
+import tech.lamprism.lampray.security.firewall.FirewallException;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.common.ParameterMissingException;
 import tech.lamprism.lampray.web.system.ErrorRecord;
@@ -58,6 +63,8 @@ import tech.rollw.common.web.system.ContextThreadAware;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.Deque;
 import java.util.List;
@@ -65,7 +72,7 @@ import java.util.Locale;
 import java.util.concurrent.LinkedBlockingDeque;
 
 /**
- * Handle {@link Exception}s
+ * Handle Exceptions
  *
  * @author RollW
  */
@@ -109,6 +116,7 @@ public class LampSystemExceptionHandler {
             BindException.class,
             ConstraintViolationException.class,
             MethodArgumentNotValidException.class,
+            ValidationException.class
     })
     public HttpResponseEntity<Void> handleParamException(Exception e) {
         return HttpResponseEntity.of(
@@ -135,7 +143,12 @@ public class LampSystemExceptionHandler {
 
     @ExceptionHandler(CommonRuntimeException.class)
     public HttpResponseEntity<Void> handle(CommonRuntimeException e) {
-        logger.trace("Common runtime exception: {}", e.getMessage(), e);
+        if (logger.isTraceEnabled()) {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            logger.trace("Common runtime exception: {}\n{}", e.getMessage(),
+                    omitStackTrace(sw.toString(), 5));
+        }
         return HttpResponseEntity.of(
                 errorCodeFinder.fromThrowable(e),
                 tryGetMessage(e)
@@ -203,7 +216,13 @@ public class LampSystemExceptionHandler {
 
     @ExceptionHandler(IOException.class)
     public HttpResponseEntity<Void> handle(IOException e) {
-        logger.error("IO Error: %s".formatted(e.toString()), e);
+        if (e instanceof AsyncRequestNotUsableException) {
+            return HttpResponseEntity.of(
+                    CommonErrorCode.ERROR_TIMEOUT,
+                    e.getMessage()
+            );
+        }
+        logger.warn("IO Error: {}", e.toString(), e);
         ErrorRecord errorRecord = recordErrorLog(e);
         return HttpResponseEntity.of(
                 errorRecord.errorCode(),
@@ -233,6 +252,22 @@ public class LampSystemExceptionHandler {
         return HttpResponseEntity.of(AuthErrorCode.ERROR_NOT_HAS_ROLE);
     }
 
+    @ExceptionHandler(FirewallException.class)
+    public HttpResponseEntity<Void> handleFirewallException(FirewallException e) {
+        return HttpResponseEntity.of(
+                AuthErrorCode.ERROR_IN_BLOCKLIST,
+                e.getMessage()
+        );
+    }
+
+    @ExceptionHandler(RegistrationException.class)
+    public HttpResponseEntity<Void> handleRegistrationException(RegistrationException e) {
+        return HttpResponseEntity.of(
+                UserErrorCode.ERROR_REGISTER,
+                e.getMessage()
+        );
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public HttpResponseEntity<Void> handleHttpMessageNotReadableException() {
         return HttpResponseEntity.of(WebCommonErrorCode.ERROR_BODY_MISSING);
@@ -246,6 +281,15 @@ public class LampSystemExceptionHandler {
                 errorRecord.errorCode(),
                 e.getMessage()
         );
+    }
+
+    private String omitStackTrace(String message, int level) {
+        String[] lines = message.split("\n");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < level && i < lines.length; i++) {
+            sb.append(lines[i]).append("\n");
+        }
+        return sb.toString();
     }
 
     private final Deque<ErrorRecord> errorRecords = new LinkedBlockingDeque<>();
@@ -280,6 +324,8 @@ public class LampSystemExceptionHandler {
     }
 
     @GetMapping("/api/v1/common/error/occur")
+    @PreAuthorize("hasScope(T(RoleBasedAuthorizationScope).ADMIN)")
+    // For test only
     public void makeException() {
         throw new RuntimeException("Test exception");
     }
