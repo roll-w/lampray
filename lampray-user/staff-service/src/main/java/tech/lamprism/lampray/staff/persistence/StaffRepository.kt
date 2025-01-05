@@ -34,10 +34,13 @@ class StaffRepository(
         }
     }
 
-    fun findByTypes(types: Set<StaffType>): List<StaffDo> {
-        return findAll { root, _,
-                         criteriaBuilder ->
-            root.get(StaffDo_.types).`in`(types)
+    fun  findByTypes(types: Set<StaffType>): List<StaffDo> {
+        return findAll { root, _, criteriaBuilder ->
+            criteriaBuilder.and(
+                *types.map {
+                    criteriaBuilder.isMember(it, root.get(StaffDo_.roles))
+                }.toTypedArray()
+            )
         }
     }
 }

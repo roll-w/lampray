@@ -17,15 +17,22 @@
 package tech.lamprism.lampray.staff.persistence
 
 import jakarta.persistence.AttributeConverter
+import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column
-import jakarta.persistence.Convert
+import jakarta.persistence.ElementCollection
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.ForeignKey
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.staff.AttributedStaff
 import tech.lamprism.lampray.staff.Staff
@@ -46,8 +53,13 @@ class StaffDo(
     @Column(name = "user_id", nullable = false)
     override var userId: Long = 0,
 
-    @Column(name = "types", nullable = false, length = 255)
-    @Convert(converter = StaffTypeConverter::class)
+    @ElementCollection(targetClass = StaffType::class)
+    @CollectionTable(name = "staff_types", joinColumns = [
+        JoinColumn(name = "id", referencedColumnName = "id"),
+    ], foreignKey = ForeignKey(name = "index__type__id"))
+    @Column(name = "type", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     override var types: Set<StaffType> = emptySet(),
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -60,7 +72,7 @@ class StaffDo(
 
     @Column(name = "as_user", nullable = false)
     var asUser: Boolean = false,
-    
+
     @Column(name = "deleted", nullable = false)
     var deleted: Boolean = false
 ) : DataEntity<Long>, AttributedStaff {
@@ -180,7 +192,7 @@ class StaffDo(
         @JvmStatic
         fun Staff.toDo(): StaffDo {
             return StaffDo(
-                id, userId, types, createTime, updateTime, 
+                id, userId, types, createTime, updateTime,
                 isAsUser, isDeleted
             )
         }
