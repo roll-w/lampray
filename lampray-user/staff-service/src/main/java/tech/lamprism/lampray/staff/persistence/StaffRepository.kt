@@ -38,7 +38,7 @@ class StaffRepository(
         return findAll { root, _, criteriaBuilder ->
             criteriaBuilder.and(
                 *types.map {
-                    criteriaBuilder.isMember(it, root.get(StaffDo_.roles))
+                    criteriaBuilder.isMember(it, root.get(StaffDo_.types))
                 }.toTypedArray()
             )
         }
