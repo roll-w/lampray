@@ -27,8 +27,7 @@ import tech.lamprism.lampray.user.event.OnUserRoleChangeEvent;
  * @author RollW
  */
 @Component
-public class UserRoleChangeListener
-        implements ApplicationListener<OnUserRoleChangeEvent> {
+public class UserRoleChangeListener implements ApplicationListener<OnUserRoleChangeEvent> {
 
     public UserRoleChangeListener() {
     }
