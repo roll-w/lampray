@@ -31,4 +31,19 @@ class ContentMetadataRepository(
     fun findByContent(content: ContentTrait): Optional<ContentMetadataDo> {
         return contentMetadataDao.findByContent(content.contentId, content.contentType)
     }
+
+    fun findByContents(contents: List<ContentTrait>): List<ContentMetadataDo> {
+        if (contents.isEmpty()) {
+            return emptyList()
+        }
+        return findAll { root, _, builder ->
+            val predicates = contents.map {
+                builder.and(
+                    builder.equal(root.get(ContentMetadataDo_.contentId), it.contentId),
+                    builder.equal(root.get(ContentMetadataDo_.contentType), it.contentType)
+                )
+            }
+            builder.or(*predicates.toTypedArray())
+        }
+    }
 }

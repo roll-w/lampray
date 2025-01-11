@@ -55,6 +55,7 @@ import tech.rollw.common.web.system.paged.PageableContext;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author RollW
@@ -99,10 +100,7 @@ public class ContentService implements ContentAccessService,
                                       ContentAccessCredentials contentAccessCredentials) throws ContentException {
         ContentMetadataDo metadata = contentMetadataRepository
                 .findByContent(contentTrait)
-                .orElse(null);
-        if (metadata == null) {
-            throw new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
-        }
+                .orElseThrow(() -> new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND));
         ErrorCode errorCode = fromContentStatus(metadata.getContentStatus());
         if (errorCode.failed()) {
             throw new ContentException(errorCode);
@@ -209,8 +207,8 @@ public class ContentService implements ContentAccessService,
         return contentDetails;
     }
 
-    private <T extends ContentDetails> List<ContentMetadataDetails<T>> pairWith(
-            List<T> contentDetails,
+    private List<ContentMetadataDetails<? extends ContentDetails>> pairWith(
+            List<? extends ContentDetails> contentDetails,
             List<ContentMetadata> contentMetadata) {
         return contentDetails.stream().map(details -> {
             ContentMetadata metadata = contentMetadata.stream()
@@ -218,7 +216,7 @@ public class ContentService implements ContentAccessService,
                     .findFirst()
                     .orElseThrow(() -> new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND));
             return new ContentMetadataDetails<>(details, metadata);
-        }).toList();
+        }).collect(Collectors.toUnmodifiableList());
     }
 
     @Override
@@ -237,13 +235,21 @@ public class ContentService implements ContentAccessService,
             ContentCollectionIdentity contentCollectionIdentity,
             ContentAccessCredentials contentAccessCredentials) {
         // TODO: impl
-        return List.of();
+        return getContents(contentCollectionIdentity);
     }
 
     @Override
     public List<ContentMetadataDetails<? extends ContentDetails>> getContents(
             ContentCollectionIdentity contentCollectionIdentity) {
-        // TODO: impl
-        return List.of();
+        ContentCollectionProvider contentCollectionProvider = getContentCollectionProvider(
+                contentCollectionIdentity.getContentCollectionType());
+        List<? extends ContentDetails> contents = contentCollectionProvider
+                .getContents(contentCollectionIdentity);
+        List<ContentMetadata> contentMetadatas = contentMetadataRepository
+                .findByContents(contents)
+                .stream()
+                .map(ContentMetadataDo::lock)
+                .toList();
+        return pairWith(contents, contentMetadatas);
     }
 }

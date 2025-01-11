@@ -139,34 +139,28 @@ class ContentMetadataDo(
             this.contentAccessAuthType = other.contentAccessAuthType
         }
 
-        fun setId(id: Long?): Builder {
+        fun setId(id: Long?) = apply {
             this.id = id
-            return this
         }
 
-        fun setUserId(userId: Long): Builder {
+        fun setUserId(userId: Long) = apply {
             this.userId = userId
-            return this
         }
 
-        fun setContentId(contentId: Long): Builder {
+        fun setContentId(contentId: Long) = apply {
             this.contentId = contentId
-            return this
         }
 
-        fun setContentType(contentType: ContentType): Builder {
+        fun setContentType(contentType: ContentType) = apply {
             this.contentType = contentType
-            return this
         }
 
-        fun setContentStatus(contentStatus: ContentStatus): Builder {
+        fun setContentStatus(contentStatus: ContentStatus) = apply {
             this.contentStatus = contentStatus
-            return this
         }
 
-        fun setContentAccessAuthType(contentAccessAuthType: ContentAccessAuthType): Builder {
+        fun setContentAccessAuthType(contentAccessAuthType: ContentAccessAuthType) = apply {
             this.contentAccessAuthType = contentAccessAuthType
-            return this
         }
 
         fun build(): ContentMetadataDo {
