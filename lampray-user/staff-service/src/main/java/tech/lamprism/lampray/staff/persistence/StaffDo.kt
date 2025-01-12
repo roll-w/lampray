@@ -16,13 +16,13 @@
 
 package tech.lamprism.lampray.staff.persistence
 
-import jakarta.persistence.AttributeConverter
 import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column
 import jakarta.persistence.ElementCollection
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.ForeignKey
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -53,7 +53,7 @@ class StaffDo(
     @Column(name = "user_id", nullable = false)
     override var userId: Long = 0,
 
-    @ElementCollection(targetClass = StaffType::class)
+    @ElementCollection(targetClass = StaffType::class, fetch = FetchType.EAGER)
     @CollectionTable(name = "staff_types", joinColumns = [
         JoinColumn(name = "id", referencedColumnName = "id"),
     ], foreignKey = ForeignKey(name = "index__type__id"))
@@ -103,19 +103,6 @@ class StaffDo(
         id, userId, types, createTime, updateTime, 
         asUser, deleted
     )
-    
-    class StaffTypeConverter : AttributeConverter<Set<StaffType>, String> {
-        override fun convertToDatabaseColumn(attribute: Set<StaffType>?): String {
-            return attribute?.joinToString(",") { it.name } ?: ""
-        }
-
-        override fun convertToEntityAttribute(dbData: String?): Set<StaffType> {
-            if (dbData == null) {
-                return emptySet()
-            }
-            return dbData.split(",").map { StaffType.valueOf(it) }.toSet()
-        }
-    }
 
     class Builder {
         private var id: Long? = null

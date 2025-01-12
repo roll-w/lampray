@@ -49,7 +49,7 @@ public class Staff implements DataEntity<Long>, AttributedStaff {
                  boolean deleted) {
         this.id = id;
         this.userId = userId;
-        this.types = EnumSet.copyOf(types);
+        this.types = types.isEmpty() ? EnumSet.noneOf(StaffType.class) : types;
         this.createTime = createTime;
         this.updateTime = updateTime;
         this.asUser = asUser;
