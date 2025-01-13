@@ -19,7 +19,7 @@ package tech.lamprism.lampray.web.common;
 import org.springframework.http.HttpMethod;
 import space.lingu.NonNull;
 import space.lingu.Nullable;
-import tech.lamprism.lampray.user.UserIdentity;
+import tech.lamprism.lampray.user.AttributedUser;
 import tech.rollw.common.web.system.SystemContext;
 
 import java.time.OffsetDateTime;
@@ -32,12 +32,12 @@ public class ApiContext implements SystemContext {
     private final String ip;
     private final Locale locale;
     private final HttpMethod method;
-    private final UserIdentity user;
+    private final AttributedUser user;
     private final OffsetDateTime timestamp;
     private final String requestUri;
 
     public ApiContext(String ip, Locale locale,
-                      HttpMethod method, UserIdentity user,
+                      HttpMethod method, AttributedUser user,
                       OffsetDateTime timestamp, String requestUri) {
         this.ip = ip;
         this.locale = locale;
@@ -75,7 +75,7 @@ public class ApiContext implements SystemContext {
     }
 
     @Nullable
-    public UserIdentity getUser() {
+    public AttributedUser getUser() {
         return user;
     }
 
@@ -87,7 +87,7 @@ public class ApiContext implements SystemContext {
         return requestUri;
     }
 
-    public ApiContext fork(UserIdentity user) {
+    public ApiContext fork(AttributedUser user) {
         if (user == this.user) {
             return this;
         }

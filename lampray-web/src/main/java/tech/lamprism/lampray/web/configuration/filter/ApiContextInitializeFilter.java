@@ -27,7 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import space.lingu.NonNull;
-import tech.lamprism.lampray.user.UserIdentity;
+import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.util.RequestUtils;
 import tech.rollw.common.web.system.ContextThread;
@@ -62,18 +62,18 @@ public class ApiContextInitializeFilter extends OncePerRequestFilter {
         }
     }
 
-    private UserIdentity tryGetUser() {
+    private AttributedUser tryGetUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             return null;
         }
-        if (!(authentication.getPrincipal() instanceof UserIdentity user)) {
+        if (!(authentication.getPrincipal() instanceof AttributedUser user)) {
             return null;
         }
         return user;
     }
 
-    private ApiContext createApiContext(HttpServletRequest request, UserIdentity user) {
+    private ApiContext createApiContext(HttpServletRequest request, AttributedUser user) {
         String requestUri = request.getRequestURI();
         HttpMethod method = HttpMethod.valueOf(request.getMethod());
         String ip = RequestUtils.getRemoteIpAddress(request);
