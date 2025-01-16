@@ -6,8 +6,8 @@ Lampray is a blog system built with Spring Boot 3 and Vue3.
 
 ## Requirements
 
-- Java 17 or higher
-- MySQL 8.0 or higher
+- Java 17+
+- MySQL 8.0+
 
 ## Build
 
