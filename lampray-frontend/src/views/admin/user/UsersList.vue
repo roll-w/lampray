@@ -30,17 +30,13 @@
                 :pagination="false"
                 class="mt-5"
         />
-        <FastPagination :route-name="adminUsers" :page="page"/>
+        <FastPagination :page="page" :route-name="adminUsers"/>
     </div>
 </template>
 
 <script setup>
 import {getCurrentInstance, h, ref} from "vue";
-import {
-    NButton, NButtonGroup, NTag,
-    useNotification, useMessage,
-    useDialog
-} from "naive-ui";
+import {NButton, NButtonGroup, NDataTable, NTag, useDialog, useMessage, useNotification} from "naive-ui";
 import api from "@/request/api";
 import {useUserStore} from "@/stores/user";
 import AdminBreadcrumb from "@/components/admin/AdminBreadcrumb.vue";

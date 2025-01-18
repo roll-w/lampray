@@ -40,7 +40,7 @@
 
 <script setup>
 import {getCurrentInstance, h, ref} from "vue";
-import {NButton, NButtonGroup, NTag, useNotification} from "naive-ui";
+import {NButton, NButtonGroup, NDataTable, NPagination, NTag, useNotification} from "naive-ui";
 import api from "@/request/api";
 import {useUserStore} from "@/stores/user";
 import AdminBreadcrumb from "@/components/admin/AdminBreadcrumb.vue";

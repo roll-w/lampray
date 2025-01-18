@@ -18,6 +18,7 @@
 import {usePage} from "@/views/utils/pages";
 import {useRouter} from "vue-router";
 import {ref} from "vue";
+import {NPagination} from "naive-ui";
 
 const props = defineProps({
     page: {

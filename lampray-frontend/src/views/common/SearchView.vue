@@ -15,9 +15,9 @@
   -->
 
 <script setup>
-import {ref, getCurrentInstance} from "vue";
+import {getCurrentInstance, ref} from "vue";
 import {useRouter} from "vue-router";
-import {useNotification, useMessage, useDialog} from "naive-ui";
+import {NTabPane, NTabs, useDialog, useMessage, useNotification} from "naive-ui";
 import SearchBar from "@/components/SearchBar.vue";
 import UserSearchView from "@/views/user/UserSearchView.vue";
 

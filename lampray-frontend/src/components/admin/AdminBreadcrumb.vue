@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import {admin} from "@/router";
+import {NBreadcrumb, NBreadcrumbItem, NDropdown} from "naive-ui";
 import {convertsToMenuOptions, requestChildrenMenus, requestFullMenu} from "@/views/menu";
 
 const properties = defineProps({

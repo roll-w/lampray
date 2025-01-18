@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+/**
+ * @deprecated use format.js/formatTimestamp instead
+ */
 export function formatTimestamp(timestamp) {
     let date = new Date(timestamp)
     let Y = date.getFullYear() + '-'

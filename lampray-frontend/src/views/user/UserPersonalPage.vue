@@ -15,29 +15,31 @@
   -->
 
 <template>
-  <div>
-    <n-card :bordered="false" size="large">
-      <UserPageHeader v-if="userInfo"
-                      :avatar="userInfo.avatar || 'http://localhost:5100/static/img/lamp_user.png'"
-                      :introduction="userInfo.introduction"
-                      :nickname="userInfo.nickname"
-                      :username="userInfo.username"
-                      cover="http://localhost:5100/static/img/cover2.png"
-      />
-      <div v-else class="text-3xl p-10">
-        {{ message }}
-      </div>
-    </n-card>
-    <n-card>
-      <div>
+    <div>
+        <n-card :bordered="false" size="large">
+            <UserPageHeader v-if="userInfo"
+                            :id="userInfo.userId"
+                            :avatar="userInfo.avatar"
+                            :cover="userInfo.cover"
+                            :introduction="userInfo.introduction"
+                            :nickname="userInfo.nickname"
+                            :username="userInfo.username"
+            />
+            <div v-else class="text-3xl p-10">
+                {{ message }}
+            </div>
+        </n-card>
+        <n-card>
+            <div>
 
-      </div>
-    </n-card>
-  </div>
+            </div>
+        </n-card>
+    </div>
 </template>
 
 <script setup>
 import {useRouter} from "vue-router";
+import {NCard} from "naive-ui";
 import {getCurrentInstance, ref} from "vue";
 import api from "@/request/api";
 import {createConfig} from "@/request/axios_config";
@@ -52,28 +54,28 @@ const userInfo = ref(null)
 const message = ref(null)
 
 const getMessage = (status) => {
-  if (status >= 500) {
-    return "请求信息错误"
-  }
-  if (status === 404) {
-    return "用户不存在"
-  }
-  return "用户注销或被屏蔽"
+    if (status >= 500) {
+        return "请求信息错误"
+    }
+    if (status === 404) {
+        return "用户不存在"
+    }
+    return "用户注销或被屏蔽"
 }
 
 const getUserInfo = () => {
-  const config = createConfig()
-  proxy.$axios.get(api.userInfo(id, false), config)
-      .then(res => {
-        const userData = res.data
-        if (userData.introduction === null) {
-          userData.introduction = "这个人很懒，什么都没留下"
-        }
-        userInfo.value = res.data
-      })
-      .catch(err => {
-        message.value = getMessage(err.status)
-      })
+    const config = createConfig()
+    proxy.$axios.get(api.users(false, id), config)
+            .then(res => {
+                const userData = res.data
+                if (userData.introduction === null) {
+                    userData.introduction = "这个人很懒，什么都没留下"
+                }
+                userInfo.value = res.data
+            })
+            .catch(err => {
+                message.value = getMessage(err.status)
+            })
 }
 
 getUserInfo()

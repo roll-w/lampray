@@ -17,7 +17,7 @@
 <script setup>
 import {getCurrentInstance, ref} from "vue";
 import {useRouter} from "vue-router";
-import {useNotification, useMessage, useDialog} from "naive-ui";
+import {NCard, NEmpty, NGi, NGrid, useDialog, useMessage, useNotification} from "naive-ui";
 import {createConfig} from "@/request/axios_config";
 import api from "@/request/api";
 import {popUserErrorTemplate} from "@/views/utils/error";

@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-
+import {NCard, NCarousel, NH1} from "naive-ui";
 </script>
 
 <style scoped>

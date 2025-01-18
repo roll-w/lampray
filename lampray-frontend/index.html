@@ -25,5 +25,14 @@
 <body>
 <div id="app" style="height: 100%"></div>
 <script src="/src/main.js" type="module"></script>
+<script>
+    window.config = {
+        server: {
+            host: "localhost:5100",
+            httpProtocol: "http",
+            wsProtocol: "ws"
+        }
+    }
+</script>
 </body>
 </html>

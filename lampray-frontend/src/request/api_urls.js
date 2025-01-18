@@ -14,70 +14,79 @@
  * limitations under the License.
  */
 
-const base = 'localhost:5100';
-const frontBase = 'localhost:5000';
+function getServerConfig() {
+    return (window.config || {}).server
+}
 
-export const frontBaseUrl = `http://${frontBase}`;
+const base = () => getServerConfig().host
+const httpProtocol = () => getServerConfig().httpProtocol
+const wsProtocol = () => getServerConfig().wsProtocol
 
-export const baseUrl = `http://${base}`;
-export const wsBaseUrl = `ws://${base}`;
+const frontBase = () => 'localhost:5000';
 
-const prefix = `${baseUrl}/api/v1`;
-const adminPrefix = `${baseUrl}/api/v1/admin`;
-const wsPrefix = `ws://${base}/api/v1`;
+export const frontBaseUrl = () => `${httpProtocol()}://${frontBase()}`;
 
-export const passwordLogin = `${prefix}/user/login/password`;
-export const emailLogin = `${prefix}/user/login/email`;
-export const logout = `${prefix}/user/logout`;
-export const register = `${prefix}/user/register`;
+export const baseUrl = () => `${httpProtocol()}://${base()}`;
+export const wsBaseUrl = () => `${wsProtocol()}://${base()}`;
+
+const prefix = () => `${baseUrl()}/api/v1`;
+const adminPrefix = () => `${baseUrl()}/api/v1/admin`;
+const wsPrefix =  () => `${wsBaseUrl()}/api/v1`;
+
+export const passwordLogin = `${prefix()}/user/login/password`;
+export const emailLogin = `${prefix()}/user/login/email`;
+export const logout = `${prefix()}/user/logout`;
+export const register = `${prefix()}/user/register`;
 export const registerActivate = (token) =>
-    `${prefix}/user/register/token/${token}`;
+    `${prefix()}/user/register/token/${token}`;
 
 export const user = (admin = false) =>
-    `${admin ? adminPrefix : prefix}/user`;
+    `${admin ? adminPrefix() : prefix()}/user`;
 export const users = (admin = false, id = null) =>
-    `${admin ? adminPrefix : prefix}/users${id ? `/${id}` : ''}`;
+    `${admin ? adminPrefix() : prefix()}/users${id ? `/${id}` : ''}`;
 export const searchUsers = (admin = false) =>
-    `${admin ? adminPrefix : prefix}/users/search`;
-export const currentUser = `${prefix}/user`;
+    `${admin ? adminPrefix() : prefix()}/users/search`;
+export const currentUser = `${prefix()}/user`;
 
 
 export const userChat = wsPrefix + '/message/talk';
 export const userMessages = (userId, admin = false) =>
-    `${admin ? adminPrefix : prefix}/users/${userId}/messages`;
+    `${admin ? adminPrefix() : prefix()}/users/${userId}/messages`;
 export const messages = (admin = false) =>
-    `${admin ? adminPrefix : prefix}/messages`;
+    `${admin ? adminPrefix() : prefix()}/messages`;
 
-export const staffs = `${adminPrefix}/staffs`;
+export const staffs = `${adminPrefix()}/staffs`;
 export const staffInfo = (staffId, admin = false) =>
-    `${prefix}/staffs/${staffId}`;
+    `${prefix()}/staffs/${staffId}`;
 
 export const staffInfoByUser = (userId, admin = false) =>
-    `${prefix}/users/${userId}/staff`;
+    `${prefix()}/users/${userId}/staff`;
 
-export const allReviews = `${adminPrefix}/reviews`;
-export const currentReviews = `${prefix}/reviews`;
+export const allReviews = `${adminPrefix()}/reviews`;
+export const currentReviews = `${prefix()}/reviews`;
 
 export const statusReviews = (userId, admin = false) =>
-    `${admin ? adminPrefix : prefix}/${userId}/reviews`;
+    `${admin ? adminPrefix() : prefix()}/${userId}/reviews`;
 export const reviewContent = (jobId, admin = false) =>
-    `${admin ? adminPrefix : prefix}/reviews/${jobId}/content`;
+    `${admin ? adminPrefix() : prefix()}/reviews/${jobId}/content`;
 export const reviewResource = (jobId, admin = false) =>
-    `${admin ? adminPrefix : prefix}/reviews/${jobId}`;
+    `${admin ? adminPrefix() : prefix()}/reviews/${jobId}`;
 
 
-export const tokenRefresh = `${prefix}/auth/token/r`;
+export const tokenRefresh = `${prefix()}/auth/token/r`;
 
 export const articleDetails = (userId, articleId, admin) => {
-    return `${admin ? adminPrefix : prefix}/users/${userId}/articles/${articleId}`;
+    return `${admin ? adminPrefix() : prefix()}/users/${userId}/articles/${articleId}`;
 }
 export const userArticles = (userId, admin = false) => {
-    return `${admin ? adminPrefix : prefix}/users/${userId}/articles`;
+    return `${admin ? adminPrefix() : prefix()}/users/${userId}/articles`;
 }
-export const articles = (admin) => `${admin ? adminPrefix : prefix}/articles`;
-export const comments = (admin) => `${admin ? adminPrefix : prefix}/comments`;
+export const articles = (admin) => `${admin ? adminPrefix() : prefix()}/articles`;
+export const comments = (admin) => `${admin ? adminPrefix() : prefix()}/comments`;
+export const contentComments = (contentType, contentId, admin) =>
+    `${admin ? adminPrefix() : prefix()}/${contentType}/${contentId}/comments`;
 
-export const userList = `${adminPrefix}/users`;
-export const systemErrorLog = `${adminPrefix}/system/errors`;
-export const systemSettings = `${adminPrefix}/system/settings`;
-export const systemMessageResources = `${adminPrefix}/system/resources/messages`;
+export const userList = `${adminPrefix()}/users`;
+export const systemErrorLog = `${adminPrefix()}/system/errors`;
+export const systemSettings = `${adminPrefix()}/system/settings`;
+export const systemMessageResources = `${adminPrefix()}/system/resources/messages`;

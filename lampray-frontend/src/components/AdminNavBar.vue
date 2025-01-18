@@ -41,11 +41,11 @@
 
 <script setup>
 
-import {RouterLink, useRouter} from "vue-router";
-import {h, onBeforeMount, ref} from "vue";
+import {useRouter} from "vue-router";
+import {onBeforeMount, ref} from "vue";
 import {index} from "@/router";
 import {useUserStore} from "@/stores/user";
-import {useMessage} from "naive-ui";
+import {NLayoutSider, NMenu, useMessage} from "naive-ui";
 import {convertsToMenuOptions, requestFullMenu} from "@/views/menu";
 
 const message = useMessage()

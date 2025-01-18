@@ -18,43 +18,48 @@
 import {NaiveUIRenderer} from "@/markdown/render";
 import {compile, h, ref, watch} from "vue";
 import {marked} from "marked";
-import api, {frontBaseUrl} from "@/request/api";
+import api from "@/request/api";
 
 export default {
-  props: {
-    value: {
-      type: String,
-      default: ""
-    }
-  },
-  name: "MarkdownRender",
-  setup(props) {
-    const render = new NaiveUIRenderer()
-    const val = ref('')
-    const renderMarkdown = (value) => {
-      marked(value.replace(/\\/g, '\\\\'), {
-        renderer: render,
-        gfm: true,
-        baseUrl: frontBaseUrl,
-        pedantic: false,
-        sanitize: false,
-        tables: true,
-        breaks: false,
-        smartLists: true,
-        smartypants: false,
-        xhtml: false
-      }, (err, content) => {
-        if (err) throw err
-        val.value = content
-      })
-    }
+    props: {
+        value: {
+            type: String,
+            default: ""
+        }
+    },
+    name: "MarkdownRender",
+    setup(props) {
+        const render = new NaiveUIRenderer()
+        const val = ref('')
+        const renderMarkdown = (value) => {
 
-    watch(() => props.value, () => {
-      renderMarkdown(props.value)
-    })
+            const renderedContent = marked(value.replace(/\\/g, '\\\\'), {
+                renderer: render,
+                gfm: true,
+                baseUrl: api.frontBaseUrl(),
+                pedantic: false,
+                sanitize: false,
+                tables: true,
+                breaks: false,
+                smartLists: true,
+                smartypants: false,
+                xhtml: false
+            })
+            if (renderedContent instanceof Promise) {
+                renderedContent.then((content) => {
+                    val.value = content
+                })
+            } else {
+                val.value = renderedContent
+            }
+        }
 
-    renderMarkdown(props.value || '')
-    return () => h(compile(val.value))
-  }
+        watch(() => props.value, () => {
+            renderMarkdown(props.value)
+        })
+
+        renderMarkdown(props.value || '')
+        return () => h(compile(val.value))
+    }
 }
 </script>

@@ -15,7 +15,6 @@
  */
 
 import {createRouter, createWebHistory} from 'vue-router'
-import UserLayout from "@/views/UserLayout.vue";
 import {useUserStore} from "@/stores/user";
 
 export const index = "index"
@@ -65,7 +64,7 @@ const router = createRouter({
             path: '/layout',
             name: 'user-layout',
             redirect: '/',
-            component: UserLayout,
+            component: () => import("@/views/UserLayout.vue"),
             children: [
                 {
                     path: '/',

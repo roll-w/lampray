@@ -28,5 +28,5 @@
 </template>
 
 <script setup>
-
+import {NH1, NH2} from "naive-ui";
 </script>

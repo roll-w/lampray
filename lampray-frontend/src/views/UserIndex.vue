@@ -61,7 +61,7 @@
 
 <script setup>
 import {useUserStore} from "@/stores/user";
-import {admin, articleView} from "@/router";
+import {NA, NAlert, NCard, NCarousel, NH1, NH2, NText} from "naive-ui";
 
 const userStore = useUserStore()
 

@@ -35,8 +35,8 @@
 </template>
 
 <script setup>
-
 import {useRouter} from "vue-router";
+import {NButton, NResult} from "naive-ui";
 
 const router = useRouter()
 const result = router.currentRoute.value.query.result

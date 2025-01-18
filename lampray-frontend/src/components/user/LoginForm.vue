@@ -57,9 +57,8 @@
 
 <script setup>
 import {getCurrentInstance, ref} from "vue";
-import axios from "axios";
 import api from "@/request/api";
-import {useNotification} from "naive-ui";
+import {NA, NButton, NButtonGroup, NCheckbox, NForm, NFormItem, NInput, NText, useNotification} from "naive-ui";
 import {useRouter} from "vue-router";
 import {useUserStore} from "@/stores/user";
 import {index, register} from "@/router";

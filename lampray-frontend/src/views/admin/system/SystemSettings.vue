@@ -38,10 +38,8 @@
 
 <script setup>
 import AdminBreadcrumb from "@/components/admin/AdminBreadcrumb.vue";
-import {NButton, NButtonGroup, useNotification} from "naive-ui";
-import {useUserStore} from "@/stores/user";
+import {NButton, NButtonGroup, NDataTable, NH1, NPagination, useNotification} from "naive-ui";
 import {getCurrentInstance, h, ref} from "vue";
-import axios from "axios";
 import api from "@/request/api";
 import {systemSettings} from "@/router";
 import {menuSystem} from "@/views/menu";
