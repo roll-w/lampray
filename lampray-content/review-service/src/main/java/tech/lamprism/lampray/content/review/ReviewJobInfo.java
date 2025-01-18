@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.content.review;
 
+import space.lingu.NonNull;
+import space.lingu.Nullable;
+import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
 
 import java.time.OffsetDateTime;
@@ -34,7 +37,7 @@ public record ReviewJobInfo(
         Long operator,
         OffsetDateTime assignedTime,
         OffsetDateTime reviewTime
-) {
+) implements ReviewJobDetails {
     public static ReviewJobInfo of(ReviewJob job) {
         if (job == null) {
             return null;
@@ -51,5 +54,57 @@ public record ReviewJobInfo(
                 job.getAssignedTime(),
                 job.getReviewTime()
         );
+    }
+
+    @Override
+    public long getJobId() {
+        return id;
+    }
+
+    @Override
+    @NonNull
+    public ReviewStatus getStatus() {
+        return status;
+    }
+
+    @Override
+    @NonNull
+    public ReviewMark getReviewMark() {
+        return reviewMark;
+    }
+
+    @Override
+    public long getReviewer() {
+        return reviewer;
+    }
+
+    @Override
+    @Nullable
+    public Long getOperator() {
+        return operator;
+    }
+
+    @Override
+    @NonNull
+    public OffsetDateTime getAssignedTime() {
+        return assignedTime;
+    }
+
+    @Override
+    @NonNull
+    public OffsetDateTime getReviewTime() {
+        return reviewTime;
+    }
+
+    @Override
+    @NonNull
+    public String getResult() {
+        return result;
+    }
+
+    @Override
+    @NonNull
+    public ContentIdentity getAssociatedContent() {
+        return ContentIdentity.of(contentId, type);
     }
 }
