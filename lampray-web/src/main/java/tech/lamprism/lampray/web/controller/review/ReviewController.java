@@ -25,16 +25,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import tech.lamprism.lampray.LampException;
-import tech.lamprism.lampray.web.common.ApiContext;
-import tech.lamprism.lampray.web.controller.Api;
-import tech.lamprism.lampray.web.controller.review.model.ReviewRequest;
+import tech.lamprism.lampray.content.review.ReviewContentProvider;
 import tech.lamprism.lampray.content.review.ReviewJobContent;
 import tech.lamprism.lampray.content.review.ReviewJobInfo;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
 import tech.lamprism.lampray.content.review.ReviewStatues;
-import tech.lamprism.lampray.content.review.ReviewContentProvider;
 import tech.lamprism.lampray.content.review.service.ReviewStatusService;
 import tech.lamprism.lampray.user.UserIdentity;
+import tech.lamprism.lampray.web.common.ApiContext;
+import tech.lamprism.lampray.web.controller.Api;
+import tech.lamprism.lampray.web.controller.review.model.ReviewJobContentView;
+import tech.lamprism.lampray.web.controller.review.model.ReviewRequest;
 import tech.rollw.common.web.AuthErrorCode;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.system.ContextThread;
@@ -107,7 +108,7 @@ public class ReviewController {
     }
 
     @GetMapping("/reviews/{jobId}/content")
-    public HttpResponseEntity<ReviewJobContent> getReviewContent(
+    public HttpResponseEntity<ReviewJobContentView> getReviewContent(
             @PathVariable(name = "jobId") Long jobId) {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
@@ -118,7 +119,9 @@ public class ReviewController {
         if (reviewJobInfo.reviewer() != user.getOperatorId()) {
             throw new LampException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
         }
-        return HttpResponseEntity.success(reviewJobContent);
+        return HttpResponseEntity.success(
+                ReviewJobContentView.of(reviewJobContent)
+        );
     }
 
     @PostMapping("/reviews/{jobId}")
