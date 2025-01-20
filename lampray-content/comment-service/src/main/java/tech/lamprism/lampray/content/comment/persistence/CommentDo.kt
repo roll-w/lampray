@@ -33,7 +33,10 @@ import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentIdentity
 import tech.lamprism.lampray.content.ContentType
 import tech.lamprism.lampray.content.comment.Comment
+import tech.lamprism.lampray.content.comment.CommentDetailsMetadata
+import tech.lamprism.lampray.content.comment.CommentResourceKind
 import tech.lamprism.lampray.content.comment.CommentStatus
+import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 
 /**
@@ -117,6 +120,15 @@ class CommentDo(
 
     override fun getAssociatedContent(): ContentIdentity =
         ContentIdentity.of(commentOnId, commentOnType)
+
+    override fun getSystemResourceKind(): SystemResourceKind =
+        CommentResourceKind
+
+    override fun getMetadata(): CommentDetailsMetadata {
+        return CommentDetailsMetadata(
+            commentOnType, commentOnId, parentId
+        )
+    }
 
     fun lock(): Comment = Comment(
         id!!, userId, parentId, content, createTime,

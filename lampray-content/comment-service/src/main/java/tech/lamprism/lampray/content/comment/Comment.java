@@ -22,6 +22,7 @@ import tech.lamprism.lampray.DataEntity;
 import tech.lamprism.lampray.LongEntityBuilder;
 import tech.lamprism.lampray.content.ContentAssociated;
 import tech.lamprism.lampray.content.ContentDetails;
+import tech.lamprism.lampray.content.ContentDetailsMetadata;
 import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
 import tech.rollw.common.web.system.SystemResourceKind;
@@ -32,6 +33,8 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 public class Comment implements DataEntity<Long>, ContentDetails, ContentAssociated {
+    public static final int COMMENT_ROOT_ID = 0;
+
     private final Long id;
     private final long userId;
     /**
@@ -55,6 +58,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
     private final CommentStatus commentStatus;
 
     private final ContentIdentity associatedContent;
+    private final CommentDetailsMetadata commentDetailsMetadata;
 
     public Comment(Long id, long userId, long parentId, String content,
                    OffsetDateTime createTime, OffsetDateTime updateTime,
@@ -70,6 +74,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
         this.commentOnType = commentOnType;
         this.commentStatus = commentStatus;
         this.associatedContent = ContentIdentity.of(commentOnId, commentOnType);
+        this.commentDetailsMetadata = new CommentDetailsMetadata(commentOnType, commentOnId, parentId);
     }
 
     public Long getId() {
@@ -142,6 +147,12 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
     @Override
     public ContentIdentity getAssociatedContent() {
         return associatedContent;
+    }
+
+    @Nullable
+    @Override
+    public ContentDetailsMetadata getMetadata() {
+        return commentDetailsMetadata;
     }
 
     public Builder toBuilder() {

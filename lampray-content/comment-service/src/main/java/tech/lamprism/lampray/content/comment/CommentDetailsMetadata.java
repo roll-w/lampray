@@ -16,7 +16,9 @@
 
 package tech.lamprism.lampray.content.comment;
 
+import space.lingu.Nullable;
 import tech.lamprism.lampray.content.ContentDetailsMetadata;
+import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
 
 /**
@@ -25,6 +27,11 @@ import tech.lamprism.lampray.content.ContentType;
 public record CommentDetailsMetadata(
         ContentType contentType,
         long contentId,
+
+        @Nullable
         Long parentId
 ) implements ContentDetailsMetadata {
+    public ContentIdentity getCommentOn() {
+        return ContentIdentity.of(contentId, contentType);
+    }
 }
