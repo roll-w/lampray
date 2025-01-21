@@ -60,3 +60,42 @@ dependencies {
 
 description = "lampray-web"
 
+tasks.register<Task>("copyFrontendResources") {
+    delete {
+        delete(layout.buildDirectory.dir("generated/resources/assets"))
+    }
+    copy {
+        from("${project.parent?.projectDir}/lampray-frontend/dist")
+        into(layout.buildDirectory.dir("generated/resources/assets"))
+    }
+    outputs.upToDateWhen { false }
+    val buildFrontend = if (project.hasProperty("buildFrontend")) {
+        val value = project.property("buildFrontend").toString().toBoolean()
+        if (value) {
+            dependsOn(
+                rootProject.tasks.findByName("buildFrontend")
+            )
+        }
+        value
+    } else {
+        false
+    }
+
+    onlyIf {
+        buildFrontend == true
+    }
+}
+
+tasks.withType<ProcessResources> {
+    dependsOn("copyFrontendResources")
+
+    outputs.upToDateWhen { false }
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDir(layout.buildDirectory.dir("generated/resources"))
+        }
+    }
+}
