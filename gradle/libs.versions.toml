@@ -22,7 +22,7 @@ rollw-web-common = "0.2.1"
 spring-shell = "3.4.0"
 sshd = "2.14.0"
 jline = "3.26.3"
-
+seancfoley-ipaddress = "5.5.1"
 [libraries]
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text" }
@@ -35,7 +35,7 @@ rollw-web-common-core = { module = "tech.rollw.common:web-common-core", version.
 rollw-web-common-spring-boot-starter = { module = "tech.rollw.common:web-common-spring-boot-starter", version.ref = "rollw-web-common" }
 sshd-core = { module = "org.apache.sshd:sshd-core", version.ref = "sshd" }
 jline-terminal-jna = { module = "org.jline:jline-terminal-jna", version.ref = "jline" }
-
+seancfoley-ipaddress = { module = "com.github.seancfoley:ipaddress", version.ref = "seancfoley-ipaddress" }
 [bundles]
 
 [plugins]

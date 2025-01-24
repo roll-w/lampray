@@ -22,6 +22,7 @@ plugins {
 dependencies {
     api(project(":lampray-iam:authentication-api"))
     api(project(":lampray-user:user-service"))
+    api(project(":lampray-system:message-resource-api"))
     api(project(":lampray-common-data"))
     api(project(":lampray-push:push-api"))
     implementation(libs.io.jsonwebtoken.jjwt.api)
