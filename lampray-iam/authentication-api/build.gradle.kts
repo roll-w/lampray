@@ -23,6 +23,7 @@ dependencies {
     api(project(":lampray-system:setting-api"))
     api(project(":lampray-user:user-api"))
     api(libs.rollw.web.common.core)
+    api(libs.seancfoley.ipaddress)
     api("org.springframework.security:spring-security-core")
     api("jakarta.servlet:jakarta.servlet-api")
 }
