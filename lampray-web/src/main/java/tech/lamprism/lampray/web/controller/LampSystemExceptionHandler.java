@@ -32,6 +32,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -101,6 +102,14 @@ public class LampSystemExceptionHandler {
         return HttpResponseEntity.of(
                 CommonErrorCode.ERROR_NOT_FOUND,
                 e.getMessage()
+        );
+    }
+
+    @ExceptionHandler(RequestRejectedException.class)
+    public HttpResponseEntity<Void> handleRequestRejectedException(RequestRejectedException e) {
+        logger.info("Reject request due to: {}", e.getMessage());
+        return HttpResponseEntity.of(
+                AuthErrorCode.ERROR_PERMISSION_DENIED
         );
     }
 
