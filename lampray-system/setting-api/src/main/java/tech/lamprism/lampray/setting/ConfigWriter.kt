@@ -24,16 +24,34 @@ interface ConfigWriter {
     /**
      * Store the raw value of the setting.
      *
-     * Not recommended to use this method directly, as it
-     * will not check the validity of the value. Use the
-     * [SettingSpecification] version instead.
+     * Not recommended to use this method directly, as it will not
+     * check the validity of the value. Use the [SettingSpecification]
+     * version instead.
+     *
+     * @return appropriate [SettingSource] if the value is stored successfully,
+     * or [SettingSource.NONE] if the value is not stored.
      */
-    operator fun set(key: String, value: String?)
+    operator fun set(key: String, value: String?): SettingSource
 
     /**
      * Store the value of the setting.
+     *
+     * @return appropriate [SettingSource] if the value is stored successfully,
+     * or [SettingSource.NONE] if the value is not stored.
      */
-    operator fun <T, V> set(spec: SettingSpecification<T, V>, value: T?)
+    operator fun <T, V> set(spec: SettingSpecification<T, V>, value: T?): SettingSource
+
+    /**
+     * Store the value of the setting.
+     *
+     * Note: [ConfigValue.source] will be ignored.
+     *
+     * @return appropriate [SettingSource] if the value is stored successfully,
+     * or [SettingSource.NONE] if the value is not stored.
+     */
+    fun <T, V> set(configValue: ConfigValue<T, V>): SettingSource {
+        return set(configValue, configValue.value)
+    }
 
     fun supports(spec: SettingSpecification<*, *>): Boolean {
         return supports(spec.key.name)

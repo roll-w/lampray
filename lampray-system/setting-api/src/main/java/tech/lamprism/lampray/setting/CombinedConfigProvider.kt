@@ -60,20 +60,22 @@ class CombinedConfigProvider(
         return configProviders.flatMap { it.list() }
     }
 
-    override fun set(key: String, value: String?) {
-        for (reader in configProviders) {
-            if (reader.supports(key)) {
-                reader[key] = value
+    override fun set(key: String, value: String?): SettingSource {
+        for (provider in configProviders) {
+            if (provider.supports(key)) {
+                return provider.set(key, value)
             }
         }
+        return SettingSource.NONE
     }
 
-    override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?) {
-        for (reader in configProviders) {
-            if (reader.supports(spec)) {
-                reader[spec] = value
+    override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?): SettingSource {
+        for (provider in configProviders) {
+            if (provider.supports(spec)) {
+                return provider.set(spec, value)
             }
         }
+        return SettingSource.NONE
     }
 
     override fun supports(key: String): Boolean {

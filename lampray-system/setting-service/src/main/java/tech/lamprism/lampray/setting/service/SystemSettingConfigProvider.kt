@@ -18,11 +18,14 @@ package tech.lamprism.lampray.setting.service
 
 import org.springframework.stereotype.Service
 import tech.lamprism.lampray.setting.ConfigProvider
+import tech.lamprism.lampray.setting.ConfigReader
+import tech.lamprism.lampray.setting.ConfigValue
 import tech.lamprism.lampray.setting.RawSettingValue
 import tech.lamprism.lampray.setting.SettingSource
 import tech.lamprism.lampray.setting.SettingSpecification
 import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import tech.lamprism.lampray.setting.SettingSpecificationHelper
+import tech.lamprism.lampray.setting.SettingSpecificationProvider
 import tech.lamprism.lampray.setting.data.SystemSettingDo
 import tech.lamprism.lampray.setting.data.SystemSettingRepository
 
@@ -31,7 +34,8 @@ import tech.lamprism.lampray.setting.data.SystemSettingRepository
  */
 @Service
 class SystemSettingConfigProvider(
-    private val systemSettingRepository: SystemSettingRepository
+    private val systemSettingRepository: SystemSettingRepository,
+    private val settingSpecificationProvider: SettingSpecificationProvider
 ) : ConfigProvider {
     override fun get(key: String): String? {
         return systemSettingRepository.findByKey(key)?.value
@@ -68,21 +72,22 @@ class SystemSettingConfigProvider(
         }
     }
 
-    override fun set(key: String, value: String?) {
+    override fun set(key: String, value: String?): SettingSource {
         val setting = systemSettingRepository.findByKey(key)
         if (setting != null) {
             setting.value = value
             systemSettingRepository.save(setting)
-            return
+            return SettingSource.DATABASE
         }
         val newSetting = SystemSettingDo(
             key = key,
             value = value
         )
         systemSettingRepository.save(newSetting)
+        return SettingSource.DATABASE
     }
 
-    override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?) {
+    override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?): SettingSource {
         val setting = systemSettingRepository.findByKey(spec.keyName)
         val value = with(SettingSpecificationHelper) {
             value.serialize(spec)
@@ -90,14 +95,23 @@ class SystemSettingConfigProvider(
         if (setting != null) {
             setting.value = value
             systemSettingRepository.save(setting)
-            return
+            return SettingSource.DATABASE
         }
         val newSetting = SystemSettingDo(
             key = spec.key.name,
             value = value
         )
         systemSettingRepository.save(newSetting)
+        return SettingSource.DATABASE
     }
 
-    override fun supports(key: String): Boolean = true
+    override fun supports(key: String): Boolean {
+        return try {
+            settingSpecificationProvider.getSettingSpecification(key)
+                .supportedSources
+                .contains(SettingSource.DATABASE)
+        } catch (_: Exception) {
+            false
+        }
+    }
 }
