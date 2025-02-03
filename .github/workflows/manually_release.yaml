@@ -120,6 +120,12 @@ jobs:
                         
                         Pull image from `ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}` 
                         or download the image package from current release assets.
+                        
+                        Run the following command to pull the image:
+                        
+                        ```bash
+                        docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}
+                        ```
 
                     draft: true
                     tag_name: ${{ env.version_name }}
