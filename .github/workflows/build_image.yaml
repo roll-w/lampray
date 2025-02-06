@@ -66,7 +66,7 @@ jobs:
             -   name: Build
                 run: |
                     chmod +x gradlew
-                    ./gradlew buildImage -DbuildFrontend=true
+                    ./gradlew -PbuildFrontend=true buildImage
                     mv build/dist/lampray-${{ env.raw_version_name }}-dist.tar.gz build/dist/lampray-${{ env.version_name }}-dist.tar.gz
             -   name: Upload Dist
                 uses: actions/upload-artifact@v4
@@ -86,9 +86,12 @@ jobs:
             -   name: Output Result
                 run: |
                     echo "# Build Summary" >> $GITHUB_STEP_SUMMARY
-                    echo "- Version: ${{ env.version_name }}" >> $GITHUB_STEP_SUMMARY
-                    echo "- Remote Tag: ${{ env.remote_tag }}" >> $GITHUB_STEP_SUMMARY
+                    echo '- Version: `${{ env.version_name }}`' >> $GITHUB_STEP_SUMMARY
+                    echo '- Remote Tag: `${{ env.remote_tag }}`' >> $GITHUB_STEP_SUMMARY
+                    echo '' >> $GITHUB_STEP_SUMMARY
                     echo "Image has been pushed, run the following command to pull the image:" >> $GITHUB_STEP_SUMMARY
+                    echo '' >> $GITHUB_STEP_SUMMARY
                     echo '```bash' >> $GITHUB_STEP_SUMMARY
                     echo "docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}" >> $GITHUB_STEP_SUMMARY
                     echo '```' >> $GITHUB_STEP_SUMMARY
+                    echo '' >> $GITHUB_STEP_SUMMARY

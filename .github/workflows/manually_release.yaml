@@ -89,7 +89,7 @@ jobs:
                 continue-on-error: true
                 run: |
                     chmod +x gradlew
-                    ./gradlew packageImage
+                    ./gradlew -PbuildFrontend=true packageImage
             -   name: Push Image
                 id: push
                 run: |
@@ -115,16 +115,20 @@ jobs:
                         
                         ## Artifacts
                         
-                        - Image: ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}
+                        - Image: `ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}`
                             - sha: `${{ steps.push.outputs.digest }}`
                         
-                        Pull image from `ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}` 
-                        or download the image package from current release assets.
-                        
-                        Run the following command to pull the image:
+                        Pull image by running the following command:
                         
                         ```bash
                         docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}
+                        ```
+                        
+                        or download the image package from current release assets, 
+                        and run command like following to load the image:
+                        
+                        ```bash
+                        docker load -i lampray-${{ env.raw_version_name }}-image.tar.gz
                         ```
 
                     draft: true
