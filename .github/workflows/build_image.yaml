@@ -66,7 +66,7 @@ jobs:
             -   name: Build
                 run: |
                     chmod +x gradlew
-                    ./gradlew -PbuildFrontend=true buildImage
+                    ./gradlew -PbuildFrontend=true -Pci=true buildImage
                     mv build/dist/lampray-${{ env.raw_version_name }}-dist.tar.gz build/dist/lampray-${{ env.version_name }}-dist.tar.gz
             -   name: Upload Dist
                 uses: actions/upload-artifact@v4

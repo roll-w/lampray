@@ -45,6 +45,9 @@ abstract class GenerateBuildConfigTask : DefaultTask() {
     @get:Input
     abstract val version: Property<String>
 
+    private val ci: Boolean = project.hasProperty("ci") &&
+            project.property("ci").toString().toBoolean()
+
     companion object {
         private const val OUTPUT_DIR = "generated/sources/buildconfig/java/main"
     }
@@ -68,6 +71,14 @@ abstract class GenerateBuildConfigTask : DefaultTask() {
             ZoneId.of("UTC")
         ).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
+        // if CI, add commit id as suffix to version
+        // TODO: move to lampray-project.gradle.kts
+        val buildVersion = if (ci) {
+            "${version.get()}-$commitIdAbbrev"
+        } else {
+            version.get()
+        }
+
         println(
             """
             BuildConfig: 
@@ -77,7 +88,7 @@ abstract class GenerateBuildConfigTask : DefaultTask() {
                 - commitId: $commitId
                 - commitIdAbbrev: $commitIdAbbrev
                 - commitTime: $commitTime
-                - version: ${version.get()}
+                - version: $buildVersion
         """.trimIndent()
         )
 
@@ -95,7 +106,7 @@ abstract class GenerateBuildConfigTask : DefaultTask() {
                 public static final String COMMIT_ID = "$commitId";
                 public static final String COMMIT_ID_ABBREV = "$commitIdAbbrev";
                 public static final String COMMIT_TIME = "$commitTime";
-                public static final String VERSION = "${version.get()}";
+                public static final String VERSION = "$buildVersion";
                 
                 private BuildConfig() {}
             }
