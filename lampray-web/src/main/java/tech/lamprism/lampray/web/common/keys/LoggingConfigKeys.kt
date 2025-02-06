@@ -78,8 +78,17 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
     @JvmField
     val LOGGING_LEVEL =
         SettingSpecificationBuilder(SettingKey.ofString("logging.level"))
-            .setTextDescription("The logging level.")
-            .setDefaultValue(null)
+            .setTextDescription("""
+                Logging level for loggers, for example:
+                
+                ```
+                logging.level=logger1:info, logger2:debug,\
+                  logger3:warn, logger4:error
+                ```
+                
+                The value is a comma-separated list of logger name and level pairs.
+            """.trimIndent())
+            .setDefaultValue("")
             .setRequired(false)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .build()
@@ -94,11 +103,28 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
     )
 
     @JvmStatic
-    fun parseLoggingLevel(level: String): Map<String, String> {
+    fun parseLoggingLevel(level: String?): Map<String, String> {
         // TODO: move to logging parser when setting value parser api is ready
-        return level.split(",").map {
+        if (level == null) {
+            return emptyMap()
+        }
+        return level.split(",").mapNotNull {
+            if (it.isBlank()) {
+                // skip for empty line
+                return@mapNotNull null
+            }
+
             val pair = it.trim().split(":")
-            pair[0].trim() to pair[1].trim()
+            if (pair.size != 2) {
+                throw IllegalArgumentException("Invalid logging level format '$it'")
+            }
+            val key = pair[0].trim()
+            val value = pair[1].trim()
+            if (key.isEmpty()) return@mapNotNull null
+            if (value.isEmpty()) {
+                throw IllegalArgumentException("Logging level cannot be empty: $it")
+            }
+            key to value
         }.toMap()
     }
 
