@@ -107,7 +107,7 @@ const router = createRouter({
                     }
                 },
                 {
-                    path: '/user/:userId/space',
+                    path: '/users/:userId/space',
                     name: userPage,
                     component: () => import('@/views/user/UserPersonalPage.vue'),
                     meta: {
@@ -115,7 +115,7 @@ const router = createRouter({
                     }
                 },
                 {
-                    path: '/user/manage/articles',
+                    path: '/user/management/articles',
                     name: articleList,
                     component: () => import('@/views/article/PersonalArticleManageView.vue'),
                     meta: {
@@ -125,22 +125,13 @@ const router = createRouter({
                 },
 
                 {
-                    path: '/user/:user/article/:id',
+                    path: '/users/:user/articles/:id',
                     name: articleView,
                     component: () => import('@/views/article/ArticleViewer.vue'),
                     meta: {
                         title: "文章查看"
                     }
                 },
-                {
-                    path: '/user/:user/article/:id/focus',
-                    name: articleFocusView,
-                    component: () => import('@/views/article/ReadingView.vue'),
-                    meta: {
-                        title: "文章查看"
-                    }
-                },
-
                 {
                     path: '/article/editor',
                     name: articleEditorPage,
@@ -149,19 +140,6 @@ const router = createRouter({
                         title: "文章编辑",
                         requireLogin: true,
                     }
-                },
-                {
-                    path: '/user/chat/:id',
-                    name: userChat,
-                    component: () => import('@/views/message/UserChat.vue'),
-                    meta: {
-                        title: "聊天",
-                        requireLogin: true,
-                    },
-                },
-                {
-                    path: '/user/chat',
-                    redirect: '/user/chat/s0',
                 },
                 {
                     path: '/article/editor/:id',
