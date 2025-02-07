@@ -276,14 +276,14 @@ const router = createRouter({
                         title: "系统设置"
                     }
                 },
-                {
-                    path: '/admin/system/resources/messages',
-                    name: systemMessageResource,
-                    component: () => import('@/views/admin/system/SystemMessageResources.vue'),
-                    meta: {
-                        title: "消息资源"
-                    }
-                },
+                // {
+                //     path: '/admin/system/resources/messages',
+                //     name: systemMessageResource,
+                //     component: () => import('@/views/admin/system/SystemMessageResources.vue'),
+                //     meta: {
+                //         title: "消息资源"
+                //     }
+                // },
             ]
         }
 
