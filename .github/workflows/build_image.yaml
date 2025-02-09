@@ -14,11 +14,12 @@ on:
             - .idea/**
             - .vscode/**
             - distribution/**
+            - Dockerfile
 env:
     namespace: ${{ github.repository_owner }}
 permissions: write-all
 jobs:
-    build:
+    build-image:
         runs-on:
             ubuntu-latest
         timeout-minutes: 360 # 6 hours
