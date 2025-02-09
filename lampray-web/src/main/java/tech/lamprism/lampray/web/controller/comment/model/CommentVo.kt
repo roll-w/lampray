@@ -17,7 +17,7 @@ package tech.lamprism.lampray.web.controller.comment.model
 
 import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentType
-import tech.lamprism.lampray.content.comment.Comment
+import tech.lamprism.lampray.content.comment.CommentDetailsMetadata
 import tech.lamprism.lampray.web.controller.content.vo.ContentVo
 import java.time.OffsetDateTime
 
@@ -47,16 +47,18 @@ data class CommentVo(
             if (contentDetails == null) {
                 return null
             }
-            if (contentDetails !is Comment) {
+            val metadata = contentDetails.metadata
+                ?: return null
+            if (metadata !is CommentDetailsMetadata) {
                 return null
             }
             return CommentVo(
-                contentDetails.id,
+                contentDetails.contentId,
                 contentDetails.userId,
-                contentDetails.parentId,
+                metadata.parentId,
                 contentDetails.content,
-                contentDetails.commentOnId,
-                contentDetails.commentOnType,
+                metadata.contentId,
+                metadata.contentType,
                 contentDetails.createTime,
                 contentDetails.updateTime
             )

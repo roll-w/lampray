@@ -18,6 +18,7 @@ package tech.lamprism.lampray.content;
 
 import space.lingu.NonNull;
 import space.lingu.Nullable;
+import tech.lamprism.lampray.user.UserIdentity;
 
 /**
  * Represents a content that has not been created.
@@ -28,7 +29,11 @@ public interface UncreatedContent {
     @NonNull
     ContentType getContentType();
 
+    @Deprecated
     long getUserId();
+
+    @NonNull
+    UserIdentity getOperator();
 
     /**
      * Get the title of the content, if exists.

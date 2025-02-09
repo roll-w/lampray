@@ -57,7 +57,7 @@ class CommentController(
         )
         val uncreatedContent = SimpleUncreatedContent(
             ContentType.COMMENT,
-            user.userId,
+            user,
             null,
             commentRequest.content,
             commentDetailsMetadata

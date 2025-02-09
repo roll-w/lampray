@@ -21,6 +21,7 @@ import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.SimpleUncreatedContent;
 import tech.lamprism.lampray.content.UncreatedContent;
 import tech.lamprism.lampray.content.article.ArticleDetailsMetadata;
+import tech.lamprism.lampray.user.UserIdentity;
 
 /**
  * @author RollW
@@ -29,11 +30,11 @@ public record ArticleCreateRequest(
         String title,
         String content
 ) {
-    public UncreatedContent toUncreatedContent(long userId,
+    public UncreatedContent toUncreatedContent(UserIdentity userIdentity,
                                                ArticleDetailsMetadata articleDetailsMetadata) {
         return new SimpleUncreatedContent(
                 ContentType.ARTICLE,
-                userId,
+                userIdentity,
                 StringUtils.trim(title),
                 StringUtils.trim(content),
                 articleDetailsMetadata

@@ -18,15 +18,16 @@ package tech.lamprism.lampray.web.controller.article;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import tech.lamprism.lampray.web.common.ApiContext;
-import tech.lamprism.lampray.web.controller.Api;
-import tech.lamprism.lampray.web.controller.article.model.ArticleCreateRequest;
-import tech.lamprism.lampray.content.article.ArticleDetailsMetadata;
-import tech.lamprism.lampray.content.article.ArticleInfo;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentPublishProvider;
 import tech.lamprism.lampray.content.UncreatedContent;
+import tech.lamprism.lampray.content.article.ArticleDetailsMetadata;
+import tech.lamprism.lampray.content.article.ArticleInfo;
 import tech.lamprism.lampray.content.common.ContentException;
+import tech.lamprism.lampray.user.UserIdentity;
+import tech.lamprism.lampray.web.common.ApiContext;
+import tech.lamprism.lampray.web.controller.Api;
+import tech.lamprism.lampray.web.controller.article.model.ArticleCreateRequest;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.UserErrorCode;
 import tech.rollw.common.web.system.ContextThread;
@@ -54,9 +55,9 @@ public class ArticleController {
         if (!apiContext.hasUser()) {
             throw new ContentException(UserErrorCode.ERROR_USER_NOT_LOGIN);
         }
-        long userId = apiContext.getUser().getUserId();
+        UserIdentity user = apiContext.getUser();
         UncreatedContent uncreatedContent = articleCreateRequest.toUncreatedContent(
-                userId,
+                user,
                 ArticleDetailsMetadata.EMPTY
         );
         ContentDetails articleDetails =

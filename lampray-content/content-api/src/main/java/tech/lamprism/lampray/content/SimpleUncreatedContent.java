@@ -18,13 +18,14 @@ package tech.lamprism.lampray.content;
 
 import space.lingu.NonNull;
 import space.lingu.Nullable;
+import tech.lamprism.lampray.user.UserIdentity;
 
 /**
  * @author RollW
  */
 public record SimpleUncreatedContent(
         @NonNull ContentType contentType,
-        long userId,
+        @NonNull UserIdentity operator,
         @Nullable String title,
         @Nullable String content,
         @Nullable ContentDetailsMetadata metadata
@@ -37,7 +38,13 @@ public record SimpleUncreatedContent(
 
     @Override
     public long getUserId() {
-        return userId;
+        return operator.getUserId();
+    }
+
+    @NonNull
+    @Override
+    public UserIdentity getOperator() {
+        return operator;
     }
 
     @Nullable
