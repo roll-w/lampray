@@ -45,8 +45,36 @@ object ServerConfigKeys : SettingSpecificationSupplier {
             .setRequired(false)
             .build()
 
+    @JvmField
+    val SSH_PORT =
+        SettingSpecificationBuilder(SettingKey.ofInt("server.ssh.port"))
+            .setTextDescription("SSH port")
+            .setDefaultValue(5101)
+            .setSupportedSources(SettingSource.LOCAL_ONLY)
+            .setRequired(true)
+            .build()
+
+    @JvmField
+    val SSH_HOST =
+        SettingSpecificationBuilder(SettingKey.ofString("server.ssh.host"))
+            .setTextDescription("Server SSH host")
+            .setDefaultValue(null)
+            .setSupportedSources(SettingSource.LOCAL_ONLY)
+            .setRequired(false)
+            .build()
+
+    @JvmField
+    val SSH_HOST_KEY =
+        SettingSpecificationBuilder(SettingKey.ofString("server.ssh.host.key"))
+            .setTextDescription("Private key path for SSH host, if specified file does not exist, " +
+                    "a new key will be generated")
+            .setDefaultValue("conf/ssh_host.key")
+            .setSupportedSources(SettingSource.LOCAL_ONLY)
+            .setRequired(false)
+            .build()
+
     private val keys = listOf(
-        PORT
+        PORT, HOST, SSH_PORT, SSH_HOST, SSH_HOST_KEY
     )
 
     override val specifications: List<AttributedSettingSpecification<*, *>>
