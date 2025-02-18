@@ -19,17 +19,21 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import tech.lamprism.lampray.content.ContentAccessAuthType
+import tech.lamprism.lampray.content.ContentAccessCredentials
 import tech.lamprism.lampray.content.ContentPublishProvider
 import tech.lamprism.lampray.content.ContentType
 import tech.lamprism.lampray.content.SimpleUncreatedContent
+import tech.lamprism.lampray.content.collection.ContentCollectionIdentity
+import tech.lamprism.lampray.content.collection.ContentCollectionProviderFactory
 import tech.lamprism.lampray.content.collection.ContentCollectionType
 import tech.lamprism.lampray.content.comment.CommentDetailsMetadata
 import tech.lamprism.lampray.web.common.ApiContext
 import tech.lamprism.lampray.web.controller.Api
 import tech.lamprism.lampray.web.controller.comment.model.CommentRequest
 import tech.lamprism.lampray.web.controller.comment.model.CommentVo
+import tech.lamprism.lampray.web.controller.content.vo.UrlContentType
 import tech.rollw.common.web.HttpResponseEntity
-import tech.rollw.common.web.ParameterFailedException
 import tech.rollw.common.web.system.ContextThreadAware
 
 /**
@@ -38,7 +42,8 @@ import tech.rollw.common.web.system.ContextThreadAware
 @Api
 class CommentController(
     private val apiContextThreadAware: ContextThreadAware<ApiContext>,
-    private val contentPublishProvider: ContentPublishProvider
+    private val contentPublishProvider: ContentPublishProvider,
+    private val contentCollectionProviderFactory: ContentCollectionProviderFactory
 ) {
     @PostMapping("/{contentType}/{contentId}/comments")
     fun createComment(
@@ -70,22 +75,41 @@ class CommentController(
         )
     }
 
-    // TODO: implement the following methods
     @GetMapping("/{contentType}/{contentId}/comments")
     fun getComments(
-        @PathVariable("contentId") contentId: Long?,
+        @PathVariable("contentId") contentId: Long,
         @PathVariable("contentType") type: String
     ): HttpResponseEntity<List<CommentVo>> {
         val contentType = getContentType(type)
         val collectionType = getFromContentType(contentType)
+        val context = apiContextThreadAware.contextThread
+            .context
+        val contentAccessCredentials = ContentAccessCredentials.of(
+            ContentAccessAuthType.USER,
+            context.user
+        )
 
-        return HttpResponseEntity.success(listOf())
+        val contents = contentCollectionProviderFactory.getContents(
+            ContentCollectionIdentity.of(contentId, collectionType),
+            contentAccessCredentials
+        ).mapNotNull {
+            CommentVo.of(it.contentDetails)
+        }
+        return HttpResponseEntity.success(contents)
     }
 
 
     @GetMapping("/user/comments")
     fun getCommentsOfCurrentUser(): HttpResponseEntity<List<CommentVo>> {
-        return HttpResponseEntity.success(listOf())
+        val context = apiContextThreadAware.contextThread
+            .context
+        val user = context.user!!
+        val contents = contentCollectionProviderFactory.getContents(
+            ContentCollectionIdentity.of(user.userId, ContentCollectionType.USER_COMMENTS),
+        ).mapNotNull {
+            CommentVo.of(it.contentDetails)
+        }
+        return HttpResponseEntity.success(contents)
     }
 
     @GetMapping("/users/{userId}/comments")
@@ -104,8 +128,7 @@ class CommentController(
 
     companion object {
         private fun getContentType(contentType: String): ContentType =
-            ContentType.findByName(contentType)
-                ?: throw ParameterFailedException("Content type not found.")
+            UrlContentType.fromUrl(contentType).contentType
 
     }
 }
