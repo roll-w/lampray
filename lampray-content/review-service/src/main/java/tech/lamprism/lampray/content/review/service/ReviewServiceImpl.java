@@ -18,6 +18,7 @@ package tech.lamprism.lampray.content.review.service;
 
 import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
+import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentTrait;
 import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.review.ReviewJobInfo;
@@ -65,7 +66,9 @@ public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
         }
 
         long reviewerId = reviewerAllocator.allocateReviewer(
-                contentType, allowAutoReview);
+                ContentIdentity.of(contentId, contentType),
+                allowAutoReview
+        );
 
         ReviewJobDo.Builder builder = ReviewJobDo.builder()
                 .setReviewContentId(contentId)

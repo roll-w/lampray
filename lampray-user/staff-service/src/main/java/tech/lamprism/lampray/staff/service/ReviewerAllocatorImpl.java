@@ -18,18 +18,24 @@ package tech.lamprism.lampray.staff.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.review.ReviewStatus;
 import tech.lamprism.lampray.content.review.ReviewerAllocator;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository;
+import tech.lamprism.lampray.staff.AttributedStaff;
 import tech.lamprism.lampray.staff.OnStaffEventListener;
 import tech.lamprism.lampray.staff.Staff;
+import tech.lamprism.lampray.staff.StaffType;
+import tech.lamprism.lampray.staff.persistence.StaffRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -40,11 +46,15 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
    private static final Logger logger = LoggerFactory.getLogger(ReviewerAllocatorImpl.class);
 
     private final ReviewJobRepository reviewJobRepository;
+    private final StaffRepository staffRepository;
     private final Map<Long, Integer> weights = new HashMap<>();
     private final TreeMap<Integer, List<Long>> staffReviewingCount = new TreeMap<>();
 
-    public ReviewerAllocatorImpl(ReviewJobRepository reviewJobRepository) {
+    @Lazy
+    public ReviewerAllocatorImpl(ReviewJobRepository reviewJobRepository,
+                                 StaffRepository staffRepository) {
         this.reviewJobRepository = reviewJobRepository;
+        this.staffRepository = staffRepository;
         loadStaffReviewingCount();
     }
 
@@ -59,7 +69,7 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
             weights.put(reviewerId, weights.getOrDefault(reviewerId, 0) + weight);
         });
 
-        List<Staff> staffs = List.of();
+        List<? extends AttributedStaff> staffs = loadStaffs();
         // TODO: load staffs
         staffs.forEach(staff -> {
             if (weights.containsKey(staff.getUserId())) {
@@ -78,6 +88,11 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
         logger.info("Load staff reviewing count: {}", staffReviewingCount);
     }
 
+    private List<? extends AttributedStaff> loadStaffs() {
+        return staffRepository
+                .findByTypes(Set.of(StaffType.ADMIN, StaffType.REVIEWER));
+    }
+
     private void remappingReviewer(long reviewer, int original, int weight) {
         weights.put(reviewer, weight);
 
@@ -92,8 +107,8 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
     }
 
     @Override
-    public long allocateReviewer(ContentType contentType, boolean allowAutoReviewer) {
-        if (canAutoReview(contentType) && allowAutoReviewer) {
+    public long allocateReviewer(ContentIdentity contentIdentity, boolean allowAutoReviewer) {
+        if (canAutoReview(contentIdentity.getContentType()) && allowAutoReviewer) {
             return AUTO_REVIEWER;
         }
         Map.Entry<Integer, List<Long>> entry = staffReviewingCount.firstEntry();
@@ -102,12 +117,12 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
         }
         List<Long> ids = entry.getValue();
         long reviewerId = ids.get(0);
-        remappingReviewer(reviewerId, entry.getKey(), entry.getKey() + contentType.getWeight());
+        remappingReviewer(reviewerId, entry.getKey(), entry.getKey() + contentIdentity.getContentType().getWeight());
         return reviewerId;
     }
 
     @Override
-    public void releaseReviewer(long reviewerId, ContentType contentType) {
+    public void releaseReviewer(long reviewerId, ContentIdentity contentIdentity) {
         if (reviewerId == AUTO_REVIEWER) {
             return;
         }
@@ -115,7 +130,8 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
         if (weight == null) {
             return;
         }
-        remappingReviewer(reviewerId, weight, weight - contentType.getWeight());
+        remappingReviewer(reviewerId, weight,
+                weight - contentIdentity.getContentType().getWeight());
     }
 
     private boolean canAutoReview(ContentType contentType) {

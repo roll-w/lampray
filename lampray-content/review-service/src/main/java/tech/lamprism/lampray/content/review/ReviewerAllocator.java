@@ -16,7 +16,7 @@
 
 package tech.lamprism.lampray.content.review;
 
-import tech.lamprism.lampray.content.ContentType;
+import tech.lamprism.lampray.content.ContentIdentity;
 
 /**
  * @author RollW
@@ -30,17 +30,17 @@ public interface ReviewerAllocator {
     long AUTO_REVIEWER = -1;
 
     /**
-     * Allocate a reviewer for the content with the given content type.
+     * Allocate a reviewer for the content with the given content.
      *
      * @param allowAutoReviewer whether to allow auto-reviewer
      */
-    long allocateReviewer(ContentType contentType, boolean allowAutoReviewer);
+    long allocateReviewer(ContentIdentity contentIdentity, boolean allowAutoReviewer);
 
     /**
      * Callback when the reviewer is released.
      *
      * @param reviewerId  the reviewer id
-     * @param contentType the content type
+     * @param contentIdentity the content identity
      */
-    void releaseReviewer(long reviewerId, ContentType contentType);
+    void releaseReviewer(long reviewerId, ContentIdentity contentIdentity);
 }

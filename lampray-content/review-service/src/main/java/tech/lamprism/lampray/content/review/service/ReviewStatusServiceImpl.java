@@ -74,7 +74,7 @@ public class ReviewStatusServiceImpl implements ReviewStatusService {
             return null;
         }
         OffsetDateTime time = OffsetDateTime.now();
-        reviewerAllocator.releaseReviewer(job.getReviewerId(), job.getReviewContentType());
+        reviewerAllocator.releaseReviewer(job.getReviewerId(), job.getAssociatedContent());
         if (passed) {
             return job.reviewPass(operator, time);
         }
