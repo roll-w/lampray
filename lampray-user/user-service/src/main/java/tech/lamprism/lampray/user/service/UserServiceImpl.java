@@ -70,7 +70,8 @@ public class UserServiceImpl implements UserSignatureProvider,
         if (user == null) {
             return null;
         }
-        return "LampBlogUserSignature-" + user.getPassword();
+        // TODO: custom config
+        return "LamprayUserSignature-" + user.getPassword();
     }
 
     @Override
