@@ -17,9 +17,10 @@
 package tech.lamprism.lampray.security.authorization.service
 
 import org.springframework.stereotype.Service
+import tech.lamprism.lampray.security.authorization.PrivilegeAttributedUser
 import tech.lamprism.lampray.security.authorization.PrivilegedUser
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider
-import tech.lamprism.lampray.security.authorization.PrivilegeAttributedUser
+import tech.lamprism.lampray.user.UserIdentity
 import tech.lamprism.lampray.user.UserProvider
 
 /**
@@ -37,5 +38,12 @@ class PrivilegedUserProviderImpl(
     override fun loadPrivilegedUserById(id: Long): PrivilegedUser {
         val user = userProvider.getUser(id)
         return PrivilegeAttributedUser(user)
+    }
+
+    override fun loadPrivilegedUser(userIdentity: UserIdentity): PrivilegedUser {
+        if (userIdentity is PrivilegedUser) {
+            return userIdentity
+        }
+        return loadPrivilegedUserById(userIdentity.userId)
     }
 }

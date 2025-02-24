@@ -16,6 +16,8 @@
 
 package tech.lamprism.lampray.security.authorization
 
+import tech.lamprism.lampray.user.UserIdentity
+
 /**
  * @author RollW
  */
@@ -23,4 +25,6 @@ interface PrivilegedUserProvider {
     fun loadPrivilegedUserByUsername(username: String): PrivilegedUser
 
     fun loadPrivilegedUserById(id: Long): PrivilegedUser
+
+    fun loadPrivilegedUser(userIdentity: UserIdentity): PrivilegedUser
 }
