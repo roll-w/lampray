@@ -28,16 +28,15 @@ import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentMetadataDetails;
 import tech.lamprism.lampray.content.ContentOperator;
 import tech.lamprism.lampray.content.ContentPublishProvider;
-import tech.lamprism.lampray.web.common.ApiContext;
-import tech.lamprism.lampray.web.controller.Api;
-import tech.lamprism.lampray.web.controller.comment.model.CommentVo;
-import tech.lamprism.lampray.web.controller.content.vo.ContentVo;
-import tech.lamprism.lampray.web.controller.content.vo.UrlContentType;
-import tech.lamprism.lampray.web.controller.article.model.ArticleVo;
 import tech.lamprism.lampray.content.collection.ContentCollectionIdentity;
 import tech.lamprism.lampray.content.collection.ContentCollectionProviderFactory;
+import tech.lamprism.lampray.content.collection.ContentCollectionType;
 import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
+import tech.lamprism.lampray.web.common.ApiContext;
+import tech.lamprism.lampray.web.controller.Api;
+import tech.lamprism.lampray.web.controller.content.vo.ContentVo;
+import tech.lamprism.lampray.web.controller.content.vo.UrlContentType;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.system.ContextThread;
 import tech.rollw.common.web.system.ContextThreadAware;
@@ -92,11 +91,28 @@ public class ContentController {
 
 
     @GetMapping("/{contentType}")
-    public HttpResponseEntity<Void> getContents(
+    public HttpResponseEntity<List<ContentVo>> getContents(
             @PathVariable("contentType") UrlContentType contentType) {
+        ApiContext context = apiContextThreadAware.getContextThread()
+                .getContext();
 
+        ContentCollectionType userCollectionType = contentType
+                .getUserCollectionType();
+        ContentAccessCredentials contentAccessCredentials = ContentAccessCredentials.of(
+                ContentAccessAuthType.USER,
+                context.getUser()
+        );
+        List<ContentMetadataDetails<?>> contents = contentCollectionProviderFactory.getContents(
+                ContentCollectionIdentity.of(
+                        context.getUser().getUserId(),
+                        userCollectionType
+                ),
+                contentAccessCredentials
+        );
 
-        return HttpResponseEntity.success();
+        return HttpResponseEntity.success(
+                contents.stream().map(this::contentVoConvert).toList()
+        );
     }
 
     @GetMapping("/users/{userId}/{contentType}")
@@ -107,12 +123,10 @@ public class ContentController {
                 apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         // TODO: check if the user is the same as the current user
-        ContentAccessCredentials contentAccessCredentials =
-                ContentAccessCredentials.of(
-                        ContentAccessAuthType.USER,
-                        apiContext.getUser() == null ? null
-                                : apiContext.getUser().getUserId()
-                );
+        ContentAccessCredentials contentAccessCredentials = ContentAccessCredentials.of(
+                ContentAccessAuthType.USER,
+                apiContext.getUser()
+        );
 
         List<ContentMetadataDetails<?>> contents =
                 contentCollectionProviderFactory.getContents(
@@ -161,10 +175,6 @@ public class ContentController {
     }
 
     private ContentVo contentVoConvert(ContentDetails details) {
-        return switch (details.getContentType()) {
-            case ARTICLE -> ArticleVo.of(details);
-            case COMMENT -> CommentVo.of(details);
-            default -> throw new IllegalStateException("Unexpected value: " + details.getContentType());
-        };
+       return ContentViewHelper.toContentView(details);
     }
 }
