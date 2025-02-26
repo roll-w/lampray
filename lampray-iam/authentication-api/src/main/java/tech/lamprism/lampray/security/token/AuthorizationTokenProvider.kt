@@ -19,6 +19,7 @@ package tech.lamprism.lampray.security.token
 import tech.lamprism.lampray.security.authorization.AuthorizationScope
 import tech.lamprism.lampray.user.UserIdentity
 import tech.lamprism.lampray.user.UserSignatureProvider
+import tech.rollw.common.web.system.AuthenticationException
 import java.time.Duration
 
 /**
@@ -48,9 +49,9 @@ interface AuthorizationTokenProvider {
      * @param token The token.
      * @param signatureProvider The signature provider to verify the token.
      * @return The user identity.
-     * @throws InvalidTokenException If the token is invalid or expired.
+     * @throws AuthenticationException If the token is invalid or expired.
      */
-    @Throws(InvalidTokenException::class)
+    @Throws(AuthenticationException::class)
     fun parseToken(
         token: AuthorizationToken,
         signatureProvider: UserSignatureProvider
