@@ -31,7 +31,6 @@ rootProject.name = "lampray"
 includeBuild("build-logic")
 
 include(":lampray-web")
-include(":lampray-email")
 include(":lampray-file")
 include(":lampray-file:file-api")
 include(":lampray-file:file-awss3")
