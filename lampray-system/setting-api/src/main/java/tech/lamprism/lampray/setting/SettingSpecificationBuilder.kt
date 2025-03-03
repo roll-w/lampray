@@ -48,61 +48,57 @@ class SettingSpecificationBuilder<T, V> {
 
     var valueEntries: List<V?> = emptyList()
         private set
+    
+    var secret: Boolean = false
+        private set
 
-    fun setKey(key: SettingKey<T, V>): SettingSpecificationBuilder<T, V> {
+    fun setKey(key: SettingKey<T, V>) = apply{
         this.key = key
-        return this
     }
 
-    fun setDescription(description: SettingDescription): SettingSpecificationBuilder<T, V> {
+    fun setDescription(description: SettingDescription) = apply{
         this.description = description
-        return this
     }
 
-    fun setTextDescription(description: String): SettingSpecificationBuilder<T, V> {
+    fun setTextDescription(description: String) = apply{
         this.description = SettingDescription.text(description)
-        return this
     }
 
-    fun setResourceDescription(key: String): SettingSpecificationBuilder<T, V> {
+    fun setResourceDescription(key: String) = apply{
         this.description = SettingDescription.resource(key)
-        return this
     }
 
-    fun setAllowAnyValue(allowAnyValue: Boolean): SettingSpecificationBuilder<T, V> {
+    fun setAllowAnyValue(allowAnyValue: Boolean) = apply{
         this.allowAnyValue = allowAnyValue
-        return this
     }
 
-    fun setSupportedSources(supportedSources: List<SettingSource>): SettingSpecificationBuilder<T, V> {
+    fun setSupportedSources(supportedSources: List<SettingSource>) = apply{
         this.supportedSources = supportedSources
-        return this
     }
 
-    fun setRequired(isRequired: Boolean): SettingSpecificationBuilder<T, V> {
+    fun setRequired(isRequired: Boolean) = apply{
         this.isRequired = isRequired
-        return this
     }
 
-    fun setDefaults(defaults: List<Int>): SettingSpecificationBuilder<T, V> {
+    fun setDefaults(defaults: List<Int>) = apply{
         this.defaults = defaults
-        return this
     }
 
-    fun setDefault(default: Int): SettingSpecificationBuilder<T, V> {
+    fun setDefault(default: Int) = apply{
         this.defaults = listOf(default)
-        return this
     }
 
-    fun setDefaultValue(default: V?): SettingSpecificationBuilder<T, V> {
+    fun setDefaultValue(default: V?) = apply{
         this.defaults = listOf(0)
         this.valueEntries = listOf(default)
-        return this
     }
 
-    fun setValueEntries(valueEntries: List<V?>): SettingSpecificationBuilder<T, V> {
+    fun setValueEntries(valueEntries: List<V?>) = apply{
         this.valueEntries = valueEntries
-        return this
+    }
+    
+    fun setSecret(secret: Boolean) = apply {
+        this.secret = secret
     }
 
     fun buildSimple(): SettingSpecification<T, V> {
@@ -118,6 +114,7 @@ class SettingSpecificationBuilder<T, V> {
     fun build(): AttributedSettingSpecification<T, V> {
         return buildSimple().withAttributes(
             description = description,
+            secret = secret,
             supportedSources = supportedSources
         )
     }

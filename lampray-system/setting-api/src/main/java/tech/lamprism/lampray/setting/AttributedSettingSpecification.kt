@@ -24,5 +24,11 @@ interface AttributedSettingSpecification<T, V> : SettingSpecification<T, V> {
 
     override val isRequired: Boolean
 
+    /**
+     * Whether the setting is a secret. If it is a secret,
+     * it should be masked when displayed.
+     */
+    val secret: Boolean
+
     val supportedSources: List<SettingSource>
 }

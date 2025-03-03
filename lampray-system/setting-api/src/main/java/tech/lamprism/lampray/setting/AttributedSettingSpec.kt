@@ -22,6 +22,7 @@ package tech.lamprism.lampray.setting
 data class AttributedSettingSpec<T, V> @JvmOverloads constructor(
     private val specification: SettingSpecification<T, V>,
     override val description: SettingDescription = SettingDescription.EMPTY,
+    override val secret: Boolean =false,
     override val supportedSources: List<SettingSource> = SettingSource.LOCAL_ONLY
 ) : SettingSpecification<T, V> by specification, AttributedSettingSpecification<T, V> {
 
@@ -29,11 +30,13 @@ data class AttributedSettingSpec<T, V> @JvmOverloads constructor(
         @JvmStatic
         fun <T, V> SettingSpecification<T, V>.withAttributes(
             description: SettingDescription = SettingDescription.EMPTY,
+            secret: Boolean = false,
             supportedSources: List<SettingSource> = SettingSource.LOCAL_ONLY
         ): AttributedSettingSpec<T, V> {
             return AttributedSettingSpec(
                 this,
                 description,
+                secret,
                 supportedSources
             )
         }
