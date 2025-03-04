@@ -53,6 +53,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         SettingSpecificationBuilder(SettingKey.ofString("database.password"))
             .setDescription(SettingDescription.text("Database password"))
             .setDefaultValue(null)
+            .setSecret(true)
             .setSupportedSources(LOCAL_SOURCE)
             .setRequired(false)
             .build()

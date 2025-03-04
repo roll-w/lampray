@@ -68,6 +68,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
             new SettingSpecificationBuilder<>(SettingKey.ofString("mail.password"))
                     .setTextDescription("Login password of the SMTP server.")
                     .setDefaultValue(null)
+                    .setSecret(true)
                     .setRequired(false)
                     .setSupportedSources(SettingSource.VALUES)
                     .build();
