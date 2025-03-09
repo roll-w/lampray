@@ -36,11 +36,18 @@ public class SecurityConfigKeys implements SettingSpecificationSupplier {
                     .setRequired(true)
                     .build();
 
-
     public static final AttributedSettingSpecification<Long, Long> TOKEN_EXPIRE_TIME =
             new SettingSpecificationBuilder<>(SettingKey.ofLong("security.token.expire-time"))
                     .setDefaultValue(3600L)
                     .setTextDescription("Token expiration time in seconds.")
+                    .setSupportedSources(SettingSource.VALUES)
+                    .setRequired(true)
+                    .build();
+
+    public static final AttributedSettingSpecification<String, String> TOKEN_SIGN_KEY =
+            new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.sign-key"))
+                    .setDefaultValue("[random]")
+                    .setTextDescription("Key used to sign and verify token.")
                     .setSupportedSources(SettingSource.VALUES)
                     .setRequired(true)
                     .build();
