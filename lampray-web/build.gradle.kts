@@ -31,6 +31,7 @@ dependencies {
     implementation(project(":lampray-user:user-service"))
     implementation(project(":lampray-user:staff-service"))
     implementation(project(":lampray-user:user-details-service"))
+    implementation(project(":lampray-file:storage-service"))
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation(libs.rollw.web.common.spring.boot.starter)
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
