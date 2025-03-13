@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.java-conventions")
-}
+package tech.lamprism.lampray.storage;
 
-dependencies {
-    api(project(":lampray-common"))
-}
+/**
+ * @author RollW
+ */
+public class DefaultStorageIds {
+    public static final String DEFAULT_AVATAR_ID = "user";
+    public static final String DEFAULT_USER_COVER_ID = "user-cover";
+    public static final String DEFAULT_ARTICLE_COVER_ID = "article-cover";
+    public static final String DEFAULT_CATEGORY_COVER_ID = "category-cover";
 
-description = "lampray-file-api"
+    private DefaultStorageIds() {
+    }
+}

@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2023-2025 RollW
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package tech.lamprism.lampray.web.controller.storage;
 
 import com.google.common.base.Strings;
@@ -8,6 +24,12 @@ import tech.lamprism.lampray.web.domain.storage.StorageProvider;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpRange;
+import tech.lamprism.lampray.storage.FileStorage;
+import tech.lamprism.lampray.storage.FileType;
+import tech.lamprism.lampray.storage.StorageProvider;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -20,6 +42,8 @@ import java.util.List;
 public final class DownloadHelper {
     public static final String ACCEPT_TYPE = "X-Lamp-Accept-Type";
     public static final String DISPOSITION_TYPE = "X-Lamp-Disposition-Type";
+
+    private static final Logger logger = LoggerFactory.getLogger(DownloadHelper.class);
 
     private static String getEncodedFileName(String fileName) {
         return URLEncoder.encode(fileName, StandardCharsets.UTF_8)
@@ -85,7 +109,7 @@ public final class DownloadHelper {
         if (length > 0) {
             response.setHeader("Content-Length", String.valueOf(length));
         }
-        storageProvider.getFile( storage.getFileId(), response.getOutputStream());
+        storageProvider.getFile(storage.getFileId(), response.getOutputStream());
     }
 
     private DownloadHelper() {

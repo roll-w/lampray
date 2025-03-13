@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.domain.storage.service;
+package tech.lamprism.lampray.storage.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import tech.lamprism.lampray.web.domain.storage.StorageUrlProviderStrategy;
+import tech.lamprism.lampray.storage.StorageUrlProviderStrategy;
 
 /**
  * @author RollW
@@ -26,12 +25,15 @@ import tech.lamprism.lampray.web.domain.storage.StorageUrlProviderStrategy;
 @Service
 public class DefaultStorageUrlProviderStrategy implements StorageUrlProviderStrategy {
 
+    private String baseUrl;
+
     @Override
     public String getUrlOfStorage(String id) {
-        final String baseUrl = ServletUriComponentsBuilder
-                .fromCurrentContextPath()
-                .build()
-                .toUriString();
+        // TODO
+        // final String baseUrl = ServletUriComponentsBuilder
+        //         .fromCurrentContextPath()
+        //         .build()
+        //         .toUriString();
         return baseUrl + "/api/v1/storages/" + id;
     }
 }

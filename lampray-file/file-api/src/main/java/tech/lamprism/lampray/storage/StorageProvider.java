@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.domain.storage;
+package tech.lamprism.lampray.storage;
 
-
-import tech.lamprism.lampray.web.domain.storage.dto.FileSystemInfile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +25,7 @@ import java.io.OutputStream;
  * @author RollW
  */
 public interface StorageProvider {
-    FileSystemInfile saveFile(InputStream inputStream) throws IOException;
+    FileSummary saveFile(InputStream inputStream) throws IOException;
 
     void getFile(String fileId, OutputStream outputStream) throws IOException;
 

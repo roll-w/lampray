@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.domain.storage;
+package tech.lamprism.lampray.storage;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.DataEntity;
 import tech.lamprism.lampray.EntityBuilder;
-import tech.lamprism.lampray.web.domain.systembased.LampSystemResourceKind;
 import tech.rollw.common.web.system.SystemResourceKind;
 
 import java.time.OffsetDateTime;
@@ -98,7 +97,7 @@ public class FileStorage implements DataEntity<String> {
 
     @Override
     public String toString() {
-        return "DiskFileStorage{" +
+        return "FileStorage{" +
                 "fileId='" + fileId + '\'' +
                 ", fileSize=" + fileSize +
                 ", createTime=" + createTime +
@@ -112,7 +111,7 @@ public class FileStorage implements DataEntity<String> {
     @NonNull
     @Override
     public SystemResourceKind getSystemResourceKind() {
-        return LampSystemResourceKind.STORAGE;
+        return StorageResourceKind.INSTANCE;
     }
 
     public static final class Builder implements EntityBuilder<FileStorage, String> {

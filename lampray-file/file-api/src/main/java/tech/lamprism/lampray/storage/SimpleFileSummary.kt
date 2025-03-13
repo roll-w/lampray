@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package tech.lamprism.lampray.web.domain.storage;
+package tech.lamprism.lampray.storage
 
 /**
  * @author RollW
  */
-public interface StorageUrlProviderStrategy {
-    String getUrlOfStorage(String id);
+data class SimpleFileSummary(
+   val fileId: String,
+   val fileSize: Long
+) {
+    companion object {
+        fun from(fileStorage: FileStorage): SimpleFileSummary {
+            return SimpleFileSummary(
+                fileStorage.fileId,
+                fileStorage.fileSize
+            )
+        }
+    }
 }

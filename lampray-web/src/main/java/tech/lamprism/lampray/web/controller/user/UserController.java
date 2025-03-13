@@ -26,7 +26,7 @@ import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.common.ParamValidate;
 import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.web.controller.user.model.UserCommonDetailsVo;
-import tech.lamprism.lampray.web.domain.storage.StorageUrlProvider;
+import tech.lamprism.lampray.storage.StorageUrlProvider;
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.user.UserViewException;

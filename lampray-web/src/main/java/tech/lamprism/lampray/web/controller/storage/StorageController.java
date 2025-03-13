@@ -16,14 +16,15 @@
 
 package tech.lamprism.lampray.web.controller.storage;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import tech.lamprism.lampray.web.controller.Api;
-import tech.lamprism.lampray.web.domain.storage.FileStorage;
-import tech.lamprism.lampray.web.domain.storage.StorageProvider;
+import tech.lamprism.lampray.storage.FileStorage;
+import tech.lamprism.lampray.storage.FileType;
+import tech.lamprism.lampray.storage.StorageProvider;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**

@@ -21,7 +21,7 @@ import tech.lamprism.lampray.user.AttributedUserDetails;
 import tech.lamprism.lampray.web.controller.AdminApi;
 import tech.lamprism.lampray.web.controller.user.model.UserCreateRequest;
 import tech.lamprism.lampray.web.controller.user.model.UserDetailsVo;
-import tech.lamprism.lampray.web.domain.storage.StorageUrlProvider;
+import tech.lamprism.lampray.storage.StorageUrlProvider;
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.UserManageService;
 import tech.lamprism.lampray.user.UserProvider;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,21 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.domain.storage;
+package tech.lamprism.lampray.storage
 
 /**
+ * Represents a summary of a file.
+ *
  * @author RollW
  */
-public interface StorageUrlProvider {
-    String getUrlOfStorage(String id);
+interface FileSummary {
+    /**
+     * The unique identifier of the file.
+     */
+    val id: String
 
-    void setStorageUrlProviderStrategy(
-            StorageUrlProviderStrategy storageUrlProviderStrategy);
+    /**
+     * The size of the file in bytes.
+     */
+    val size: Long
 }

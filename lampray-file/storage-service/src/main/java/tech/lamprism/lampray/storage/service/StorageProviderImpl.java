@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.domain.storage.service;
+package tech.lamprism.lampray.storage.service;
 
 import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.TimeAttributed;
-import tech.lamprism.lampray.web.domain.storage.DefaultStorageIds;
-import tech.lamprism.lampray.web.domain.storage.FileStorage;
-import tech.lamprism.lampray.web.domain.storage.FileType;
-import tech.lamprism.lampray.web.domain.storage.StorageProvider;
-import tech.lamprism.lampray.web.domain.storage.StorageUrlProvider;
-import tech.lamprism.lampray.web.domain.storage.StorageUrlProviderStrategy;
-import tech.lamprism.lampray.web.domain.storage.common.StorageException;
-import tech.lamprism.lampray.web.domain.storage.dto.FileSystemInfile;
+import tech.lamprism.lampray.storage.DefaultStorageIds;
+import tech.lamprism.lampray.storage.FileStorage;
+import tech.lamprism.lampray.storage.FileSummary;
+import tech.lamprism.lampray.storage.FileType;
+import tech.lamprism.lampray.storage.StorageException;
+import tech.lamprism.lampray.storage.StorageProvider;
+import tech.lamprism.lampray.storage.StorageUrlProvider;
+import tech.lamprism.lampray.storage.StorageUrlProviderStrategy;
 import tech.rollw.common.web.DataErrorCode;
 
 import java.io.FileNotFoundException;
@@ -47,7 +47,7 @@ public class StorageProviderImpl implements StorageProvider, StorageUrlProvider 
 
     // TODO:
     @Override
-    public FileSystemInfile saveFile(InputStream inputStream)
+    public FileSummary saveFile(InputStream inputStream)
             throws IOException {
         return null;
     }
@@ -55,10 +55,9 @@ public class StorageProviderImpl implements StorageProvider, StorageUrlProvider 
     @Override
     public void getFile(String fileId, OutputStream outputStream) throws IOException {
         switch (fileId) {
-            case DefaultStorageIds.DEFAULT_AVATAR_ID ->
-                    loadLocalResource(USER_AVATAR_PATH, outputStream);
-            case DefaultStorageIds.DEFAULT_USER_COVER_ID ->
-                    loadLocalResource(USER_COVER_PATH, outputStream);
+            case DefaultStorageIds.DEFAULT_AVATAR_ID -> loadLocalResource(USER_AVATAR_PATH, outputStream);
+            case DefaultStorageIds.DEFAULT_USER_COVER_ID,
+                 DefaultStorageIds.DEFAULT_ARTICLE_COVER_ID -> loadLocalResource(USER_COVER_PATH, outputStream);
         }
     }
 
@@ -68,7 +67,8 @@ public class StorageProviderImpl implements StorageProvider, StorageUrlProvider 
         switch (fileId) {
             case DefaultStorageIds.DEFAULT_AVATAR_ID -> loadLocalResource(USER_AVATAR_PATH, outputStream,
                     startBytes, endBytes);
-            case DefaultStorageIds.DEFAULT_USER_COVER_ID -> loadLocalResource(USER_COVER_PATH, outputStream,
+            case DefaultStorageIds.DEFAULT_USER_COVER_ID,
+                 DefaultStorageIds.DEFAULT_ARTICLE_COVER_ID -> loadLocalResource(USER_COVER_PATH, outputStream,
                     startBytes, endBytes);
         }
     }
