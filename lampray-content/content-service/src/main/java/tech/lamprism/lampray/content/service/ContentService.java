@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class ContentService implements ContentAccessService,
         );
         if (!permitResult.isPermitted()) {
             throw new ContentException(
-                    selectFirst(permitResult.errors())
+                    selectFirst(permitResult.getErrors())
             );
         }
         ContentProvider provider = contentProviderFactory.getContentProvider(
