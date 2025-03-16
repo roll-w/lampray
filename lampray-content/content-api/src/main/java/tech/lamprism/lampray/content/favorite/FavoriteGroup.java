@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.domain.favorite;
+package tech.lamprism.lampray.content.favorite;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.DataEntity;
 import tech.lamprism.lampray.LongEntityBuilder;
-import tech.lamprism.lampray.web.domain.systembased.LampSystemResourceKind;
 import tech.rollw.common.web.system.SystemResourceKind;
 
 import java.time.OffsetDateTime;
@@ -31,19 +30,21 @@ public class FavoriteGroup implements DataEntity<Long> {
     private final Long id;
     private final String name;
     private final long userId;
-    private final boolean isPublic;
+    private final boolean isPublic; // add 'is' to avoid conflict with keyword
+    private final String description;
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
     private final boolean deleted;
 
     public FavoriteGroup(Long id, String name, long userId,
-                         boolean isPublic,
+                         boolean isPublic, String description,
                          OffsetDateTime createTime, OffsetDateTime updateTime,
                          boolean deleted) {
         this.id = id;
         this.name = name;
         this.userId = userId;
         this.isPublic = isPublic;
+        this.description = description;
         this.createTime = createTime;
         this.updateTime = updateTime;
         this.deleted = deleted;
@@ -64,6 +65,10 @@ public class FavoriteGroup implements DataEntity<Long> {
 
     public boolean isPublic() {
         return isPublic;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     @NonNull
@@ -89,7 +94,7 @@ public class FavoriteGroup implements DataEntity<Long> {
     @NonNull
     @Override
     public SystemResourceKind getSystemResourceKind() {
-        return LampSystemResourceKind.FAVORITE_GROUP;
+        return FavoriteGroupResourceKind.INSTANCE;
     }
 
     public static Builder builder() {
@@ -101,6 +106,7 @@ public class FavoriteGroup implements DataEntity<Long> {
         private String name;
         private long userId;
         private boolean isPublic;
+        private String description;
         private OffsetDateTime createTime;
         private OffsetDateTime updateTime;
         private boolean deleted;
@@ -113,6 +119,7 @@ public class FavoriteGroup implements DataEntity<Long> {
             this.name = favoriteGroup.name;
             this.userId = favoriteGroup.userId;
             this.isPublic = favoriteGroup.isPublic;
+            this.description = favoriteGroup.description;
             this.createTime = favoriteGroup.createTime;
             this.updateTime = favoriteGroup.updateTime;
             this.deleted = favoriteGroup.deleted;
@@ -139,6 +146,11 @@ public class FavoriteGroup implements DataEntity<Long> {
             return this;
         }
 
+        public Builder setDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
         public Builder setCreateTime(OffsetDateTime createTime) {
             this.createTime = createTime;
             return this;
@@ -156,7 +168,7 @@ public class FavoriteGroup implements DataEntity<Long> {
 
         @Override
         public FavoriteGroup build() {
-            return new FavoriteGroup(id, name, userId, isPublic,
+            return new FavoriteGroup(id, name, userId, isPublic, description,
                     createTime, updateTime, deleted);
         }
     }

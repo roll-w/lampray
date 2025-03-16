@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.domain.favorite;
+package tech.lamprism.lampray.content.favorite;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.DataEntity;
@@ -22,7 +22,6 @@ import tech.lamprism.lampray.LongEntityBuilder;
 import tech.lamprism.lampray.content.ContentAssociated;
 import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
-import tech.lamprism.lampray.web.domain.systembased.LampSystemResourceKind;
 import tech.rollw.common.web.system.SystemResourceKind;
 
 import java.time.OffsetDateTime;
@@ -101,7 +100,7 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
     @NonNull
     @Override
     public SystemResourceKind getSystemResourceKind() {
-        return LampSystemResourceKind.FAVORITE_ITEM;
+        return FavoriteItemResourceKind.INSTANCE;
     }
 
     public Builder toBuilder() {
