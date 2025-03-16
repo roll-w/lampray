@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ package tech.lamprism.lampray.web;
  *
  * @author RollW
  */
-public final class LampEnvKeys {
-    public static final String RAW_ARGS = "lamp.startup.raw-args";
-    public static final String LOCAL_CONFIG_LOADER = "lamp.config.local-provider";
+public final class LamprayEnvKeys {
+    public static final String RAW_ARGS = "lampray.startup.raw-args";
+    public static final String LOCAL_CONFIG_LOADER = "lampray.config.local-provider";
 
-    private LampEnvKeys() {
+    private LamprayEnvKeys() {
     }
 }

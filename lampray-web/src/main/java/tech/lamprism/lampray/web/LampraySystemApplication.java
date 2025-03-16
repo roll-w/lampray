@@ -51,7 +51,7 @@ public class LampraySystemApplication {
 
         Map<String, Object> overrideProperties = new HashMap<>();
         overrideProperties.put("spring.application.name", "Lampray");
-        overrideProperties.put(LampEnvKeys.RAW_ARGS, args);
+        overrideProperties.put(LamprayEnvKeys.RAW_ARGS, args);
         setupFixedProperties(overrideProperties);
         ConfigurableEnvironment environment = new OverrideSystemPropertiesEnvironment(
                 false,

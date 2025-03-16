@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import tech.lamprism.lampray.setting.ConfigProvider;
-import tech.lamprism.lampray.web.LampEnvKeys;
+import tech.lamprism.lampray.web.LamprayEnvKeys;
 
 /**
  * @author RollW
@@ -40,7 +40,7 @@ public class LocalConfigConfiguration {
     @Order(0)
     public ConfigProvider localConfigProvider() {
         ConfigProvider configProvider = configurableApplicationContext.getEnvironment()
-                .getProperty(LampEnvKeys.LOCAL_CONFIG_LOADER, ConfigProvider.class);
+                .getProperty(LamprayEnvKeys.LOCAL_CONFIG_LOADER, ConfigProvider.class);
         if (configProvider == null) {
             throw new IllegalStateException("No local config provider found");
         }

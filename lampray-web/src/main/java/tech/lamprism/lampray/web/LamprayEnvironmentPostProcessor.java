@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import tech.lamprism.lampray.web.common.keys.ServerConfigKeys;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -39,20 +40,21 @@ import java.util.Objects;
 /**
  * @author RollW
  */
-public class LampEnvironmentPostProcessor implements EnvironmentPostProcessor {
+public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
     private static final String SETUP_PROPERTIES = "lampraySetupProperties";
 
     private final Log logger;
 
-    public LampEnvironmentPostProcessor(DeferredLogFactory deferredLogFactory) {
-        this.logger = deferredLogFactory.getLog(LampEnvironmentPostProcessor.class);
+    public LamprayEnvironmentPostProcessor(DeferredLogFactory deferredLogFactory) {
+        this.logger = deferredLogFactory.getLog(LamprayEnvironmentPostProcessor.class);
     }
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment,
                                        SpringApplication application) {
-        String[] rawArgs = environment.getProperty(LampEnvKeys.RAW_ARGS, String[].class);
+        String[] rawArgs = environment.getProperty(LamprayEnvKeys.RAW_ARGS, String[].class);
+        logger.debug("Passed rawArgs: " + Arrays.toString(rawArgs));
         if (rawArgs == null) {
             throw new IllegalStateException("Raw arguments not found.");
         }
@@ -68,7 +70,7 @@ public class LampEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
     private void setPropertiesNeedsInStartup(Map<String, Object> properties, ConfigProvider localProvider) {
         properties.put("server.port", localProvider.get(ServerConfigKeys.PORT));
-        properties.put(LampEnvKeys.LOCAL_CONFIG_LOADER, localProvider);
+        properties.put(LamprayEnvKeys.LOCAL_CONFIG_LOADER, localProvider);
         try {
             setupLoggingProperties(properties, localProvider);
         } catch (RuntimeException e) {
