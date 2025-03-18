@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.OverrideSystemPropertiesEnvironment;
-import space.lingu.fiesta.Fiesta;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,7 +34,6 @@ import java.util.Map;
         FreeMarkerAutoConfiguration.class,
         ErrorMvcAutoConfiguration.class
 })
-@Fiesta
 public class LampraySystemApplication {
     private static ConfigurableApplicationContext sContext;
 
