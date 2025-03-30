@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023 RollW
+  - Copyright (C) 2023-2025 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ const handleKeyDown = (event) => {
                  @mouseleave="hover = false">
             <template #suffix>
                 <n-icon :size="size === 'large' ? '40' : '33'"
-                        class="icon"
+                        class="cursor-pointer rounded-md transition-all duration-300 hover:bg-gray-300/30"
                         depth="1.0"
                         @click="handleKeyDown">
                     <SearchFilled class="p-1 hover:text-amber-500 transition-all"/>
@@ -94,18 +94,3 @@ const handleKeyDown = (event) => {
         </n-input>
     </div>
 </template>
-
-<style scoped>
-.input {
-    height: 100%;
-}
-
-.icon {
-    @apply cursor-pointer
-    rounded-md
-    transition-all duration-300
-    hover:bg-opacity-30
-    hover:bg-gray-300;
-}
-
-</style>

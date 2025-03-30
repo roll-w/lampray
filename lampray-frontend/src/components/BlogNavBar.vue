@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023 RollW
+  - Copyright (C) 2023-2025 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -55,24 +55,29 @@
 import {RouterLink, useRouter} from "vue-router";
 import {useUserStore} from "@/stores/user";
 import {getCurrentInstance, h, onMounted, ref} from "vue";
-import {NAvatar, NText} from "naive-ui";
-import {useSiteStore} from "@/stores/site";
 import {
-    admin,
-    articleEditorPage,
-    index,
-    login, searchPage,
-    userPage,
-    userSearchPage
-} from "@/router";
+    NAvatar,
+    NButton,
+    NDropdown,
+    NLayoutHeader,
+    NSpace,
+    NText,
+    useDialog,
+    useMessage,
+    useNotification
+} from "naive-ui";
+import {useSiteStore} from "@/stores/site";
+import {admin, articleEditorPage, index, login, searchPage, userPage, userSettingPage} from "@/router";
 import api from "@/request/api";
 import {createConfig} from "@/request/axios_config";
-import UsersOutlined from "@/components/icon/UsersOutlined.vue";
-import SearchFilled from "@/components/icon/SearchFilled.vue";
 import SearchBar from "@/components/SearchBar.vue";
+import {popUserErrorTemplate} from "@/views/utils/error.js";
 
-const router = useRouter();
+const router = useRouter()
 const {proxy} = getCurrentInstance()
+const notification = useNotification()
+const message = useMessage()
+const dialog = useDialog()
 
 const siteStore = useSiteStore()
 const userStore = useUserStore()
@@ -81,6 +86,9 @@ const username = ref('')
 const role = ref(userStore.user.role)
 
 const requestPersonalData = () => {
+    if (!userStore.isLogin) {
+        return
+    }
     const config = createConfig()
     proxy.$axios.get(api.currentUser, config).then((response) => {
         const userData = {
@@ -90,7 +98,7 @@ const requestPersonalData = () => {
         }
         userStore.setUserData(userData)
     }).catch((error) => {
-        console.log(error)
+        popUserErrorTemplate(notification, error, "获取用户信息失败")
     })
 }
 
@@ -306,7 +314,4 @@ const handleThemeClick = () => {
     height: 32px;
     width: 32px;
 }
-</style>
-
-<style>
 </style>
