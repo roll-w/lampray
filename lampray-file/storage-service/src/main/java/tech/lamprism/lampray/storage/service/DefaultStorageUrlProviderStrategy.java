@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.storage.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.lamprism.lampray.storage.StorageUrlProviderStrategy;
 
 /**
@@ -24,16 +25,14 @@ import tech.lamprism.lampray.storage.StorageUrlProviderStrategy;
  */
 @Service
 public class DefaultStorageUrlProviderStrategy implements StorageUrlProviderStrategy {
-
-    private String baseUrl;
+    // TODO: support read baseUrl from config
 
     @Override
     public String getUrlOfStorage(String id) {
-        // TODO
-        // final String baseUrl = ServletUriComponentsBuilder
-        //         .fromCurrentContextPath()
-        //         .build()
-        //         .toUriString();
+        final String baseUrl = ServletUriComponentsBuilder
+                .fromCurrentContextPath()
+                .build()
+                .toUriString();
         return baseUrl + "/api/v1/storages/" + id;
     }
 }
