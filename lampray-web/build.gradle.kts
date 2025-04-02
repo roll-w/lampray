@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,14 +61,12 @@ dependencies {
 
 description = "lampray-web"
 
+interface Injected {
+    @get:Inject
+    val fs: FileSystemOperations
+}
+
 tasks.register<Task>("copyFrontendResources") {
-    delete {
-        delete(layout.buildDirectory.dir("generated/resources/assets"))
-    }
-    copy {
-        from("${project.parent?.projectDir}/lampray-frontend/dist")
-        into(layout.buildDirectory.dir("generated/resources/assets"))
-    }
     outputs.upToDateWhen { false }
     val buildFrontend = if (project.hasProperty("buildFrontend")) {
         val value = project.property("buildFrontend").toString().toBoolean()
@@ -81,9 +79,22 @@ tasks.register<Task>("copyFrontendResources") {
     } else {
         false
     }
+    onlyIf { buildFrontend }
 
-    onlyIf {
-        buildFrontend == true
+    val injected = project.objects.newInstance<Injected>()
+
+    val projectDirectory = project.parent?.projectDir?.absolutePath
+    val buildDirectory = layout.buildDirectory.get().asFile.absolutePath
+
+    doLast {
+        injected.fs.delete {
+            delete("$buildDirectory/generated/resources/assets")
+        }
+
+        injected.fs.copy {
+            from("$projectDirectory/lampray-frontend/dist")
+            into("$buildDirectory/generated/resources/assets")
+        }
     }
 }
 
