@@ -63,8 +63,8 @@ public class FrontendResourceController {
     }
 
     @GetMapping(value = "/{*path}")
-    public void index(HttpServletResponse response,
-                      @PathVariable("path") String path) throws IOException {
+    public void servingResource(HttpServletResponse response,
+                                @PathVariable("path") String path) throws IOException {
         // This will not be null, because the spec has a default value
         @SuppressWarnings("DataFlowIssue")
         boolean enabled = configReader.get(ResourceConfigKeys.FRONTEND_ENABLED);
@@ -149,9 +149,13 @@ public class FrontendResourceController {
     }
 
     private void fallback(HttpServletResponse response) throws IOException {
+        Resource indexHtml = getIndexHtml();
+        if (!indexHtml.exists()) {
+            throw new LampException(CommonErrorCode.ERROR_NOT_FOUND);
+        }
         response.setContentType(MediaType.TEXT_HTML_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        getIndexHtml().getInputStream().transferTo(response.getOutputStream());
+        indexHtml.getInputStream().transferTo(response.getOutputStream());
     }
 
     private Resource getIndexHtml() {
