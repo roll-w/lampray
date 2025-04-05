@@ -71,7 +71,9 @@ jobs:
                     if [ "${{ github.event_name }}" == "push" ]; then
                       echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
                       docker tag lampray:${{ env.raw_version_name }} ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}
+                      docker tag lampray:${{ env.raw_version_name }} ghcr.io/${{ env.namespace }}/lampray:main
                       docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}
+                      docker push ghcr.io/${{ env.namespace }}/lampray:main
                       sha=$(docker inspect ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }} --format='{{index .RepoDigests 0}}')
                       echo "digest=$sha" >> $GITHUB_ENV
                     fi
@@ -80,7 +82,7 @@ jobs:
                 run: |
                     echo "# Build Summary" >> $GITHUB_STEP_SUMMARY
                     echo '- Version: `${{ env.version_name }}`' >> $GITHUB_STEP_SUMMARY
-                    echo '- Remote Tag: `${{ env.remote_tag }}`' >> $GITHUB_STEP_SUMMARY
+                    echo '- Remote Tag: `${{ env.remote_tag }}`, `main`' >> $GITHUB_STEP_SUMMARY
                     echo '' >> $GITHUB_STEP_SUMMARY
                     echo "Image has been pushed, run the following command to pull the image:" >> $GITHUB_STEP_SUMMARY
                     echo '' >> $GITHUB_STEP_SUMMARY
