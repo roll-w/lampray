@@ -17,7 +17,5 @@ WORKDIR /app/lampray
 
 EXPOSE 5100 5101
 
-VOLUME /app/lampray/logs /app/lampray/conf
-
 # TODO: support args
-ENTRYPOINT ["bin/lampray"]
+ENTRYPOINT ["/app/lampray/bin/lampray"] CMD [""]
