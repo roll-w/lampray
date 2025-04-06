@@ -17,7 +17,7 @@
 <script>
 import {compile, h, ref, watch} from "vue";
 import {Marked} from "marked";
-import {katexExtensions, renderer} from "@/markdown/renderer.js";
+import {katexExtensions, renderer} from "@/markdown/render.js";
 
 export default {
     props: {
