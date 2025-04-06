@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,177 +14,185 @@
  * limitations under the License.
  */
 
-function getDefaults() {
-    return {
-        async: false,
-        baseUrl: null,
-        breaks: false,
-        extensions: null,
-        gfm: true,
-        headerIds: true,
-        headerPrefix: '',
-        highlight: null,
-        langPrefix: 'language-',
-        mangle: true,
-        pedantic: false,
-        renderer: null,
-        sanitize: false,
-        sanitizer: null,
-        silent: false,
-        smartypants: false,
-        tokenizer: null,
-        walkTokens: null,
-        xhtml: false
-    };
-}
+import katex from 'katex'
 
-const defaults = getDefaults();
-
-const escapeTest = /[&<>"]/;
-const escapeReplace = new RegExp(escapeTest.source, 'g');
-const escapeTestNoEncode = /[<>"']|&(?!(#\d{1,7}|#[Xx][a-fA-F0-9]{1,6}|\w+);)/;
-const escapeReplaceNoEncode = new RegExp(escapeTestNoEncode.source, 'g');
+/**
+ * Helpers
+ */
 const escapeReplacements = {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
-    '"': '&quot;'
+    '"': '&quot;',
+    "'": '&#39;',
 };
 const getEscapeReplacement = (ch) => escapeReplacements[ch];
+const other = {
+    codeRemoveIndent: /^(?: {1,4}| {0,3}\t)/gm,
+    outputLinkReplace: /\\([\[\]])/g,
+    indentCodeCompensation: /^(\s+)(?:```)/,
+    beginningSpace: /^\s+/,
+    endingHash: /#$/,
+    startingSpaceChar: /^ /,
+    endingSpaceChar: / $/,
+    nonSpaceChar: /[^ ]/,
+    newLineCharGlobal: /\n/g,
+    tabCharGlobal: /\t/g,
+    multipleSpaceGlobal: /\s+/g,
+    blankLine: /^[ \t]*$/,
+    doubleBlankLine: /\n[ \t]*\n[ \t]*$/,
+    blockquoteStart: /^ {0,3}>/,
+    blockquoteSetextReplace: /\n {0,3}((?:=+|-+) *)(?=\n|$)/g,
+    blockquoteSetextReplace2: /^ {0,3}>[ \t]?/gm,
+    listReplaceTabs: /^\t+/,
+    listReplaceNesting: /^ {1,4}(?=( {4})*[^ ])/g,
+    listIsTask: /^\[[ xX]\] /,
+    listReplaceTask: /^\[[ xX]\] +/,
+    anyLine: /\n.*\n/,
+    hrefBrackets: /^<(.*)>$/,
+    tableDelimiter: /[:|]/,
+    tableAlignChars: /^\||\| *$/g,
+    tableRowBlankLine: /\n[ \t]*$/,
+    tableAlignRight: /^ *-+: *$/,
+    tableAlignCenter: /^ *:-+: *$/,
+    tableAlignLeft: /^ *:-+ *$/,
+    startATag: /^<a /i,
+    endATag: /^<\/a>/i,
+    startPreScriptTag: /^<(pre|code|kbd|script)(\s|>)/i,
+    endPreScriptTag: /^<\/(pre|code|kbd|script)(\s|>)/i,
+    startAngleBracket: /^</,
+    endAngleBracket: />$/,
+    pedanticHrefTitle: /^([^'"]*[^\s])\s+(['"])(.*)\2/,
+    unicodeAlphaNumeric: /[\p{L}\p{N}]/u,
+    escapeTest: /[&<>"']/,
+    escapeReplace: /[&<>"']/g,
+    escapeTestNoEncode: /[<>"']|&(?!(#\d{1,7}|#[Xx][a-fA-F0-9]{1,6}|\w+);)/,
+    escapeReplaceNoEncode: /[<>"']|&(?!(#\d{1,7}|#[Xx][a-fA-F0-9]{1,6}|\w+);)/g,
+    unescapeTest: /&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig,
+    caret: /(^|[^\[])\^/g,
+    percentDecode: /%25/g,
+    findPipe: /\|/g,
+    splitPipe: / \|/,
+    slashPipe: /\\\|/g,
+    carriageReturn: /\r\n|\r/g,
+    spaceLine: /^ +$/gm,
+    notSpaceStart: /^\S*/,
+    endingNewline: /\n$/,
+    listItemRegex: (bull) => new RegExp(`^( {0,3}${bull})((?:[\t ][^\\n]*)?(?:\\n|$))`),
+    nextBulletRegex: (indent) => new RegExp(`^ {0,${Math.min(3, indent - 1)}}(?:[*+-]|\\d{1,9}[.)])((?:[ \t][^\\n]*)?(?:\\n|$))`),
+    hrRegex: (indent) => new RegExp(`^ {0,${Math.min(3, indent - 1)}}((?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$)`),
+    fencesBeginRegex: (indent) => new RegExp(`^ {0,${Math.min(3, indent - 1)}}(?:\`\`\`|~~~)`),
+    headingBeginRegex: (indent) => new RegExp(`^ {0,${Math.min(3, indent - 1)}}#`),
+    htmlBeginRegex: (indent) => new RegExp(`^ {0,${Math.min(3, indent - 1)}}<(?:[a-z].*>|!--)`, 'i'),
+};
 
 function escape(html, encode) {
     if (encode) {
-        if (escapeTest.test(html)) {
-            return html.replace(escapeReplace, getEscapeReplacement);
+        if (other.escapeTest.test(html)) {
+            return html.replace(other.escapeReplace, getEscapeReplacement);
         }
     } else {
-        if (escapeTestNoEncode.test(html)) {
-            return html.replace(escapeReplaceNoEncode, getEscapeReplacement);
+        if (other.escapeTestNoEncode.test(html)) {
+            return html.replace(other.escapeReplaceNoEncode, getEscapeReplacement);
         }
     }
     return html;
 }
 
-const unescapeTest = /&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig;
-
-/**
- * @param {string} html
- */
-function unescape(html) {
-    // explicitly match decimal, hex, and named HTML entities
-    return html.replace(unescapeTest, (_, n) => {
-        n = n.toLowerCase();
-        if (n === 'colon') return ':';
-        if (n.charAt(0) === '#') {
-            return n.charAt(1) === 'x'
-                ? String.fromCharCode(parseInt(n.substring(2), 16))
-                : String.fromCharCode(+n.substring(1));
-        }
-        return '';
-    });
-}
-
-const nonWordAndColonTest = /[^\w:]/g;
-const originIndependentUrl = /^$|^[a-z][a-z0-9+.-]*:|^[?#]/i;
-
-/**
- * @param {boolean} sanitize
- * @param {string} base
- * @param {string} href
- */
-function cleanUrl(sanitize, base, href) {
-    if (sanitize) {
-        let prot;
-        try {
-            prot = decodeURIComponent(unescape(href))
-                .replace(nonWordAndColonTest, '')
-                .toLowerCase();
-        } catch (e) {
-            return null;
-        }
-        if (prot.indexOf('javascript:') === 0 || prot.indexOf('vbscript:') === 0 || prot.indexOf('data:') === 0) {
-            return null;
-        }
-    }
-    if (base && !originIndependentUrl.test(href)) {
-        href = resolveUrl(base, href);
-    }
+function cleanUrl(href) {
     try {
-        href = encodeURI(href).replace(/%25/g, '%');
-    } catch (e) {
+        href = encodeURI(href).replace(other.percentDecode, '%');
+    } catch {
         return null;
     }
     return href;
 }
 
-const baseUrls = {};
-const justDomain = /^[^:]+:\/*[^/]*$/;
-const protocol = /^([^:]+:)[\s\S]*$/;
-const domain = /^([^:]+:\/*[^/]*)[\s\S]*$/;
+const inlineRule = /^(\${1,2})(?!\$)((?:\\.|[^\\\n])*?(?:\\.|[^\\\n\$]))\1(?=[\s?!\.,:？！。，：]|$)/;
+const inlineRuleNonStandard = /^(\${1,2})(?!\$)((?:\\.|[^\\\n])*?(?:\\.|[^\\\n\$]))\1/; // Non-standard, even if there are no spaces before and after $ or $$, try to parse
 
-/**
- * @param {string} base
- * @param {string} href
- */
-function resolveUrl(base, href) {
-    if (!baseUrls[' ' + base]) {
-        // we can ignore everything in base after the last slash of its path component,
-        // but we might need to add _that_
-        // https://tools.ietf.org/html/rfc3986#section-3
-        if (justDomain.test(base)) {
-            baseUrls[' ' + base] = base + '/';
-        } else {
-            baseUrls[' ' + base] = rtrim(base, '/', true);
-        }
-    }
-    base = baseUrls[' ' + base];
-    const relativeBase = base.indexOf(':') === -1;
+const blockRule = /^(\${1,2})\n((?:\\[^]|[^\\])+?)\n\1(?:\n|$)/;
 
-    if (href.substring(0, 2) === '//') {
-        if (relativeBase) {
-            return href;
-        }
-        return base.replace(protocol, '$1') + href;
-    } else if (href.charAt(0) === '/') {
-        if (relativeBase) {
-            return href;
-        }
-        return base.replace(domain, '$1') + href;
-    } else {
-        return base + href;
-    }
+export function katexExtensions(options = {}) {
+    return {
+        extensions: [
+            inlineKatex(options),
+            blockKatex(options),
+        ],
+    };
 }
 
-/**
- * Remove trailing 'c's. Equivalent to str.replace(/c*$/, '').
- * /c*$/ is vulnerable to REDOS.
- *
- * @param {string} str
- * @param {string} c
- * @param {boolean} invert Remove suffix of non-c chars instead. Default falsey.
- */
-function rtrim(str, c, invert) {
-    const l = str.length;
-    if (l === 0) {
-        return '';
-    }
+function tryMath(text) {
+    return text.replace(/\"/g, '&quot;')
+}
 
-    // Length of suffix matching the invert condition.
-    let suffLen = 0;
+function inlineKatex(options) {
+    const nonStandard = options && options.nonStandard;
+    const ruleReg = nonStandard ? inlineRuleNonStandard : inlineRule;
+    return {
+        name: 'inlineKatex',
+        level: 'inline',
+        start(src) {
+            let index;
+            let indexSrc = src;
 
-    // Step left until we fail to match the invert condition.
-    while (suffLen < l) {
-        const currChar = str.charAt(l - suffLen - 1);
-        if (currChar === c && !invert) {
-            suffLen++;
-        } else if (currChar !== c && invert) {
-            suffLen++;
-        } else {
-            break;
-        }
-    }
+            while (indexSrc) {
+                index = indexSrc.indexOf('$');
+                if (index === -1) {
+                    return;
+                }
+                const f = nonStandard ? index > -1 : index === 0 || indexSrc.charAt(index - 1) === ' ';
+                if (f) {
+                    const possibleKatex = indexSrc.substring(index);
 
-    return str.slice(0, l - suffLen);
+                    if (possibleKatex.match(ruleReg)) {
+                        return index;
+                    }
+                }
+
+                indexSrc = indexSrc.substring(index + 1).replace(/^\$+/, '');
+            }
+        },
+        tokenizer(src, tokens) {
+            const match = src.match(ruleReg);
+            if (match) {
+                return {
+                    type: 'inlineKatex',
+                    raw: match[0],
+                    text: match[2].trim(),
+                    displayMode: match[1].length === 2,
+                };
+            }
+        },
+        renderer: (token) => {
+            // TODO: fix this
+            // return `<n-equation value="${tryMath(token.text)}" :katex-options="{displayMode: false, strict: false}"/>\n`
+            return katex.renderToString(token.text, {...options, displayMode: token.displayMode})
+        },
+    };
+}
+
+function blockKatex(options) {
+    return {
+        name: 'blockKatex',
+        level: 'block',
+        tokenizer(src, tokens) {
+            const match = src.match(blockRule);
+            if (match) {
+                return {
+                    type: 'blockKatex',
+                    raw: match[0],
+                    text: match[2].trim(),
+                    displayMode: match[1].length === 2,
+                };
+            }
+        },
+        renderer: (token) => {
+            // TODO: fix this
+            // return `<n-equation value="${tryMath(token.text)}" :katex-options="{displayMode: true, strict: false}"/>\n`
+            return katex.renderToString(token.text, {...options, displayMode: token.displayMode}) + '\n'
+        },
+    };
 }
 
 function tryEscape(text) {
@@ -194,211 +202,175 @@ function tryEscape(text) {
     return encode
 }
 
-function tryMath(text) {
-    return text.replace(/\"/g, '&quot;')
+function ifFirst(level) {
+    return level === "1" || level === 1;
 }
 
-export class NaiveUIRenderer {
-    constructor(options) {
-        this.options = options || defaults;
-    }
-
-    code(code, infostring, escaped) {
-        const lang = (infostring || '').match(/\S*/)[0];
-
-        code = code.replace(/\n$/, '') + '\n';
+export const renderer = {
+    space(token) {
+        return '';
+    },
+    code({text, lang, escaped}) {
+        const langString = (lang || '').match(other.notSpaceStart)?.[0];
+        const code = text.replace(other.endingNewline, '') + '\n';
         let encode = tryEscape(code)
-
-        if (!lang) {
+        if (!langString) {
             return '<n-code style="overflow: auto" code="'
-                + encode
-                + '"/>\n';
+                + (escaped ? code : escape(code, true))
+                + '\'"/>\n';
         }
         return '<n-code style="overflow: auto" class="'
-            + this.options.langPrefix
-            + escape(lang)
             + ` mt-5 " code="${escape(code, true)}" language="${escape(lang)}" :show-line-numbers="true" />`
             + '\n';
-    }
+    },
+    blockquote({tokens}) {
+        const body = this.parser.parse(tokens);
+        return `<n-blockquote>\n${body}</n-blockquote>\n`
+    },
+    html({text}) {
+        return text;
+    },
+    heading({tokens, depth, text, raw}) {
+        const id = this.options.headerPrefix + text;
+        const prefix = ifFirst(depth) ? 'prefix="bar"' : "";
+        return `<n-h${depth} id="${id}" type="primary" ${prefix}><n-text type="primary">${this.parser.parseInline(tokens)}</n-text></n-h${depth}>\n`;
+    },
 
-    /**
-     * @param {string} quote
-     */
-    blockquote(quote) {
-        return `<n-blockquote>${(quote)}</n-blockquote>\n`;
-    }
-
-    html(html) {
-        return html;
-    }
-
-    /**
-     * @param {string} text
-     * @param {string} level
-     * @param {string} raw
-     * @param {any} slugger
-     */
-    heading(text, level, raw, slugger) {
-        const id = this.options.headerPrefix + raw;
-        const prefix = this.ifFirst(level) ? 'prefix="bar"' : "";
-        return `<n-h${level} id="${id}" type="primary" ${prefix}><n-text type="primary">${(text)}</n-text></n-h${level}>\n`;
-    }
-
-    ifFirst(level) {
-        return level === "1" || level === 1;
-
-    }
-
-    hr() {
+    hr(token) {
         return '<n-hr/>\n';
-    }
-
-    list(body, ordered, start) {
-        const type = ordered ? 'n-ol' : 'n-ul',
-            startatt = (ordered && start !== 1) ? (' start="' + start + '"') : '',
-            classType = ordered ? 'list-decimal' : 'list-disc';
-        return '<' + type + startatt + ` class="${classType}" >\n` + body + '</' + type + '>\n';
-    }
-
-    /**
-     * @param {string} text
-     */
-    listitem(text) {
-        return `<n-li>${text}</n-li>\n`;
-    }
-
-    checkbox(checked) {
+    },
+    list(token) {
+        const ordered = token.ordered;
+        const start = token.start;
+        let body = '';
+        for (let j = 0; j < token.items.length; j++) {
+            const item = token.items[j];
+            body += this.listitem(item);
+        }
+        const type = ordered ? 'n-ol' : 'n-ul';
+        const startAttr = (ordered && start !== 1) ? (' start="' + start + '"') : '';
+        return '<' + type + startAttr + '>\n' + body + '</' + type + '>\n';
+    },
+    listitem(item) {
+        let itemBody = '';
+        if (item.task) {
+            const checkbox = this.checkbox({checked: !!item.checked});
+            if (item.loose) {
+                if (item.tokens[0]?.type === 'paragraph') {
+                    item.tokens[0].text = checkbox + ' ' + item.tokens[0].text;
+                    if (item.tokens[0].tokens && item.tokens[0].tokens.length > 0 && item.tokens[0].tokens[0].type === 'text') {
+                        item.tokens[0].tokens[0].text = checkbox + ' ' + escape(item.tokens[0].tokens[0].text);
+                        item.tokens[0].tokens[0].escaped = true;
+                    }
+                } else {
+                    item.tokens.unshift({
+                        type: 'text',
+                        raw: checkbox + ' ',
+                        text: checkbox + ' ',
+                        escaped: true,
+                    });
+                }
+            } else {
+                itemBody += checkbox + ' ';
+            }
+        }
+        itemBody += this.parser.parse(item.tokens, !!item.loose);
+        return `<n-li>${itemBody}</n-li>\n`;
+    },
+    checkbox({checked}) {
         return '<n-checkbox class="mr-2 ml-2" '
             + (checked ? 'checked' : '')
             + ' disabled'
             + '/>';
-    }
-
-
-    /**
-     * @param {string} text
-     */
-    paragraph(text) {
-        const isTeXInline = /\$(.*)\$/g.test(text);
-        const isTeXLine = /^\$\$(\s*.*\s*)\$\$$/.test(text);
-        if (!isTeXLine && isTeXInline) {
-            text = text.replace(/(\$([^\$]*)\$)+/g, ($1, $2) => {
-                if ($2.indexOf('<n-code') >= 0) {
-                    return $2
-                }
-                let inText = $2.replace(/\$/g, "")
-                inText = tryMath(inText)
-                return `<n-equation value="${inText}" :katex-options="{displayMode: false, strict: false}"/>\n`;
-            })
-        } else {
-            let inner = text.replace(/\$/g, "")
-            inner = tryMath(inner)
-            text = (isTeXLine) ? `<n-equation value="${inner}" :katex-options="{displayMode: true, strict: false}"/>\n` : text
+    },
+    paragraph({tokens, text}) {
+        return `<p>${this.parser.parseInline(tokens)}</p>\n`;
+    },
+    table(token) {
+        let header = '';
+        // header
+        let cell = '';
+        for (let j = 0; j < token.header.length; j++) {
+            cell += this.tablecell(token.header[j]);
         }
-        return `<n-p>${(text)}</n-p>\n`;
-    }
-
-    /**
-     * @param {string} header
-     * @param {string} body
-     */
-    table(header, body) {
-        if (body) body = `<tbody>${body}</tbody>`;
-
+        header += this.tablerow({text: cell});
+        let body = '';
+        for (let j = 0; j < token.rows.length; j++) {
+            const row = token.rows[j];
+            cell = '';
+            for (let k = 0; k < row.length; k++) {
+                cell += this.tablecell(row[k]);
+            }
+            body += this.tablerow({text: cell});
+        }
+        if (body)
+            body = `<tbody>${body}</tbody>`;
         return '<n-table size="small" :single-line="false" class="w-auto" style="overflow: auto">\n'
             + '<thead>\n'
             + header
             + '</thead>\n'
             + body
             + '</n-table>\n';
-    }
-
-    /**
-     * @param {string} content
-     */
-    tablerow(content) {
-        return `<tr>\n${content}</tr>\n`;
-    }
-
-    tablecell(content, flags) {
-        const type = flags.header ? 'th' : 'td';
-        const tag = flags.align
-            ? `<${type} style="text-align: ${flags.align}">`
+    },
+    tablerow({text}) {
+        return `<tr>\n${text}</tr>\n`;
+    },
+    tablecell(token) {
+        const content = this.parser.parseInline(token.tokens);
+        const type = token.header ? 'th' : 'td';
+        const tag = token.align
+            ? `<${type} align="${token.align}">`
             : `<${type}>`;
         return tag + content + `</${type}>\n`;
-    }
-
+    },
     /**
      * span level renderer
-     * @param {string} text
      */
-    strong(text) {
-        return `<span class="font-bold">${text}</span>`;
-    }
-
-    /**
-     * @param {string} text
-     */
-    em(text) {
-        return `<span class="italic">${text}</span>`;
-    }
-
-    /**
-     * @param {string} text
-     */
-    codespan(text) {
-        return `<n-text code>${text}</n-text>`;
-    }
-
-    br() {
+    strong({tokens}) {
+        return `<span class="font-bold">${this.parser.parseInline(tokens)}</span>`;
+    },
+    em({tokens}) {
+        return `<span class="italic">${this.parser.parseInline(tokens)}</span>`;
+    },
+    codespan({text}) {
+        return `<n-text code>${escape(text, true)}</n-text>`;
+    },
+    br(token) {
         return '<br/>';
-    }
-
-    /**
-     * @param {string} text
-     */
-    del(text) {
-        return `<span class="line-through">${text}</span>`;
-    }
-
-    /**
-     * @param {string} href
-     * @param {string} title
-     * @param {string} text
-     */
-    link(href, title, text) {
-        href = cleanUrl(this.options.sanitize, this.options.baseUrl, href);
-        if (href === null) {
+    },
+    del({tokens}) {
+        return `<span class="line-through">${this.parser.parseInline(tokens)}</span>`;
+    },
+    link({href, title, tokens}) {
+        const text = this.parser.parseInline(tokens);
+        const cleanHref = cleanUrl(href);
+        if (cleanHref === null) {
             return text;
         }
+        href = cleanHref;
         let out = '<n-a href="' + href + '"';
         if (title) {
-            out += ' title="' + title + '"';
+            out += ' title="' + (escape(title)) + '"';
         }
         out += ' target="_blank">' + text + '</n-a>';
         return out;
-    }
-
-    /**
-     * @param {string} href
-     * @param {string} title
-     * @param {string} text
-     */
-    image(href, title, text) {
-        href = cleanUrl(this.options.sanitize, this.options.baseUrl, href);
-        if (href === null) {
-            return text;
+    },
+    image({href, title, text}) {
+        const cleanHref = cleanUrl(href);
+        if (cleanHref === null) {
+            return escape(text);
         }
-
+        href = cleanHref;
         let out = `<n-image src="${href}" alt="${text}"`;
         if (title) {
-            out += ` title="${title}"`;
+            out += ` title="${escape(title)}"`;
         }
         out += '/>';
         return out;
-    }
-
-    text(text) {
-        return text;
+    },
+    text(token) {
+        return 'tokens' in token && token.tokens
+            ? this.parser.parseInline(token.tokens)
+            : ('escaped' in token && token.escaped ? token.text : escape(token.text));
     }
 }
