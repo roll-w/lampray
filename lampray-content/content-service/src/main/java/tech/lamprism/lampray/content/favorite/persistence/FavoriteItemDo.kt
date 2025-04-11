@@ -30,8 +30,8 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.content.ContentType
+import tech.lamprism.lampray.content.favorite.FavoriteItem
 import tech.lamprism.lampray.content.favorite.FavoriteItemResourceKind
-import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 
 /**
@@ -40,24 +40,24 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = "favorite_item")
 class FavoriteItemDo(
-    @Column(name = "id")
     @Id
+    @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long,
+    private var id: Long? = null,
 
     @Column(name = "user_id", nullable = false)
-    var userId: Long = 0,
+    var userId: Long,
 
-    @Column(name = "favorite_group_id", nullable = false)
-    var favoriteGroupId: Long = 0,
+    @Column(name = "group_id", nullable = false)
+    var groupId: Long,
 
     @Column(name = "content_id", nullable = false)
-    private var contentId: Long = 0,
+    var contentId: Long = 0,
 
-    @Column(name = "type", nullable = false, length = 40)
+    @Column(name = "content_type", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    private var contentType: ContentType = ContentType.ARTICLE,
+    var contentType: ContentType = ContentType.ARTICLE,
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_time", nullable = false)
@@ -70,38 +70,56 @@ class FavoriteItemDo(
     @Column(name = "deleted", nullable = false)
     var deleted: Boolean = false
 ) : DataEntity<Long> {
-    override fun getId(): Long = id
+    override fun getId(): Long = id!!
 
-    override fun getSystemResourceKind(): SystemResourceKind = FavoriteItemResourceKind
+    fun setId(id: Long) {
+        this.id = id
+    }
+
+    override fun getSystemResourceKind() = FavoriteItemResourceKind
 
     override fun getCreateTime(): OffsetDateTime = createTime
 
     override fun getUpdateTime(): OffsetDateTime = updateTime
 
+    fun lock(): FavoriteItem =
+        FavoriteItem(
+            id,
+            groupId,
+            userId,
+            contentId,
+            contentType,
+            createTime,
+            updateTime,
+            deleted
+        )
+
+    fun toBuilder() = Builder(this)
+
     class Builder {
-        private var id: Long = 0
+        private var id: Long? = null
         private var userId: Long = 0
-        private var favoriteGroupId: Long = 0
+        private var groupId: Long = 0
         private var contentId: Long = 0
-        private var contentType: ContentType? = null
-        private var createTime: OffsetDateTime? = null
-        private var updateTime: OffsetDateTime? = null
+        private var contentType: ContentType = ContentType.ARTICLE
+        private var createTime: OffsetDateTime = OffsetDateTime.now()
+        private var updateTime: OffsetDateTime = OffsetDateTime.now()
         private var deleted: Boolean = false
 
         constructor()
 
-        constructor(favoriteItemDo: FavoriteItemDo) {
-            this.id = favoriteItemDo.id
-            this.userId = favoriteItemDo.userId
-            this.favoriteGroupId = favoriteItemDo.favoriteGroupId
-            this.contentId = favoriteItemDo.contentId
-            this.contentType = favoriteItemDo.contentType
-            this.createTime = favoriteItemDo.createTime
-            this.updateTime = favoriteItemDo.updateTime
-            this.deleted = favoriteItemDo.deleted
+        constructor(favoriteItem: FavoriteItemDo) {
+            this.id = favoriteItem.id
+            this.userId = favoriteItem.userId
+            this.groupId = favoriteItem.groupId
+            this.contentId = favoriteItem.contentId
+            this.contentType = favoriteItem.contentType
+            this.createTime = favoriteItem.createTime
+            this.updateTime = favoriteItem.updateTime
+            this.deleted = favoriteItem.deleted
         }
 
-        fun setId(id: Long) = apply {
+        fun setId(id: Long?) = apply {
             this.id = id
         }
 
@@ -109,8 +127,8 @@ class FavoriteItemDo(
             this.userId = userId
         }
 
-        fun setFavoriteGroupId(favoriteGroupId: Long) = apply {
-            this.favoriteGroupId = favoriteGroupId
+        fun setGroupId(groupId: Long) = apply {
+            this.groupId = groupId
         }
 
         fun setContentId(contentId: Long) = apply {
@@ -133,9 +151,33 @@ class FavoriteItemDo(
             this.deleted = deleted
         }
 
-        fun build() = FavoriteItemDo(
-            id, userId, favoriteGroupId, contentId, contentType!!,
-            createTime!!, updateTime!!, deleted
+        fun build(): FavoriteItemDo {
+            return FavoriteItemDo(
+                id,
+                userId,
+                groupId,
+                contentId,
+                contentType,
+                createTime,
+                updateTime,
+                deleted
+            )
+        }
+    }
+
+    companion object {
+        fun FavoriteItem.toDo() = FavoriteItemDo(
+            id,
+            userId,
+            groupId,
+            contentId,
+            contentType,
+            createTime,
+            updateTime,
+            isDeleted
         )
+
+        @JvmStatic
+        fun builder(): Builder = Builder()
     }
 }

@@ -31,7 +31,7 @@ import java.time.OffsetDateTime;
  */
 public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
     private final Long id;
-    private final long favoriteGroupId;
+    private final long groupId;
     private final long userId;
     private final long contentId;
     private final ContentType contentType;
@@ -40,12 +40,12 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
     private final boolean deleted;
     private final ContentIdentity associatedContent;
 
-    public FavoriteItem(Long id, long favoriteGroupId, long userId,
+    public FavoriteItem(Long id, long groupId, long userId,
                         long contentId, ContentType contentType,
                         OffsetDateTime createTime,
                         OffsetDateTime updateTime, boolean deleted) {
         this.id = id;
-        this.favoriteGroupId = favoriteGroupId;
+        this.groupId = groupId;
         this.userId = userId;
         this.contentId = contentId;
         this.contentType = contentType;
@@ -60,8 +60,8 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
         return id;
     }
 
-    public long getFavoriteGroupId() {
-        return favoriteGroupId;
+    public long getGroupId() {
+        return groupId;
     }
 
     public long getUserId() {
@@ -113,7 +113,7 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
 
     public static final class Builder implements LongEntityBuilder<FavoriteItem> {
         private Long id;
-        private long favoriteGroupId;
+        private long groupId;
         private long userId;
         private long contentId;
         private ContentType contentType;
@@ -126,7 +126,7 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
 
         private Builder(FavoriteItem favoriteitem) {
             this.id = favoriteitem.id;
-            this.favoriteGroupId = favoriteitem.favoriteGroupId;
+            this.groupId = favoriteitem.groupId;
             this.userId = favoriteitem.userId;
             this.contentId = favoriteitem.contentId;
             this.contentType = favoriteitem.contentType;
@@ -140,8 +140,8 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
             return this;
         }
 
-        public Builder setFavoriteGroupId(long favoriteGroupId) {
-            this.favoriteGroupId = favoriteGroupId;
+        public Builder setGroupId(long groupId) {
+            this.groupId = groupId;
             return this;
         }
 
@@ -176,7 +176,7 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
         }
 
         public FavoriteItem build() {
-            return new FavoriteItem(id, favoriteGroupId, userId, contentId,
+            return new FavoriteItem(id, groupId, userId, contentId,
                     contentType, createTime, updateTime, deleted);
         }
     }

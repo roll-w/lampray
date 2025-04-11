@@ -32,12 +32,13 @@ public class FavoriteGroup implements DataEntity<Long> {
     private final long userId;
     private final boolean isPublic; // add 'is' to avoid conflict with keyword
     private final String description;
+    private final String icon;
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
     private final boolean deleted;
 
     public FavoriteGroup(Long id, String name, long userId,
-                         boolean isPublic, String description,
+                         boolean isPublic, String description, String icon,
                          OffsetDateTime createTime, OffsetDateTime updateTime,
                          boolean deleted) {
         this.id = id;
@@ -45,6 +46,7 @@ public class FavoriteGroup implements DataEntity<Long> {
         this.userId = userId;
         this.isPublic = isPublic;
         this.description = description;
+        this.icon = icon;
         this.createTime = createTime;
         this.updateTime = updateTime;
         this.deleted = deleted;
@@ -69,6 +71,10 @@ public class FavoriteGroup implements DataEntity<Long> {
 
     public String getDescription() {
         return description;
+    }
+
+    public String getIcon() {
+        return icon;
     }
 
     @NonNull
@@ -107,6 +113,7 @@ public class FavoriteGroup implements DataEntity<Long> {
         private long userId;
         private boolean isPublic;
         private String description;
+        private String icon;
         private OffsetDateTime createTime;
         private OffsetDateTime updateTime;
         private boolean deleted;
@@ -120,6 +127,7 @@ public class FavoriteGroup implements DataEntity<Long> {
             this.userId = favoriteGroup.userId;
             this.isPublic = favoriteGroup.isPublic;
             this.description = favoriteGroup.description;
+            this.icon = favoriteGroup.icon;
             this.createTime = favoriteGroup.createTime;
             this.updateTime = favoriteGroup.updateTime;
             this.deleted = favoriteGroup.deleted;
@@ -151,6 +159,11 @@ public class FavoriteGroup implements DataEntity<Long> {
             return this;
         }
 
+        public Builder setIcon(String icon) {
+            this.icon = icon;
+            return this;
+        }
+
         public Builder setCreateTime(OffsetDateTime createTime) {
             this.createTime = createTime;
             return this;
@@ -168,7 +181,7 @@ public class FavoriteGroup implements DataEntity<Long> {
 
         @Override
         public FavoriteGroup build() {
-            return new FavoriteGroup(id, name, userId, isPublic, description,
+            return new FavoriteGroup(id, name, userId, isPublic, description, icon,
                     createTime, updateTime, deleted);
         }
     }

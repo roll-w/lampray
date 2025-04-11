@@ -26,8 +26,8 @@ import jakarta.persistence.Table
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
 import tech.lamprism.lampray.DataEntity
-import tech.lamprism.lampray.content.favorite.FavoriteItemResourceKind
-import tech.rollw.common.web.system.SystemResourceKind
+import tech.lamprism.lampray.content.favorite.FavoriteGroup
+import tech.lamprism.lampray.content.favorite.FavoriteGroupResourceKind
 import java.time.OffsetDateTime
 
 /**
@@ -36,23 +36,26 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = "favorite_group")
 class FavoriteGroupDo(
-    @Column(name = "id")
     @Id
+    @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long,
+    private var id: Long? = null,
+
+    @Column(name = "name", nullable = false)
+    var name: String = "",
 
     @Column(name = "user_id", nullable = false)
-    var userId: Long = 0,
+    var userId: Long = 0L,
 
-    @Column(name = "name", nullable = false, length = 255)
-    var name: String = "",
+    @Column(name = "public", nullable = false)
+    var isPublic: Boolean = false,
 
     @Lob
     @Column(name = "description", nullable = false, length = 16777215)
     var description: String = "",
 
-    @Column(name = "public", nullable = false)
-    var public: Boolean = false,
+    @Column(name = "icon", nullable = false)
+    private var icon: String = "",
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_time", nullable = false)
@@ -65,11 +68,122 @@ class FavoriteGroupDo(
     @Column(name = "deleted", nullable = false)
     var deleted: Boolean = false
 ) : DataEntity<Long> {
-    override fun getId(): Long = id
+    override fun getId(): Long = id!!
 
-    override fun getSystemResourceKind(): SystemResourceKind = FavoriteItemResourceKind
+    override fun getSystemResourceKind() = FavoriteGroupResourceKind
 
     override fun getCreateTime(): OffsetDateTime = createTime
 
     override fun getUpdateTime(): OffsetDateTime = updateTime
+
+    fun setId(id: Long) {
+        this.id = id
+    }
+
+    fun lock(): FavoriteGroup =
+        FavoriteGroup(
+            id,
+            name,
+            userId,
+            isPublic,
+            description,
+            icon,
+            createTime,
+            updateTime,
+            deleted
+        )
+
+    fun toBuilder() = Builder(this)
+
+    class Builder {
+        private var id: Long? = null
+        private var name: String = ""
+        private var userId: Long = 0L
+        private var isPublic: Boolean = false
+        private var description: String = ""
+        private var icon: String = ""
+        private var createTime: OffsetDateTime = OffsetDateTime.now()
+        private var updateTime: OffsetDateTime = OffsetDateTime.now()
+        private var deleted: Boolean = false
+
+        constructor()
+
+        constructor(favoriteGroup: FavoriteGroupDo) {
+            this.id = favoriteGroup.id
+            this.name = favoriteGroup.name
+            this.userId = favoriteGroup.userId
+            this.isPublic = favoriteGroup.isPublic
+            this.description = favoriteGroup.description
+            this.icon = favoriteGroup.icon
+            this.createTime = favoriteGroup.createTime
+            this.updateTime = favoriteGroup.updateTime
+            this.deleted = favoriteGroup.deleted
+        }
+
+        fun setId(id: Long?) = apply {
+            this.id = id
+        }
+
+        fun setName(name: String) = apply {
+            this.name = name
+        }
+
+        fun setUserId(userId: Long) = apply {
+            this.userId = userId
+        }
+
+        fun setPublic(isPublic: Boolean) = apply {
+            this.isPublic = isPublic
+        }
+
+        fun setDescription(description: String) = apply {
+            this.description = description
+        }
+
+        fun setIcon(icon: String) = apply {
+            this.icon = icon
+        }
+
+        fun setCreateTime(createTime: OffsetDateTime) = apply {
+            this.createTime = createTime
+        }
+
+        fun setUpdateTime(updateTime: OffsetDateTime) = apply {
+            this.updateTime = updateTime
+        }
+
+        fun setDeleted(deleted: Boolean) = apply {
+            this.deleted = deleted
+        }
+
+        fun build() = FavoriteGroupDo(
+            id,
+            name,
+            userId,
+            isPublic,
+            description,
+            icon,
+            createTime,
+            updateTime,
+            deleted
+        )
+    }
+
+    companion object {
+        @JvmStatic
+        fun builder() = Builder()
+
+        @JvmStatic
+        fun FavoriteGroup.toDo() = FavoriteGroupDo(
+            id,
+            name,
+            userId,
+            isPublic,
+            description,
+            icon,
+            createTime,
+            updateTime,
+            isDeleted
+        )
+    }
 }
