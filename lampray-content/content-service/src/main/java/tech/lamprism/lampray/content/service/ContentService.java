@@ -45,7 +45,7 @@ import tech.lamprism.lampray.content.permit.ContentPermitChecker;
 import tech.lamprism.lampray.content.permit.ContentPermitResult;
 import tech.lamprism.lampray.content.persistence.ContentMetadataDo;
 import tech.lamprism.lampray.content.persistence.ContentMetadataRepository;
-import tech.lamprism.lampray.content.publish.ContentPublishCallback;
+import tech.lamprism.lampray.content.publish.ContentPublishListener;
 import tech.rollw.common.web.CommonErrorCode;
 import tech.rollw.common.web.ErrorCode;
 import tech.rollw.common.web.system.ContextThreadAware;
@@ -67,7 +67,7 @@ public class ContentService implements ContentAccessService,
     private final List<ContentPublisher> contentPublishers;
     private final List<UncreatedContentPreChecker> uncreatedContentPreCheckers;
     private final List<ContentCollectionProvider> contentCollectionProviders;
-    private final List<ContentPublishCallback> contentPublishCallbacks;
+    private final List<ContentPublishListener> contentPublishListeners;
 
     private final ContentProviderFactory contentProviderFactory;
     private final ContentPermitChecker contentPermitChecker;
@@ -77,7 +77,7 @@ public class ContentService implements ContentAccessService,
     public ContentService(List<ContentPublisher> contentPublishers,
                           List<UncreatedContentPreChecker> uncreatedContentPreCheckers,
                           List<ContentCollectionProvider> contentCollectionProviders,
-                          List<ContentPublishCallback> contentPublishCallbacks,
+                          List<ContentPublishListener> contentPublishListeners,
                           ContentProviderFactory contentProviderFactory,
                           ContentPermitChecker contentPermitChecker,
                           ContentMetadataRepository contentMetadataRepository,
@@ -85,7 +85,7 @@ public class ContentService implements ContentAccessService,
         this.contentPublishers = contentPublishers;
         this.uncreatedContentPreCheckers = uncreatedContentPreCheckers;
         this.contentCollectionProviders = contentCollectionProviders;
-        this.contentPublishCallbacks = contentPublishCallbacks;
+        this.contentPublishListeners = contentPublishListeners;
         this.contentProviderFactory = contentProviderFactory;
         this.contentPermitChecker = contentPermitChecker;
         this.contentMetadataRepository = contentMetadataRepository;
@@ -196,10 +196,10 @@ public class ContentService implements ContentAccessService,
                 .setUserId(contentDetails.getUserId())
                 .setContentAccessAuthType(ContentAccessAuthType.PUBLIC);
         ContentStatus contentStatus = ContentStatus.PUBLISHED;
-        for (ContentPublishCallback contentPublishCallback :
-                contentPublishCallbacks) {
+        for (ContentPublishListener contentPublishListener :
+                contentPublishListeners) {
             contentStatus = contentStatus.plus(
-                    contentPublishCallback.publish(contentDetails)
+                    contentPublishListener.onPublish(contentDetails)
             );
         }
         contentMetadataBuilder.setContentStatus(contentStatus);

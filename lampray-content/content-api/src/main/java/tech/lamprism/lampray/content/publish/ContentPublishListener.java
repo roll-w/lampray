@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ import tech.lamprism.lampray.content.ContentStatus;
 /**
  * @author RollW
  */
-public interface ContentPublishCallback {
+public interface ContentPublishListener {
     int DEFAULT_ORDER = 0;
 
     default int order() {
         return DEFAULT_ORDER;
     }
 
-    ContentStatus publish(ContentDetails contentDetails);
+    ContentStatus onPublish(ContentDetails contentDetails);
 }
