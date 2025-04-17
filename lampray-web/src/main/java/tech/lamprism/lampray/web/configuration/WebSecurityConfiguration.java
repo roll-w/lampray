@@ -19,8 +19,6 @@ package tech.lamprism.lampray.web.configuration;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.expression.spel.support.SimpleNameTypeLocator;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -48,8 +46,6 @@ import tech.lamprism.lampray.authentication.token.AuthenticationTokenService;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationProvider;
 import tech.lamprism.lampray.security.authentication.adapter.TokenBasedAuthenticationProvider;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
-import tech.lamprism.lampray.security.authorization.RoleBasedAuthorizationScope;
-import tech.lamprism.lampray.security.authorization.adapter.ScopeBasedMethodSecurityExpressionHandler;
 import tech.lamprism.lampray.user.UserSignatureProvider;
 import tech.lamprism.lampray.web.configuration.compenent.WebDelegateSecurityHandler;
 import tech.lamprism.lampray.web.configuration.filter.ApiContextInitializeFilter;
@@ -136,17 +132,6 @@ public class WebSecurityConfiguration {
         return new ProviderManager(authenticationProviders);
     }
 
-    @Bean
-    @Primary
-    protected ScopeBasedMethodSecurityExpressionHandler scopeBasedMethodSecurityExpressionHandler() {
-        SimpleNameTypeLocator simpleNameTypeLocator = new SimpleNameTypeLocator(List.of(
-                RoleBasedAuthorizationScope.class
-        ));
-        ScopeBasedMethodSecurityExpressionHandler expressionHandler =
-                new ScopeBasedMethodSecurityExpressionHandler();
-        expressionHandler.setTypeLocator(simpleNameTypeLocator);
-        return expressionHandler;
-    }
 
     @Bean
     public CorsConfigFilter corsConfigFilter(
