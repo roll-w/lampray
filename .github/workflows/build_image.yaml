@@ -42,8 +42,8 @@ jobs:
                     version=$(./gradlew -q :version)
                     commit=$(git rev-parse --short HEAD)
                     echo "raw_version_name=${version}" >> $GITHUB_ENV
-                    echo "version_name=${version}-${commit}" >> $GITHUB_ENV
-                    echo "remote_tag=${version}-${commit}" >> $GITHUB_ENV
+                    echo "version_name=${version}" >> $GITHUB_ENV
+                    echo "remote_tag=${version}" >> $GITHUB_ENV
                 id: project_version
             -   name: Install Dependencies
                 run: |
@@ -59,8 +59,8 @@ jobs:
             -   name: Build
                 run: |
                     chmod +x gradlew
-                    ./gradlew -PbuildFrontend=true -Pci=true buildImage
-                    mv build/dist/lampray-${{ env.raw_version_name }}-dist.tar.gz build/dist/lampray-${{ env.version_name }}-dist.tar.gz
+                    export CI=true
+                    ./gradlew -Dci=true -PbuildFrontend=true buildImage
             -   name: Upload Dist
                 uses: actions/upload-artifact@v4
                 with:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,3 +16,15 @@
 
 group = "tech.lamprism.lampray"
 version = "0.1.0"
+
+
+val ci: Boolean = "true".equals(System.getProperty("ci"), ignoreCase = true) ||
+        "true".equals(System.getenv("CI"), ignoreCase = true)
+
+if (ci) {
+    val commitIdAbbrev = providers.exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+    }.standardOutput.asText.get().trim()
+    version = "$version-$commitIdAbbrev"
+}
+

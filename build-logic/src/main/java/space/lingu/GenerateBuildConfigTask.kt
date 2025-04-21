@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,9 +45,6 @@ abstract class GenerateBuildConfigTask : DefaultTask() {
     @get:Input
     abstract val version: Property<String>
 
-    private val ci: Boolean = project.hasProperty("ci") &&
-            project.property("ci").toString().toBoolean()
-
     companion object {
         private const val OUTPUT_DIR = "generated/sources/buildconfig/java/main"
     }
@@ -71,13 +68,7 @@ abstract class GenerateBuildConfigTask : DefaultTask() {
             ZoneId.of("UTC")
         ).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
-        // if CI, add commit id as suffix to version
-        // TODO: move to lampray-project.gradle.kts
-        val buildVersion = if (ci) {
-            "${version.get()}-$commitIdAbbrev"
-        } else {
-            version.get()
-        }
+        val buildVersion = version.get().trim()
 
         println(
             """
