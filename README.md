@@ -143,21 +143,33 @@ following command:
 > [!NOTE]
 > Before running the command, you need to prepare a configuration file named
 > `lampray.conf` in your local directory for mount to the container and replace
-> the `/path/to/lampray.conf` with the actual path to the configuration file.
+> the `/path/to/conf/` with the actual path to the conf directory.
+
+> [!NOTE]
+> You need to create a Docker network named `lampray` first, or replace it with
+> your own network.
+> 
+> You can create a Docker network using the following command:
+> 
+> ```shell
+> docker network create lampray
+> ```
 
 ```shell
 docker run \
   -d \
   -it \
   -p 5100:5100 \
-  --network host \
-  -v /path/to/lampray.conf:/app/lampray/conf/lampray.conf \
+  -p 5101:5101 \
+  --network lampray \
+  -v /path/to/conf:/app/lampray/conf \
   --name lampray lampray:{version}
 ```
 
 > Options:
-> - `--network host`: Use the host network, or replace with your own network.
-> - `-v /path/to/lampray.conf:/app/lampray/conf/lampray.conf`: Mount the configuration file to the container.
+> - `--network lampray`: Use the `lampray` network, or replace with your own network.
+> - `-v /path/to/conf:/app/lampray/conf/`: Mount the configuration directory to the container. Needs a configuration file 
+>  named `lampray.conf` in the local directory.
 
 Also, you can use the environment variable `JAVA_OPTS` to specify the
 JVM options, like the following:
