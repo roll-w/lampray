@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,12 @@ import jakarta.annotation.PreDestroy;
 import org.apache.sshd.server.SshServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import tech.lamprism.lampray.setting.ConfigReader;
 import tech.lamprism.lampray.web.ServerInitializeException;
+import tech.lamprism.lampray.web.common.keys.ServerConfigKeys;
+import tech.lamprism.lampray.web.configuration.LocalConfigConfiguration;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -35,14 +39,21 @@ public class SshdServerRunner {
     private static final Logger logger = LoggerFactory.getLogger(SshdServerRunner.class);
 
     private final SshServer sshServer;
+    private final ConfigReader configReader;
 
-    public SshdServerRunner(SshServer sshServer) {
+    public SshdServerRunner(SshServer sshServer,
+                            @Qualifier(LocalConfigConfiguration.LOCAL_CONFIG_PROVIDER)
+                            ConfigReader configReader) {
         this.sshServer = sshServer;
+        this.configReader = configReader;
     }
 
     @PostConstruct
     public void run() throws ServerInitializeException {
-        // TODO: allow disabling SSH server
+        if (configReader.get(ServerConfigKeys.SSH_PORT) < 0) {
+            logger.debug("SSH port set to -1, skipping SSH server startup.");
+            return;
+        }
         try {
             sshServer.start();
         } catch (BindException e) {
