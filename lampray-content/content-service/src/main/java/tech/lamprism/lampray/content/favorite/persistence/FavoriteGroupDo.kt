@@ -18,6 +18,8 @@ package tech.lamprism.lampray.content.favorite.persistence
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -25,9 +27,12 @@ import jakarta.persistence.Lob
 import jakarta.persistence.Table
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.content.favorite.FavoriteGroup
 import tech.lamprism.lampray.content.favorite.FavoriteGroupResourceKind
+import tech.lamprism.lampray.content.favorite.FavoriteGroupType
 import java.time.OffsetDateTime
 
 /**
@@ -46,6 +51,11 @@ class FavoriteGroupDo(
 
     @Column(name = "user_id", nullable = false)
     var userId: Long = 0L,
+
+    @Column(name = "type", nullable = false, length = 40)
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    var type: FavoriteGroupType = FavoriteGroupType.USER,
 
     @Column(name = "public", nullable = false)
     var isPublic: Boolean = false,
@@ -85,6 +95,7 @@ class FavoriteGroupDo(
             id,
             name,
             userId,
+            type,
             isPublic,
             description,
             icon,
@@ -99,6 +110,7 @@ class FavoriteGroupDo(
         private var id: Long? = null
         private var name: String = ""
         private var userId: Long = 0L
+        private var type: FavoriteGroupType = FavoriteGroupType.USER
         private var isPublic: Boolean = false
         private var description: String = ""
         private var icon: String = ""
@@ -112,6 +124,7 @@ class FavoriteGroupDo(
             this.id = favoriteGroup.id
             this.name = favoriteGroup.name
             this.userId = favoriteGroup.userId
+            this.type = favoriteGroup.type
             this.isPublic = favoriteGroup.isPublic
             this.description = favoriteGroup.description
             this.icon = favoriteGroup.icon
@@ -130,6 +143,10 @@ class FavoriteGroupDo(
 
         fun setUserId(userId: Long) = apply {
             this.userId = userId
+        }
+
+        fun setType(type: FavoriteGroupType) = apply {
+            this.type = type
         }
 
         fun setPublic(isPublic: Boolean) = apply {
@@ -160,6 +177,7 @@ class FavoriteGroupDo(
             id,
             name,
             userId,
+            type,
             isPublic,
             description,
             icon,
@@ -178,6 +196,7 @@ class FavoriteGroupDo(
             id,
             name,
             userId,
+            type,
             isPublic,
             description,
             icon,

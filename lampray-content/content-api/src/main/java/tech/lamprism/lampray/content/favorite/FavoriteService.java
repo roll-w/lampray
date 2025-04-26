@@ -22,8 +22,17 @@ import tech.lamprism.lampray.user.UserTrait;
  * @author RollW
  */
 public interface FavoriteService extends FavoriteProvider {
+    default FavoriteGroup createFavoriteGroup(UserTrait owner,
+                                      String name,
+                                      String description,
+                                      boolean isPublic) {
+        return createFavoriteGroup(owner, name, description,
+                isPublic, FavoriteGroupType.USER);
+    }
+
     FavoriteGroup createFavoriteGroup(UserTrait owner,
                                       String name,
                                       String description,
-                                      boolean isPublic);
+                                      boolean isPublic,
+                                      FavoriteGroupType groupType);
 }
