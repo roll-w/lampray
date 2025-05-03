@@ -69,7 +69,7 @@ public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor
     }
 
     private void setPropertiesNeedsInStartup(Map<String, Object> properties, ConfigProvider localProvider) {
-        properties.put("server.port", localProvider.get(ServerConfigKeys.PORT));
+        properties.put("server.port", localProvider.get(ServerConfigKeys.HTTP_PORT));
         properties.put(LamprayEnvKeys.LOCAL_CONFIG_LOADER, localProvider);
         try {
             setupLoggingProperties(properties, localProvider);
@@ -84,8 +84,7 @@ public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor
     private void setupLoggingProperties(Map<String, Object> properties,
                                         ConfigProvider localProvider) {
         String loggingLevel = localProvider.get(LoggingConfigKeys.LOGGING_LEVEL);
-        Map<String, String> loggingLevels = LoggingConfigKeys
-                .parseLoggingLevel(loggingLevel);
+        Map<String, String> loggingLevels = LoggingConfigKeys.parseLoggingLevel(loggingLevel);
         for (Map.Entry<String, String> entry : loggingLevels.entrySet()) {
             properties.put("logging.level." + entry.getKey(), entry.getValue());
         }

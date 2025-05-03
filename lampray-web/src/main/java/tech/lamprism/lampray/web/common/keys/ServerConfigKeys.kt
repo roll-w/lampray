@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,18 +28,18 @@ import tech.lamprism.lampray.setting.SettingSpecificationSupplier
 object ServerConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
-    val PORT =
-        SettingSpecificationBuilder(SettingKey.ofInt("server.port"))
-            .setTextDescription("Server port")
+    val HTTP_PORT =
+        SettingSpecificationBuilder(SettingKey.ofInt("server.http.port"))
+            .setTextDescription("HTTP server port")
             .setDefaultValue(5100)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .setRequired(true)
             .build()
 
     @JvmField
-    val HOST =
-        SettingSpecificationBuilder(SettingKey.ofString("server.host"))
-            .setResourceDescription("config.server.host")
+    val HTTP_HOST =
+        SettingSpecificationBuilder(SettingKey.ofString("server.http.host"))
+            .setResourceDescription("HTTP server host")
             .setDefaultValue(null)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .setRequired(false)
@@ -48,7 +48,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
     @JvmField
     val SSH_PORT =
         SettingSpecificationBuilder(SettingKey.ofInt("server.ssh.port"))
-            .setTextDescription("SSH port")
+            .setTextDescription("SSH server port")
             .setDefaultValue(5101)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .setRequired(true)
@@ -57,7 +57,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
     @JvmField
     val SSH_HOST =
         SettingSpecificationBuilder(SettingKey.ofString("server.ssh.host"))
-            .setTextDescription("Server SSH host")
+            .setTextDescription("SSH server host")
             .setDefaultValue(null)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .setRequired(false)
@@ -74,7 +74,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
             .build()
 
     private val keys = listOf(
-        PORT, HOST, SSH_PORT, SSH_HOST, SSH_HOST_KEY
+        HTTP_PORT, HTTP_HOST, SSH_PORT, SSH_HOST, SSH_HOST_KEY
     )
 
     override val specifications: List<AttributedSettingSpecification<*, *>>
