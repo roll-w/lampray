@@ -43,7 +43,7 @@ public interface CommandTree {
             if (fullName.equals(name)) {
                 return child;
             }
-            if (fullName.startsWith(name + " ")) {
+            if (name.startsWith(fullName)) {
                 return child.findChildByFullName(name);
             }
         }
