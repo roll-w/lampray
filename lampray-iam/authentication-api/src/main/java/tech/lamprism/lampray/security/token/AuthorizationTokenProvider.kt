@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package tech.lamprism.lampray.security.token
 
 import tech.lamprism.lampray.security.authorization.AuthorizationScope
-import tech.lamprism.lampray.user.UserIdentity
 import tech.lamprism.lampray.user.UserSignatureProvider
 import tech.rollw.common.web.system.AuthenticationException
 import java.time.Duration
@@ -29,7 +28,7 @@ interface AuthorizationTokenProvider {
     /**
      * Create a token for the user.
      *
-     * @param user the user to create the token for.
+     * @param subject the subject to create the token for.
      * @param signatureProvider the signature provider to sign the token.
      * @param expiryDuration the expiry duration of the token from now.
      * @param authorizedScopes the authorized scopes of the token. If empty,
@@ -37,7 +36,7 @@ interface AuthorizationTokenProvider {
      * @return the token.
      */
     fun createToken(
-        user: UserIdentity, // TODO: maybe replace with TokenSubject
+        subject: TokenSubject,
         signatureProvider: UserSignatureProvider,
         expiryDuration: Duration = Duration.ofDays(1),
         authorizedScopes: Collection<AuthorizationScope> = emptyList()
@@ -55,7 +54,7 @@ interface AuthorizationTokenProvider {
     fun parseToken(
         token: AuthorizationToken,
         signatureProvider: UserSignatureProvider
-    ): UserIdentity // TODO: maybe replace with a MetadataToken
+    ): MetadataAuthorizationToken
 
     fun supports(tokenType: String): Boolean
 }
