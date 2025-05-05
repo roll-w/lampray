@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,11 @@ public class SecurityConfigKeys implements SettingSpecificationSupplier {
                     .setRequired(true)
                     .build();
 
+    public static final String RANDOM = "[random]";
+
     public static final AttributedSettingSpecification<String, String> TOKEN_SIGN_KEY =
             new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.sign-key"))
-                    .setDefaultValue("[random]")
+                    .setDefaultValue(RANDOM)
                     .setTextDescription("Key used to sign and verify token.")
                     .setSupportedSources(SettingSource.VALUES)
                     .setRequired(true)
