@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import tech.rollw.common.web.system.AuthenticationException;
 /**
  * Authentication token service.
  *
+ * @deprecated Move to {@link tech.lamprism.lampray.security.token.AuthorizationTokenProvider}
  * @author RollW
  */
+@Deprecated
 public interface AuthenticationTokenService {
     String generateAuthToken(long userId, String signature);
 
