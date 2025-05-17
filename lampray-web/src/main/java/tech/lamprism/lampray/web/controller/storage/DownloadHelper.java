@@ -35,8 +35,8 @@ import java.util.List;
  * @author RollW
  */
 public final class DownloadHelper {
-    public static final String ACCEPT_TYPE = "X-Lamp-Accept-Type";
-    public static final String DISPOSITION_TYPE = "X-Lamp-Disposition-Type";
+    public static final String ACCEPT_TYPE = "X-Accept-Type";
+    public static final String DISPOSITION_TYPE = "X-Disposition-Type";
 
     private static final Logger logger = LoggerFactory.getLogger(DownloadHelper.class);
 
@@ -66,6 +66,10 @@ public final class DownloadHelper {
         return dispositionType;
     }
 
+    /**
+     * @deprecated This method is deprecated
+     */
+    @Deprecated
     public static void downloadFile(FileStorage storage,
                                     String name,
                                     HttpServletRequest request,

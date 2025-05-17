@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.storage.FileStorage;
-import tech.lamprism.lampray.storage.FileType;
 import tech.lamprism.lampray.storage.StorageProvider;
+import tech.lamprism.lampray.web.controller.Api;
 
 import java.io.IOException;
 
@@ -38,14 +37,20 @@ public class StorageController {
         this.storageProvider = storageProvider;
     }
 
+    // TODO: rewrite this method
     @GetMapping("/storages/{id}")
     public void getStorage(@PathVariable("id") String id,
                            HttpServletRequest request,
                            HttpServletResponse response) throws IOException {
         FileStorage fileStorage = storageProvider.getFileStorage(id);
-        DownloadHelper.downloadFile(
-                fileStorage, id, request,
-                response, storageProvider
-        );
+        try {
+            DownloadHelper.downloadFile(
+                    fileStorage, id, request,
+                    response, storageProvider
+            );
+        } catch (IOException e) {
+            response.reset();
+            throw e;
+        }
     }
 }
