@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023 RollW
+  - Copyright (C) 2023-2025 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@
 
 <script setup>
 import {useUserStore} from "@/stores/user";
+import {admin} from "@/router/index.js";
 import {NA, NAlert, NCard, NCarousel, NH1, NH2, NText} from "naive-ui";
 
 const userStore = useUserStore()
