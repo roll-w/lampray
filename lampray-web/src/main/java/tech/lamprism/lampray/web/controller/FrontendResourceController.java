@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.web.controller;
 
 import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -54,6 +55,16 @@ public class FrontendResourceController {
 
     private static final String ASSETS_PATH = "/assets/";
 
+    private static final String CONFIG_JS_TEMPLATE = """
+            window.config = {
+                server: {
+                    host: "{host}",
+                    httpProtocol: "{httpProtocol}",
+                    wsProtocol: "{wsProtocol}",
+                },
+            }
+            """;
+
     private final ClassPathResource index = new ClassPathResource(ASSETS_PATH + "index.html");
     private final ConfigReader configReader;
 
@@ -63,7 +74,8 @@ public class FrontendResourceController {
     }
 
     @GetMapping(value = "/{*path}")
-    public void servingResource(HttpServletResponse response,
+    public void servingResource(HttpServletRequest request,
+                                HttpServletResponse response,
                                 @PathVariable("path") String path) throws IOException {
         // This will not be null, because the spec has a default value
         @SuppressWarnings("DataFlowIssue")
@@ -72,6 +84,9 @@ public class FrontendResourceController {
             throw new LampException(CommonErrorCode.ERROR_NOT_FOUND);
         }
         String removed = removePrefix(path);
+        if (onConfigJs(removed, request, response)) {
+            return;
+        }
         ServletOutputStream outputStream = response.getOutputStream();
         if (removed.isEmpty()) {
             fallback(response);
@@ -90,6 +105,37 @@ public class FrontendResourceController {
         logger.debug("Serving frontend resource: '{}'", path);
         setContentType(response, removed);
         resource.getInputStream().transferTo(outputStream);
+    }
+
+    private boolean onConfigJs(String path,
+                               HttpServletRequest request,
+                               HttpServletResponse response) throws IOException {
+        if (!path.equals("config.js")) {
+            return false;
+        }
+        // TODO: make this configurable
+        String host = toAddress(request);
+        String httpProtocol = request.getScheme();
+        String wsProtocol = httpProtocol.equals("https") ? "wss" : "ws";
+        String configJs = CONFIG_JS_TEMPLATE
+                .replace("{host}", host)
+                .replace("{httpProtocol}", httpProtocol)
+                .replace("{wsProtocol}", wsProtocol);
+        response.setContentType("text/javascript");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.getOutputStream().write(configJs.getBytes(StandardCharsets.UTF_8));
+        return true;
+    }
+
+    private String toAddress(HttpServletRequest request) {
+        String scheme = request.getScheme();
+        String serverName = request.getServerName();
+        int serverPort = request.getServerPort();
+        if (serverPort == 80 && "http".equals(scheme) ||
+                serverPort == 443 && "https".equals(scheme)) {
+            return serverName;
+        }
+        return serverName + ":" + serverPort;
     }
 
     private Resource loadResource(String path) {
