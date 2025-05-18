@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import tech.lamprism.lampray.user.UserProvider;
 import tech.lamprism.lampray.user.UserSignatureProvider;
 import tech.lamprism.lampray.user.UserTrait;
 import tech.lamprism.lampray.user.UserViewException;
+import tech.lamprism.lampray.user.event.NewUserCreatedEvent;
 import tech.rollw.common.web.AuthErrorCode;
 import tech.rollw.common.web.ErrorCode;
 import tech.rollw.common.web.IoErrorCode;
@@ -199,6 +200,11 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                 iter.getUsername(), iter.getPassword(),
                 iter.getEmail(), iter.getRole(), iter.getEnabled()
         );
+        NewUserCreatedEvent newUserCreatedEvent = new NewUserCreatedEvent(user);
+        eventPublisher.publishEvent(newUserCreatedEvent);
+
+
+        // TODO: replace with UserNotifier to send email
         OnUserRegistrationEvent event = new OnUserRegistrationEvent(user, LocaleContextHolder.getLocale());
         eventPublisher.publishEvent(event);
 

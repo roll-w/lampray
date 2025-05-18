@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import tech.lamprism.lampray.staff.persistence.StaffDo;
 import tech.lamprism.lampray.staff.persistence.StaffRepository;
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.Role;
-import tech.lamprism.lampray.user.event.OnUserCreateEvent;
+import tech.lamprism.lampray.user.event.NewUserCreatedEvent;
 
 import java.time.OffsetDateTime;
 
@@ -33,17 +33,17 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 @Component
-public class UserCreateEventListener implements ApplicationListener<OnUserCreateEvent> {
+public class CreateStaffOnUserCreateListener implements ApplicationListener<NewUserCreatedEvent> {
 
     private final StaffRepository staffRepository;
 
-    public UserCreateEventListener(StaffRepository staffRepository) {
+    public CreateStaffOnUserCreateListener(StaffRepository staffRepository) {
         this.staffRepository = staffRepository;
     }
 
     @Override
     @Async
-    public void onApplicationEvent(@NonNull OnUserCreateEvent event) {
+    public void onApplicationEvent(@NonNull NewUserCreatedEvent event) {
         AttributedUser attributedUser = event.getUser();
         if (attributedUser.getRole() == Role.USER) {
             return;
