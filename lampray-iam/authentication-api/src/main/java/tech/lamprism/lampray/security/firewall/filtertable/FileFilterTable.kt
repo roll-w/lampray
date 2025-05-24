@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.firewall.blocklist
+package tech.lamprism.lampray.security.firewall.filtertable
 
 import org.slf4j.info
 import org.slf4j.logger
@@ -24,29 +24,29 @@ import java.io.File
 import java.time.OffsetDateTime
 
 /**
- * Represents a blocklist that is stored in a file.
+ * Represents a filterlist that is stored in a file.
  *
- * The blocklist is stored in the following format:
+ * The filterlist is stored in the following format:
  *
  * ```
- * # type    identifier    expiration    reason
- * IP   127.0.0.1  2023-01-01T00:00:00Z   test
+ * # type    identifier    mode    expiration    reason
+ * IP   127.0.0.1   ALLOW   2023-01-01T00:00:00Z   test
  * ```
  *
  * @author RollW
  */
-class FileBlocklist(
+class FileFilterTable(
     private val file: File
-) : Blocklist {
+) : FilterTable {
     companion object {
-        private val logger = logger<FileBlocklist>()
+        private val logger = logger<FileFilterTable>()
     }
 
     constructor(path: String) : this(File(path))
 
-    private val delegate = InMemoryBlocklist()
+    private val delegate = InMemoryFilterTable()
 
-    override fun addAll(entries: Collection<BlocklistEntry>) {
+    override fun addAll(entries: Collection<FilterEntry>) {
         delegate.addAll(entries)
         flushToFile()
     }
@@ -69,42 +69,49 @@ class FileBlocklist(
         }.let {
             delegate.addAll(it)
             logger.info {
-                "Load ${it.size} blocklist entries from file: ${file.absolutePath}"
+                "Load ${it.size} Filterlist entries from file: ${file.absolutePath}"
             }
         }
     }
 
-    private fun parseLine(line: String): BlocklistEntry {
-        val line = line.trim()
-        val splits = line.split(" ")
-        if (splits.size < 3) {
-            throw BlocklistFormatException("Invalid blocklist entry: '$line'")
+    private fun parseLine(line: String): FilterEntry {
+        val splits = line.trim().split(" ")
+        if (splits.size < 4) {
+            throw FilterTableFormatException("Invalid Filterlist entry: '$line'")
         }
-        val (type, identifier, reason, expiration) =
-            if (splits.size == 4) splits else splits.reformatAsEntry()
-        return buildBlocklistEntry(type, identifier, reason, expiration)
+        val (type, identifier, mode, expiration, reason) =
+            if (splits.size == 5) splits else splits.reformatAsEntry()
+        return buildFilterlistEntry(
+            type = type,
+            identifier = identifier,
+            mode = FilterMode.fromString(mode),
+            expiration = expiration,
+            reason = reason
+        )
     }
 
-    private fun buildBlocklistEntry(
+    private fun buildFilterlistEntry(
         type: String,
         identifier: String,
-        reason: String,
-        expiration: String
-    ): BlocklistEntry {
+        mode: FilterMode,
+        expiration: String,
+        reason: String
+    ): FilterEntry {
         try {
-            return BlocklistEntry(
+            return FilterEntry(
                 identifier,
                 IdentifierType.valueOf(type),
-                reason,
+                mode,
                 if (expiration.contentEquals("inf", true)) {
-                    BlocklistEntry.INF
+                    FilterEntry.INF
                 } else {
                     OffsetDateTime.parse(expiration)
-                }
+                },
+                reason
             )
         } catch (e: Exception) {
-            throw BlocklistFormatException(
-                "Invalid blocklist entry: '$type $identifier $reason $expiration'",
+            throw FilterTableFormatException(
+                "Invalid Filterlist entry: '$type $identifier $mode $reason $expiration'",
                 e
             )
         }
@@ -119,38 +126,39 @@ class FileBlocklist(
             }
         }
         if (nonEmpty.size < 3) {
-            throw IllegalArgumentException("Invalid blocklist entry: '$this'")
+            throw IllegalArgumentException("Invalid Filterlist entry: '$this'")
         }
         val type = nonEmpty[0].first.trim()
         val identifier = nonEmpty[1].first.trim()
-        val expiration = nonEmpty[2].first.trim()
-        if (nonEmpty.size == 3) {
-            return listOf(type, identifier, "", expiration)
+        val mode = nonEmpty[2].first.trim()
+        val expiration = nonEmpty[3].first.trim()
+        if (nonEmpty.size == 4) {
+            return listOf(type, identifier, mode, expiration, "")
         }
-        val startIndex = nonEmpty[3].second
+        val startIndex = nonEmpty[4].second
         val endIndex = nonEmpty.last().second
         val reason = subList(startIndex, endIndex + 1).joinToString(" ").trim()
-        return listOf(type, identifier, reason, expiration)
+        return listOf(type, identifier, mode, expiration, reason)
     }
 
-    override fun plus(item: BlocklistEntry) = apply {
-        delegate.plus(item)
+    override fun plus(entry: FilterEntry) = apply {
+        delegate.plus(entry)
         flushToFile()
         return this
     }
 
-    override fun minus(entry: BlocklistEntry) = apply {
+    override fun minus(entry: FilterEntry) = apply {
         delegate.minus(entry)
         flushToFile()
         return this
     }
 
-    override fun plusAssign(entry: BlocklistEntry) {
+    override fun plusAssign(entry: FilterEntry) {
         delegate.plusAssign(entry)
         flushToFile()
     }
 
-    override fun minusAssign(entry: BlocklistEntry) {
+    override fun minusAssign(entry: FilterEntry) {
         delegate.minusAssign(entry)
         flushToFile()
     }
@@ -161,12 +169,18 @@ class FileBlocklist(
         }
     }
 
-    override fun clear() {
-        delegate.clear()
-        flushToFile(emptyList<BlocklistEntry>().iterator())
+    override fun get(requestIdentifier: RequestIdentifier): FilterEntry? {
+        return delegate[requestIdentifier].also {
+            flushToFile()
+        }
     }
 
-    override fun iterator(): Iterator<BlocklistEntry> {
+    override fun clear() {
+        delegate.clear()
+        flushToFile(emptyList<FilterEntry>().iterator())
+    }
+
+    override fun iterator(): Iterator<FilterEntry> {
         val snapshot = delegate.toList()
         return snapshot.iterator().also { _ ->
             flushToFile(snapshot.iterator())
@@ -174,17 +188,17 @@ class FileBlocklist(
     }
 
     private fun flushToFile(
-        iterator: Iterator<BlocklistEntry> = delegate.iterator()
+        iterator: Iterator<FilterEntry> = delegate.iterator()
     ) {
         if (!file.exists()) {
             file.createNewFile()
         }
         file.printWriter().use { writer ->
-            writer.println("# type    identifier    expiration    reason")
+            writer.println("# type    identifier    mode    expiration    reason")
             iterator.forEach {
                 writer.println(
-                    "${it.type} ${it.identifier} ${
-                        if (it.expiration == BlocklistEntry.INF) "inf"
+                    "${it.type} ${it.identifier} ${it.mode} ${
+                        if (it.expiration == FilterEntry.INF) "inf"
                         else it.expiration
                     } ${it.reason}"
                 )

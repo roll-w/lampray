@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.firewall.blocklist
-
-import tech.lamprism.lampray.security.firewall.IdentifierType
-import java.time.OffsetDateTime
+package tech.lamprism.lampray.security.firewall.filtertable;
 
 /**
  * @author RollW
  */
-data class BlocklistEntry(
-    val identifier: String,
-    val type: IdentifierType,
-    val reason: String,
-    val expiration: OffsetDateTime
-) {
-    companion object {
-        @JvmField
-        val INF: OffsetDateTime = OffsetDateTime.MAX
+public class FilterTableFormatException extends RuntimeException {
+    public FilterTableFormatException() {
+        super();
+    }
+
+    public FilterTableFormatException(String message) {
+        super(message);
+    }
+
+    public FilterTableFormatException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public FilterTableFormatException(Throwable cause) {
+        super(cause);
     }
 }

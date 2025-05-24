@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.firewall.blocklist
+package tech.lamprism.lampray.security.firewall.filtertable
 
 import tech.lamprism.lampray.security.firewall.RequestIdentifier
 
 /**
  * @author RollW
  */
-interface Blocklist : Iterable<BlocklistEntry> {
-    fun addAll(entries: Collection<BlocklistEntry>)
+interface FilterTable : Iterable<FilterEntry> {
+    fun addAll(entries: Collection<FilterEntry>)
 
-    operator fun plus(entry: BlocklistEntry): Blocklist
+    operator fun plus(entry: FilterEntry): FilterTable
 
-    operator fun minus(entry: BlocklistEntry): Blocklist
+    operator fun minus(entry: FilterEntry): FilterTable
 
-    operator fun plusAssign(entry: BlocklistEntry)
+    operator fun plusAssign(entry: FilterEntry)
 
-    operator fun minusAssign(entry: BlocklistEntry)
+    operator fun minusAssign(entry: FilterEntry)
 
     operator fun contains(requestIdentifier: RequestIdentifier): Boolean
+
+    operator fun get(requestIdentifier: RequestIdentifier): FilterEntry?
 
     fun clear()
 }
