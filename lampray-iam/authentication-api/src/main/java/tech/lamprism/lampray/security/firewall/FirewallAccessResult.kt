@@ -24,8 +24,21 @@ data class FirewallAccessResult @JvmOverloads constructor(
     val message: String = "",
 ) {
     enum class Case {
+        /**
+         * Allow the request to pass through the firewall, and will not pass the
+         * request into the next firewalls.
+         */
         ALLOW,
+
+        /**
+         * Allow the request to pass through the firewall, but they still need to go
+         * through the next firewalls.
+         */
         NEUTRAL,
+
+        /**
+         * Deny the request and stop the request.
+         */
         DENY
     }
 
