@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,17 @@ class SettingSpecificationBuilder<T, V> {
 
     constructor(key: SettingKey<T, V>) {
         this.key = key
+
+        if (key == SettingType.BOOLEAN) {
+            this.valueEntries = listOf(true, false) as List<V?>
+            this.allowAnyValue = false
+        }
     }
 
     var key: SettingKey<T, V>? = null
         private set
 
-    var allowAnyValue: Boolean = false
+    var allowAnyValue: Boolean = true
         private set
 
     var description: SettingDescription = SettingDescription.EMPTY
@@ -89,6 +94,15 @@ class SettingSpecificationBuilder<T, V> {
     }
 
     fun setDefaultValue(default: V?) = apply{
+        if (valueEntries.isNotEmpty()) {
+            if (default != null && !valueEntries.contains(default)) {
+                throw IllegalArgumentException("Default value $default is not in the value entries $valueEntries")
+            }
+            this.defaults = valueEntries.mapIndexedNotNull { index, value ->
+                if (value == default) index else null
+            }
+            return@apply
+        }
         this.defaults = listOf(0)
         this.valueEntries = listOf(default)
     }
