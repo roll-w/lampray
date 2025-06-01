@@ -104,17 +104,22 @@ class HelpRenderer(
         append("Use \"help $helpCommand\" or \"$helpCommand --help\" for more information about a given command.")
     }
 
-    private fun AttributedStringBuilder.renderDescription(commandTree: CommandTree) = commandTree.description.let {
-        if (it.isNotEmpty()) {
-            appendLine()
+    private fun AttributedStringBuilder.renderDescription(commandTree: CommandTree) =
+        commandTree.description.let { it ->
+            if (it == null) {
+                return
+            }
+
+            if (it.isNotEmpty()) {
+                appendLine()
+            }
+            it.trim().wrap(110).lines().forEach { line ->
+                appendLine(line)
+            }
+            if (it.isNotEmpty()) {
+                appendLine()
+            }
         }
-        it.trim().wrap(110).lines().forEach { line ->
-            appendLine(line)
-        }
-        if (it.isNotEmpty()) {
-            appendLine()
-        }
-    }
 
     private fun AttributedStringBuilder.renderChildrenCommands(commandTree: CommandTree) {
         if (commandTree.children.isEmpty()) {
@@ -122,7 +127,7 @@ class HelpRenderer(
         }
         val groupded = commandTree.children.groupBy { it.group }
         groupded.forEach { (group, commands) ->
-            append("${group.ifEmpty { "Available Commands" }}: \n", AttributedStyle.DEFAULT)
+            append("${(group ?: "").ifEmpty { "Available Commands" }}: \n", AttributedStyle.DEFAULT)
             commands.forEach {
                 if (it.isHidden) {
                     return@forEach
@@ -132,7 +137,7 @@ class HelpRenderer(
                     appendLine()
                     16
                 } else 0
-                it.description.trim().wrap(LINE_LENGTH - 16).lines().forEachIndexed { i, it ->
+                it.description?.trim()?.wrap(LINE_LENGTH - 16)?.lines()?.forEachIndexed { i, it ->
                     if (i == 0) {
                         appendLine("${" ".repeat(descriptionPadding)}$it")
                     } else {
