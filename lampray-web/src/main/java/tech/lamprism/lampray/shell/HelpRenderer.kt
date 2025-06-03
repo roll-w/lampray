@@ -125,8 +125,7 @@ class HelpRenderer(
         if (commandTree.children.isEmpty()) {
             return
         }
-        val groupded = commandTree.children.groupBy { it.group }
-        groupded.forEach { (group, commands) ->
+        commandTree.children.groupBy { it.group }.forEach { (group, commands) ->
             append("${(group ?: "").ifEmpty { "Available Commands" }}: \n", AttributedStyle.DEFAULT)
             commands.forEach {
                 if (it.isHidden) {
