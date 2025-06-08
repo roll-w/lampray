@@ -28,12 +28,13 @@ private const val LINE_LENGTH = 110
  * E.g.:
  *
  * ```text
+ * HEADER OF HELP
+ *
  * Usage: <COMMAND> [OPTIONS]
  *
  * Description of the command.
  *
  * Available Commands:
- *
  *  command1      Description of command1
  *  command2      Description of command2
  *
@@ -49,7 +50,8 @@ private const val LINE_LENGTH = 110
  * @author RollW
  */
 class HelpRenderer(
-    private val root: CommandTree
+    private val root: CommandTree,
+    private val header: String = "",
 ) {
     fun getHelp(vararg commands: String): AttributedString {
         return if (commands.isEmpty()) {
@@ -79,12 +81,17 @@ class HelpRenderer(
     }
 
     private fun AttributedStringBuilder.renderCommand(commandTree: CommandTree) {
+        if (header.isNotEmpty()) {
+            appendLine(header)
+            appendLine()
+        }
+
         append("Usage: ")
         val command = if (commandTree.children.isNotEmpty()) {
             "<COMMAND> [OPTIONS]"
         } else {
             "[OPTIONS]"
-        }
+        } + "\n"
         appendLine("${commandTree.fullName} $command")
         renderDescription(commandTree)
         renderChildrenCommands(commandTree)
@@ -93,13 +100,13 @@ class HelpRenderer(
         fun getCommandName(tree: CommandTree): String {
             val fullName = tree.fullName.trim()
             if (fullName.isBlank()) {
-                return " "
+                return ""
             }
             return "$fullName "
         }
 
         val helpCommand = if (commandTree.children.isEmpty())
-            "${getCommandName(root)} <COMMAND>" else "${getCommandName(commandTree)} <COMMAND>"
+            "${getCommandName(root)}<COMMAND>" else "${getCommandName(commandTree)}<COMMAND>"
 
         append("Use \"help $helpCommand\" or \"$helpCommand --help\" for more information about a given command.")
     }
@@ -136,11 +143,16 @@ class HelpRenderer(
                     appendLine()
                     16
                 } else 0
-                it.description?.trim()?.wrap(LINE_LENGTH - 16)?.lines()?.forEachIndexed { i, it ->
-                    if (i == 0) {
-                        appendLine("${" ".repeat(descriptionPadding)}$it")
-                    } else {
-                        appendLine("${" ".repeat(16)}$it")
+
+                if (it.description.isNullOrEmpty()) {
+                    appendLine()
+                } else {
+                    it.description.trim().wrap(LINE_LENGTH - 16).lines().forEachIndexed { i, it ->
+                        if (i == 0) {
+                            appendLine("${" ".repeat(descriptionPadding)}$it")
+                        } else {
+                            appendLine("${" ".repeat(16)}$it")
+                        }
                     }
                 }
             }

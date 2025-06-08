@@ -27,7 +27,7 @@ import tech.lamprism.lampray.shell.HelpRenderer
 import tech.lamprism.lampray.shell.adapter.ShellCommandTree
 import tech.lamprism.lampray.shell.command.HelpCommandProvider
 
-private const val LINE_LENGTH = 110
+private const val HEADER = "Lampray Command Line Interface"
 
 /**
  * @author RollW
@@ -66,7 +66,7 @@ class Help : AbstractShellComponent(), HelpCommandProvider {
         val registrations = Utils
             .removeHiddenCommands(commandCatalog.registrations)
         val root = ShellCommandTree.of(registrations)
-        val helpRenderer = HelpRenderer(root)
+        val helpRenderer = HelpRenderer(root, header = HEADER)
         return helpRenderer.getHelp()
     }
 
@@ -74,7 +74,7 @@ class Help : AbstractShellComponent(), HelpCommandProvider {
         val registrations = Utils
             .removeHiddenCommands(commandCatalog.registrations)
         val root = ShellCommandTree.of(registrations)
-        val helpRenderer = HelpRenderer(root)
+        val helpRenderer = HelpRenderer(root, header = HEADER)
         return helpRenderer.getHelp(*command)
     }
 }
