@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.web.common.keys
 
+import org.slf4j.event.Level
 import tech.lamprism.lampray.setting.AttributedSettingSpecification
 import tech.lamprism.lampray.setting.SettingKey
 import tech.lamprism.lampray.setting.SettingSource
@@ -77,8 +78,9 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
      */
     @JvmField
     val LOGGING_LEVEL =
-        SettingSpecificationBuilder(SettingKey.ofString("logging.level"))
-            .setTextDescription("""
+        SettingSpecificationBuilder(SettingKey.ofStringSet("logging.level"))
+            .setTextDescription(
+                """
                 Logging level for loggers, for example:
                 
                 ```
@@ -86,8 +88,9 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
                   logger3:warn, logger4:error
                 ```
                 
-                The value is a comma-separated list of logger name and level pairs.
-            """.trimIndent())
+                The value is a list of logger name and level pairs.
+                """.trimIndent()
+            )
             .setDefaultValue("")
             .setRequired(false)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
@@ -102,13 +105,22 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
         LOGGING_LEVEL
     )
 
+    private val LEVELS = Level.values().map { it.toString() }
+
     @JvmStatic
-    fun parseLoggingLevel(level: String?): Map<String, String> {
+    fun parseLoggingLevel(level: Set<String>?): Map<String, String> {
         // TODO: move to logging parser when setting value parser api is ready
         if (level == null) {
             return emptyMap()
         }
-        return level.split(",").mapNotNull {
+
+        return level.flatMap {
+            it.split(",")
+        }.map {
+            it.trim()
+        }.filter {
+            it.isNotEmpty()
+        }.mapNotNull { it ->
             if (it.isBlank()) {
                 // skip for empty line
                 return@mapNotNull null
@@ -123,6 +135,9 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
             if (key.isEmpty()) return@mapNotNull null
             if (value.isEmpty()) {
                 throw IllegalArgumentException("Logging level cannot be empty: $it")
+            }
+            if (value.uppercase() !in LEVELS) {
+                throw IllegalArgumentException("Invalid logging level '$value' in '$it', must be one of ${LEVELS.joinToString()}")
             }
             key to value
         }.toMap()
