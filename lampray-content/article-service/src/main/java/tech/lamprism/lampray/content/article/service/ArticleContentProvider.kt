@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import tech.lamprism.lampray.content.service.ContentMetadataService
  * @author RollW
  */
 @Service
-class ArticleProviderService(
+class ArticleContentProvider(
     private val articleRepository: ArticleRepository,
     override val contentMetadataService: ContentMetadataService
 ) : ContentProvider,
@@ -52,6 +52,20 @@ class ArticleProviderService(
             ?: throw ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND)
 
         return ArticleOperatorImpl(article.lock(), this, checkDelete)
+    }
+
+    override fun getContentDetails(contentTraits: List<ContentTrait>): List<ContentDetails> {
+        if (contentTraits.isEmpty()) {
+            return emptyList()
+        }
+        return articleRepository
+            .findAllById(contentTraits.map {
+                it.contentId
+            })
+            .map {
+                it.lock()
+            }
+
     }
 
     override fun updateArticle(article: Article) {

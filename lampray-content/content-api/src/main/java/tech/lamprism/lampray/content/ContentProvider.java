@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package tech.lamprism.lampray.content;
 
 import space.lingu.NonNull;
 
+import java.util.List;
+
 /**
  * Content service internal interface.
  *
@@ -35,4 +37,16 @@ public interface ContentProvider extends ContentSupportable {
     @NonNull
     ContentOperator getContentOperator(@NonNull ContentTrait contentTrait,
                                        boolean checkDelete);
+
+    /**
+     * Get content details by a list of content traits.
+     * <p>
+     * This method is used to get content details for multiple content traits at once.
+     * It is more efficient than calling {@link #getContentDetails(ContentTrait)} for each trait.
+     *
+     * @param contentTraits the list of content traits
+     * @return the list of content details
+     */
+    @NonNull
+    List<ContentDetails> getContentDetails(@NonNull List<? extends ContentTrait> contentTraits);
 }

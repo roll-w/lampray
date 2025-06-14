@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.content.comment.service
 
 import org.springframework.stereotype.Service
+import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentOperator
 import tech.lamprism.lampray.content.ContentProvider
 import tech.lamprism.lampray.content.ContentTrait
@@ -50,6 +51,17 @@ class CommentContentProvider(
                 ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND, "Comment not found")
             }
         return CommentOperatorImpl(commentDo.lock(), this, checkDelete)
+    }
+
+    override fun getContentDetails(contentTraits: List<ContentTrait>): List<ContentDetails> {
+        if (contentTraits.isEmpty()) {
+            return emptyList()
+        }
+        return commentRepository.findAllById(contentTraits.map {
+            it.contentId
+        }).map {
+            it.lock()
+        }
     }
 
     override fun updateComment(comment: Comment) {
