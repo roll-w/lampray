@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.web.common.keys
 
 import org.slf4j.event.Level
+import org.springframework.stereotype.Component
 import tech.lamprism.lampray.setting.AttributedSettingSpecification
 import tech.lamprism.lampray.setting.SettingKey
 import tech.lamprism.lampray.setting.SettingSource
@@ -26,6 +27,7 @@ import tech.lamprism.lampray.setting.SettingSpecificationSupplier
 /**
  * @author RollW
  */
+@Component
 object LoggingConfigKeys : SettingSpecificationSupplier {
     const val LOGGING_PATH_CONSOLE = "[console]"
 
@@ -66,6 +68,48 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .build()
 
+    const val LOGGING_FORMAT_TEXT = "text"
+    const val LOGGING_FORMAT_JSON = "json"
+
+    @JvmField
+    val LOGGING_FILE_FORMAT =
+        SettingSpecificationBuilder(SettingKey.ofString("logging.file.format"))
+            .setTextDescription(
+                """
+                The format of the log file, can be either 'text' or 'json'.
+                If not specified, the default format is 'text'.
+                
+                The 'text' format is a plain text format, while the 'json' format is a JSON format.
+                
+                JSON format is more structured and can be easily parsed by log analysis tools,
+                for example:
+                
+                ```
+                {
+                    "timestamp": "2023-01-01T12:00:00.000Z",
+                    "level": "INFO",
+                    "thread": "main",
+                    "logger": "com.example.MyClass",
+                    "message": "This is a log message",
+                    "error": {
+                        "type": "java.lang.Exception",
+                        "message": "An error occurred",
+                        "stacktrace": [
+                            "at com.example.MyClass.method(MyClass.java:10)",
+                            "at com.example.MyClass.main(MyClass.java:5)"
+                        ]
+                    }
+                }
+                ```
+                """.trimIndent()
+            )
+            .setDefaultValue("text")
+            .setAllowAnyValue(false)
+            .setValueEntries(listOf(LOGGING_FORMAT_TEXT, LOGGING_FORMAT_JSON))
+            .setRequired(false)
+            .setSupportedSources(SettingSource.LOCAL_ONLY)
+            .build()
+
     /**
      * Logging level for loggers, for example:
      *
@@ -102,6 +146,7 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
         LOGGING_FILE_MAX_SIZE,
         LOGGING_FILE_MAX_HISTORY,
         LOGGING_FILE_TOTAL_SIZE_CAP,
+        LOGGING_FILE_FORMAT,
         LOGGING_LEVEL
     )
 

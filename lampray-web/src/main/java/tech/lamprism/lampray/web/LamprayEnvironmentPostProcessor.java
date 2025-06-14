@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.web;
 
 import com.google.common.base.Strings;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
@@ -24,6 +25,8 @@ import org.springframework.boot.logging.DeferredLogFactory;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
+import tech.lamprism.lampray.logging.FileCommonStructuredLogFormatter;
+import tech.lamprism.lampray.logging.JsonStructuredLogFormatter;
 import tech.lamprism.lampray.setting.ConfigProvider;
 import tech.lamprism.lampray.setting.InputStreamConfigReader;
 import tech.lamprism.lampray.setting.ReadonlyConfigProvider;
@@ -107,6 +110,19 @@ public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor
                 localProvider.get(LoggingConfigKeys.LOGGING_FILE_TOTAL_SIZE_CAP));
         properties.put("logging.logback.rollingpolicy.file-name-pattern",
                 "${logging.file.path}/lampray-%d{yyyy-MM-dd}.%i.log");
+
+        String format = localProvider.get(LoggingConfigKeys.LOGGING_FILE_FORMAT);
+
+        if (StringUtils.equalsIgnoreCase(format, LoggingConfigKeys.LOGGING_FORMAT_JSON)) {
+            properties.put("logging.structured.format.file", JsonStructuredLogFormatter.class.getCanonicalName());
+        } else if (StringUtils.equalsIgnoreCase(format, LoggingConfigKeys.LOGGING_FORMAT_TEXT)) {
+            properties.put("logging.structured.format.file", FileCommonStructuredLogFormatter.class.getCanonicalName());
+        } else {
+            throw new ServerInitializeException(new ServerInitializeException.Detail(
+                    "Invalid logging file format: " + format,
+                    "Check the logging file format in your local config file."
+            ));
+        }
     }
 
     private static ReadonlyConfigProvider createLocalProvider(String[] args) {
