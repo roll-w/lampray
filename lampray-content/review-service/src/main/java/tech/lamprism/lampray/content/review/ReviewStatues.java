@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package tech.lamprism.lampray.content.review;
 
+import java.util.List;
+
 /**
  * @author RollW
  */
@@ -26,13 +28,13 @@ public enum ReviewStatues {
     REJECTED(ReviewStatus.REJECTED),
     ALL(ReviewStatus.NOT_REVIEWED, ReviewStatus.REVIEWED, ReviewStatus.REJECTED);
 
-    private final ReviewStatus[] statuses;
+    private final List<ReviewStatus> statuses;
 
     ReviewStatues(ReviewStatus... statuses) {
-        this.statuses = statuses;
+        this.statuses = List.of(statuses);
     }
 
-    public ReviewStatus[] getStatuses() {
+    public List<ReviewStatus> getStatuses() {
         return statuses;
     }
 }

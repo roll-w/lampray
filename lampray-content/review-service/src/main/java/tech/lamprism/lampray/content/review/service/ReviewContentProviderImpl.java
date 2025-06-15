@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package tech.lamprism.lampray.content.review.service;
 import com.google.common.base.Verify;
 import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
-import tech.lamprism.lampray.content.ContentAccessService;
+import tech.lamprism.lampray.content.ContentAssociationProvider;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.review.ReviewContentProvider;
 import tech.lamprism.lampray.content.review.ReviewJobContent;
@@ -32,12 +32,12 @@ import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository;
 @Service
 public class ReviewContentProviderImpl implements ReviewContentProvider {
     private final ReviewJobRepository reviewJobRepository;
-    private final ContentAccessService contentAccessService;
+    private final ContentAssociationProvider contentAssociationProvider;
 
     public ReviewContentProviderImpl(ReviewJobRepository reviewJobRepository,
-                                     ContentAccessService contentAccessService) {
+                                     ContentAssociationProvider contentAssociationProvider) {
         this.reviewJobRepository = reviewJobRepository;
-        this.contentAccessService = contentAccessService;
+        this.contentAssociationProvider = contentAssociationProvider;
     }
 
     @NonNull
@@ -45,8 +45,7 @@ public class ReviewContentProviderImpl implements ReviewContentProvider {
     public ReviewJobContent getReviewContent(long jobId) {
         ReviewJobDo job = reviewJobRepository.findById(jobId).orElse(null);
         Verify.verifyNotNull(job, "Review job not found");
-        ContentDetails details = contentAccessService.getContentDetails(
-                job.getAssociatedContent());
+        ContentDetails details = contentAssociationProvider.getAssociatedContentDetails(job);
         return ReviewJobContent.of(job.lock(), details);
     }
 }

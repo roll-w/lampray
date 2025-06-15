@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,25 +22,27 @@ import tech.rollw.common.web.system.Operator
  * @author RollW
  */
 interface ReviewJobProvider {
-    fun getReviewJob(reviewJobId: Long): ReviewJobInfo
+    fun getReviewJob(reviewJobId: Long): ReviewJobDetails
 
-    val reviewJobs: List<ReviewJobInfo>
+    val reviewJobs: List<ReviewJobDetails>
 
-    fun getReviewJobs(operatorId: Long): List<ReviewJobInfo>
+    fun getReviewJobsByOperator(operator: Operator): List<ReviewJobDetails>
+
+    fun getReviewJobsByReviewer(reviewer: Operator): List<ReviewJobDetails>
 
     fun getReviewJobs(
         reviewer: Operator,
         status: ReviewStatus
-    ): List<ReviewJobInfo>
+    ): List<ReviewJobDetails>
 
     fun getReviewJobs(
         reviewer: Operator,
         statues: ReviewStatues = ReviewStatues.ALL
-    ): List<ReviewJobInfo>
+    ): List<ReviewJobDetails>
 
-    fun getReviewJobs(contentTrait: ContentTrait): List<ReviewJobInfo>
+    fun getReviewJobs(contentTrait: ContentTrait): List<ReviewJobDetails>
 
-    fun getReviewJobs(reviewStatus: ReviewStatus): List<ReviewJobInfo>
+    fun getReviewJobs(reviewStatus: ReviewStatus): List<ReviewJobDetails>
 
-    fun getReviewJobs(reviewStatues: ReviewStatues): List<ReviewJobInfo>
+    fun getReviewJobs(reviewStatues: ReviewStatues): List<ReviewJobDetails>
 }

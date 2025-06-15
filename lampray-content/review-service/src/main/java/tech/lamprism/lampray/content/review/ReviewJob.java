@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.Objects;
 /**
  * @author RollW
  */
-public class ReviewJob implements DataEntity<Long>, ContentAssociated {
+public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJobDetails {
     private final Long jobId;
 
     // TODO: may add serial number to replace job id in the future
@@ -93,7 +93,7 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated {
         return getReviewTime();
     }
 
-    public Long getJobId() {
+    public long getJobId() {
         return jobId;
     }
 
@@ -110,6 +110,7 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated {
         return operatorId;
     }
 
+    @NonNull
     public ReviewStatus getStatus() {
         return status;
     }
@@ -118,22 +119,27 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated {
         return reviewContentType;
     }
 
+    @NonNull
     public OffsetDateTime getAssignedTime() {
         return assignedTime;
     }
 
+    @NonNull
     public String getResult() {
         return result;
     }
 
+    @NonNull
     public OffsetDateTime getReviewTime() {
         return reviewTime;
     }
 
+    @NonNull
     public ReviewMark getReviewMark() {
         return reviewMark;
     }
 
+    @NonNull
     @Override
     public ContentIdentity getAssociatedContent() {
         return associatedContent;
@@ -204,6 +210,17 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated {
     @NonNull
     public SystemResourceKind getSystemResourceKind() {
         return ReviewJobResourceKind.INSTANCE;
+    }
+
+    @Override
+    public long getReviewer() {
+        return reviewerId;
+    }
+
+    @Override
+    @Nullable
+    public Long getOperator() {
+        return operatorId;
     }
 
 

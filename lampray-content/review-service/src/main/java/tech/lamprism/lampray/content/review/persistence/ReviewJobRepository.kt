@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
 import tech.lamprism.lampray.content.ContentType
 import tech.lamprism.lampray.content.review.ReviewStatus
-import java.util.Optional
 
 /**
  * @author RollW
@@ -32,9 +31,9 @@ class ReviewJobRepository(
 ) : CommonRepository<ReviewJobDo, Long>(reviewJobDao) {
     fun findByContent(
         contentId: Long,
-        contentType: ContentType
-    ): Optional<ReviewJobDo> {
-        return findOne(createContentSpecification(contentId, contentType))
+        contentType: ContentType,
+    ): List<ReviewJobDo> {
+        return findAll(createContentSpecification(contentId, contentType))
     }
 
     private fun createContentSpecification(
@@ -50,20 +49,44 @@ class ReviewJobRepository(
 
     fun findByReviewer(
         reviewerId: Long,
-        vararg statuses: ReviewStatus
+        statuses: List<ReviewStatus>,
     ): List<ReviewJobDo> {
-        return findAll(createReviewerSpecification(reviewerId, statuses.toList()))
+        return findAll(createReviewerSpecification(reviewerId, statuses, true))
     }
 
+    fun findByOperator(
+        operatorId: Long,
+        statuses: List<ReviewStatus>,
+    ): List<ReviewJobDo> {
+        return findAll(createReviewerSpecification(operatorId, statuses, false))
+    }
+
+    /**
+     * Find by operator or reviewer.
+     *
+     * @param reviewer if true, find by reviewer, otherwise find by operator.
+     */
     private fun createReviewerSpecification(
-        reviewerId: Long,
-        statuses: List<ReviewStatus>
+        userId: Long,
+        statuses: List<ReviewStatus>,
+        reviewer: Boolean
     ): Specification<ReviewJobDo> =
         Specification { root, _, criteriaBuilder ->
-            val reviewer = criteriaBuilder.equal(root.get(ReviewJobDo_.reviewerId), reviewerId)
+            val reviewer = if (reviewer) {
+                criteriaBuilder.equal(root.get(ReviewJobDo_.reviewerId), userId)
+            } else {
+                criteriaBuilder.equal(root.get(ReviewJobDo_.operatorId), userId)
+            }
             if (statuses.isEmpty()) {
                 return@Specification reviewer
             }
+            if (statuses.size == 1) {
+                return@Specification criteriaBuilder.and(
+                    reviewer,
+                    criteriaBuilder.equal(root.get(ReviewJobDo_.status), statuses[0])
+                )
+            }
+
             criteriaBuilder.and(
                 reviewer,
                 root.get(ReviewJobDo_.status).`in`(statuses)
@@ -71,11 +94,16 @@ class ReviewJobRepository(
         }
 
     fun findByStatus(reviewStatus: ReviewStatus): List<ReviewJobDo> {
-        return findAll(createStatusSpecification(reviewStatus))
-    }
-
-    private fun createStatusSpecification(reviewStatus: ReviewStatus): Specification<ReviewJobDo> =
-        Specification { root, _, criteriaBuilder ->
+        return findAll { root, _, criteriaBuilder ->
             criteriaBuilder.equal(root.get(ReviewJobDo_.status), reviewStatus)
         }
+    }
+
+    fun findByStatuses(reviewStatus: List<ReviewStatus>): List<ReviewJobDo> {
+        return findAll { root, _, criteriaBuilder ->
+            criteriaBuilder.and(
+                root.get(ReviewJobDo_.status).`in`(reviewStatus)
+            )
+        }
+    }
 }
