@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,29 @@
 
 package tech.lamprism.lampray.web.controller.review;
 
+import com.google.common.base.Verify;
 import org.springframework.web.bind.annotation.GetMapping;
-import tech.lamprism.lampray.web.controller.AdminApi;
-import tech.lamprism.lampray.content.review.ReviewJobProvider;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import tech.lamprism.lampray.content.review.ReviewContentProvider;
+import tech.lamprism.lampray.content.review.ReviewJobContent;
+import tech.lamprism.lampray.content.review.ReviewJobDetails;
 import tech.lamprism.lampray.content.review.ReviewJobInfo;
+import tech.lamprism.lampray.content.review.ReviewJobProvider;
+import tech.lamprism.lampray.content.review.ReviewStatues;
+import tech.lamprism.lampray.content.review.service.ReviewStatusService;
+import tech.lamprism.lampray.user.UserIdentity;
+import tech.lamprism.lampray.user.UserTrait;
+import tech.lamprism.lampray.web.common.ApiContext;
+import tech.lamprism.lampray.web.controller.AdminApi;
+import tech.lamprism.lampray.web.controller.review.model.ReviewJobContentView;
+import tech.lamprism.lampray.web.controller.review.model.ReviewJobView;
+import tech.lamprism.lampray.web.controller.review.model.ReviewRequest;
 import tech.rollw.common.web.HttpResponseEntity;
+import tech.rollw.common.web.system.ContextThread;
+import tech.rollw.common.web.system.ContextThreadAware;
 
 import java.util.List;
 
@@ -30,14 +48,75 @@ import java.util.List;
 @AdminApi
 public class ReviewManageController {
     private final ReviewJobProvider reviewJobProvider;
+    private final ReviewContentProvider reviewContentProvider;
+    private final ReviewStatusService reviewStatusService;
+    private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
-    public ReviewManageController(ReviewJobProvider reviewJobProvider) {
+    public ReviewManageController(ReviewJobProvider reviewJobProvider,
+                                  ReviewContentProvider reviewContentProvider,
+                                  ReviewStatusService reviewStatusService,
+                                  ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.reviewJobProvider = reviewJobProvider;
+        this.reviewContentProvider = reviewContentProvider;
+        this.reviewStatusService = reviewStatusService;
+        this.apiContextThreadAware = apiContextThreadAware;
+    }
+
+    @GetMapping("/reviews/{jobId}")
+    public HttpResponseEntity<ReviewJobView> getReviewJob(
+            @PathVariable("jobId") Long jobId) {
+        ReviewJobDetails reviewJobInfo = reviewJobProvider.getReviewJob(jobId);
+        return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
     }
 
     @GetMapping("/reviews")
-    public HttpResponseEntity<List<ReviewJobInfo>> getReviewInfos() {
-        List<ReviewJobInfo> reviewJobInfos = reviewJobProvider.getReviewJobs();
-        return HttpResponseEntity.success(reviewJobInfos);
+    public HttpResponseEntity<List<ReviewJobView>> getReviewJobs() {
+        List<ReviewJobDetails> reviewJobInfos = reviewJobProvider.getReviewJobs();
+        return HttpResponseEntity.success(reviewJobInfos
+                .stream()
+                .map(ReviewJobView::from)
+                .toList()
+        );
+    }
+
+    @GetMapping("/users/{userId}/reviews")
+    public HttpResponseEntity<List<ReviewJobView>> getReviewJobsByUser(
+            @PathVariable(value = "userId") Long userId,
+            @RequestParam(value = "status", required = false,
+                    defaultValue = "ALL")
+            ReviewStatues statues) {
+        List<ReviewJobDetails> reviewJobInfos = reviewJobProvider.getReviewJobs(
+                UserTrait.of(userId),
+                statues
+        );
+        return HttpResponseEntity.success(reviewJobInfos
+                .stream()
+                .map(ReviewJobView::from)
+                .toList()
+        );
+    }
+
+    @GetMapping("/reviews/{jobId}/content")
+    public HttpResponseEntity<ReviewJobContentView> getContentOfReviewJob(
+            @PathVariable("jobId") Long jobId) {
+        ReviewJobContent reviewJobContent = reviewContentProvider.getReviewContent(jobId);
+        return HttpResponseEntity.success(ReviewJobContentView.of(reviewJobContent));
+    }
+
+    @PostMapping("/reviews/{jobId}")
+    public HttpResponseEntity<ReviewJobView> makeReview(
+            @PathVariable("jobId") Long jobId,
+            @RequestBody ReviewRequest reviewRequest
+    ) {
+        ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
+        ApiContext apiContext = apiContextThread.getContext();
+        UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
+        ReviewJobInfo reviewJobInfo = reviewStatusService.makeReview(
+                jobId,
+                user.getOperatorId(),
+                reviewRequest.getPass(),
+                reviewRequest.getResult()
+        );
+        return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
     }
 }

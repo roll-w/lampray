@@ -33,13 +33,13 @@ import tech.lamprism.lampray.content.review.ReviewJobProvider;
 import tech.lamprism.lampray.content.review.ReviewStatues;
 import tech.lamprism.lampray.content.review.service.ReviewStatusService;
 import tech.lamprism.lampray.user.UserIdentity;
-import tech.lamprism.lampray.user.UserTrait;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobContentView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewRequest;
 import tech.rollw.common.web.AuthErrorCode;
+import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.system.ContextThread;
 import tech.rollw.common.web.system.ContextThreadAware;
@@ -103,24 +103,6 @@ public class ReviewController {
         );
     }
 
-    @GetMapping("/users/{userId}/reviews")
-    public HttpResponseEntity<List<ReviewJobView>> getReviewInfos(
-            @PathVariable(value = "userId") Long userId,
-            @RequestParam(value = "status", required = false,
-                    defaultValue = "ALL")
-            ReviewStatues statues) {
-        // TODO: impl
-        List<ReviewJobDetails> reviewJobInfos = reviewJobProvider.getReviewJobs(
-                UserTrait.of(userId),
-                statues
-        );
-        return HttpResponseEntity.success(reviewJobInfos
-                .stream()
-                .map(ReviewJobView::from)
-                .toList()
-        );
-    }
-
     @GetMapping("/reviews/{jobId}/content")
     public HttpResponseEntity<ReviewJobContentView> getReviewContent(
             @PathVariable("jobId") Long jobId) {
@@ -145,6 +127,11 @@ public class ReviewController {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
+        ReviewJobDetails reviewJobDetails = reviewJobProvider.getReviewJob(jobId);
+        if (reviewJobDetails.getReviewer() != user.getOperatorId()) {
+            throw new CommonRuntimeException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
+        }
+
         ReviewJobInfo reviewJobInfo = reviewStatusService.makeReview(
                 jobId,
                 user.getOperatorId(),

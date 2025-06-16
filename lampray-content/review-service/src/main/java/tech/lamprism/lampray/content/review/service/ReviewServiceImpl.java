@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,10 +97,7 @@ public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
     @NonNull
     public ReviewJobInfo getReviewJob(long reviewJobId) {
         ReviewJobDo reviewJob = reviewJobRepository.findById(reviewJobId)
-                .orElse(null);
-        if (reviewJob == null) {
-            throw new ReviewException(CommonErrorCode.ERROR_NOT_FOUND);
-        }
+                .orElseThrow(() -> new ReviewException(CommonErrorCode.ERROR_NOT_FOUND));
         return ReviewJobInfo.of(reviewJob.lock());
     }
 
