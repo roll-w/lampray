@@ -44,10 +44,10 @@ class OnContentPublishReviewListener(
                 ReviewStatus.CANCELED -> ContentStatus.FORBIDDEN
             }
         } catch (e: NotReviewedException) {
-            logger.info(
+            logger.info {
                 "Already assigned reviewer for content: ${contentDetails.contentId}@${contentDetails.contentType}, " +
                         "reviewer: ${e.reviewInfo.reviewer}"
-            )
+            }
             return ContentStatus.REVIEWING
         }
     }

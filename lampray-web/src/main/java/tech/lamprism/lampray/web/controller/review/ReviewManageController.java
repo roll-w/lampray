@@ -70,8 +70,11 @@ public class ReviewManageController {
     }
 
     @GetMapping("/reviews")
-    public HttpResponseEntity<List<ReviewJobView>> getReviewJobs() {
-        List<ReviewJobDetails> reviewJobInfos = reviewJobProvider.getReviewJobs();
+    public HttpResponseEntity<List<ReviewJobView>> getReviewJobs(
+            @RequestParam(value = "status", required = false,
+                    defaultValue = "ALL")
+            ReviewStatues statues) {
+        List<ReviewJobDetails> reviewJobInfos = reviewJobProvider.getReviewJobs(statues);
         return HttpResponseEntity.success(reviewJobInfos
                 .stream()
                 .map(ReviewJobView::from)

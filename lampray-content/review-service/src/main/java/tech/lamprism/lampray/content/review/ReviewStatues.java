@@ -22,11 +22,13 @@ import java.util.List;
  * @author RollW
  */
 public enum ReviewStatues {
-    FINISHED(ReviewStatus.REVIEWED, ReviewStatus.REJECTED),
-    UNFINISHED(ReviewStatus.NOT_REVIEWED),
+    FINISHED(ReviewStatus.REVIEWED, ReviewStatus.REJECTED, ReviewStatus.CANCELED),
     PASSED(ReviewStatus.REVIEWED),
+    REVIEWED(ReviewStatus.REVIEWED),
+    UNFINISHED(ReviewStatus.NOT_REVIEWED),
     REJECTED(ReviewStatus.REJECTED),
-    ALL(ReviewStatus.NOT_REVIEWED, ReviewStatus.REVIEWED, ReviewStatus.REJECTED);
+    CANCELED(ReviewStatus.CANCELED),
+    ALL(ReviewStatus.values());
 
     private final List<ReviewStatus> statuses;
 
