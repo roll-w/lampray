@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentPublishProvider;
 import tech.lamprism.lampray.content.UncreatedContent;
 import tech.lamprism.lampray.content.article.ArticleDetailsMetadata;
-import tech.lamprism.lampray.content.article.ArticleInfo;
 import tech.lamprism.lampray.content.common.ContentException;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.web.controller.article.model.ArticleCreateRequest;
+import tech.lamprism.lampray.web.controller.article.model.ArticleInfoView;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.UserErrorCode;
 import tech.rollw.common.web.system.ContextThread;
@@ -48,7 +48,7 @@ public class ArticleController {
     }
 
     @PostMapping("/articles")
-    public HttpResponseEntity<ArticleInfo> createArticle(
+    public HttpResponseEntity<ArticleInfoView> createArticle(
             @RequestBody ArticleCreateRequest articleCreateRequest) {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
@@ -62,7 +62,7 @@ public class ArticleController {
         );
         ContentDetails articleDetails =
                 contentPublishProvider.publishContent(uncreatedContent);
-        ArticleInfo articleInfo = ArticleInfo.from(articleDetails);
-        return HttpResponseEntity.success(articleInfo);
+        ArticleInfoView articleInfoView = ArticleInfoView.from(articleDetails);
+        return HttpResponseEntity.success(articleInfoView);
     }
 }

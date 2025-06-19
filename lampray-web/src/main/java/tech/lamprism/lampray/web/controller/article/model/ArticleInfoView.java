@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,34 +14,37 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.article;
+package tech.lamprism.lampray.web.controller.article.model;
 
-import space.lingu.NonNull;
-import tech.lamprism.lampray.content.Content;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentDetailsMetadata;
 import tech.lamprism.lampray.content.ContentType;
+import tech.lamprism.lampray.content.article.ArticleDetailsMetadata;
+import tech.lamprism.lampray.web.controller.content.vo.ContentVo;
 
 import java.time.OffsetDateTime;
 
 /**
  * @author RollW
  */
-public record ArticleInfo(
+public record ArticleInfoView(
         long id,
         long userId,
         String title,
         String cover,
         OffsetDateTime createTime,
         OffsetDateTime updateTime
-) implements Content {
-    public static ArticleInfo from(ContentDetails contentDetails) {
+) implements ContentVo {
+    public static ArticleInfoView from(ContentDetails contentDetails) {
         if (contentDetails == null) {
             return null;
         }
+        if (contentDetails.getContentType() != ContentType.ARTICLE) {
+            throw new IllegalArgumentException("Content details is not an article.");
+        }
         ContentDetailsMetadata metadata = contentDetails.getMetadata();
         if (!(metadata instanceof ArticleDetailsMetadata articleMetadata)) {
-            return new ArticleInfo(
+            return new ArticleInfoView(
                     contentDetails.getContentId(),
                     contentDetails.getUserId(),
                     contentDetails.getTitle(),
@@ -50,7 +53,7 @@ public record ArticleInfo(
                     contentDetails.getUpdateTime()
             );
         }
-        return new ArticleInfo(
+        return new ArticleInfoView(
                 contentDetails.getContentId(),
                 contentDetails.getUserId(),
                 contentDetails.getTitle(),
@@ -58,21 +61,5 @@ public record ArticleInfo(
                 contentDetails.getCreateTime(),
                 contentDetails.getUpdateTime()
         );
-    }
-
-    @Override
-    public long getContentId() {
-        return id;
-    }
-
-    @NonNull
-    @Override
-    public ContentType getContentType() {
-        return ContentType.ARTICLE;
-    }
-
-    @Override
-    public long getUserId() {
-        return userId;
     }
 }
