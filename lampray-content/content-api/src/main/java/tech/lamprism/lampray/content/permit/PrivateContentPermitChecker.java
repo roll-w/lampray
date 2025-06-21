@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ import tech.rollw.common.web.UserErrorCode;
  * @author RollW
  */
 @Component
-public class ContentUserChecker implements ContentPermitCheckProvider {
-    public ContentUserChecker() {
+public class PrivateContentPermitChecker implements ContentPermitCheckProvider {
+    public PrivateContentPermitChecker() {
     }
 
     @Override
@@ -41,15 +41,14 @@ public class ContentUserChecker implements ContentPermitCheckProvider {
     public ErrorCode checkAccessPermit(@NonNull Content content,
                                        @NonNull ContentAccessAuthType contentAccessAuthType,
                                        @NonNull ContentAccessCredentials credentials) {
-        ContentAccessCredential credential = credentials.getCredential(ContentAccessAuthType.USER);
-        if (credential == null || credential.getRawData() == null) {
-            return UserErrorCode.ERROR_USER_NOT_LOGIN;
-        }
-
         if (contentAccessAuthType != ContentAccessAuthType.PRIVATE) {
             return CommonErrorCode.SUCCESS;
         }
 
+        ContentAccessCredential credential = credentials.getCredential(ContentAccessCredential.Type.USER);
+        if (credential == null || credential.getRawData() == null) {
+            return UserErrorCode.ERROR_USER_NOT_LOGIN;
+        }
         Type type = getType(credential.getRawData());
         return switch (type) {
             case LONG -> checkIfLong(content, (Long) credential.getRawData());
@@ -89,8 +88,8 @@ public class ContentUserChecker implements ContentPermitCheckProvider {
     /**
      * Supported types.
      *
-     * @see ContentAccessAuthType#USER
-     * @see ContentAccessAuthType#getTypes()
+     * @see ContentAccessCredential.Type#USER
+     * @see ContentAccessCredential.Type#getTypes()
      */
     private enum Type {
         LONG,

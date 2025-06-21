@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
-import tech.lamprism.lampray.content.ContentAccessAuthType;
+import tech.lamprism.lampray.content.ContentAccessCredential;
 import tech.lamprism.lampray.content.ContentAccessCredentials;
 import tech.lamprism.lampray.content.ContentAccessService;
 import tech.lamprism.lampray.content.ContentDetails;
@@ -33,10 +33,12 @@ import tech.lamprism.lampray.content.collection.ContentCollectionProviderFactory
 import tech.lamprism.lampray.content.collection.ContentCollectionType;
 import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
+import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.web.controller.content.vo.ContentVo;
 import tech.lamprism.lampray.web.controller.content.vo.UrlContentType;
+import tech.rollw.common.web.CommonErrorCode;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.system.ContextThread;
 import tech.rollw.common.web.system.ContextThreadAware;
@@ -79,7 +81,7 @@ public class ContentController {
         ContentDetails details = contentAccessService.openContent(
                 ContentIdentity.of(contentId, contentType.getContentType()),
                 ContentAccessCredentials.of(
-                        ContentAccessAuthType.USER, apiContext.getUser()
+                        ContentAccessCredential.Type.USER, apiContext.getUser()
                 )
         );
         if (details.getUserId() != userId) {
@@ -95,16 +97,19 @@ public class ContentController {
             @PathVariable("contentType") UrlContentType contentType) {
         ApiContext context = apiContextThreadAware.getContextThread()
                 .getContext();
+        AttributedUser user = context.getUser();
+        if (user == null) {
+            return HttpResponseEntity.of(CommonErrorCode.ERROR_NOT_FOUND);
+        }
 
-        ContentCollectionType userCollectionType = contentType
-                .getUserCollectionType();
+        ContentCollectionType userCollectionType = contentType.getUserCollectionType();
         ContentAccessCredentials contentAccessCredentials = ContentAccessCredentials.of(
-                ContentAccessAuthType.USER,
-                context.getUser()
+                ContentAccessCredential.Type.USER,
+                user
         );
         List<ContentMetadataDetails<?>> contents = contentCollectionProviderFactory.getContents(
                 ContentCollectionIdentity.of(
-                        context.getUser().getUserId(),
+                        user.getUserId(),
                         userCollectionType
                 ),
                 contentAccessCredentials
@@ -124,7 +129,7 @@ public class ContentController {
         ApiContext apiContext = apiContextThread.getContext();
         // TODO: check if the user is the same as the current user
         ContentAccessCredentials contentAccessCredentials = ContentAccessCredentials.of(
-                ContentAccessAuthType.USER,
+                ContentAccessCredential.Type.USER,
                 apiContext.getUser()
         );
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public final class ContentAccessCredentials implements SystemAuthenticateCredent
         return Collections.unmodifiableList(contentAccessCredentials);
     }
 
-    public boolean hasType(ContentAccessAuthType type) {
+    public boolean hasType(ContentAccessCredential.Type type) {
         for (ContentAccessCredential credential : contentAccessCredentials) {
             if (credential == null) {
                 continue;
@@ -55,7 +55,7 @@ public final class ContentAccessCredentials implements SystemAuthenticateCredent
         return false;
     }
 
-    public List<ContentAccessCredential> getCredentials(ContentAccessAuthType type) {
+    public List<ContentAccessCredential> getCredentials(ContentAccessCredential.Type type) {
         List<ContentAccessCredential> result = new ArrayList<>();
         for (ContentAccessCredential credential : contentAccessCredentials) {
             if (credential == null) {
@@ -68,7 +68,7 @@ public final class ContentAccessCredentials implements SystemAuthenticateCredent
         return result;
     }
 
-    public ContentAccessCredential getCredential(ContentAccessAuthType type) {
+    public ContentAccessCredential getCredential(ContentAccessCredential.Type type) {
         for (ContentAccessCredential credential : contentAccessCredentials) {
             if (credential == null) {
                 continue;
@@ -93,26 +93,32 @@ public final class ContentAccessCredentials implements SystemAuthenticateCredent
         return new ContentAccessCredentials(credentials);
     }
 
-    public static ContentAccessCredentials of(@NonNull ContentAccessAuthType type, Object data) {
+    public static ContentAccessCredentials of(@NonNull ContentAccessCredential.Type type, Object data) {
         return new ContentAccessCredentials(new ContentAccessCredential(type, data));
     }
 
 
-    public static ContentAccessCredentials of(@NonNull ContentAccessAuthType type1, Object data1,
-                                              @NonNull ContentAccessAuthType type2, Object data2) {
+    public static ContentAccessCredentials of(@NonNull ContentAccessCredential.Type type1, Object data1,
+                                              @NonNull ContentAccessCredential.Type type2, Object data2) {
         return new ContentAccessCredentials(
                 new ContentAccessCredential(type1, data1),
                 new ContentAccessCredential(type2, data2)
         );
     }
 
-    public static ContentAccessCredentials of(@NonNull ContentAccessAuthType type1, Object data1,
-                                              @NonNull ContentAccessAuthType type2, Object data2,
-                                              @NonNull ContentAccessAuthType type3, Object data3) {
+    public static ContentAccessCredentials of(@NonNull ContentAccessCredential.Type type1, Object data1,
+                                              @NonNull ContentAccessCredential.Type type2, Object data2,
+                                              @NonNull ContentAccessCredential.Type type3, Object data3) {
         return new ContentAccessCredentials(
                 new ContentAccessCredential(type1, data1),
                 new ContentAccessCredential(type2, data2),
                 new ContentAccessCredential(type3, data3)
         );
     }
+
+    public static final ContentAccessCredentials NO_LIMIT = new ContentAccessCredentials(
+            new ContentAccessCredential(ContentAccessCredential.Type.NO_LIMIT, null)
+    );
+
+    public static final ContentAccessCredentials ANONYMOUS = new ContentAccessCredentials();
 }

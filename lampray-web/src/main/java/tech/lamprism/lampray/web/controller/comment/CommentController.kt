@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import tech.lamprism.lampray.content.ContentAccessAuthType
+import tech.lamprism.lampray.content.ContentAccessCredential
 import tech.lamprism.lampray.content.ContentAccessCredentials
 import tech.lamprism.lampray.content.ContentPublishProvider
 import tech.lamprism.lampray.content.ContentType
@@ -85,7 +85,7 @@ class CommentController(
         val context = apiContextThreadAware.contextThread
             .context
         val contentAccessCredentials = ContentAccessCredentials.of(
-            ContentAccessAuthType.USER,
+            ContentAccessCredential.Type.USER,
             context.user
         )
 
@@ -106,6 +106,7 @@ class CommentController(
         val user = context.user!!
         val contents = contentCollectionProviderFactory.getContents(
             ContentCollectionIdentity.of(user.userId, ContentCollectionType.USER_COMMENTS),
+            ContentAccessCredentials.NO_LIMIT
         ).mapNotNull {
             CommentVo.of(it.contentDetails)
         }

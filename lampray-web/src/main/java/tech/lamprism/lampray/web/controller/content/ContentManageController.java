@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,17 @@ package tech.lamprism.lampray.web.controller.content;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import tech.lamprism.lampray.content.ContentAccessService;
+import tech.lamprism.lampray.content.ContentIdentity;
+import tech.lamprism.lampray.content.ContentMetadataDetails;
+import tech.lamprism.lampray.content.ContentProviderFactory;
+import tech.lamprism.lampray.content.collection.ContentCollectionProviderFactory;
+import tech.lamprism.lampray.content.collection.ContentCollectionType;
+import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.AdminApi;
-import tech.lamprism.lampray.web.controller.comment.model.CommentVo;
 import tech.lamprism.lampray.web.controller.content.vo.ContentVo;
 import tech.lamprism.lampray.web.controller.content.vo.UrlContentType;
-import tech.lamprism.lampray.web.controller.article.model.ArticleVo;
-import tech.lamprism.lampray.content.ContentAccessService;
-import tech.lamprism.lampray.content.ContentDetails;
-import tech.lamprism.lampray.content.ContentIdentity;
-import tech.lamprism.lampray.content.collection.ContentCollectionProviderFactory;
-import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.system.ContextThreadAware;
 import tech.rollw.common.web.system.SystemResourceOperatorProvider;
@@ -39,15 +39,17 @@ import tech.rollw.common.web.system.SystemResourceOperatorProvider;
 @AdminApi
 public class ContentManageController {
     private final ContentAccessService contentAccessService;
+    private final ContentProviderFactory contentProviderFactory;
     private final SystemResourceOperatorProvider<Long> systemResourceOperatorProvider;
     private final ContentCollectionProviderFactory contentCollectionProviderFactory;
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
-    public ContentManageController(ContentAccessService contentAccessService,
+    public ContentManageController(ContentAccessService contentAccessService, ContentProviderFactory contentProviderFactory,
                                    SystemResourceOperatorProvider<Long> systemResourceOperatorProvider,
                                    ContentCollectionProviderFactory contentCollectionProviderFactory,
                                    ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.contentAccessService = contentAccessService;
+        this.contentProviderFactory = contentProviderFactory;
         this.systemResourceOperatorProvider = systemResourceOperatorProvider;
         this.contentCollectionProviderFactory = contentCollectionProviderFactory;
         this.apiContextThreadAware = apiContextThreadAware;
@@ -58,20 +60,20 @@ public class ContentManageController {
             @PathVariable("userId") Long userId,
             @PathVariable("contentType") UrlContentType contentType,
             @PathVariable("contentId") Long contentId) {
-        ContentDetails details = contentAccessService.getContentDetails(
+        ContentMetadataDetails<?> contentMetadataDetails = contentAccessService.getContentMetadataDetails(
                 ContentIdentity.of(contentId, contentType.getContentType())
         );
-        if (details.getUserId() != userId) {
+        if (contentMetadataDetails.getUserId() != userId) {
             return HttpResponseEntity.of(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
         }
-        return HttpResponseEntity.success(contentVoConvert(details));
+        return HttpResponseEntity.success(ContentViewHelper.toContentView(contentMetadataDetails.getContentDetails()));
     }
 
-    private ContentVo contentVoConvert(ContentDetails details) {
-        return switch (details.getContentType()) {
-            case ARTICLE -> ArticleVo.of(details);
-            case COMMENT -> CommentVo.of(details);
-            default -> throw new IllegalStateException("Unexpected value: " + details.getContentType());
+    private ContentCollectionType getUserContentCollectionType(UrlContentType contentType) {
+        return switch (contentType) {
+            case ARTICLE -> ContentCollectionType.USER_ARTICLES;
+            case COMMENT -> ContentCollectionType.USER_COMMENTS;
+            default -> throw new IllegalArgumentException("Unknown content type: " + contentType);
         };
     }
 }

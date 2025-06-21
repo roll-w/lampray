@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class ContentPasswordChecker implements ContentPermitCheckProvider {
         if (contentAccessAuthType != ContentAccessAuthType.PASSWORD) {
             return CommonErrorCode.SUCCESS;
         }
-        ContentAccessCredential credential = credentials.getCredential(ContentAccessAuthType.PASSWORD);
+        ContentAccessCredential credential = credentials.getCredential(ContentAccessCredential.Type.PASSWORD);
         if (credential == null) {
             return ContentErrorCode.ERROR_PASSWORD_REQUIRED;
         }

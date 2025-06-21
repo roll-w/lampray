@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package tech.lamprism.lampray.content.permit
 import space.lingu.NonNull
 import tech.lamprism.lampray.content.Content
 import tech.lamprism.lampray.content.ContentAccessAuthType
+import tech.lamprism.lampray.content.ContentAccessCredential.Type
 import tech.lamprism.lampray.content.ContentAccessCredentials
 
 /**
@@ -37,6 +38,10 @@ class ContentPermitCheckerChain(
             // no need to check.
             return ContentPermitResult.permit()
         }
+        if (credentials.hasType(Type.NO_LIMIT)) {
+            return ContentPermitResult.permit()
+        }
+
         for (provider in providers) {
             if (!provider.supports(contentAccessAuthType)) {
                 continue
