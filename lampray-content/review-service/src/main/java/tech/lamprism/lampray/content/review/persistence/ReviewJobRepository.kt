@@ -77,10 +77,13 @@ class ReviewJobRepository(
             } else {
                 criteriaBuilder.equal(root.get(ReviewJobDo_.operatorId), userId)
             }
-            if (statuses.isEmpty()) {
+            if (statuses.isEmpty() || statuses.containsAll(ReviewStatus.entries)) {
+                // If no statuses are provided or all statuses are included,
+                // return the reviewer specification without filtering by status.
                 return@Specification reviewer
             }
             if (statuses.size == 1) {
+                // More efficient way than using `in` for a single value.
                 return@Specification criteriaBuilder.and(
                     reviewer,
                     criteriaBuilder.equal(root.get(ReviewJobDo_.status), statuses[0])

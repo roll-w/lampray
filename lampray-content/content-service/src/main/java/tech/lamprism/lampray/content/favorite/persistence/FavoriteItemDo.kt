@@ -166,6 +166,7 @@ class FavoriteItemDo(
     }
 
     companion object {
+        @JvmStatic
         fun FavoriteItem.toDo() = FavoriteItemDo(
             id,
             userId,

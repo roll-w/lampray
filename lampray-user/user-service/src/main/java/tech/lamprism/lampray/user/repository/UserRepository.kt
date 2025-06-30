@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ class UserRepository(
     }
 
     private fun createSearchBySpec(keyword: String) =
-        Specification { root, query, builder ->
+        Specification { root, _, builder ->
             builder.like(root.get(UserDo_.username), keyword)
         }
 }
