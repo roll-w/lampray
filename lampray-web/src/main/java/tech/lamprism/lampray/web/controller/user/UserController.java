@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,22 +21,21 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import tech.lamprism.lampray.storage.StorageUrlProvider;
+import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.AttributedUserDetails;
+import tech.lamprism.lampray.user.UserIdentity;
+import tech.lamprism.lampray.user.UserProvider;
+import tech.lamprism.lampray.user.UserSearchService;
+import tech.lamprism.lampray.user.UserViewException;
+import tech.lamprism.lampray.user.details.UserPersonalData;
+import tech.lamprism.lampray.user.details.UserPersonalDataService;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.common.ParamValidate;
 import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.web.controller.user.model.UserCommonDetailsVo;
-import tech.lamprism.lampray.storage.StorageUrlProvider;
-import tech.lamprism.lampray.user.AttributedUser;
-import tech.lamprism.lampray.user.UserIdentity;
-import tech.lamprism.lampray.user.UserViewException;
-import tech.lamprism.lampray.user.UserProvider;
-import tech.lamprism.lampray.user.UserSearchService;
-import tech.lamprism.lampray.user.details.UserPersonalData;
-import tech.lamprism.lampray.user.details.UserPersonalDataService;
 import tech.rollw.common.web.AuthErrorCode;
 import tech.rollw.common.web.HttpResponseEntity;
-import tech.rollw.common.web.system.ContextThread;
 import tech.rollw.common.web.system.ContextThreadAware;
 import tech.rollw.common.web.system.paged.PageableContext;
 
@@ -70,25 +69,21 @@ public class UserController {
 
     @GetMapping("/user")
     public HttpResponseEntity<UserCommonDetailsVo> getAuthenticatedUser() {
-        ApiContext context = apiContextThreadAware
-                .getContextThread().getContext();
-        UserIdentity userInfo = context.getUser();
-        if (userInfo == null) {
+        ApiContext context = apiContextThreadAware.getContextThread().getContext();
+        UserIdentity contextUser = context.getUser();
+        if (contextUser == null) {
             throw new UserViewException(AuthErrorCode.ERROR_UNAUTHORIZED_USE);
         }
-        UserPersonalData userPersonalData =
-                userPersonalDataService.getPersonalData(userInfo);
+        UserPersonalData userPersonalData = userPersonalDataService.getPersonalData(contextUser);
         return HttpResponseEntity.success(UserCommonDetailsVo.of(
-                userInfo, userPersonalData,
-                storageUrlProvider.getUrlOfStorage(
-                        userPersonalData.getAvatar()),
-                storageUrlProvider.getUrlOfStorage(
-                        userPersonalData.getCover())
+                contextUser, userPersonalData,
+                storageUrlProvider.getUrlOfStorage(userPersonalData.getAvatar()),
+                storageUrlProvider.getUrlOfStorage(userPersonalData.getCover())
         ));
     }
 
     @GetMapping("/users")
-    public HttpResponseEntity<List<UserCommonDetailsVo>> getUsers() {
+    public HttpResponseEntity<List<UserCommonDetailsVo>> listUsers() {
         List<AttributedUserDetails> users = userProvider.getUsers();
         List<UserCommonDetailsVo> userCommonDetailsVos = users.stream()
                 .map(this::toDetailsVo)
@@ -106,10 +101,8 @@ public class UserController {
                 userPersonalDataService.getPersonalData(userIdentity);
         return HttpResponseEntity.success(UserCommonDetailsVo.of(
                 userIdentity, userPersonalData,
-                storageUrlProvider.getUrlOfStorage(
-                        userPersonalData.getAvatar()),
-                storageUrlProvider.getUrlOfStorage(
-                        userPersonalData.getCover())
+                storageUrlProvider.getUrlOfStorage(userPersonalData.getAvatar()),
+                storageUrlProvider.getUrlOfStorage(userPersonalData.getCover())
         ));
     }
 
@@ -117,21 +110,13 @@ public class UserController {
     public HttpResponseEntity<List<UserCommonDetailsVo>> searchUsers(
             @RequestParam("keyword") String keyword) {
         ParamValidate.notEmpty(keyword, "keyword");
-        ContextThread<PageableContext> contextThread =
-                pageableContextThreadAware.getContextThread();
-        PageableContext pageableContext = contextThread.getContext();
-        pageableContext.setIncludeDeleted(false);
 
-        List<AttributedUser> attributedUsers =
-                userSearchService.findUsers(keyword);
-
-        List<UserCommonDetailsVo> userCommonDetailsVos =
-                attributedUsers.stream()
-                        .map(this::toDetailsVo)
-                        .toList();
-        return HttpResponseEntity.success(
-                pageableContext.toPage(userCommonDetailsVos)
-        );
+        // TODO: page support
+        List<AttributedUser> attributedUsers = userSearchService.findUsers(keyword);
+        List<UserCommonDetailsVo> userCommonDetailsVos = attributedUsers.stream()
+                .map(this::toDetailsVo)
+                .toList();
+        return HttpResponseEntity.success(userCommonDetailsVos);
     }
 
     private UserCommonDetailsVo toDetailsVo(AttributedUser user) {

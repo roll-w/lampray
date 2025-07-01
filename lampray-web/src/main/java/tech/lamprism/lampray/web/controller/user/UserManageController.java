@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,25 @@
 
 package tech.lamprism.lampray.web.controller.user;
 
-import org.springframework.web.bind.annotation.*;
-import tech.lamprism.lampray.user.AttributedUserDetails;
-import tech.lamprism.lampray.web.controller.AdminApi;
-import tech.lamprism.lampray.web.controller.user.model.UserCreateRequest;
-import tech.lamprism.lampray.web.controller.user.model.UserDetailsVo;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import tech.lamprism.lampray.storage.StorageUrlProvider;
 import tech.lamprism.lampray.user.AttributedUser;
+import tech.lamprism.lampray.user.AttributedUserDetails;
 import tech.lamprism.lampray.user.UserManageService;
 import tech.lamprism.lampray.user.UserProvider;
 import tech.lamprism.lampray.user.details.UserPersonalData;
 import tech.lamprism.lampray.user.details.UserPersonalDataService;
+import tech.lamprism.lampray.web.controller.AdminApi;
+import tech.lamprism.lampray.web.controller.user.model.UserCreateRequest;
+import tech.lamprism.lampray.web.controller.user.model.UserDetailsVo;
 import tech.rollw.common.web.HttpResponseEntity;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,31 +58,31 @@ public class UserManageController {
     }
 
     @GetMapping("/users")
-    public HttpResponseEntity<List<UserDetailsVo>> getUserList() {
-        List<AttributedUserDetails> userIdentities = userProvider.getUsers();
-        List<UserPersonalData> personalDataList =
-                userPersonalDataService.getPersonalData(userIdentities);
-        List<UserDetailsVo> userDetailsVos = new ArrayList<>();
-        for (AttributedUser user : userIdentities) {
-            UserPersonalData personalData = getPersonalData(
-                    user, personalDataList);
-            userDetailsVos.add(UserDetailsVo.of(
-                    user, personalData,
-                    storageUrlProvider.getUrlOfStorage(personalData.getAvatar()),
-                    storageUrlProvider.getUrlOfStorage(personalData.getCover())
-            ));
-        }
+    public HttpResponseEntity<List<UserDetailsVo>> listUser(
+            @RequestParam(required = false, defaultValue = "") String filter
+    ) {
+        List<AttributedUserDetails> users = userProvider.getUsers();
+        List<UserPersonalData> personalDataList = userPersonalDataService.getPersonalData(users);
+
+        List<UserDetailsVo> userDetailsVos = users.stream()
+                .map(user -> {
+                    UserPersonalData personalData = findPersonalData(user, personalDataList);
+                    return UserDetailsVo.of(
+                            user, personalData,
+                            storageUrlProvider.getUrlOfStorage(personalData.getAvatar()),
+                            storageUrlProvider.getUrlOfStorage(personalData.getCover())
+                    );
+                })
+                .toList();
         return HttpResponseEntity.success(userDetailsVos);
     }
 
-    private UserPersonalData getPersonalData(AttributedUser user,
-                                             List<UserPersonalData> personalDataList) {
-        for (UserPersonalData data : personalDataList) {
-            if (data.getUserId() == user.getUserId()) {
-                return data;
-            }
-        }
-        return UserPersonalData.defaultOf(user);
+    private UserPersonalData findPersonalData(AttributedUser user,
+                                              List<UserPersonalData> personalDataList) {
+        return personalDataList.stream()
+                .filter(data -> data.getUserId() == user.getUserId())
+                .findFirst()
+                .orElse(UserPersonalData.defaultOf(user));
     }
 
     @GetMapping("/users/{userId}")
