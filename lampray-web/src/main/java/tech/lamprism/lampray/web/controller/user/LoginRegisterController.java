@@ -133,12 +133,15 @@ public class LoginRegisterController {
         return HttpResponseEntity.success();
     }
 
-    @PostMapping(value = "/register/token")
+    @PostMapping("/register/token")
     public HttpResponseEntity<Void> resendRegisterToken(
             @RequestParam("username") String username) {
         ParamValidate.notEmpty(username,
                 "Username cannot be null or empty.");
-        // TODO: resend the register token
+
+        AttributedUserDetails user = userProvider.getUser(username);
+        registerProvider.resendRegisterToken(user);
+
         return HttpResponseEntity.success();
     }
 
