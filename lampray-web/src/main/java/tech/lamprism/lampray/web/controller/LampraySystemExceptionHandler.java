@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,15 +79,15 @@ import java.util.concurrent.LinkedBlockingDeque;
  */
 @ControllerAdvice
 @RestController
-public class LampSystemExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(LampSystemExceptionHandler.class);
+public class LampraySystemExceptionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(LampraySystemExceptionHandler.class);
     private final ErrorCodeFinder errorCodeFinder;
     private final MessageSource messageSource;
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
-    public LampSystemExceptionHandler(ErrorCodeFinder errorCodeFinder,
-                                      MessageSource messageSource,
-                                      ContextThreadAware<ApiContext> apiContextThreadAware) {
+    public LampraySystemExceptionHandler(ErrorCodeFinder errorCodeFinder,
+                                         MessageSource messageSource,
+                                         ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.errorCodeFinder = errorCodeFinder;
         this.messageSource = messageSource;
         this.apiContextThreadAware = apiContextThreadAware;
@@ -216,7 +216,6 @@ public class LampSystemExceptionHandler {
 
     @ExceptionHandler(FileNotFoundException.class)
     public HttpResponseEntity<Void> handle(FileNotFoundException e) {
-        recordErrorLog(IoErrorCode.ERROR_FILE_NOT_FOUND, e);
         return HttpResponseEntity.of(
                 IoErrorCode.ERROR_FILE_NOT_FOUND,
                 e.getMessage()
