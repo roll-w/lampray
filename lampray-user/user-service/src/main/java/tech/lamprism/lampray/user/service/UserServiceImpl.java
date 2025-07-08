@@ -119,7 +119,7 @@ public class UserServiceImpl implements UserSignatureProvider,
 
     @Override
     public AttributedUserDetails getUser(long userId) throws UserViewException {
-        UserDo user = userRepository.getByUserId(userId).orElse(null);
+        UserDo user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
         }
@@ -128,7 +128,7 @@ public class UserServiceImpl implements UserSignatureProvider,
 
     @Override
     public AttributedUserDetails getUser(String username) throws UserViewException {
-        UserDo user = userRepository.getByUsername(username).orElse(null);
+        UserDo user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
         }
@@ -137,7 +137,7 @@ public class UserServiceImpl implements UserSignatureProvider,
 
     @Override
     public AttributedUserDetails getUserByEmail(String email) throws UserViewException {
-        UserDo user = userRepository.getByEmail(email).orElse(null);
+        UserDo user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
             throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
         }
@@ -182,7 +182,7 @@ public class UserServiceImpl implements UserSignatureProvider,
     @Override
     public List<AttributedUser> findUsers(List<Long> ids) {
         return Collections.unmodifiableList(
-                userRepository.getByIds(ids)
+                userRepository.findAllById(ids)
         );
     }
 }

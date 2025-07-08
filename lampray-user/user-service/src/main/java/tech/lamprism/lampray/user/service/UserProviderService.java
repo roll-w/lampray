@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class UserProviderService implements SystemResourceProvider<Long>,
     }
 
     private UserDo getUser(long id) {
-        UserDo user = userRepository.getByUserId(id).orElse(null);
+        UserDo user = userRepository.findById(id).orElse(null);
         if (user == null) {
             throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
         }
@@ -97,7 +97,7 @@ public class UserProviderService implements SystemResourceProvider<Long>,
 
     @Override
     public boolean checkUsernameExist(String username, long id) {
-        UserDo user = userRepository.getByUsername(username).orElse(null);
+        UserDo user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             return false;
         }
@@ -109,7 +109,7 @@ public class UserProviderService implements SystemResourceProvider<Long>,
 
     @Override
     public boolean checkEmailExist(String email, long id) {
-        UserDo user = userRepository.getByEmail(email).orElse(null);
+        UserDo user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
             return false;
         }

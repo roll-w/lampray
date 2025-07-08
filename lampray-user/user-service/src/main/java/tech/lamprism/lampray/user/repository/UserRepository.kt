@@ -33,21 +33,24 @@ class UserRepository(
         return userDao.findAll(createSearchBySpec(keyword))
     }
 
-    fun getByUserId(id: Long): Optional<UserDo> = userDao.getByUserId(id)
+    fun findByUsername(username: String): Optional<UserDo> {
+        return findOne { root, _, criteriaBuilder ->
+            criteriaBuilder.equal(root.get(UserDo_.username), username)
+        }
+    }
 
-    fun getByUsername(username: String): Optional<UserDo> = userDao.getByUsername(username)
-
-    fun getByEmail(email: String): Optional<UserDo> = userDao.getByEmail(email)
-
-    fun getByIds(ids: MutableList<Long>): List<UserDo> =
-        userDao.findAllById(ids)
+    fun findByEmail(email: String): Optional<UserDo> {
+        return findOne { root, _, criteriaBuilder ->
+            criteriaBuilder.equal(root.get(UserDo_.email), email)
+        }
+    }
 
     fun isExistByEmail(email: String): Boolean {
-        return getByEmail(email).isPresent
+        return findByEmail(email).isPresent
     }
 
     fun isExistByUsername(username: String): Boolean {
-        return getByUsername(username).isPresent
+        return findByUsername(username).isPresent
     }
 
     fun hasUsers(): Boolean {
