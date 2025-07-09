@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import tech.lamprism.lampray.authentication.token.AuthenticationTokenService;
 import tech.lamprism.lampray.security.authentication.registration.RegisterProvider;
 import tech.lamprism.lampray.security.authentication.registration.SimpleRegistration;
 import tech.lamprism.lampray.user.AttributedUser;
+import tech.lamprism.lampray.user.AttributedUserDetails;
+import tech.lamprism.lampray.user.UserProvider;
 import tech.lamprism.lampray.web.common.ParamValidate;
 import tech.lamprism.lampray.web.controller.user.model.LoginResponse;
 import tech.lamprism.lampray.web.controller.user.model.LoginTokenSendRequest;
@@ -50,13 +52,16 @@ public class LoginRegisterController {
     private final LoginProvider loginProvider;
     private final RegisterProvider registerProvider;
     private final AuthenticationTokenService authenticationTokenService;
+    private final UserProvider userProvider;
 
     public LoginRegisterController(LoginProvider loginProvider,
                                    RegisterProvider registerProvider,
-                                   AuthenticationTokenService authenticationTokenService) {
+                                   AuthenticationTokenService authenticationTokenService,
+                                   UserProvider userProvider) {
         this.loginProvider = loginProvider;
         this.registerProvider = registerProvider;
         this.authenticationTokenService = authenticationTokenService;
+        this.userProvider = userProvider;
     }
 
     @PostMapping("/login/password")
