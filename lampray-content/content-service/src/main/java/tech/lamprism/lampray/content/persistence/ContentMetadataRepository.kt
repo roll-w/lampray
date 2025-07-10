@@ -29,7 +29,12 @@ class ContentMetadataRepository(
     private val contentMetadataDao: ContentMetadataDao
 ) : CommonRepository<ContentMetadataDo, Long>(contentMetadataDao) {
     fun findByContent(content: ContentTrait): Optional<ContentMetadataDo> {
-        return contentMetadataDao.findByContent(content.contentId, content.contentType)
+        return findOne { root, query, criteriaBuilder ->
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get(ContentMetadataDo_.contentId), content.contentId),
+                criteriaBuilder.equal(root.get(ContentMetadataDo_.contentType), content.contentType)
+            )
+        }
     }
 
     fun findByContents(contents: List<ContentTrait>): List<ContentMetadataDo> {
