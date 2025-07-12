@@ -32,7 +32,5 @@ public interface StorageProvider {
     void getFile(String fileId, OutputStream outputStream,
                  long startBytes, long endBytes) throws IOException;
 
-    long getFileSize(String fileId);
-
     FileStorage getFileStorage(String fileId);
 }

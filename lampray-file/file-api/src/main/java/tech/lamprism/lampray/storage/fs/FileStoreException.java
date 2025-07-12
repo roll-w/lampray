@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,20 @@ import java.io.IOException;
 /**
  * @author RollW
  */
-public class FileServerException extends IOException {
-    public FileServerException(String message) {
+public class FileStoreException extends IOException {
+    public FileStoreException() {
+        super();
+    }
+
+    public FileStoreException(String message) {
         super(message);
     }
 
-    public FileServerException(String message, Throwable cause) {
+    public FileStoreException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public FileServerException(Throwable cause) {
+    public FileStoreException(Throwable cause) {
         super(cause);
     }
 }

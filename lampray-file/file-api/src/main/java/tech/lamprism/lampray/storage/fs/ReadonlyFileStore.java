@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,25 @@
 
 package tech.lamprism.lampray.storage.fs;
 
+import java.io.InputStream;
+
 /**
  * @author RollW
  */
-public interface ServerFileProvider {
+public abstract class ReadonlyFileStore implements FileStore {
+    @Override
+    public final StoredFile storeFile(String path, InputStream inputStream) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("ReadonlyFileStore does not support storing files");
+    }
+
+    @Override
+    public final boolean readOnly() {
+        return true;
+    }
+
+    @Override
+    public final boolean deleteFile(String path) throws FileStoreException {
+        return false;
+    }
+
 }

@@ -73,10 +73,6 @@ public class StorageProviderImpl implements StorageProvider, StorageUrlProvider 
         }
     }
 
-    @Override
-    public long getFileSize(String fileId) {
-        return 0;
-    }
 
     private static final FileStorage AVATAR_FILE_STORAGE =
             FileStorage.builder()

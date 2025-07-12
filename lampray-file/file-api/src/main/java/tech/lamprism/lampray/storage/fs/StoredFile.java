@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,29 @@
 
 package tech.lamprism.lampray.storage.fs;
 
+import java.time.OffsetDateTime;
+
 /**
- * A file in the file server. It is a file that can be read and written.
- *
  * @author RollW
  */
-public interface ServerFile {
+public interface StoredFile {
     /**
-     * A qualified name is a unique identifier for a file.
-     * It is used to identify a file in the file server.
-     *
-     * @return qualified name of the file
+     * Get the file name.
      */
-    String getQualifiedName();
+    String getName();
 
     /**
-     * Get the size of the file.
-     *
-     * @return size of the file
+     * Get the file path.
+     * <p>
+     * Can be a path or URI.
      */
+    String getPath();
+
     long getSize();
 
-    String getServerName();
+    OffsetDateTime getLastModified();
+
+    OffsetDateTime getCreatedAt();
+
+    FileStore.ID getFileStoreId();
 }
