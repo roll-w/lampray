@@ -16,8 +16,6 @@
 
 package tech.lamprism.lampray.storage.fs;
 
-import tech.lamprism.lampray.storage.PositionMark;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
