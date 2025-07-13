@@ -88,7 +88,7 @@ public final class DownloadHelper {
         response.setHeader("Content-Security-Policy", "frame-ancestors 'self' localhost:* 127.0.0.1:*");
         response.setHeader("Content-Disposition",
                 dispositionType + ";filename*=utf-8''" + getEncodedFileName(name));
-        long length = storageProvider.getFileSize(storage.getFileId());
+        long length = storage.getFileSize();
 
         if (!ranges.isEmpty()) {
             HttpRange range = ranges.get(0);
