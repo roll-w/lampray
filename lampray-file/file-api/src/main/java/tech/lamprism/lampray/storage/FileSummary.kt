@@ -23,12 +23,14 @@ package tech.lamprism.lampray.storage
  */
 interface FileSummary {
     /**
-     * The unique identifier of the file.
+     * The id of the file.
      */
-    val id: String
+    val fileId: Long
 
     /**
      * The size of the file in bytes.
      */
     val size: Long
+
+    val fileType: FileType
 }
