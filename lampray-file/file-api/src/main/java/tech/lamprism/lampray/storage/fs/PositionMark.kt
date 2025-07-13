@@ -39,10 +39,12 @@ data class PositionMark(
     }
 
     companion object {
+        @JvmStatic
         fun fromOffset(offset: Long, length: Long): PositionMark {
             return PositionMark(offset, length)
         }
 
+        @JvmStatic
         fun fromStartEnd(start: Long, end: Long): PositionMark {
             return PositionMark(start, end - start)
         }

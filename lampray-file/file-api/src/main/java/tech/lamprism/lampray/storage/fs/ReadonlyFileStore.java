@@ -16,6 +16,8 @@
 
 package tech.lamprism.lampray.storage.fs;
 
+import space.lingu.NonNull;
+
 import java.io.InputStream;
 
 /**
@@ -23,6 +25,7 @@ import java.io.InputStream;
  */
 public abstract class ReadonlyFileStore implements FileStore {
     @Override
+    @NonNull
     public final StoredFile storeFile(String path, InputStream inputStream) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("ReadonlyFileStore does not support storing files");
     }
@@ -37,4 +40,8 @@ public abstract class ReadonlyFileStore implements FileStore {
         return false;
     }
 
+    @Override
+    public final long getAvailableSpace() {
+        return 0;
+    }
 }

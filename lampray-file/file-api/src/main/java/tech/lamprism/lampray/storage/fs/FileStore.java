@@ -16,7 +16,8 @@
 
 package tech.lamprism.lampray.storage.fs;
 
-import java.io.IOException;
+import space.lingu.NonNull;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -34,22 +35,25 @@ public interface FileStore {
      *                    implementation
      * @param inputStream the input stream containing the file data
      * @return a {@link StoredFile} object representing the stored file
-     * @throws IOException if an I/O error occurs during storage
+     * @throws FileStoreException if an error occurs while storing the file
      */
-    StoredFile storeFile(String path, InputStream inputStream) throws IOException;
+    @NonNull
+    StoredFile storeFile(String path, InputStream inputStream) throws FileStoreException;
 
-    void writeFileToStream(String path, OutputStream outputStream) throws IOException;
+    void writeFileToStream(String path, OutputStream outputStream) throws FileStoreException;
 
     void writeFileToStream(String path, OutputStream outputStream,
-                           PositionMark positionMark) throws IOException;
+                           PositionMark positionMark) throws FileStoreException;
 
-    StoredFile findStoredFile(String path);
+    @NonNull
+    StoredFile findStoredFile(String path) throws FileStoreException;
 
+    @NonNull
     ID getId();
 
     boolean deleteFile(String path) throws FileStoreException;
 
-    boolean exists(String path);
+    boolean exists(String path) throws FileStoreException;
 
     /**
      * Gets the total space available in this file store; -1 indicates that the space is not limited.
@@ -64,18 +68,23 @@ public interface FileStore {
      * Represents a unique identifier for a file store.
      */
     class ID {
+        @NonNull
         private final String type;
+
+        @NonNull
         private final String name;
 
-        public ID(String type, String name) {
+        public ID(@NonNull String type, @NonNull String name) {
             this.type = type;
             this.name = name;
         }
 
+        @NonNull
         public String getType() {
             return type;
         }
 
+        @NonNull
         public String getName() {
             return name;
         }
