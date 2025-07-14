@@ -55,15 +55,12 @@ public class FrontendResourceController {
 
     private static final String ASSETS_PATH = "/assets/";
 
-    private static final String CONFIG_JS_TEMPLATE = """
-            window.config = {
-                server: {
-                    host: "{host}",
-                    httpProtocol: "{httpProtocol}",
-                    wsProtocol: "{wsProtocol}",
-                },
-            }
-            """;
+    private static final String CONFIG_JS_TEMPLATE =
+            "window.config={server:{" +
+                    "host:\"{host}\"," +
+                    "httpProtocol:\"{httpProtocol}\"," +
+                    "wsProtocol:\"{wsProtocol}\"" +
+                    "}}";
 
     private final ClassPathResource index = new ClassPathResource(ASSETS_PATH + "index.html");
     private final ConfigReader configReader;

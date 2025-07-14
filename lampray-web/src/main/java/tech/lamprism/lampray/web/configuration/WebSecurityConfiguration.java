@@ -36,6 +36,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.firewall.ExceptionResolveRequestRejectedHandler;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.cors.CorsConfiguration;
@@ -46,7 +47,9 @@ import tech.lamprism.lampray.authentication.token.AuthenticationTokenService;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationProvider;
 import tech.lamprism.lampray.security.authentication.adapter.TokenBasedAuthenticationProvider;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
+import tech.lamprism.lampray.security.firewall.FirewallFilter;
 import tech.lamprism.lampray.user.UserSignatureProvider;
+import tech.lamprism.lampray.web.configuration.compenent.ForwardedHeaderDelegateFilter;
 import tech.lamprism.lampray.web.configuration.compenent.WebDelegateSecurityHandler;
 import tech.lamprism.lampray.web.configuration.filter.ApiContextInitializeFilter;
 import tech.lamprism.lampray.web.configuration.filter.CorsConfigFilter;
@@ -79,21 +82,26 @@ public class WebSecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity security,
+                                                   SecurityContextRepository securityContextRepository,
                                                    CorsConfigFilter corsConfigFilter,
                                                    TokenAuthenticationFilter tokenAuthenticationFilter,
                                                    ApiContextInitializeFilter apiContextInitializeFilter,
+                                                   FirewallFilter firewallFilter,
+                                                   ForwardedHeaderDelegateFilter forwardedHeaderFilter,
                                                    AuthenticationEntryPoint authenticationEntryPoint,
                                                    AccessDeniedHandler accessDeniedHandler) throws Exception {
         security.csrf(AbstractHttpConfigurer::disable);
         security.cors(configurer -> configurer
                 .configurationSource(corsConfigurationSource())
         );
+        security.securityContext(configurer ->
+                configurer.securityContextRepository(securityContextRepository));
         security.authorizeHttpRequests(configurer -> configurer
                 .requestMatchers(HttpMethod.OPTIONS).permitAll()
                 .requestMatchers("/api/{version}/auth/token/**").permitAll()
-                .requestMatchers("/api/{version}/admin/**").hasAnyAuthority("ADMIN", "role:ADMIN")
-                .requestMatchers("/api/{version}/message/**").hasAnyAuthority("USER", "role:USER")
-                .requestMatchers("/api/{version}/*/review/**").hasAnyAuthority("role:ADMIN", "role:REVIEWER")
+                .requestMatchers("/api/{version}/admin/**").hasAnyAuthority("role:ADMIN")
+                .requestMatchers("/api/{version}/message/**").hasAnyAuthority("role:USER")
+                .requestMatchers("/api/{version}/{userId}/review/**").hasAnyAuthority("role:ADMIN", "role:REVIEWER")
                 .requestMatchers("/api/{version}/common/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/{version}/storages/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/{version}/admin/**").hasAnyAuthority("role:ADMIN")
@@ -102,10 +110,9 @@ public class WebSecurityConfiguration {
                 .requestMatchers("/api/{version}/user/login/**").permitAll()
                 .requestMatchers("/api/{version}/user/register/**").permitAll()
                 .requestMatchers("/api/{version}/user/logout/**").permitAll()
-                .requestMatchers("/**").hasAnyAuthority("USER", "role:USER")
+                .requestMatchers("/api/**").hasAnyAuthority("USER", "role:USER")
                 .requestMatchers("/static/images/**").permitAll()
-                .requestMatchers("/img/**").permitAll()
-                .requestMatchers("/js/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/**").permitAll()
                 .anyRequest().hasAnyAuthority("USER", "role:USER")
         );
 
@@ -117,12 +124,11 @@ public class WebSecurityConfiguration {
         security.sessionManagement(configurer -> {
             configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         });
-        security.addFilterBefore(tokenAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class);
-        security.addFilterAfter(apiContextInitializeFilter,
-                TokenAuthenticationFilter.class);
-        security.addFilterBefore(corsConfigFilter,
-                SecurityContextHolderFilter.class);
+        security.addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        security.addFilterAfter(apiContextInitializeFilter, TokenAuthenticationFilter.class);
+        security.addFilterAfter(firewallFilter, ApiContextInitializeFilter.class);
+        security.addFilterBefore(corsConfigFilter, SecurityContextHolderFilter.class);
+        security.addFilterBefore(forwardedHeaderFilter, CorsConfigFilter.class);
         return security.build();
     }
 
@@ -131,7 +137,6 @@ public class WebSecurityConfiguration {
             List<AuthenticationProvider> authenticationProviders) {
         return new ProviderManager(authenticationProviders);
     }
-
 
     @Bean
     public CorsConfigFilter corsConfigFilter(
