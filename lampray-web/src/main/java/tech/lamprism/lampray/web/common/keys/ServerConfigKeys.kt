@@ -46,6 +46,17 @@ object ServerConfigKeys : SettingSpecificationSupplier {
             .build()
 
     @JvmField
+    val PROCESS_PROXY_HEADERS =
+        SettingSpecificationBuilder(SettingKey.ofBoolean("server.http.proxy.headers"))
+            .setTextDescription("Process proxy headers for HTTP server, if enabled, the server will " +
+                    "process the Forwarded, X-Forwarded-For and X-Forwarded-Proto and other headers " +
+                    "to determine the original request information, such as the original IP address and protocol.")
+            .setDefaultValue(false)
+            .setSupportedSources(SettingSource.LOCAL_ONLY)
+            .setRequired(false)
+            .build()
+
+    @JvmField
     val SSH_PORT =
         SettingSpecificationBuilder(SettingKey.ofInt("server.ssh.port"))
             .setTextDescription("SSH server port")
@@ -74,7 +85,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
             .build()
 
     private val keys = listOf(
-        HTTP_PORT, HTTP_HOST, SSH_PORT, SSH_HOST, SSH_HOST_KEY
+        HTTP_PORT, HTTP_HOST, PROCESS_PROXY_HEADERS, SSH_PORT, SSH_HOST, SSH_HOST_KEY
     )
 
     override val specifications: List<AttributedSettingSpecification<*, *>>
