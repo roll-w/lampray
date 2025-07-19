@@ -31,13 +31,168 @@ import java.io.InputStream
  */
 class TomlConfigReader(
     inputStream: InputStream,
-    private val path: String? = null
+    private val path: String = ""
 ) : ConfigReader {
     private val values: MutableMap<String, Any> = hashMapOf()
 
     init {
         loadToml(inputStream)
         inputStream.close()
+    }
+
+    private val _metadata = ConfigReader.Metadata(
+        name = "TomlConfigReader",
+        ConfigPath(path, SettingSource.LOCAL)
+    )
+
+    override val metadata: ConfigReader.Metadata
+        get() = _metadata
+
+    private fun loadToml(inputStream: InputStream) {
+        values.clear()
+        tomlMapper.configure(TomlReadFeature.PARSE_JAVA_TIME, false)
+        val readValue = tomlMapper.readValue(inputStream, Map::class.java)
+        values.putAll(readValue as Map<String, Any>)
+    }
+
+    private fun readKey(key: String): Any? {
+        if (key.isEmpty()) {
+            return null
+        }
+        if (key in values) {
+            return values[key]
+        }
+        val parts = key.split('.')
+        var currentMap: Map<*, *> = values
+        for (part in parts) {
+            if (part !in currentMap) {
+                return null
+            }
+
+            val value = currentMap[part]
+            if (value is Map<*, *>) {
+                currentMap = value
+            } else {
+                return value
+            }
+        }
+
+        return null
+    }
+
+    override fun get(key: String): String? {
+        val value = readKey(key) ?: return null
+        return when (value) {
+            is String -> value
+            else -> value.toString()
+        }
+    }
+
+    override fun get(key: String, defaultValue: String?): String? {
+        return get(key) ?: defaultValue
+    }
+
+    override fun <T, V> get(specification: SettingSpecification<T, V>): T? {
+        return readRaw(specification) ?: specification.defaultValue
+    }
+
+    override fun <T, V> get(
+        specification: SettingSpecification<T, V>,
+        defaultValue: T
+    ): T {
+        return readRaw(specification) ?: defaultValue
+    }
+
+    private fun <T, V> readRaw(specification: SettingSpecification<T, V>): T? {
+        val value = readKey(specification.keyName) ?: return null
+        return convertToType(value, specification)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T, V> convertToType(value: Any?, specification: SettingSpecification<T, V>): T? {
+        // Converts value to the type specified in SettingSpecification
+        if (value == null) {
+            return null
+        }
+        return when (specification.key.type) {
+            SettingType.STRING -> if (value is String) value as T else value.toString() as T?
+            SettingType.INT -> when (value) {
+                is Number -> value.toInt() as T
+                is String -> value.toIntOrNull() as T?
+                else -> null
+            }
+
+            SettingType.LONG -> when (value) {
+                is Number -> value.toLong() as T
+                is String -> value.toLongOrNull() as T?
+                else -> null
+            }
+
+            SettingType.FLOAT -> when (value) {
+                is Number -> value.toFloat() as T
+                is String -> value.toFloatOrNull() as T?
+                else -> null
+            }
+
+            SettingType.DOUBLE -> when (value) {
+                is Number -> value.toDouble() as T
+                is String -> value.toDoubleOrNull() as T?
+                else -> null
+            }
+
+            SettingType.BOOLEAN -> when (value) {
+                is Boolean -> value as T
+                is String -> value.toBooleanStrictOrNull() as T?
+                else -> null
+            }
+
+            SettingType.STRING_SET -> when (value) {
+                is List<*> -> value.mapNotNull {
+                    when (it) {
+                        null -> null
+                        is String -> it.trim()
+                        else -> it.toString()
+                    }
+                }.toSet() as T
+                is String -> value.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet() as T
+                else -> null
+            }
+
+            else -> throw IllegalArgumentException("Unsupported type: ${specification.key.type}")
+        }
+    }
+
+    override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
+        val value = get(specification)
+        return SnapshotConfigValue(value, SettingSource.LOCAL, specification)
+    }
+
+    override fun list(): List<RawSettingValue> {
+        return flattenMap(values)
+    }
+
+    private fun flattenMap(
+        map: Map<String, Any>,
+        prefix: String = ""
+    ): List<RawSettingValue> {
+        val result = mutableListOf<RawSettingValue>()
+        for ((key, value) in map) {
+            val fullKey = if (prefix.isEmpty()) key else "$prefix.$key"
+            when (value) {
+                is Map<*, *> -> {
+                    result.addAll(flattenMap(value as Map<String, Any>, fullKey))
+                }
+
+                is String -> {
+                    result.add(RawSettingValue(fullKey, value, SettingSource.LOCAL))
+                }
+
+                else -> {
+                    result.add(RawSettingValue(fullKey, value.toString(), SettingSource.LOCAL))
+                }
+            }
+        }
+        return result
     }
 
     companion object {
@@ -94,132 +249,5 @@ class TomlConfigReader(
             }
             return File("lampray.toml")
         }
-    }
-
-    private fun loadToml(inputStream: InputStream) {
-        values.clear()
-        tomlMapper.configure(TomlReadFeature.PARSE_JAVA_TIME, false)
-        val readValue = tomlMapper.readValue(inputStream, Map::class.java)
-        values.putAll(readValue as Map<String, Any>)
-    }
-
-    private fun readKey(key: String): Any? {
-        if (key.isEmpty()) {
-            return null
-        }
-        if (key in values) {
-            return values[key]
-        }
-        val parts = key.split('.') // TODO: Handle nested keys more gracefully
-        var currentMap: Map<*, *> = values
-        for (part in parts) {
-            if (part !in currentMap) {
-                return null
-            }
-
-            val value = currentMap[part]
-            if (value is Map<*, *>) {
-                currentMap = value
-            } else {
-                return value
-            }
-        }
-
-        return null
-    }
-
-    override val metadata: ConfigReader.Metadata
-        get() = ConfigReader.Metadata(
-            name = "TomlConfigReader",
-            ConfigPath("TomlConfig", SettingSource.LOCAL)
-        )
-
-    override fun get(key: String): String? {
-        val value = readKey(key) ?: return null
-        return when (value) {
-            is String -> value
-            else -> value.toString()
-        }
-    }
-
-    override fun get(key: String, defaultValue: String?): String? {
-        return get(key) ?: defaultValue
-    }
-
-    override fun <T, V> get(specification: SettingSpecification<T, V>): T? {
-        return readRaw(specification) ?: specification.defaultValue
-    }
-
-    override fun <T, V> get(
-        specification: SettingSpecification<T, V>,
-        defaultValue: T
-    ): T {
-        return readRaw(specification) ?: defaultValue
-    }
-
-    private fun <T, V> readRaw(specification: SettingSpecification<T, V>): T? {
-        val value = readKey(specification.keyName) ?: return null
-        return convertToType(value, specification)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T, V> convertToType(value: Any?, specification: SettingSpecification<T, V>): T? {
-        // TODO: implement a better way to read value
-        return return when (specification.key.type) {
-            SettingType.STRING -> if (value is String) value as T else value.toString()
-            SettingType.INT -> if (value is Number) value.toInt() as T else value.toString().toInt()
-            SettingType.LONG -> if (value is Number) value.toLong() as T else value.toString().toLong()
-            SettingType.FLOAT -> if (value is Number) value.toFloat() as T else value.toString().toFloat()
-            SettingType.DOUBLE -> if (value is Number) value.toDouble() as T else value.toString().toDouble()
-            SettingType.BOOLEAN -> if (value is Boolean) value as T else value.toString().toBooleanStrict()
-            SettingType.STRING_SET -> when (value) {
-                is List<*> -> {
-                    value.mapNotNull { it as? String }.toSet() as T
-                }
-
-                is String -> {
-                    value.split(',').map { it.trim() }.toSet() as T
-                }
-
-                else -> {
-                    null
-                }
-            }
-
-            else -> throw IllegalArgumentException("Unsupported type: $this")
-        } as T?
-    }
-
-    override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
-        val value = get(specification)
-        return SnapshotConfigValue(value, SettingSource.LOCAL, specification)
-    }
-
-    override fun list(): List<RawSettingValue> {
-        return flattenMap(values)
-    }
-
-    private fun flattenMap(
-        map: Map<String, Any>,
-        prefix: String = ""
-    ): List<RawSettingValue> {
-        val result = mutableListOf<RawSettingValue>()
-        for ((key, value) in map) {
-            val fullKey = if (prefix.isEmpty()) key else "$prefix.$key"
-            when (value) {
-                is Map<*, *> -> {
-                    result.addAll(flattenMap(value as Map<String, Any>, fullKey))
-                }
-
-                is String -> {
-                    result.add(RawSettingValue(fullKey, value, SettingSource.LOCAL))
-                }
-
-                else -> {
-                    result.add(RawSettingValue(fullKey, value.toString(), SettingSource.LOCAL))
-                }
-            }
-        }
-        return result
     }
 }
