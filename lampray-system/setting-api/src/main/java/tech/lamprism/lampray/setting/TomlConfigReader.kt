@@ -158,9 +158,6 @@ class TomlConfigReader(
     }
 
     private fun <T, V> readRaw(specification: SettingSpecification<T, V>): T? {
-        if (specification.isTemplate()) {
-            throw IllegalArgumentException("Cannot use a template specification to get value, key: ${specification.keyName}")
-        }
         val value = readKey(specification.keyName) ?: return null
         return convertToType(value, specification)
     }
@@ -195,11 +192,7 @@ class TomlConfigReader(
 
     override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
         val value = get(specification)
-        return SnapshotConfigValue(
-            value = value,
-            source = SettingSource.LOCAL,
-            specification = specification
-        )
+        return SnapshotConfigValue(value, SettingSource.LOCAL, specification)
     }
 
     override fun list(): List<RawSettingValue> {
