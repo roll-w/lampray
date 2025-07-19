@@ -28,8 +28,8 @@ import org.springframework.core.env.MutablePropertySources;
 import tech.lamprism.lampray.logging.FileCommonStructuredLogFormatter;
 import tech.lamprism.lampray.logging.JsonStructuredLogFormatter;
 import tech.lamprism.lampray.setting.ConfigProvider;
-import tech.lamprism.lampray.setting.InputStreamConfigReader;
 import tech.lamprism.lampray.setting.ReadonlyConfigProvider;
+import tech.lamprism.lampray.setting.TomlConfigReader;
 import tech.lamprism.lampray.web.common.keys.LoggingConfigKeys;
 import tech.lamprism.lampray.web.common.keys.ServerConfigKeys;
 
@@ -131,7 +131,7 @@ public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor
 
         try {
             return new ReadonlyConfigProvider(
-                    InputStreamConfigReader.loadConfig(
+                    TomlConfigReader.loadConfig(
                             LampraySystemApplication.class,
                             path, allowFail
                     )
