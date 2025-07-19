@@ -45,6 +45,10 @@ jobs:
           git checkout v0.2.1
           mvn -f web-common-parent/ clean install
           cd ..
+      - name: Install Frontend Dependencies
+        run: |
+          cd lampray-frontend
+          npm install
       - name: Build
         run: |
           chmod +x gradlew
