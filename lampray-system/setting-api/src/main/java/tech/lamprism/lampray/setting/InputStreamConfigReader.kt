@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,17 @@ import java.util.Properties
 /**
  * @author RollW
  */
-class InputStreamConfigReader(inputStream: InputStream) : ConfigReader {
+class InputStreamConfigReader(
+    inputStream: InputStream,
+    private val path: String? = null
+) : ConfigReader {
     private val properties: Properties = Properties()
+
+    override val metadata: ConfigReader.Metadata =
+        ConfigReader.Metadata(
+            name = "InputStreamConfigReader",
+            paths = listOf(ConfigPath(path ?: "Unknown", SettingSource.LOCAL))
+        )
 
     init {
         properties.load(inputStream)
@@ -42,12 +51,6 @@ class InputStreamConfigReader(inputStream: InputStream) : ConfigReader {
         return properties.getProperty(key, defaultValue)
     }
 
-    @JvmName("getOrDefault")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    override fun get(key: String, defaultValue: String): String {
-        return properties.getProperty(key, defaultValue)
-    }
-
     private fun <T, V> getRaw(specification: SettingSpecification<T, V>): T? {
         val value = properties.getProperty(specification.keyName) ?: return null
         return with(SettingSpecificationHelper) {
@@ -55,12 +58,20 @@ class InputStreamConfigReader(inputStream: InputStream) : ConfigReader {
         }
     }
 
-    override operator fun <T, V> get(spec: SettingSpecification<T, V>): T? {
-        return getRaw(spec) ?: spec.defaultValue
+    override operator fun <T, V> get(specification: SettingSpecification<T, V>): T? {
+        return getRaw(specification) ?: specification.defaultValue
     }
 
-    override fun <T, V> get(spec: SettingSpecification<T, V>, defaultValue: T): T {
-        return getRaw(spec) ?: defaultValue
+    override fun <T, V> get(specification: SettingSpecification<T, V>, defaultValue: T): T {
+        return getRaw(specification) ?: defaultValue
+    }
+
+    override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
+        return SnapshotConfigValue(
+            get(specification),
+            SettingSource.LOCAL,
+            specification
+        )
     }
 
     override fun list(): List<RawSettingValue> {

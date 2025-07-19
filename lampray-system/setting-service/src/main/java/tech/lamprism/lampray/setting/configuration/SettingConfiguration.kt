@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,16 @@
 
 package tech.lamprism.lampray.setting.configuration
 
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.context.MessageSource
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import tech.lamprism.lampray.setting.CombinedConfigProvider
 import tech.lamprism.lampray.setting.ConfigProvider
+import tech.lamprism.lampray.setting.MessageSourceSettingDescriptionProvider
+import tech.lamprism.lampray.setting.SettingSpecificationProvider
+import tech.lamprism.lampray.setting.event.EventProxyConfigProvider
 
 /**
  * @author RollW
@@ -31,8 +36,23 @@ class SettingConfiguration {
     @Bean
     @Primary
     fun configProvider(
-        configProviders: List<ConfigProvider>
+        configProviders: List<ConfigProvider>,
+        specificationProvider: SettingSpecificationProvider,
+        applicationEventPublisher: ApplicationEventPublisher
     ): ConfigProvider {
-        return CombinedConfigProvider(configProviders)
+        return EventProxyConfigProvider(
+            CombinedConfigProvider(
+                configProviders.sortedByDescending { it ->
+                    it.metadata.settingSources.minOfOrNull { it.ordinal }
+                }
+            ),
+            specificationProvider,
+            applicationEventPublisher
+        )
     }
+
+    @Bean
+    fun messageSourceSettingDescriptionProvider(
+        messageSource: MessageSource
+    ) = MessageSourceSettingDescriptionProvider(messageSource)
 }

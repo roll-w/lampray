@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,42 @@ package tech.lamprism.lampray.setting
  * @author RollW
  */
 interface ConfigReader {
+    val metadata: Metadata
+
+    /**
+     * Recomment use [get] ([SettingSpecification]) instead of this method.
+     */
     operator fun get(key: String): String?
 
+    /**
+     * Recomment use [get] ([SettingSpecification]) instead of this method.
+     */
     operator fun get(key: String, defaultValue: String?): String?
-
-    @JvmName("getOrDefault")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    operator fun get(key: String, defaultValue: String): String
 
     operator fun <T, V> get(specification: SettingSpecification<T, V>): T?
 
     operator fun <T, V> get(specification: SettingSpecification<T, V>, defaultValue: T): T
 
+    fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V>
+
     fun list(): List<RawSettingValue>
+
+    /**
+     * Metadata of the config reader.
+     */
+    data class Metadata(
+        /**
+         * The name of the config reader.
+         */
+        val name: String,
+
+        val paths: List<ConfigPath> = emptyList(),
+    ) {
+        constructor(name: String) : this(name, listOf())
+
+        constructor(name: String, vararg paths: ConfigPath) : this(name, listOf(*paths))
+
+        val settingSources: List<SettingSource>
+            get() = paths.map { it.source }
+    }
 }

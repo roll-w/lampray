@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,16 @@ package tech.lamprism.lampray.setting
 class CombinedConfigProvider(
     private val configProviders: List<ConfigProvider>
 ) : ConfigProvider {
+    private val _metadata = ConfigReader.Metadata(
+        "Composed Config Provider",
+        configProviders.flatMap { it.metadata.paths }
+            .distinct()
+            .toList()
+    )
+
+    override val metadata: ConfigReader.Metadata
+        get() = _metadata
+
     override fun get(key: String): String? {
         for (reader in configProviders) {
             val value = reader[key]
@@ -36,15 +46,9 @@ class CombinedConfigProvider(
         return this[key] ?: defaultValue
     }
 
-    @JvmName("getOrDefault")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    override fun get(key: String, defaultValue: String): String {
-        return this[key] ?: defaultValue
-    }
-
-    override fun <T, V> get(spec: SettingSpecification<T, V>): T? {
+    override fun <T, V> get(specification: SettingSpecification<T, V>): T? {
         for (reader in configProviders) {
-            val value = reader[spec]
+            val value = reader[specification]
             if (value != null) {
                 return value
             }
@@ -52,8 +56,18 @@ class CombinedConfigProvider(
         return null
     }
 
-    override fun <T, V> get(spec: SettingSpecification<T, V>, defaultValue: T): T {
-        return this[spec] ?: defaultValue
+    override fun <T, V> get(specification: SettingSpecification<T, V>, defaultValue: T): T {
+        return this[specification] ?: defaultValue
+    }
+
+    override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
+        for (reader in configProviders) {
+            val value = reader.getValue(specification)
+            if (value.value != null) {
+                return value
+            }
+        }
+        return SnapshotConfigValue(null, SettingSource.NONE, specification)
     }
 
     override fun list(): List<RawSettingValue> {

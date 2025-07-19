@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package tech.lamprism.lampray.setting
 data class AttributedSettingSpec<T, V> @JvmOverloads constructor(
     private val specification: SettingSpecification<T, V>,
     override val description: SettingDescription = SettingDescription.EMPTY,
-    override val secret: Boolean =false,
+    override val secret: Boolean = false,
     override val supportedSources: List<SettingSource> = SettingSource.LOCAL_ONLY
 ) : SettingSpecification<T, V> by specification, AttributedSettingSpecification<T, V> {
 

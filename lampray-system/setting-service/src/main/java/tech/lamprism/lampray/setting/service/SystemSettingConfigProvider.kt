@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.setting.service
 
 import org.springframework.stereotype.Service
+import tech.lamprism.lampray.setting.ConfigPath
 import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.setting.ConfigReader
 import tech.lamprism.lampray.setting.ConfigValue
@@ -26,6 +27,7 @@ import tech.lamprism.lampray.setting.SettingSpecification
 import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import tech.lamprism.lampray.setting.SettingSpecificationHelper
 import tech.lamprism.lampray.setting.SettingSpecificationProvider
+import tech.lamprism.lampray.setting.SnapshotConfigValue
 import tech.lamprism.lampray.setting.data.SystemSettingDo
 import tech.lamprism.lampray.setting.data.SystemSettingRepository
 
@@ -37,16 +39,18 @@ class SystemSettingConfigProvider(
     private val systemSettingRepository: SystemSettingRepository,
     private val settingSpecificationProvider: SettingSpecificationProvider
 ) : ConfigProvider {
+
+    override val metadata: ConfigReader.Metadata =
+        ConfigReader.Metadata(
+           name =  "SystemSettingConfigProvider",
+            paths = listOf(ConfigPath("system_setting", SettingSource.DATABASE)),
+        )
+
     override fun get(key: String): String? {
         return systemSettingRepository.findByKey(key)?.value
     }
 
     override fun get(key: String, defaultValue: String?): String? =
-        get(key) ?: defaultValue
-
-    @JvmName("getOrDefault")
-    @Suppress("INAPPLICABLE_JVM_NAME")
-    override fun get(key: String, defaultValue: String): String =
         get(key) ?: defaultValue
 
     override fun <T, V> get(specification: SettingSpecification<T, V>): T? {
@@ -61,6 +65,18 @@ class SystemSettingConfigProvider(
         specification: SettingSpecification<T, V>,
         defaultValue: T
     ): T = get(specification) ?: defaultValue
+
+    override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
+        val setting = systemSettingRepository.findByKey(specification.keyName)
+            ?: return SnapshotConfigValue(null, SettingSource.NONE, specification)
+        return with(SettingSpecificationHelper) {
+            SnapshotConfigValue(
+                setting.value.deserialize(specification),
+                SettingSource.DATABASE,
+                specification
+            )
+        }
+    }
 
     override fun list(): List<RawSettingValue> {
         return systemSettingRepository.findAll().map {

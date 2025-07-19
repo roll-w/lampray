@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,4 +27,7 @@ class ReadonlyConfigProvider(
     override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?) = SettingSource.NONE
 
     override fun supports(key: String): Boolean = false
+
+    override val metadata: ConfigReader.Metadata
+        get() = configReader.metadata
 }
