@@ -28,20 +28,8 @@ import tech.rollw.common.web.system.ContextThreadAware
  * @author RollW
  */
 class FirewallFilter(
-    firewalls: List<Firewall>,
+   private val firewallRegistry: FirewallRegistry,
 ) : OncePerRequestFilter(), ApiContextAware {
-    private val firewalls = firewalls
-        .toSortedSet { o1, o2 ->
-            o1.priority.compareTo(o2.priority)
-        }
-
-    fun addFirewall(firewall: Firewall) {
-        firewalls.add(firewall)
-    }
-
-    fun removeFirewall(firewall: Firewall) {
-        firewalls.remove(firewall)
-    }
 
     override fun getFilterName() = "FirewallFilter"
 
@@ -52,7 +40,7 @@ class FirewallFilter(
     ) {
         val user = apiContextAware.contextThread.context.user
         val firewallAccessRequest = HttpFirewallAccessRequest(request, user)
-        for (firewall in firewalls) {
+        for (firewall in firewallRegistry.firewalls) {
             val accessResult = firewall.verifyRequest(firewallAccessRequest)
             when (accessResult.case) {
                 FirewallAccessResult.Case.ALLOW -> {

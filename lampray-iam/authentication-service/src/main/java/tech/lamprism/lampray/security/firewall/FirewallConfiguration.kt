@@ -29,8 +29,13 @@ import tech.lamprism.lampray.security.firewall.filtertable.FilterTableFirewall
 class FirewallConfiguration {
 
     @Bean
-    fun firewallFilter(firewalls: List<Firewall>): FirewallFilter {
-        return FirewallFilter(firewalls)
+    fun firewallRegistry(firewalls: List<Firewall>): FirewallRegistry {
+        return SimpleFirewallRegistry(firewalls)
+    }
+
+    @Bean
+    fun firewallFilter(firewallRegistry: FirewallRegistry): FirewallFilter {
+        return FirewallFilter(firewallRegistry)
     }
 
     @Bean
