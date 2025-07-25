@@ -75,16 +75,18 @@ After the build process is complete, you can find the image with the name
 
 To start up the application, you need to provide a configuration file.
 
-The configuration file uses the `properties` format, like the following:
+The configuration file uses the `toml` format, like the following:
 
-```properties
+```toml
 # Database Configuration
-database.url=jdbc:mysql://localhost:3306/lampray
-database.username=root
-database.password=root
+[database]
+url = "jdbc:mysql://localhost:3306/lampray"
+username = "root"
+password = "root"
 
-# Server Configuration
-server.port=5100
+# HTTP Server Configuration
+[server.http]
+port = 5100
 ```
 
 ## Running
@@ -121,7 +123,7 @@ bin/lampray # Replace with the actual path to `lampray`
 
 > Current support command line arguments:
 > - `--config`, `-c`: Specify the configuration file to use.
-    > Default will try find `lampray.conf` in the current directory and the
+    > Default will try find `lampray.toml` in the current directory and the
     > `conf` directory under the working directory.
 
 By default, the application will start on port `5100`. And database
@@ -142,7 +144,7 @@ following command:
 
 > [!NOTE]
 > Before running the command, you need to prepare a configuration file named
-> `lampray.conf` in your local directory for mount to the container and replace
+> `lampray.toml` in your local directory for mount to the container and replace
 > the `/path/to/conf/` with the actual path to the conf directory.
 
 > [!NOTE]
@@ -169,7 +171,7 @@ docker run \
 > Options:
 > - `--network lampray`: Use the `lampray` network, or replace with your own network.
 > - `-v /path/to/conf:/app/lampray/conf/`: Mount the configuration directory to the container. Needs a configuration file 
->  named `lampray.conf` in the local directory.
+>  named `lampray.toml` in the local directory.
 
 Also, you can use the environment variable `JAVA_OPTS` to specify the
 JVM options, like the following:
