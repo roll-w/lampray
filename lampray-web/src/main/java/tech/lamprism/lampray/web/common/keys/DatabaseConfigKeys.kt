@@ -44,9 +44,9 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      */
     @JvmField
     val DATABASE_TYPE = SettingSpecificationBuilder(SettingKey.ofString("database.type"))
-        .setDescription(SettingDescription.text("Select database type"))
+        .setDescription(SettingDescription.text("Select database type, e.g., mysql, postgresql, sqlite. Default is sqlite."))
         .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue("h2")
+        .setDefaultValue("sqlite") // Default to SQLite for simplicity
         .setRequired(true)
         .build()
 
