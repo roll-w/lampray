@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.web.configuration.database.ssl
 
+import space.lingu.Experimental
 import tech.lamprism.lampray.web.configuration.database.CertificateValue
 import java.io.ByteArrayInputStream
 import java.security.KeyFactory
@@ -28,7 +29,9 @@ import java.util.Base64
 import javax.net.ssl.KeyManager
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 
 /**
  * Utility class for handling SSL/TLS certificates in database connections.
@@ -36,6 +39,7 @@ import javax.net.ssl.TrustManagerFactory
  *
  * @author RollW
  */
+@Experimental(info = "Internal use only, may change in future versions.")
 object SslCertificateUtils {
 
     /**
@@ -100,10 +104,10 @@ object SslCertificateUtils {
     private fun createTrustManagers(
         caCert: CertificateValue?,
         allowSelfSigned: Boolean
-    ): Array<javax.net.ssl.TrustManager> {
+    ): Array<TrustManager> {
         return if (allowSelfSigned) {
             // Create trust manager that accepts all certificates
-            arrayOf(object : javax.net.ssl.X509TrustManager {
+            arrayOf(object : X509TrustManager {
                 override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
                 override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
                 override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()

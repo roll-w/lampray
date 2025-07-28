@@ -18,6 +18,7 @@ package tech.lamprism.lampray.web.configuration
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import org.slf4j.logger
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties
@@ -37,6 +38,8 @@ import tech.lamprism.lampray.web.configuration.database.DatabaseUrlBuilderFactor
 import tech.lamprism.lampray.web.configuration.database.SslConfig
 import tech.lamprism.lampray.web.configuration.database.ssl.SslCertificateUtils
 import javax.sql.DataSource
+
+private val logger = logger<DataSourceConfiguration>()
 
 /**
  * Data source configuration with HikariCP connection pool support for multiple database types.
@@ -60,9 +63,19 @@ class DataSourceConfiguration(
         username = configProvider[DatabaseConfigKeys.DATABASE_USERNAME]
         password = configProvider[DatabaseConfigKeys.DATABASE_PASSWORD]
 
-        // Build URL using simplified target configuration
-        val databaseConfig = databaseConfig()
-        url = DatabaseUrlBuilderFactory.buildUrl(databaseConfig)
+        try {
+            val databaseConfig = databaseConfig()
+            url = DatabaseUrlBuilderFactory.buildUrl(databaseConfig)
+            logger.info("Database URL configured: $url")
+        } catch (e: Exception) {
+            throw ServerInitializeException(
+                ServerInitializeException.Detail(
+                    "Failed to build database URL.",
+                    "Please check the 'database.type' and 'database.target' config in the configuration file or " +
+                            "environment variables. Ensure that the values are valid and accessible."
+                ), e
+            )
+        }
     }
 
     @Bean
@@ -90,22 +103,34 @@ class DataSourceConfiguration(
      */
     @Bean
     fun databaseConfig(): DatabaseConfig {
-        val databaseType = DatabaseType.fromString(
-            configProvider[DatabaseConfigKeys.DATABASE_TYPE] ?: throw ServerInitializeException(
-                ServerInitializeException.Detail(
-                    "Database type configuration is missing.",
-                    "Please check the `database.type` config in the configuration file or environment variables," +
-                            " and ensure it is set correctly."
-                )
+        val type = configProvider[DatabaseConfigKeys.DATABASE_TYPE] ?: throw ServerInitializeException(
+            ServerInitializeException.Detail(
+                "Database type configuration is missing.",
+                "Please check the 'database.type' config in the configuration file or environment variables," +
+                        " and ensure it is set correctly."
             )
         )
+        val databaseType = try {
+            DatabaseType.fromString(type)
+        } catch (e: IllegalArgumentException) {
+            throw ServerInitializeException(
+                ServerInitializeException.Detail(
+                    "Invalid database type configuration.",
+                    "The 'database.type' config must be one of: ${
+                        DatabaseType.values().joinToString(", ") { it.typeName }
+                    }, but got '$type'. Please check your configuration file or environment variables."
+                ), e
+            )
+        }
 
         return DatabaseConfig(
             target = configProvider[DatabaseConfigKeys.DATABASE_TARGET]
-                ?: throw ServerInitializeException(ServerInitializeException.Detail(
-                    "Database target configuration is missing",
-                    "Please set the 'database.target' property in your configuration file"
-                )),
+                ?: throw ServerInitializeException(
+                    ServerInitializeException.Detail(
+                        "Database target configuration is missing",
+                        "Please set the 'database.target' property in your configuration file"
+                    )
+                ),
             type = databaseType,
             databaseName = configProvider[DatabaseConfigKeys.DATABASE_NAME] ?: "",
             charset = configProvider[DatabaseConfigKeys.DATABASE_CHARSET],

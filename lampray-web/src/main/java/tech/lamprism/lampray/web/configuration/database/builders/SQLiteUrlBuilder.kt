@@ -26,7 +26,7 @@ import java.io.File
  *
  * @author RollW
  */
-class SqliteUrlBuilder : AbstractDatabaseUrlBuilder() {
+class SQLiteUrlBuilder : AbstractDatabaseUrlBuilder() {
 
     override val supportedTypes = setOf(DatabaseType.SQLITE)
 

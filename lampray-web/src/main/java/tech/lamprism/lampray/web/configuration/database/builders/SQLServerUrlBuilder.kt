@@ -26,7 +26,7 @@ import tech.lamprism.lampray.web.configuration.database.SslConfig
  *
  * @author RollW
  */
-class SqlServerUrlBuilder : AbstractDatabaseUrlBuilder() {
+class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
 
     override val supportedTypes = setOf(DatabaseType.SQL_SERVER)
 

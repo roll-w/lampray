@@ -38,28 +38,40 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
     // Basic Connection Settings
 
     /**
-     * Database type selection for JDBC connection establishment.
-     * Determines the JDBC driver and URL prefix to use for database connectivity.
-     * Supported values: mysql, mariadb, postgresql, sqlserver, oracle, sqlite, h2
+     * Database type selection for establishing JDBC connections.
+     *
+     * Specifies which database system to connect to, determining the appropriate
+     * JDBC driver and URL format. The system will automatically load the corresponding
+     * driver based on this selection.
      */
     @JvmField
     val DATABASE_TYPE = SettingSpecificationBuilder(SettingKey.ofString("database.type"))
-        .setDescription(SettingDescription.text("Select database type, e.g., mysql, postgresql, sqlite. Default is sqlite."))
+        .setDescription(SettingDescription.text("Database type selection. Determines which database system to connect to and " +
+                "automatically loads the appropriate JDBC driver and URL format based on this selection."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("sqlite") // Default to SQLite for simplicity
         .setRequired(true)
         .build()
 
     /**
-     * Unified database connection target supporting multiple connection methods:
-     * - Network connections: "localhost:3306", "db.example.com:5432", "localhost" (uses default port)
-     * - File-based databases: "file:./data/app.db", "file:/absolute/path/to/database.db"
+     * Unified database connection target with flexible addressing support.
+     *
+     * Supports multiple connection methods through intelligent target detection:
+     * - Network databases: "localhost:3306", "db.example.com:5432"
+     * - File-based databases: "file:./data/app.db", "file:/absolute/path/to/db"
      * - In-memory databases: "memory"
-     * The system automatically detects the target type and applies appropriate connection logic.
+     *
+     * Technical implementation: Parsed by DatabaseTarget class to determine
+     * connection type and generate appropriate JDBC URLs.
      */
     @JvmField
     val DATABASE_TARGET = SettingSpecificationBuilder(SettingKey.ofString("database.target"))
-        .setDescription(SettingDescription.text("Database connection target (host:port, file:path, or memory)"))
+        .setDescription(SettingDescription.text("Database connection address with flexible format support. " +
+                "Accepts network addresses (host:port), file paths (file:path), or memory mode. " +
+                "The system automatically detects the connection type and generates appropriate JDBC URLs.\n\n" +
+                "- Network databases: \"localhost:3306\", \"db.example.com:5432\"\n" +
+                "- File-based databases: \"file:./data/app.db\", \"file:/absolute/path/to/db\"\n" +
+                "- In-memory databases: \"memory\""))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("memory")
         .setRequired(true)
@@ -67,12 +79,15 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * Database authentication username.
-     * Used for database login credentials when connecting to network-based databases.
+     * Database authentication username for login credentials.
+     *
+     * Used for authenticating with network-based database servers.
+     * Not required for file-based or in-memory databases.
      */
     @JvmField
     val DATABASE_USERNAME = SettingSpecificationBuilder(SettingKey.ofString("database.username"))
-        .setDescription(SettingDescription.text("Database login username"))
+        .setDescription(SettingDescription.text("Database login username. Required for network-based database servers " +
+                "but not needed for file-based or in-memory databases."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("root")
         .setRequired(false)
@@ -80,12 +95,15 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * Database authentication password.
-     * Sensitive credential used for database authentication. Consider using environment variables.
+     * Database authentication password for secure access.
+     *
+     * Provides authentication credentials for database login. Consider using
+     * environment variables or secure configuration management for sensitive passwords.
      */
     @JvmField
     val DATABASE_PASSWORD = SettingSpecificationBuilder(SettingKey.ofString("database.password"))
-        .setDescription(SettingDescription.text("Database login password"))
+        .setDescription(SettingDescription.text("Database login password. Provides authentication credentials for database access. " +
+                "Consider using environment variables for sensitive passwords in production."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("")
         .setRequired(false)
@@ -93,13 +111,16 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * Target database name within the database server.
-     * For network databases, this specifies which database to connect to on the server.
-     * Not applicable for file-based or in-memory databases.
+     * Target database name within the database server instance.
+     *
+     * Specifies which specific database to use on multi-database servers.
+     * Only applicable for network-based databases; ignored for file-based
+     * and in-memory databases.
      */
     @JvmField
     val DATABASE_NAME = SettingSpecificationBuilder(SettingKey.ofString("database.name"))
-        .setDescription(SettingDescription.text("Database name to connect to"))
+        .setDescription(SettingDescription.text("Target database name on the server. Specifies which specific database to use " +
+                "on multi-database servers. Only applicable for network-based databases."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("")
         .setRequired(false)
@@ -109,13 +130,17 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
     // Character Set and Encoding
 
     /**
-     * Database character encoding specification for proper text handling.
-     * Common values include utf8, utf8mb4 (MySQL), UTF8 (PostgreSQL).
-     * If not specified, the database server's default encoding will be used.
+     * Database character encoding for proper internationalization support.
+     *
+     * Ensures correct handling of international characters and emojis.
+     * Common values: utf8mb4 (MySQL), UTF8 (PostgreSQL), utf8 (general).
+     * Leave empty to use database server defaults.
      */
     @JvmField
     val DATABASE_CHARSET = SettingSpecificationBuilder(SettingKey.ofString("database.charset"))
-        .setDescription(SettingDescription.text("Character encoding (utf8, utf8mb4, etc.)"))
+        .setDescription(SettingDescription.text("Database character encoding setting. Ensures correct handling of international " +
+                "characters and emojis. Common values include utf8mb4 (MySQL), UTF8 (PostgreSQL), or utf8 (general). " +
+                "Leave empty to use database defaults."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue(null)
         .setRequired(false)
@@ -125,14 +150,17 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
     // Custom Options
 
     /**
-     * Additional database-specific JDBC connection parameters.
-     * These parameters are appended to the JDBC URL as query parameters.
-     * Format: "key1=value1&key2=value2" (URL parameter format without leading "?")
-     * Example: "timezone=UTC&allowMultiQueries=true"
+     * Additional JDBC connection parameters for fine-tuning database behavior.
+     *
+     * Allows specifying database-specific connection options not covered by
+     * standard settings. Format as URL query parameters without leading "?".
+     * Example: "timezone=UTC&allowMultiQueries=true&useSSL=false"
      */
     @JvmField
     val DATABASE_OPTIONS = SettingSpecificationBuilder(SettingKey.ofString("database.options"))
-        .setDescription(SettingDescription.text("Additional JDBC parameters (key1=value1&key2=value2)"))
+        .setDescription(SettingDescription.text("Additional JDBC connection parameters. Allows specifying database-specific " +
+                "options not covered by standard settings. Format as URL query parameters without leading '?' " +
+                "(e.g., timezone=UTC&allowMultiQueries=true)."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("")
         .setRequired(false)
@@ -142,12 +170,15 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
     // SSL/TLS Configuration
 
     /**
-     * Enable SSL/TLS encryption for database connections.
-     * When enabled, the connection will use encrypted communication with the database server.
+     * Enable SSL/TLS encryption for secure database connections.
+     *
+     * Activates encrypted communication between application and database server.
+     * Recommended for production environments and remote database connections.
      */
     @JvmField
     val DATABASE_SSL_ENABLED = SettingSpecificationBuilder(SettingKey.ofBoolean("database.ssl.enabled"))
-        .setDescription(SettingDescription.text("Enable SSL/TLS encryption"))
+        .setDescription(SettingDescription.text("Enable SSL/TLS encryption for database connections. Activates encrypted " +
+                "communication between application and database server. Recommended for production and remote connections."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue(false)
         .setRequired(false)
@@ -155,16 +186,25 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * SSL connection security level and certificate verification mode.
+     * SSL connection security level and certificate verification strictness.
+     *
+     * Controls how strictly SSL certificates are validated:
      * - disable: No SSL encryption
-     * - prefer: Try SSL first, fallback to non-SSL if failed
-     * - require: SSL required, connection fails if SSL unavailable
+     * - prefer: Try SSL first, fallback to non-SSL
+     * - require: SSL required, connection fails without it
      * - verify-ca: SSL required with CA certificate verification
      * - verify-identity: SSL required with full certificate and hostname verification
      */
     @JvmField
     val DATABASE_SSL_MODE = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.mode"))
-        .setDescription(SettingDescription.text("SSL security level"))
+        .setDescription(SettingDescription.text("SSL security level and certificate verification strictness. " +
+                "Controls how strictly SSL certificates are validated, ranging from 'disable' (no SSL) " +
+                "to 'verify-identity' (full certificate and hostname verification):\n\n" +
+                "- disable: No SSL encryption\n" +
+                "- prefer: Try SSL first, fallback to non-SSL\n" +
+                "- require: SSL required, connection fails without it\n" +
+                "- verify-ca: SSL required with CA certificate verification\n" +
+                "- verify-identity: SSL required with full certificate and hostname verification"))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("prefer")
         .setValueEntries(listOf("disable", "prefer", "require", "verify-ca", "verify-identity"))
@@ -173,12 +213,15 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
 
     /**
      * Client certificate content in PEM format for mutual TLS authentication.
-     * Contains the full certificate text including "-----BEGIN CERTIFICATE-----" markers.
-     * Alternative to using certificate file path - use either content or path, not both.
+     *
+     * Provides client identity verification through certificate-based authentication.
+     * Content should include full PEM certificate with BEGIN/END markers.
+     * Use either this field or cert_path, not both.
      */
     @JvmField
     val DATABASE_SSL_CLIENT_CERT = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.client.cert"))
-        .setDescription(SettingDescription.text("Client certificate content (PEM format)"))
+        .setDescription(SettingDescription.text("Client certificate content in PEM format. Provides client identity verification " +
+                "for mutual TLS authentication. Include full PEM certificate with BEGIN/END markers."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("")
         .setRequired(false)
@@ -186,27 +229,34 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * File system path to client certificate file for mutual TLS authentication.
-     * Should point to a valid PEM-formatted certificate file.
-     * Alternative to certificate content - use either content or path, not both.
+     * File path to client certificate for mutual TLS authentication.
+     *
+     * Alternative to providing certificate content directly. Should point to
+     * a valid PEM-formatted certificate file accessible by the application.
+     * Use either this field or cert content, not both.
      */
     @JvmField
-    val DATABASE_SSL_CLIENT_CERT_PATH = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.client.cert.path"))
-        .setDescription(SettingDescription.text("Client certificate file path"))
-        .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue("")
-        .setRequired(false)
-        .setAllowAnyValue(true)
-        .build()
+    val DATABASE_SSL_CLIENT_CERT_PATH =
+        SettingSpecificationBuilder(SettingKey.ofString("database.ssl.client.cert.path"))
+            .setDescription(SettingDescription.text("Client certificate file path. Alternative to providing certificate content " +
+                    "directly. Should point to a valid PEM-formatted certificate file accessible by the application."))
+            .setSupportedSources(LOCAL_SOURCE)
+            .setDefaultValue("")
+            .setRequired(false)
+            .setAllowAnyValue(true)
+            .build()
 
     /**
      * Client private key content in PEM format for mutual TLS authentication.
-     * Contains the private key text including "-----BEGIN PRIVATE KEY-----" markers.
-     * Must correspond to the client certificate. Use either content or path, not both.
+     *
+     * Private key corresponding to the client certificate for authentication.
+     * Must match the client certificate. Content should include PEM markers.
+     * Use either this field or key_path, not both.
      */
     @JvmField
     val DATABASE_SSL_CLIENT_KEY = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.client.key"))
-        .setDescription(SettingDescription.text("Client private key content (PEM format)"))
+        .setDescription(SettingDescription.text("Client private key content in PEM format. Private key corresponding to the " +
+                "client certificate for mutual TLS authentication. Must match the client certificate."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("")
         .setRequired(false)
@@ -214,13 +264,16 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * File system path to client private key file for mutual TLS authentication.
-     * Should point to a valid PEM-formatted private key file.
-     * Must correspond to the client certificate. Use either content or path, not both.
+     * File path to client private key for mutual TLS authentication.
+     *
+     * Alternative to providing private key content directly. Should point to
+     * a valid PEM-formatted private key file matching the client certificate.
+     * Use either this field or key content, not both.
      */
     @JvmField
     val DATABASE_SSL_CLIENT_KEY_PATH = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.client.key.path"))
-        .setDescription(SettingDescription.text("Client private key file path"))
+        .setDescription(SettingDescription.text("Client private key file path. Alternative to providing private key content " +
+                "directly. Should point to a valid PEM-formatted private key file matching the client certificate."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("")
         .setRequired(false)
@@ -228,13 +281,16 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * Certificate Authority (CA) certificate content in PEM format for server verification.
-     * Used to verify the database server's SSL certificate against a trusted CA.
-     * Alternative to using CA certificate file path - use either content or path, not both.
+     * Certificate Authority (CA) certificate content for server verification.
+     *
+     * Trusted CA certificate used to verify the database server's SSL certificate.
+     * Required when using custom or self-signed certificates. Content should
+     * include full PEM certificate with BEGIN/END markers.
      */
     @JvmField
     val DATABASE_SSL_CA_CERT = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.ca.cert"))
-        .setDescription(SettingDescription.text("CA certificate content for server verification (PEM format)"))
+        .setDescription(SettingDescription.text("CA certificate content for server verification. Trusted CA certificate used to " +
+                "verify the database server's SSL certificate. Required when using custom or self-signed certificates."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("")
         .setRequired(false)
@@ -242,13 +298,16 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * File system path to Certificate Authority (CA) certificate for server verification.
-     * Should point to a valid PEM-formatted CA certificate file.
-     * Alternative to CA certificate content - use either content or path, not both.
+     * File path to Certificate Authority (CA) certificate for server verification.
+     *
+     * Alternative to providing CA certificate content directly. Should point to
+     * a valid PEM-formatted CA certificate file for server certificate validation.
+     * Use either this field or CA cert content, not both.
      */
     @JvmField
     val DATABASE_SSL_CA_CERT_PATH = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.ca.cert.path"))
-        .setDescription(SettingDescription.text("CA certificate file path for server verification"))
+        .setDescription(SettingDescription.text("CA certificate file path. Alternative to providing CA certificate content " +
+                "directly. Should point to a valid PEM-formatted CA certificate file for server certificate validation."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("")
         .setRequired(false)
@@ -256,13 +315,15 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * Enable server certificate verification for SSL connections.
-     * When true, the client verifies the server's SSL certificate.
-     * Set to false only for testing with self-signed or invalid certificates.
+     * Enable server certificate verification for enhanced security.
+     *
+     * When enabled, validates that the server's SSL certificate is trusted and valid.
+     * Disable only for testing with self-signed certificates or in development environments.
      */
     @JvmField
     val DATABASE_SSL_VERIFY_SERVER = SettingSpecificationBuilder(SettingKey.ofBoolean("database.ssl.verify.server"))
-        .setDescription(SettingDescription.text("Verify server SSL certificate"))
+        .setDescription(SettingDescription.text("Enable server certificate verification. Validates that the server's SSL " +
+                "certificate is trusted and valid. Disable only for testing or development environments."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue(true)
         .setRequired(false)
@@ -270,27 +331,34 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
 
     /**
      * Allow connections to servers with self-signed SSL certificates.
-     * When enabled, bypasses certificate chain validation for development/testing.
-     * Should only be enabled in non-production environments for security reasons.
+     *
+     * Bypasses certificate chain validation to accept self-signed certificates.
+     * Should only be enabled in development or testing environments due to
+     * security implications.
      */
     @JvmField
-    val DATABASE_SSL_ALLOW_SELF_SIGNED = SettingSpecificationBuilder(SettingKey.ofBoolean("database.ssl.allow.self.signed"))
-        .setDescription(SettingDescription.text("Allow self-signed certificates (development only)"))
-        .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue(false)
-        .setRequired(false)
-        .build()
+    val DATABASE_SSL_ALLOW_SELF_SIGNED =
+        SettingSpecificationBuilder(SettingKey.ofBoolean("database.ssl.allow.self.signed"))
+            .setDescription(SettingDescription.text("Allow self-signed SSL certificates. Bypasses certificate chain validation " +
+                    "to accept self-signed certificates. Should only be enabled in development or testing environments."))
+            .setSupportedSources(LOCAL_SOURCE)
+            .setDefaultValue(false)
+            .setRequired(false)
+            .build()
 
     // Connection Pool Configuration
 
     /**
-     * Maximum number of concurrent database connections in the connection pool.
-     * Higher values allow more concurrent database operations but consume more resources.
-     * Recommended range: 10-50 for most applications.
+     * Maximum number of concurrent database connections in the pool.
+     *
+     * Controls the upper limit of simultaneous database connections.
+     * Higher values support more concurrent operations but consume more resources.
+     * Typical range: 10-50 for most applications.
      */
     @JvmField
     val DATABASE_POOL_MAX_SIZE = SettingSpecificationBuilder(SettingKey.ofInt("database.pool.max.size"))
-        .setDescription(SettingDescription.text("Maximum connections in pool"))
+        .setDescription(SettingDescription.text("Maximum number of database connections in the pool. Controls the upper limit " +
+                "of simultaneous database connections. Higher values support more concurrency but consume more resources."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue(20)
         .setRequired(false)
@@ -299,12 +367,14 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
 
     /**
      * Minimum number of idle connections maintained in the pool.
-     * Ensures quick response times by keeping connections ready for use.
-     * Should be less than or equal to maximum pool size.
+     *
+     * Ensures responsive performance by keeping connections ready for immediate use.
+     * Should be set based on typical concurrent load. Must not exceed max pool size.
      */
     @JvmField
     val DATABASE_POOL_MIN_IDLE = SettingSpecificationBuilder(SettingKey.ofInt("database.pool.min.idle"))
-        .setDescription(SettingDescription.text("Minimum idle connections in pool"))
+        .setDescription(SettingDescription.text("Minimum number of idle connections in the pool. Ensures responsive performance " +
+                "by keeping connections ready for immediate use. Should be based on typical concurrent load."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue(2)
         .setRequired(false)
@@ -312,27 +382,36 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * Maximum time to wait for a database connection from the pool (in milliseconds).
-     * If no connection is available within this time, an exception is thrown.
-     * Common values: 10000-30000ms (10-30 seconds).
+     * Maximum wait time for acquiring a connection from the pool.
+     *
+     * Time limit in milliseconds before throwing an exception when no connections
+     * are available. Prevents indefinite blocking during high load periods.
+     * Typical values: 10-30 seconds (10000-30000ms).
      */
     @JvmField
-    val DATABASE_POOL_CONNECTION_TIMEOUT = SettingSpecificationBuilder(SettingKey.ofLong("database.pool.connection.timeout"))
-        .setDescription(SettingDescription.text("Connection timeout (milliseconds)"))
-        .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue(30000L)
-        .setRequired(false)
-        .setAllowAnyValue(true)
-        .build()
+    val DATABASE_POOL_CONNECTION_TIMEOUT =
+        SettingSpecificationBuilder(SettingKey.ofLong("database.pool.connection.timeout"))
+            .setDescription(SettingDescription.text("Maximum wait time for acquiring a connection in milliseconds. " +
+                    "Time limit before throwing an exception when no connections are available. " +
+                    "Prevents indefinite blocking during high load."))
+            .setSupportedSources(LOCAL_SOURCE)
+            .setDefaultValue(30000L)
+            .setRequired(false)
+            .setAllowAnyValue(true)
+            .build()
 
     /**
-     * Maximum lifetime of a database connection before it's retired (in milliseconds).
-     * Prevents issues with long-lived connections and helps with connection pool health.
-     * Recommended: 1800000ms (30 minutes) to 3600000ms (1 hour).
+     * Maximum lifetime of a database connection before forced retirement.
+     *
+     * Prevents issues with long-lived connections and ensures pool health.
+     * Connections are retired gracefully before reaching this limit.
+     * Recommended: 30 minutes to 1 hour (1800000-3600000ms).
      */
     @JvmField
     val DATABASE_POOL_MAX_LIFETIME = SettingSpecificationBuilder(SettingKey.ofLong("database.pool.max.lifetime"))
-        .setDescription(SettingDescription.text("Maximum connection lifetime (milliseconds)"))
+        .setDescription(SettingDescription.text("Maximum lifetime of a connection before retirement in milliseconds. " +
+                "Prevents issues with long-lived connections and ensures pool health. " +
+                "Connections are retired gracefully before reaching this limit."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue(1800000L) // 30 minutes
         .setRequired(false)
@@ -340,13 +419,17 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * Time a connection can remain idle before being eligible for eviction (in milliseconds).
-     * Helps maintain an optimal number of active connections in the pool.
-     * Common values: 300000-600000ms (5-10 minutes).
+     * Idle timeout before connections become eligible for eviction.
+     *
+     * Time in milliseconds a connection can remain unused before being closed.
+     * Helps maintain optimal pool size by removing excess idle connections.
+     * Typical values: 5-10 minutes (300000-600000ms).
      */
     @JvmField
     val DATABASE_POOL_IDLE_TIMEOUT = SettingSpecificationBuilder(SettingKey.ofLong("database.pool.idle.timeout"))
-        .setDescription(SettingDescription.text("Idle connection timeout (milliseconds)"))
+        .setDescription(SettingDescription.text("Idle timeout before connection eviction in milliseconds. " +
+                "Time a connection can remain unused before being closed. " +
+                "Helps maintain optimal pool size by removing excess idle connections."))
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue(600000L) // 10 minutes
         .setRequired(false)
@@ -354,17 +437,22 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * Connection leak detection threshold in milliseconds (0 to disable).
-     * When enabled, logs warnings if connections are held longer than this threshold.
-     * Useful for debugging connection leaks. Set to 0 to disable leak detection.
+     * Connection leak detection threshold for debugging purposes.
+     *
+     * Logs warnings when connections are held longer than this threshold,
+     * helping identify potential connection leaks in application code.
+     * Set to 0 to disable leak detection entirely.
      */
     @JvmField
-    val DATABASE_POOL_LEAK_DETECTION_THRESHOLD = SettingSpecificationBuilder(SettingKey.ofLong("database.pool.leak.detection.threshold"))
-        .setDescription(SettingDescription.text("Leak detection threshold (milliseconds, 0=disabled)"))
-        .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue(0L)
-        .setRequired(false)
-        .build()
+    val DATABASE_POOL_LEAK_DETECTION_THRESHOLD =
+        SettingSpecificationBuilder(SettingKey.ofLong("database.pool.leak.detection.threshold"))
+            .setDescription(SettingDescription.text("Connection leak detection threshold in milliseconds. " +
+                    "Logs warnings when connections are held longer than this threshold to help identify potential leaks. " +
+                    "Set to 0 to disable detection."))
+            .setSupportedSources(LOCAL_SOURCE)
+            .setDefaultValue(0L)
+            .setRequired(false)
+            .build()
 
 
     override val specifications: List<AttributedSettingSpecification<*, *>> = listOf(

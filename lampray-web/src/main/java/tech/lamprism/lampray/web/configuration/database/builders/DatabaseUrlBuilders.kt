@@ -29,9 +29,9 @@ object DatabaseUrlBuilders {
     private val builders: List<DatabaseUrlBuilder> = listOf(
         MySQLUrlBuilder(),
         PostgreSQLUrlBuilder(),
-        SqliteUrlBuilder(),
+        SQLiteUrlBuilder(),
         H2UrlBuilder(),
-        SqlServerUrlBuilder(),
+        SQLServerUrlBuilder(),
         OracleUrlBuilder()
     )
 
