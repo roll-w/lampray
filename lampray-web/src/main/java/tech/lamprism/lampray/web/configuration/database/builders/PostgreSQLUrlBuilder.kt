@@ -80,7 +80,7 @@ class PostgreSQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         config.sslConfig.clientCertificate?.let {
             if (!it.isEmpty()) {
                 when (it.type) {
-                    CertificateValue.CertificateType.FILE_PATH -> {
+                    CertificateValue.CertificateType.PATH -> {
                         params["sslcert"] = it.value
                     }
                     else -> {
@@ -94,7 +94,7 @@ class PostgreSQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         config.sslConfig.clientPrivateKey?.let {
             if (!it.isEmpty()) {
                 when (it.type) {
-                    CertificateValue.CertificateType.FILE_PATH -> {
+                    CertificateValue.CertificateType.PATH -> {
                         params["sslkey"] = it.value
                     }
                     else -> {
@@ -107,7 +107,7 @@ class PostgreSQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         config.sslConfig.caCertificate?.let {
             if (!it.isEmpty()) {
                 when (it.type) {
-                    CertificateValue.CertificateType.FILE_PATH -> {
+                    CertificateValue.CertificateType.PATH -> {
                         params["sslrootcert"] = it.value
                     }
                     else -> {

@@ -31,27 +31,27 @@ data class CertificateValue(
         /**
          * Direct certificate content (PEM format)
          */
-        CONTENT,
+        VALUE,
 
         /**
          * File path to certificate
          */
-        FILE_PATH
+        PATH
     }
 
     companion object {
         /**
-         * Creates a CertificateValue from content string
+         * Creates a CertificateValue from pem value
          */
-        fun fromContent(content: String): CertificateValue {
-            return CertificateValue(CertificateType.CONTENT, content)
+        fun fromValue(content: String): CertificateValue {
+            return CertificateValue(CertificateType.VALUE, content)
         }
 
         /**
          * Creates a CertificateValue from file path
          */
         fun fromPath(path: String): CertificateValue {
-            return CertificateValue(CertificateType.FILE_PATH, path)
+            return CertificateValue(CertificateType.PATH, path)
         }
     }
 
@@ -61,8 +61,8 @@ data class CertificateValue(
      */
     fun getContent(): String {
         return when (type) {
-            CertificateType.CONTENT -> value
-            CertificateType.FILE_PATH -> {
+            CertificateType.VALUE -> value
+            CertificateType.PATH -> {
                 try {
                     File(value).readText()
                 } catch (e: Exception) {

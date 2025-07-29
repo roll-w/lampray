@@ -159,19 +159,16 @@ class DataSourceConfiguration(
             else -> SslConfig.SslMode.PREFER
         }
 
-        val clientCert = createCertificateValue(
-            configProvider[DatabaseConfigKeys.DATABASE_SSL_CLIENT_CERT],
-            configProvider[DatabaseConfigKeys.DATABASE_SSL_CLIENT_CERT_PATH]
+        val clientCert = createCertificateValueWithAutoDetection(
+            configProvider[DatabaseConfigKeys.DATABASE_SSL_CLIENT_CERT]
         )
 
-        val clientKey = createCertificateValue(
-            configProvider[DatabaseConfigKeys.DATABASE_SSL_CLIENT_KEY],
-            configProvider[DatabaseConfigKeys.DATABASE_SSL_CLIENT_KEY_PATH]
+        val clientKey = createCertificateValueWithAutoDetection(
+            configProvider[DatabaseConfigKeys.DATABASE_SSL_CLIENT_KEY]
         )
 
-        val caCert = createCertificateValue(
-            configProvider[DatabaseConfigKeys.DATABASE_SSL_CA_CERT],
-            configProvider[DatabaseConfigKeys.DATABASE_SSL_CA_CERT_PATH]
+        val caCert = createCertificateValueWithAutoDetection(
+            configProvider[DatabaseConfigKeys.DATABASE_SSL_CA_CERT]
         )
 
         return SslConfig(
@@ -201,13 +198,23 @@ class DataSourceConfiguration(
     }
 
     /**
-     * Creates CertificateValue from content or path, preferring content over path.
+     * Creates CertificateValue with automatic PEM format detection.
+     *
+     * Automatically detects whether the input is PEM content or a file path:
+     * - If PEM headers are detected (-----BEGIN), treats as certificate content
+     * - Otherwise, treats as file path
      */
-    private fun createCertificateValue(content: String?, path: String?): CertificateValue? {
-        return when {
-            !content.isNullOrBlank() -> CertificateValue.fromContent(content)
-            !path.isNullOrBlank() -> CertificateValue.fromPath(path)
-            else -> null
+    private fun createCertificateValueWithAutoDetection(input: String?): CertificateValue? {
+        if (input.isNullOrBlank()) {
+            return null
+        }
+
+        val trimmedInput = input.trim()
+
+        return if (trimmedInput.startsWith("-----BEGIN")) {
+            CertificateValue.fromValue(trimmedInput)
+        } else {
+            CertificateValue.fromPath(trimmedInput)
         }
     }
 

@@ -77,7 +77,7 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
 
         // Handle certificate configuration
         config.sslConfig.caCertificate?.let {
-            if (!it.isEmpty() && it.type == CertificateValue.CertificateType.FILE_PATH) {
+            if (!it.isEmpty() && it.type == CertificateValue.CertificateType.PATH) {
                 params["oracle.net.ssl_server_cert_path"] = it.value
             }
         }

@@ -251,18 +251,25 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * Client certificate content in PEM format for mutual TLS authentication.
+     * Client certificate for mutual TLS authentication with flexible input support.
      *
-     * Provides client identity verification through certificate-based authentication.
-     * Content should include full PEM certificate with BEGIN/END markers.
-     * Use either this field or cert_path, not both.
+     * Supports both PEM certificate content and file path through automatic detection:
+     * - PEM content: Provide certificate directly with BEGIN/END markers
+     * - File path: Provide path to PEM-formatted certificate file
+     *
+     * The system automatically detects the input format based on PEM headers.
+     * For PEM content, include the full certificate with -----BEGIN CERTIFICATE----- markers.
+     * For file paths, ensure the file is accessible and contains valid PEM format.
      */
     @JvmField
     val DATABASE_SSL_CLIENT_CERT = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.client.cert"))
         .setDescription(
             SettingDescription.text(
-                "Client certificate content in PEM format. Provides client identity verification " +
-                        "for mutual TLS authentication. Include full PEM certificate with BEGIN/END markers."
+                "Client certificate for mutual TLS authentication with flexible input support. " +
+                        "Supports both PEM certificate content and file path through automatic detection:\n\n" +
+                        "- PEM content: Provide PEM formated certificate directly with BEGIN/END markers\n" +
+                        "- File path: Provide path to PEM-formatted certificate file\n\n" +
+                        "The system automatically detects the input format based on PEM headers."
             )
         )
         .setSupportedSources(LOCAL_SOURCE)
@@ -272,40 +279,25 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * File path to client certificate for mutual TLS authentication.
+     * Client private key for mutual TLS authentication with flexible input support.
      *
-     * Alternative to providing certificate content directly. Should point to
-     * a valid PEM-formatted certificate file accessible by the application.
-     * Use either this field or cert content, not both.
-     */
-    @JvmField
-    val DATABASE_SSL_CLIENT_CERT_PATH =
-        SettingSpecificationBuilder(SettingKey.ofString("database.ssl.client.cert.path"))
-            .setDescription(
-                SettingDescription.text(
-                    "Client certificate file path. Alternative to providing certificate content " +
-                            "directly. Should point to a valid PEM-formatted certificate file accessible by the application."
-                )
-            )
-            .setSupportedSources(LOCAL_SOURCE)
-            .setDefaultValue("")
-            .setRequired(false)
-            .setAllowAnyValue(true)
-            .build()
-
-    /**
-     * Client private key content in PEM format for mutual TLS authentication.
+     * Supports both PEM private key content and file path through automatic detection:
+     * - PEM content: Provide private key directly with BEGIN/END markers
+     * - File path: Provide path to PEM-formatted private key file
      *
-     * Private key corresponding to the client certificate for authentication.
-     * Must match the client certificate. Content should include PEM markers.
-     * Use either this field or key_path, not both.
+     * The system automatically detects the input format based on PEM headers.
+     * Must correspond to the client certificate for proper authentication.
      */
     @JvmField
     val DATABASE_SSL_CLIENT_KEY = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.client.key"))
         .setDescription(
             SettingDescription.text(
-                "Client private key content in PEM format. Private key corresponding to the " +
-                        "client certificate for mutual TLS authentication. Must match the client certificate."
+                "Client private key for mutual TLS authentication with flexible input support. " +
+                        "Supports both PEM private key content and file path through automatic detection:\n\n" +
+                        "- PEM content: Provide PEM formated private key directly with BEGIN/END markers\n" +
+                        "- File path: Provide path to PEM-formatted private key file\n\n" +
+                        "The system automatically detects the input format based on PEM headers. " +
+                        "Must correspond to the client certificate for proper authentication."
             )
         )
         .setSupportedSources(LOCAL_SOURCE)
@@ -315,60 +307,25 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .build()
 
     /**
-     * File path to client private key for mutual TLS authentication.
+     * Certificate Authority (CA) certificate for server verification with flexible input support.
      *
-     * Alternative to providing private key content directly. Should point to
-     * a valid PEM-formatted private key file matching the client certificate.
-     * Use either this field or key content, not both.
-     */
-    @JvmField
-    val DATABASE_SSL_CLIENT_KEY_PATH = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.client.key.path"))
-        .setDescription(
-            SettingDescription.text(
-                "Client private key file path. Alternative to providing private key content " +
-                        "directly. Should point to a valid PEM-formatted private key file matching the client certificate."
-            )
-        )
-        .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue("")
-        .setRequired(false)
-        .setAllowAnyValue(true)
-        .build()
-
-    /**
-     * Certificate Authority (CA) certificate content for server verification.
+     * Supports both PEM certificate content and file path through automatic detection:
+     * - PEM content: Provide CA certificate directly with BEGIN/END markers
+     * - File path: Provide path to PEM-formatted CA certificate file
      *
-     * Trusted CA certificate used to verify the database server's SSL certificate.
-     * Required when using custom or self-signed certificates. Content should
-     * include full PEM certificate with BEGIN/END markers.
+     * The system automatically detects the input format based on PEM headers.
+     * Required when using custom or self-signed certificates for server verification.
      */
     @JvmField
     val DATABASE_SSL_CA_CERT = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.ca.cert"))
         .setDescription(
             SettingDescription.text(
-                "CA certificate content for server verification. Trusted CA certificate used to " +
-                        "verify the database server's SSL certificate. Required when using custom or self-signed certificates."
-            )
-        )
-        .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue("")
-        .setRequired(false)
-        .setAllowAnyValue(true)
-        .build()
-
-    /**
-     * File path to Certificate Authority (CA) certificate for server verification.
-     *
-     * Alternative to providing CA certificate content directly. Should point to
-     * a valid PEM-formatted CA certificate file for server certificate validation.
-     * Use either this field or CA cert content, not both.
-     */
-    @JvmField
-    val DATABASE_SSL_CA_CERT_PATH = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.ca.path"))
-        .setDescription(
-            SettingDescription.text(
-                "CA certificate file path. Alternative to providing CA certificate content " +
-                        "directly. Should point to a valid PEM-formatted CA certificate file for server certificate validation."
+                "Certificate Authority (CA) certificate for server verification with flexible input support. " +
+                        "Supports both PEM certificate content and file path through automatic detection:\n\n" +
+                        "- PEM content: Provide PEM formated CA certificate directly with BEGIN/END markers\n" +
+                        "- File path: Provide path to PEM-formatted CA certificate file\n\n" +
+                        "The system automatically detects the input format based on PEM headers. " +
+                        "Required when using custom or self-signed certificates for server verification."
             )
         )
         .setSupportedSources(LOCAL_SOURCE)
@@ -561,11 +518,8 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         DATABASE_SSL_ENABLED,
         DATABASE_SSL_MODE,
         DATABASE_SSL_CLIENT_CERT,
-        DATABASE_SSL_CLIENT_CERT_PATH,
         DATABASE_SSL_CLIENT_KEY,
-        DATABASE_SSL_CLIENT_KEY_PATH,
         DATABASE_SSL_CA_CERT,
-        DATABASE_SSL_CA_CERT_PATH,
         DATABASE_SSL_VERIFY_SERVER,
         DATABASE_SSL_ALLOW_SELF_SIGNED,
         DATABASE_POOL_MAX_SIZE,

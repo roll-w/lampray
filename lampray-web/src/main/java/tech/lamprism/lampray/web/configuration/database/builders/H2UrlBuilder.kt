@@ -53,11 +53,8 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
                 val file = File(filePath)
                 val absolutePath = file.absolutePath
                 // Remove .db extension if present, H2 adds it automatically
-                val dbPath = if (absolutePath.endsWith(".db")) {
-                    absolutePath.substring(0, absolutePath.length - 3)
-                } else {
-                    absolutePath
-                }
+                val dbPath = absolutePath.removeSuffix(".db")
+
                 "jdbc:h2:file:$dbPath"
             }
 
