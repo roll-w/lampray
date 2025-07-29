@@ -70,7 +70,7 @@ class DataSourceConfiguration(
         } catch (e: Exception) {
             throw ServerInitializeException(
                 ServerInitializeException.Detail(
-                    "Failed to build database URL.",
+                    "Failed to build database URL. ${e.message}",
                     "Please check the 'database.type' and 'database.target' config in the configuration file or " +
                             "environment variables. Ensure that the values are valid and accessible."
                 ), e
@@ -115,7 +115,7 @@ class DataSourceConfiguration(
         } catch (e: IllegalArgumentException) {
             throw ServerInitializeException(
                 ServerInitializeException.Detail(
-                    "Invalid database type configuration.",
+                    "Invalid database type configuration. ${e.message}",
                     "The 'database.type' config must be one of: ${
                         DatabaseType.values().joinToString(", ") { it.typeName }
                     }, but got '$type'. Please check your configuration file or environment variables."
@@ -132,7 +132,8 @@ class DataSourceConfiguration(
                     )
                 ),
             type = databaseType,
-            databaseName = configProvider[DatabaseConfigKeys.DATABASE_NAME] ?: "",
+            databaseName = configProvider[DatabaseConfigKeys.DATABASE_NAME]
+                ?: DatabaseConfigKeys.DATABASE_NAME.defaultValue!!,
             charset = configProvider[DatabaseConfigKeys.DATABASE_CHARSET],
             customOptions = configProvider[DatabaseConfigKeys.DATABASE_OPTIONS] ?: "",
             sslConfig = buildSslConfig(),
@@ -189,19 +190,12 @@ class DataSourceConfiguration(
      */
     private fun buildConnectionPoolConfig(): ConnectionPoolConfig {
         return ConnectionPoolConfig(
-            initialSize = 0, // HikariCP doesn't use initial size
             maxActive = configProvider[DatabaseConfigKeys.DATABASE_POOL_MAX_SIZE] ?: 20,
-            maxIdle = 0, // HikariCP doesn't use max idle
             minIdle = configProvider[DatabaseConfigKeys.DATABASE_POOL_MIN_IDLE] ?: 2,
-            maxWait = 0, // HikariCP doesn't use max wait
             connectionTimeout = configProvider[DatabaseConfigKeys.DATABASE_POOL_CONNECTION_TIMEOUT] ?: 30000L,
-            testOnBorrow = true, // HikariCP always validates
-            testOnReturn = false,
-            testWhileIdle = true,
             timeBetweenEvictionRuns = configProvider[DatabaseConfigKeys.DATABASE_POOL_IDLE_TIMEOUT] ?: 600000L,
             minEvictableIdleTime = configProvider[DatabaseConfigKeys.DATABASE_POOL_MAX_LIFETIME] ?: 1800000L,
             removeAbandoned = false, // HikariCP doesn't use this concept
-            removeAbandonedTimeout = 0,
             logAbandoned = (configProvider[DatabaseConfigKeys.DATABASE_POOL_LEAK_DETECTION_THRESHOLD] ?: 0L) > 0
         )
     }

@@ -34,8 +34,10 @@ class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
         val target = parseTarget(config.target, config.type.defaultPort)
 
         return if (target.isNetwork()) {
-            val database = if (config.databaseName.isNotBlank()) ";databaseName=${config.databaseName}" else ""
-            "${config.type.urlPrefix}${target.getNetworkAddress()}$database"
+            val database = config.databaseName.ifBlank {
+                throw IllegalArgumentException("Database name must be specified for SQL Server")
+            }
+            "${config.type.urlPrefix}${target.getNetworkAddress()};databaseName=$database"
         } else {
             throw IllegalArgumentException("SQL Server requires network target format (host:port or host)")
         }
@@ -54,14 +56,17 @@ class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
             SslConfig.SslMode.DISABLE -> {
                 params["encrypt"] = "false"
             }
+
             SslConfig.SslMode.PREFER -> {
                 params["encrypt"] = "true"
                 params["trustServerCertificate"] = "true"
             }
+
             SslConfig.SslMode.REQUIRE -> {
                 params["encrypt"] = "true"
                 params["trustServerCertificate"] = "false"
             }
+
             SslConfig.SslMode.VERIFY_CA, SslConfig.SslMode.VERIFY_IDENTITY -> {
                 params["encrypt"] = "true"
                 params["trustServerCertificate"] = "false"

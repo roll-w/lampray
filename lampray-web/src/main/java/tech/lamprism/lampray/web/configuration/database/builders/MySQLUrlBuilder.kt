@@ -34,8 +34,10 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         val target = parseTarget(config.target, config.type.defaultPort)
 
         return if (target.isNetwork()) {
-            val database = if (config.databaseName.isNotBlank()) "/${config.databaseName}" else ""
-            "${config.type.urlPrefix}${target.getNetworkAddress()}$database"
+            val database = config.databaseName.ifBlank {
+                throw IllegalArgumentException("Database name must be specified for MySQL or MariaDB")
+            }
+            "${config.type.urlPrefix}${target.getNetworkAddress()}/$database"
         } else {
             throw IllegalArgumentException("MySQL requires network target format (host:port or host)")
         }
@@ -53,19 +55,23 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
             SslConfig.SslMode.DISABLE -> {
                 params["useSSL"] = "false"
             }
+
             SslConfig.SslMode.PREFER -> {
                 params["useSSL"] = "true"
                 params["requireSSL"] = "false"
             }
+
             SslConfig.SslMode.REQUIRE -> {
                 params["useSSL"] = "true"
                 params["requireSSL"] = "true"
             }
+
             SslConfig.SslMode.VERIFY_CA -> {
                 params["useSSL"] = "true"
                 params["requireSSL"] = "true"
                 params["verifyServerCertificate"] = "true"
             }
+
             SslConfig.SslMode.VERIFY_IDENTITY -> {
                 params["useSSL"] = "true"
                 params["requireSSL"] = "true"

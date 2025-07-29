@@ -139,11 +139,13 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .setDescription(
             SettingDescription.text(
                 "Target database name on the server. Specifies which specific database to use " +
-                        "on multi-database servers. Only applicable for network-based databases."
+                        "on multi-database servers. Only applicable for network-based databases. " +
+                        "Defaults to 'lampray' database, needs to be created manually if not exists, " +
+                        "will not be created automatically."
             )
         )
         .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue("")
+        .setDefaultValue("lampray")
         .setRequired(false)
         .setAllowAnyValue(true)
         .build()

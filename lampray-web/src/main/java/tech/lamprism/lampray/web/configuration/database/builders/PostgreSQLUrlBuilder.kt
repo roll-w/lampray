@@ -35,8 +35,10 @@ class PostgreSQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         val target = parseTarget(config.target, config.type.defaultPort)
 
         return if (target.isNetwork()) {
-            val database = if (config.databaseName.isNotBlank()) "/${config.databaseName}" else "/postgres"
-            "${config.type.urlPrefix}${target.getNetworkAddress()}$database"
+            val database = config.databaseName.ifBlank {
+                throw IllegalArgumentException("Database name must be specified for PostgreSQL")
+            }
+            "${config.type.urlPrefix}${target.getNetworkAddress()}/$database"
         } else {
             throw IllegalArgumentException("PostgreSQL requires network target format (host:port or host)")
         }
