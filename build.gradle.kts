@@ -17,11 +17,28 @@
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 import com.bmuschko.gradle.docker.tasks.image.DockerSaveImage
 import org.apache.tools.ant.taskdefs.condition.Os
+import java.util.Locale
 
 plugins {
     id("lampray-project")
     id("com.bmuschko.docker-remote-api") version "9.4.0"
 }
+
+val supportedPlatforms = mapOf(
+    "amd64" to "linux/amd64",
+    "arm64" to "linux/arm64"
+)
+
+fun detectCurrentArchitecture(): String {
+    val osArch = System.getProperty("os.arch").lowercase(Locale.ROOT)
+    return when {
+        osArch.contains("amd64") || osArch.contains("x86_64") -> "amd64"
+        osArch.contains("aarch64") || osArch.contains("arm64") -> "arm64"
+        else -> "amd64"
+    }
+}
+
+val currentArch = detectCurrentArchitecture()
 
 tasks.register<Tar>("package") {
     dependsOn(":lampray-web:assemble")
@@ -60,32 +77,77 @@ tasks.register<Tar>("package") {
     outputs.upToDateWhen { false }
 }
 
-tasks.register<DockerBuildImage>("buildImage") {
+tasks.register("buildImage") {
     group = "build"
-    description = "Build Docker image for lampray."
-    dependsOn(":package")
-    copy {
-        from("Dockerfile")
-        into(layout.buildDirectory.dir("dist"))
-    }
-    inputDir = layout.buildDirectory.dir("dist")
-    images = listOf("lampray:${version}")
-    buildArgs = mapOf(
-        "LAMPRAY_VERSION" to version.toString(),
-        "CTX_PATH" to "./"
-    )
-    // TODO: support multi-arch build
+    description = "Build Docker image for lampray (auto-detect current architecture)."
+    dependsOn("buildImage${currentArch.replaceFirstChar { it.uppercase() }}")
+
     outputs.upToDateWhen { false }
 }
 
-tasks.register<DockerSaveImage>("packageImage") {
-    group = "distribution"
-    description = "Creates distribution pack for the project image."
-    dependsOn("buildImage")
+supportedPlatforms.forEach { (arch, platform) ->
+    tasks.register<DockerBuildImage>("buildImage${arch.replaceFirstChar { it.uppercase() }}") {
+        group = "build"
+        description = "Build Docker image for lampray on $platform architecture."
+        dependsOn(":package")
 
-    images = listOf("lampray:${version}")
-    destFile = layout.buildDirectory.file("dist/lampray-${version}-image.tar.gz")
-    useCompression = true
+        doFirst {
+            copy {
+                from("Dockerfile")
+                into(layout.buildDirectory.dir("dist"))
+            }
+        }
+
+        inputDir = layout.buildDirectory.dir("dist")
+        images = setOf("lampray:${version}-${arch}")
+        buildArgs = mapOf(
+            "LAMPRAY_VERSION" to version.toString(),
+            "CTX_PATH" to "./"
+        )
+        this.platform = platform
+        outputs.upToDateWhen { false }
+    }
+}
+
+tasks.register("buildImageMultiArch") {
+    group = "build"
+    description = "Build Docker images for all supported architectures."
+
+    supportedPlatforms.keys.forEach { arch ->
+        dependsOn("buildImage${arch.replaceFirstChar { it.uppercase() }}")
+    }
+    outputs.upToDateWhen { false }
+}
+
+tasks.register("packageImage") {
+    group = "distribution"
+    description = "Package Docker image for lampray (auto-detect current architecture)."
+    dependsOn("packageImage${currentArch.replaceFirstChar { it.uppercase() }}")
+
+    outputs.upToDateWhen { false }
+}
+
+supportedPlatforms.forEach { (arch, platform) ->
+    tasks.register<DockerSaveImage>("packageImage${arch.replaceFirstChar { it.uppercase() }}") {
+        group = "distribution"
+        description = "Package Docker image for lampray on $platform architecture."
+        dependsOn("buildImage${arch.replaceFirstChar { it.uppercase() }}")
+
+        images = setOf("lampray:${version}-${arch}")
+        destFile = layout.buildDirectory.file("dist/lampray-${version}-${arch}-image.tar.gz")
+        useCompression = true
+
+        outputs.upToDateWhen { false }
+    }
+}
+
+tasks.register("packageImagesMultiArch") {
+    group = "distribution"
+    description = "Package Docker images for all supported architectures."
+
+    supportedPlatforms.keys.forEach { arch ->
+        dependsOn("packageImage${arch.replaceFirstChar { it.uppercase() }}")
+    }
 
     outputs.upToDateWhen { false }
 }
@@ -128,4 +190,3 @@ tasks.register("version") {
 
     outputs.upToDateWhen { false }
 }
-
