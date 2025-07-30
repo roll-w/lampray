@@ -201,26 +201,6 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
     // SSL/TLS Configuration
 
     /**
-     * Enable SSL/TLS encryption for secure database connections.
-     *
-     * Activates encrypted communication between application and database server.
-     * Recommended for production environments and remote database connections.
-     */
-    @JvmField
-    val DATABASE_SSL_ENABLED = SettingSpecificationBuilder(SettingKey.ofBoolean("database.ssl.enabled"))
-        .setDescription(
-            SettingDescription.text(
-                "Enable SSL/TLS encryption for database connections. Activates encrypted " +
-                        "communication between application and database server. Recommended for production and remote connections."
-            )
-        )
-        .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue(false)
-        .setRequired(false)
-        .setAllowAnyValue(true)
-        .build()
-
-    /**
      * SSL connection security level and certificate verification strictness.
      *
      * Controls how strictly SSL certificates are validated:
@@ -235,7 +215,8 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .setDescription(
             SettingDescription.text(
                 "SSL security level and certificate verification strictness. " +
-                        "Controls how strictly SSL certificates are validated, ranging from 'disable' (no SSL) " +
+                        "Recommended enabled SSL/TLS for production and remote connections. " +
+                        "Use mode controls how strictly SSL certificates are validated, ranging from 'disable' (no SSL) " +
                         "to 'verify-identity' (full certificate and hostname verification):\n\n" +
                         "- disable: No SSL encryption\n" +
                         "- prefer: Try SSL first, fallback to non-SSL\n" +
@@ -245,7 +226,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
             )
         )
         .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue("prefer")
+        .setDefaultValue("disable")
         .setValueEntries(listOf("disable", "prefer", "require", "verify-ca", "verify-identity"))
         .setRequired(false)
         .build()
@@ -515,7 +496,6 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         DATABASE_NAME,
         DATABASE_CHARSET,
         DATABASE_OPTIONS,
-        DATABASE_SSL_ENABLED,
         DATABASE_SSL_MODE,
         DATABASE_SSL_CLIENT_CERT,
         DATABASE_SSL_CLIENT_KEY,

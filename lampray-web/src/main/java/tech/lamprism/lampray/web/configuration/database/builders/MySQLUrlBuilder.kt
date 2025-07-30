@@ -31,8 +31,7 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
     override val supportedTypes = setOf(DatabaseType.MYSQL, DatabaseType.MARIADB)
 
     override fun buildBaseUrl(config: DatabaseConfig): String {
-        val target = parseTarget(config.target, config.type.defaultPort)
-
+        val target = config.target
         return if (target.isNetwork()) {
             val database = config.databaseName.ifBlank {
                 throw IllegalArgumentException("Database name must be specified for MySQL or MariaDB")
@@ -52,27 +51,27 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
 
     override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
         when (config.sslConfig.mode) {
-            SslConfig.SslMode.DISABLE -> {
+            SslConfig.Mode.DISABLE -> {
                 params["useSSL"] = "false"
             }
 
-            SslConfig.SslMode.PREFER -> {
+            SslConfig.Mode.PREFER -> {
                 params["useSSL"] = "true"
                 params["requireSSL"] = "false"
             }
 
-            SslConfig.SslMode.REQUIRE -> {
+            SslConfig.Mode.REQUIRE -> {
                 params["useSSL"] = "true"
                 params["requireSSL"] = "true"
             }
 
-            SslConfig.SslMode.VERIFY_CA -> {
+            SslConfig.Mode.VERIFY_CA -> {
                 params["useSSL"] = "true"
                 params["requireSSL"] = "true"
                 params["verifyServerCertificate"] = "true"
             }
 
-            SslConfig.SslMode.VERIFY_IDENTITY -> {
+            SslConfig.Mode.VERIFY_IDENTITY -> {
                 params["useSSL"] = "true"
                 params["requireSSL"] = "true"
                 params["verifyServerCertificate"] = "true"
@@ -93,8 +92,7 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         super.validateConfig(config)
 
         // MySQL-specific validations
-        val target = parseTarget(config.target, config.type.defaultPort)
-        require(target.isNetwork()) {
+        require(config.target.isNetwork()) {
             "MySQL requires network target format (host:port or host), got: ${config.target}"
         }
     }

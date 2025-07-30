@@ -31,7 +31,7 @@ class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
     override val supportedTypes = setOf(DatabaseType.SQL_SERVER)
 
     override fun buildBaseUrl(config: DatabaseConfig): String {
-        val target = parseTarget(config.target, config.type.defaultPort)
+        val target = config.target
 
         return if (target.isNetwork()) {
             val database = config.databaseName.ifBlank {
@@ -53,21 +53,21 @@ class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
 
     override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
         when (config.sslConfig.mode) {
-            SslConfig.SslMode.DISABLE -> {
+            SslConfig.Mode.DISABLE -> {
                 params["encrypt"] = "false"
             }
 
-            SslConfig.SslMode.PREFER -> {
+            SslConfig.Mode.PREFER -> {
                 params["encrypt"] = "true"
                 params["trustServerCertificate"] = "true"
             }
 
-            SslConfig.SslMode.REQUIRE -> {
+            SslConfig.Mode.REQUIRE -> {
                 params["encrypt"] = "true"
                 params["trustServerCertificate"] = "false"
             }
 
-            SslConfig.SslMode.VERIFY_CA, SslConfig.SslMode.VERIFY_IDENTITY -> {
+            SslConfig.Mode.VERIFY_CA, SslConfig.Mode.VERIFY_IDENTITY -> {
                 params["encrypt"] = "true"
                 params["trustServerCertificate"] = "false"
                 params["hostNameInCertificate"] = "*.database.windows.net"
@@ -86,7 +86,7 @@ class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
         super.validateConfig(config)
 
         // SQL Server-specific validations
-        require(parseTarget(config.target, config.type.defaultPort).isNetwork()) {
+        require(config.target.isNetwork()) {
             "SQL Server requires network target format (host:port or host), got: ${config.target}"
         }
     }

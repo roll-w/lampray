@@ -32,7 +32,7 @@ class PostgreSQLUrlBuilder : AbstractDatabaseUrlBuilder() {
     override val supportedTypes = setOf(DatabaseType.POSTGRESQL)
 
     override fun buildBaseUrl(config: DatabaseConfig): String {
-        val target = parseTarget(config.target, config.type.defaultPort)
+        val target = config.target
 
         return if (target.isNetwork()) {
             val database = config.databaseName.ifBlank {
@@ -55,22 +55,22 @@ class PostgreSQLUrlBuilder : AbstractDatabaseUrlBuilder() {
 
     override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
         when (config.sslConfig.mode) {
-            SslConfig.SslMode.DISABLE -> {
+            SslConfig.Mode.DISABLE -> {
                 params["ssl"] = "false"
             }
-            SslConfig.SslMode.PREFER -> {
+            SslConfig.Mode.PREFER -> {
                 // PostgreSQL default behavior - try SSL first, fallback to non-SSL
                 // No explicit parameter needed
             }
-            SslConfig.SslMode.REQUIRE -> {
+            SslConfig.Mode.REQUIRE -> {
                 params["ssl"] = "true"
                 params["sslmode"] = "require"
             }
-            SslConfig.SslMode.VERIFY_CA -> {
+            SslConfig.Mode.VERIFY_CA -> {
                 params["ssl"] = "true"
                 params["sslmode"] = "verify-ca"
             }
-            SslConfig.SslMode.VERIFY_IDENTITY -> {
+            SslConfig.Mode.VERIFY_IDENTITY -> {
                 params["ssl"] = "true"
                 params["sslmode"] = "verify-full"
             }
@@ -124,7 +124,7 @@ class PostgreSQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         super.validateConfig(config)
 
         // PostgreSQL-specific validations
-        val target = parseTarget(config.target, config.type.defaultPort)
+        val target = config.target
         require(target.isNetwork()) {
             "PostgreSQL requires network target format (host:port or host), got: ${config.target}"
         }

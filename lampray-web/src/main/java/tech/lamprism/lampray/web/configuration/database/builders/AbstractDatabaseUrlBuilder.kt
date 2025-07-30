@@ -57,9 +57,6 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
         require(supports(config.type)) {
             "Configuration type ${config.type.typeName} is not supported by this builder"
         }
-        require(config.target.isNotBlank()) {
-            "Database target cannot be empty"
-        }
     }
 
     /**
@@ -85,7 +82,7 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
         }
 
         // Add SSL parameters if enabled
-        if (config.sslConfig.enabled) {
+        if (config.sslConfig.isEnabled()) {
             addSslParameters(params, config)
         }
 

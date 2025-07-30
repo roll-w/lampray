@@ -31,7 +31,7 @@ class SQLiteUrlBuilder : AbstractDatabaseUrlBuilder() {
     override val supportedTypes = setOf(DatabaseType.SQLITE)
 
     override fun buildBaseUrl(config: DatabaseConfig): String {
-        val target = parseTarget(config.target, config.type.defaultPort)
+        val target = config.target
 
         return when {
             target.isMemory() -> {
@@ -71,7 +71,7 @@ class SQLiteUrlBuilder : AbstractDatabaseUrlBuilder() {
         super.validateConfig(config)
 
         // SQLite-specific validations
-        val target = parseTarget(config.target, config.type.defaultPort)
+        val target = config.target
 
         // Check if it's a network target (which is invalid for SQLite)
         require(!target.isNetwork()) {

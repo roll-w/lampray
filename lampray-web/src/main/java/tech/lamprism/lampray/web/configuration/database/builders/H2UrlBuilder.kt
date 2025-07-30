@@ -32,7 +32,7 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
     override val supportedTypes = setOf(DatabaseType.H2)
 
     override fun buildBaseUrl(config: DatabaseConfig): String {
-        val target = parseTarget(config.target, config.type.defaultPort)
+        val target = config.target
 
         return when {
             target.isMemory() -> {
@@ -72,17 +72,17 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
 
     override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
         // SSL is only supported in TCP mode
-        val target = parseTarget(config.target, config.type.defaultPort)
+        val target = config.target
         if (!target.isNetwork()) {
             return // SSL parameters are not applicable for file or memory modes
         }
         when (config.sslConfig.mode) {
-            SslConfig.SslMode.DISABLE -> {
+            SslConfig.Mode.DISABLE -> {
                 params["ssl"] = "false"
             }
 
-            SslConfig.SslMode.PREFER, SslConfig.SslMode.REQUIRE,
-            SslConfig.SslMode.VERIFY_CA, SslConfig.SslMode.VERIFY_IDENTITY -> {
+            SslConfig.Mode.PREFER, SslConfig.Mode.REQUIRE,
+            SslConfig.Mode.VERIFY_CA, SslConfig.Mode.VERIFY_IDENTITY -> {
                 params["ssl"] = "true"
                 // H2 has limited SSL certificate verification options
             }
@@ -94,7 +94,7 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
     override fun validateConfig(config: DatabaseConfig) {
         super.validateConfig(config)
 
-        val target = parseTarget(config.target, config.type.defaultPort)
+        val target = config.target
 
         // For file-based databases, ensure parent directory exists
         if (target.isFile()) {
@@ -111,7 +111,7 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
         }
 
         // Validate SSL configuration for non-TCP modes
-        if (config.sslConfig.enabled && !target.isNetwork()) {
+        if (config.sslConfig.isEnabled() && !target.isNetwork()) {
             throw IllegalArgumentException("SSL is only supported in H2 TCP server mode, not for file or memory databases")
         }
     }

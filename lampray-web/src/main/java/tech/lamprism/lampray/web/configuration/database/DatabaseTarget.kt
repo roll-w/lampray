@@ -90,6 +90,9 @@ data class DatabaseTarget(
          * @return Parsed DatabaseTarget
          */
         fun parse(target: String, defaultPort: Int = 0): DatabaseTarget {
+            if (target.isBlank()) {
+                throw IllegalArgumentException("Target cannot be empty")
+            }
             val trimmedTarget = target.trim()
 
             return when {

@@ -33,6 +33,7 @@ import tech.lamprism.lampray.web.common.keys.DatabaseConfigKeys
 import tech.lamprism.lampray.web.configuration.database.CertificateValue
 import tech.lamprism.lampray.web.configuration.database.ConnectionPoolConfig
 import tech.lamprism.lampray.web.configuration.database.DatabaseConfig
+import tech.lamprism.lampray.web.configuration.database.DatabaseTarget
 import tech.lamprism.lampray.web.configuration.database.DatabaseType
 import tech.lamprism.lampray.web.configuration.database.DatabaseUrlBuilderFactory
 import tech.lamprism.lampray.web.configuration.database.SslConfig
@@ -91,8 +92,8 @@ class DataSourceConfiguration(
             // Apply HikariCP connection pool configuration
             configureHikariCP(this, databaseConfig.connectionPoolConfig, databaseConfig.type)
 
-            // Apply SSL configuration if enabled
-            if (databaseConfig.sslConfig.enabled) {
+            // Apply SSL configuration if is network connection
+            if (databaseConfig.target.isNetwork()) {
                 configureHikariSsl(this, databaseConfig.sslConfig)
             }
         })
@@ -123,14 +124,15 @@ class DataSourceConfiguration(
             )
         }
 
+        val target = (configProvider[DatabaseConfigKeys.DATABASE_TARGET]
+            ?: throw ServerInitializeException(
+                ServerInitializeException.Detail(
+                    "Database target configuration is missing",
+                    "Please set the 'database.target' property in your configuration file"
+                )
+            ))
         return DatabaseConfig(
-            target = configProvider[DatabaseConfigKeys.DATABASE_TARGET]
-                ?: throw ServerInitializeException(
-                    ServerInitializeException.Detail(
-                        "Database target configuration is missing",
-                        "Please set the 'database.target' property in your configuration file"
-                    )
-                ),
+            target = DatabaseTarget.parse(target, databaseType.defaultPort),
             type = databaseType,
             databaseName = configProvider[DatabaseConfigKeys.DATABASE_NAME]
                 ?: DatabaseConfigKeys.DATABASE_NAME.defaultValue!!,
@@ -145,18 +147,16 @@ class DataSourceConfiguration(
      * Builds SSL configuration from configuration provider settings.
      */
     private fun buildSslConfig(): SslConfig {
-        val enabled = configProvider[DatabaseConfigKeys.DATABASE_SSL_ENABLED] ?: false
-        if (!enabled) {
-            return SslConfig(enabled = false)
-        }
-
         val mode = when (configProvider[DatabaseConfigKeys.DATABASE_SSL_MODE]?.lowercase()) {
-            "disable" -> SslConfig.SslMode.DISABLE
-            "prefer" -> SslConfig.SslMode.PREFER
-            "require" -> SslConfig.SslMode.REQUIRE
-            "verify-ca" -> SslConfig.SslMode.VERIFY_CA
-            "verify-identity" -> SslConfig.SslMode.VERIFY_IDENTITY
-            else -> SslConfig.SslMode.PREFER
+            "disable" -> SslConfig.Mode.DISABLE
+            "prefer" -> SslConfig.Mode.PREFER
+            "require" -> SslConfig.Mode.REQUIRE
+            "verify-ca" -> SslConfig.Mode.VERIFY_CA
+            "verify-identity" -> SslConfig.Mode.VERIFY_IDENTITY
+            else -> SslConfig.Mode.PREFER
+        }
+        if (mode == SslConfig.Mode.DISABLE) {
+            return SslConfig(mode = mode)
         }
 
         val clientCert = createCertificateValueWithAutoDetection(
@@ -172,7 +172,6 @@ class DataSourceConfiguration(
         )
 
         return SslConfig(
-            enabled = true,
             mode = mode,
             clientCertificate = clientCert,
             clientPrivateKey = clientKey,
@@ -272,7 +271,9 @@ class DataSourceConfiguration(
      * Note: SSL certificates are applied through HikariCP data source properties.
      */
     private fun configureHikariSsl(hikariConfig: HikariConfig, sslConfig: SslConfig) {
-        if (!sslConfig.enabled) return
+        if (!sslConfig.isEnabled()) {
+            return
+        }
 
         try {
             // Create SSL context if certificates are provided

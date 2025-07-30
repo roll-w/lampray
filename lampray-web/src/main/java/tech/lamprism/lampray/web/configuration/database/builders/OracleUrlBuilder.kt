@@ -32,7 +32,7 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
     override val supportedTypes = setOf(DatabaseType.ORACLE)
 
     override fun buildBaseUrl(config: DatabaseConfig): String {
-        val target = parseTarget(config.target, config.type.defaultPort)
+        val target = config.target
 
         return if (target.isNetwork()) {
             val service = config.databaseName.ifBlank {
@@ -51,10 +51,12 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
                 params["oracle.jdbc.defaultNChar"] = "true"
                 params["oracle.jdbc.UseNLSProcessing"] = "false"
             }
+
             "utf8mb4" -> {
                 params["oracle.jdbc.defaultNChar"] = "true"
                 params["oracle.jdbc.UseNLSProcessing"] = "false"
             }
+
             else -> {
                 params["oracle.jdbc.defaultNChar"] = "false"
             }
@@ -63,13 +65,15 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
 
     override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
         when (config.sslConfig.mode) {
-            SslConfig.SslMode.DISABLE -> {
+            SslConfig.Mode.DISABLE -> {
                 // Oracle uses non-SSL connection by default
             }
-            SslConfig.SslMode.PREFER, SslConfig.SslMode.REQUIRE -> {
+
+            SslConfig.Mode.PREFER, SslConfig.Mode.REQUIRE -> {
                 params["oracle.jdbc.useSSL"] = "true"
             }
-            SslConfig.SslMode.VERIFY_CA, SslConfig.SslMode.VERIFY_IDENTITY -> {
+
+            SslConfig.Mode.VERIFY_CA, SslConfig.Mode.VERIFY_IDENTITY -> {
                 params["oracle.jdbc.useSSL"] = "true"
                 params["oracle.net.ssl_server_dn_match"] = "true"
             }
@@ -89,7 +93,7 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
         super.validateConfig(config)
 
         // Oracle-specific validations
-        require(parseTarget(config.target, config.type.defaultPort).isNetwork()) {
+        require(config.target.isNetwork()) {
             "Oracle requires network target format (host:port or host), got: ${config.target}"
         }
     }

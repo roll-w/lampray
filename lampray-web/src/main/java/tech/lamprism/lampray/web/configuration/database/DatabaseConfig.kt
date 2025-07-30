@@ -22,7 +22,7 @@ package tech.lamprism.lampray.web.configuration.database
  * @author RollW
  */
 data class DatabaseConfig(
-    val target: String,
+    val target: DatabaseTarget,
     val databaseName: String,
     val type: DatabaseType,
     val charset: String?,
@@ -62,15 +62,14 @@ enum class DatabaseType(
  * @author RollW
  */
 data class SslConfig(
-    val enabled: Boolean = false,
-    val mode: SslMode = SslMode.PREFER,
+    val mode: Mode = Mode.DISABLE,
     val clientCertificate: CertificateValue? = null,
     val clientPrivateKey: CertificateValue? = null,
     val caCertificate: CertificateValue? = null,
     val verifyServerCertificate: Boolean = true,
     val allowSelfSignedCertificates: Boolean = false
 ) {
-    enum class SslMode {
+    enum class Mode {
         /**
          * SSL connection is disabled
          */
@@ -95,6 +94,10 @@ data class SslConfig(
          * SSL connection is required with full certificate and hostname verification
          */
         VERIFY_IDENTITY
+    }
+
+    fun isEnabled(): Boolean {
+        return mode != Mode.DISABLE
     }
 }
 
