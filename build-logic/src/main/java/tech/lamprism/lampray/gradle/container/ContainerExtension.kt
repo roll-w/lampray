@@ -19,6 +19,9 @@ package tech.lamprism.lampray.gradle.container
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
 
 /**
  * Extension for configuring container build settings
@@ -30,31 +33,41 @@ abstract class ContainerExtension {
     /**
      * Project version for container image tagging
      */
+    @get:Input
     abstract val version: Property<String>
 
     /**
      * List of supported architectures for multi-arch builds
      */
+    @get:Input
+    @get:Optional
     abstract val supportedArchitectures: ListProperty<String>
 
     /**
      * Base image name (without version and architecture suffix)
      */
+    @get:Input
     abstract val imageName: Property<String>
 
     /**
      * Path to the Containerfile (Dockerfile)
      */
+    @get:InputFile
+    @get:Optional
     abstract val containerFile: RegularFileProperty
 
     /**
      * Custom container tools configuration
      */
+    @get:Input
+    @get:Optional
     abstract val customTools: ListProperty<ContainerTool>
 
     /**
      * Preferred container tool (optional, will auto-detect if not specified)
      */
+    @get:Input
+    @get:Optional
     abstract val preferredTool: Property<String>
 
     init {

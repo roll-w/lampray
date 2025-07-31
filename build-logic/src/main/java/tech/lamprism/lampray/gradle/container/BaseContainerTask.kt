@@ -21,6 +21,7 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.process.ExecOperations
 import javax.inject.Inject
@@ -50,11 +51,13 @@ abstract class BaseContainerTask : DefaultTask() {
     @get:Nested
     abstract val containerExtension: Property<ContainerExtension>
 
+    @Internal
     protected fun getContainerToolManager(): ContainerToolManager {
         val extension = containerExtension.get()
         return ContainerToolManager(extension.customTools.get())
     }
 
+    @Internal
     protected fun getPreferredTool(): String? {
         val extension = containerExtension.get()
         return extension.preferredTool.orNull
