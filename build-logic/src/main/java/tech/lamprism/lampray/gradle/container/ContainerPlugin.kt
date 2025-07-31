@@ -43,7 +43,9 @@ class ContainerPlugin : Plugin<Project> {
 
         // Configure default values
         extension.version.convention(project.version.toString())
+        extension.imageName.convention(project.name)
         extension.supportedArchitectures.convention(SUPPORTED_PLATFORMS.keys.toList())
+        extension.containerFile.convention(project.layout.projectDirectory.file("Containerfile"))
 
         // Detect current architecture
         val currentArch = detectCurrentArchitecture()
@@ -60,6 +62,7 @@ class ContainerPlugin : Plugin<Project> {
                 this.architecture.set(arch)
                 this.platform.set(platform)
                 this.buildContext.set(project.layout.buildDirectory.dir("dist"))
+                this.containerExtension.set(extension)
 
                 dependsOn("package")
             }
@@ -72,8 +75,9 @@ class ContainerPlugin : Plugin<Project> {
                 this.architecture.set(arch)
                 this.platform.set(platform)
                 this.buildContext.set(project.layout.buildDirectory.dir("dist"))
+                this.containerExtension.set(extension)
                 this.outputFile.set(
-                    project.layout.buildDirectory.file("dist/lampray-${extension.version.get()}-${arch}-image.tar")
+                    project.layout.buildDirectory.file("dist/${extension.imageName.get()}-${extension.version.get()}-${arch}-image.tar")
                 )
 
                 dependsOn("buildImage$taskSuffix")
@@ -91,6 +95,9 @@ class ContainerPlugin : Plugin<Project> {
             group = CONTAINER_GROUP
             description = "Build container images for all supported architectures"
             dependsOn(SUPPORTED_PLATFORMS.keys.map { "buildImage${it.replaceFirstChar { c -> c.uppercase() }}" })
+
+            // Automatically create manifest after building all architectures
+            finalizedBy("createMultiArchManifest")
         }
 
         project.tasks.register("packageImage") {
@@ -103,6 +110,9 @@ class ContainerPlugin : Plugin<Project> {
             group = CONTAINER_GROUP
             description = "Package container images for all supported architectures"
             dependsOn(SUPPORTED_PLATFORMS.keys.map { "packageImage${it.replaceFirstChar { c -> c.uppercase() }}" })
+
+            // Automatically create manifest after packaging all architectures
+            finalizedBy("createMultiArchManifest")
         }
 
         project.tasks.register<CreateContainerManifestTask>("createMultiArchManifest") {
@@ -113,8 +123,12 @@ class ContainerPlugin : Plugin<Project> {
             architecture.set(currentArch)
             platform.set(SUPPORTED_PLATFORMS[currentArch]!!)
             buildContext.set(project.layout.buildDirectory.dir("dist"))
-            manifestName.set("lampray:${extension.version.get()}")
+            containerExtension.set(extension)
+            manifestName.set("${extension.imageName.get()}:${extension.version.get()}")
             supportedArchitectures.set(extension.supportedArchitectures)
+            ociManifestFile.set(
+                project.layout.buildDirectory.file("dist/${extension.imageName.get()}-${extension.version.get()}-manifest.json")
+            )
 
             dependsOn("buildImageMultiArch")
         }

@@ -39,33 +39,35 @@ abstract class PackageContainerImageTask : BaseContainerTask() {
         val toolManager = getContainerToolManager()
         val preferredTool = getPreferredTool()
         val tool = toolManager.detectAvailableTool(preferredTool)
+        val extension = containerExtension.get()
 
         val outputPath = outputFile.get().asFile.absolutePath
         val context = ContainerBuildContext(
             platform = platform.get(),
             version = version.get(),
             architecture = architecture.get(),
-            outputFile = outputPath
+            baseImageName = extension.imageName.get(),
+            outputFile = outputPath,
+            workingDirectory = buildContext.get().asFile
         )
 
-        logger.lifecycle("Packaging container image with tool: ${tool.displayName}")
+        logger.lifecycle("Packaging container image with tool: ${toolManager.getToolInfo(tool)}")
         logger.lifecycle("Image: ${context.imageName}")
         logger.lifecycle("Output: $outputPath")
 
-        val saveCommand = tool.saveCommand(context)
 
-        execOperations.exec {
-            workingDir = buildContext.get().asFile
-            commandLine = saveCommand
+        if (tool.executeSave(context, execOperations)) {
+            logger.lifecycle("Successfully packaged container image to: $outputPath")
+
+            // Show file size if exists
+            val file = outputFile.get().asFile
+            if (file.exists()) {
+                val sizeInMB = file.length() / (1024 * 1024)
+                logger.lifecycle("Package size: $sizeInMB MB")
+            }
+            return
         }
 
-        logger.lifecycle("Successfully packaged container image to: $outputPath")
-
-        // Show file size if exists
-        val file = outputFile.get().asFile
-        if (file.exists()) {
-            val sizeInMB = file.length() / (1024 * 1024)
-            logger.lifecycle("Package size: $sizeInMB MB")
-        }
+        throw ContainerPluginException("Failed to package container image to: $outputPath")
     }
 }

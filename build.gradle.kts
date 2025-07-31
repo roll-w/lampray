@@ -18,13 +18,14 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     id("lampray-project")
-    id("space.lingu.gradle.container")
+    id("tech.lamprism.lampray.gradle.container")
 }
 
 // Configure container extension
 containerImage {
     version = project.version.toString()
     imageName = "lampray"
+    containerFile = file("Containerfile")
     supportedArchitectures = listOf("amd64", "arm64")
 }
 

@@ -16,8 +16,6 @@
 
 package tech.lamprism.lampray.gradle.container
 
-import org.gradle.api.GradleException
-
 
 /**
  * Container tool detector for OCI-compliant container operations
@@ -38,7 +36,7 @@ class ContainerToolManager(private val customTools: List<ContainerTool> = emptyL
         // Try preferred tool first if specified
         if (preferredTool != null) {
             val preferred = allTools.find { it.executable == preferredTool || it.displayName == preferredTool }
-            if (preferred != null && isToolAvailable(preferred)) {
+            if (preferred != null && preferred.validateTool()) {
                 detectedTool = preferred
                 return preferred
             }
@@ -46,28 +44,20 @@ class ContainerToolManager(private val customTools: List<ContainerTool> = emptyL
 
         // Try all tools in order
         for (tool in allTools) {
-            if (isToolAvailable(tool)) {
+            if (tool.validateTool()) {
                 detectedTool = tool
                 return tool
             }
         }
 
-        throw GradleException(
+        throw ContainerPluginException(
             "No container build tool found. Please install one of: " +
                     allTools.joinToString(", ") { it.displayName }
         )
     }
 
-    private fun isToolAvailable(tool: ContainerTool): Boolean {
-        return try {
-            val process = ProcessBuilder()
-                .command(tool.executable, "--version")
-                .redirectErrorStream(true)
-                .start()
-
-            process.waitFor() == 0
-        } catch (_: Exception) {
-            false
-        }
+    fun getToolInfo(tool: ContainerTool): String {
+        val version = tool.getToolVersion() ?: "unknown"
+        return "${tool.displayName} - version: $version"
     }
 }

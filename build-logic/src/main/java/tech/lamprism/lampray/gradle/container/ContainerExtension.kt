@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.gradle.container
 
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
@@ -42,6 +43,11 @@ abstract class ContainerExtension {
     abstract val imageName: Property<String>
 
     /**
+     * Path to the Containerfile (Dockerfile)
+     */
+    abstract val containerFile: RegularFileProperty
+
+    /**
      * Custom container tools configuration
      */
     abstract val customTools: ListProperty<ContainerTool>
@@ -52,8 +58,6 @@ abstract class ContainerExtension {
     abstract val preferredTool: Property<String>
 
     init {
-        // Set default values
-        imageName.convention("lampray")
         supportedArchitectures.convention(listOf("amd64", "arm64"))
         customTools.convention(emptyList())
     }

@@ -16,9 +16,11 @@
 
 package tech.lamprism.lampray.gradle.container
 
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 /**
@@ -34,6 +36,9 @@ abstract class CreateContainerManifestTask : BaseContainerTask() {
     @get:Input
     abstract val supportedArchitectures: ListProperty<String>
 
+    @get:OutputFile
+    abstract val ociManifestFile: RegularFileProperty
+
     init {
         description = "Create multi-architecture container manifest"
     }
@@ -46,44 +51,65 @@ abstract class CreateContainerManifestTask : BaseContainerTask() {
 
         val manifestNameValue = manifestName.get()
         val versionValue = version.get()
+        val extension = containerExtension.get()
         val architectures = supportedArchitectures.get()
 
         val context = ContainerBuildContext(
             platform = platform.get(),
             version = versionValue,
             architecture = architecture.get(),
-            manifestName = manifestNameValue
+            baseImageName = extension.imageName.get(),
+            manifestName = manifestNameValue,
+            workingDirectory = buildContext.get().asFile
         )
 
-        logger.lifecycle("Creating multi-architecture manifest with tool: ${tool.displayName}")
+        logger.lifecycle("Creating multi-architecture manifest with tool: ${toolManager.getToolInfo(tool)}")
         logger.lifecycle("Manifest name: $manifestNameValue")
         logger.lifecycle("Supported architectures: ${architectures.joinToString(", ")}")
 
-        // Create manifest
-        val createCommand = tool.manifestCreateCommand(context)
-
-        execOperations.exec {
-            workingDir = buildContext.get().asFile
-            commandLine = createCommand
+        // Build image names for all architectures
+        val imageNames = architectures.map { arch ->
+            "${extension.imageName.get()}:${versionValue}-${arch}"
         }
 
-        // Add images to manifest
-        architectures.forEach { arch ->
-            val imageName = "lampray:${versionValue}-${arch}"
-            logger.lifecycle("Adding image to manifest: $imageName")
+        logger.lifecycle("Images to include in manifest: ${imageNames.joinToString(", ")}")
 
-            val addCommand = tool.manifestAddCommand(context, imageName)
+        // Execute manifest creation using container tool
+        if (tool.executeManifestCreation(context, imageNames, execOperations)) {
+            // Generate OCI-compliant manifest file using user-provided generator
+            generateOCIManifestFile(tool, manifestNameValue)
 
-            try {
-                execOperations.exec {
-                    workingDir = buildContext.get().asFile
-                    commandLine = addCommand
-                }
-            } catch (e: Exception) {
-                logger.warn("Failed to add image $imageName to manifest: ${e.message}")
-            }
+            logger.lifecycle("Successfully created multi-architecture manifest: $manifestNameValue")
+            logger.lifecycle("Manifest includes ${imageNames.size} architecture(s): ${architectures.joinToString(", ")}")
+            logger.lifecycle("OCI manifest saved to: ${ociManifestFile.get().asFile.absolutePath}")
+            return
         }
+        throw ContainerPluginException("Failed to create multi-architecture manifest: $manifestNameValue")
 
-        logger.lifecycle("Successfully created multi-architecture manifest: $manifestNameValue")
+    }
+
+    private fun generateOCIManifestFile(tool: ContainerTool, manifestNameValue: String) {
+        val ociManifestFileObj = ociManifestFile.get().asFile
+
+        // Ensure parent directory exists
+        ociManifestFileObj.parentFile?.mkdirs()
+
+        // Create context for manifest generation
+        val context = ContainerBuildContext(
+            platform = platform.get(),
+            version = version.get(),
+            architecture = architecture.get(),
+            baseImageName = containerExtension.get().imageName.get(),
+            manifestName = manifestNameValue,
+            workingDirectory = buildContext.get().asFile
+        )
+
+        // Generate OCI manifest using tool's implementation
+        val manifestContent = tool.executeGenerateOCIManifest(manifestNameValue, context, execOperations)
+        if (manifestContent.isEmpty()) {
+            throw ContainerPluginException("Failed to generate OCI manifest content for $manifestNameValue")
+        }
+        ociManifestFileObj.writeText(manifestContent)
+        logger.lifecycle("Generated OCI manifest using ${tool.displayName}")
     }
 }

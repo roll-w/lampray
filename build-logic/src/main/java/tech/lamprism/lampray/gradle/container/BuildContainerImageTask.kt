@@ -34,43 +34,51 @@ abstract class BuildContainerImageTask : BaseContainerTask() {
         val toolManager = getContainerToolManager()
         val preferredTool = getPreferredTool()
         val tool = toolManager.detectAvailableTool(preferredTool)
+        val extension = containerExtension.get()
 
         val context = ContainerBuildContext(
             platform = platform.get(),
             version = version.get(),
-            architecture = architecture.get()
+            architecture = architecture.get(),
+            baseImageName = extension.imageName.get(),
+            workingDirectory = buildContext.get().asFile,
+            environment = mapOf(
+                "LAMPRAY_VERSION" to version.get(),
+                "TARGET_ARCH" to architecture.get(),
+                "TARGET_PLATFORM" to platform.get()
+            )
         )
 
-        logger.lifecycle("Building container image with tool: ${tool.displayName}")
+        logger.lifecycle("Building container image with tool: ${toolManager.getToolInfo(tool)}")
         logger.lifecycle("Target platform: ${context.platform}")
         logger.lifecycle("Target architecture: ${context.architecture}")
 
         // Prepare build context
         prepareBuildContext()
 
-        val buildCommand = tool.buildCommand(context)
-
-        execOperations.exec {
-            workingDir = buildContext.get().asFile
-            commandLine = buildCommand
-            environment("LAMPRAY_VERSION", context.version)
-            environment("TARGET_ARCH", context.architecture)
-            environment("TARGET_PLATFORM", context.platform)
+        if (tool.executeBuild(context, execOperations)) {
+            logger.lifecycle("Successfully built container image: ${context.imageName}")
+            return
         }
-
-        logger.lifecycle("Successfully built container image: ${context.imageName}")
+        throw ContainerPluginException("Failed to build container image: ${context.imageName}")
     }
 
     private fun prepareBuildContext() {
         val contextDir = buildContext.get().asFile
-        val projectDir = project.rootDir
+        val extension = containerExtension.get()
+
+        // Ensure build context directory exists
+        if (!contextDir.exists()) {
+            contextDir.mkdirs()
+        }
 
         // Copy Containerfile to build context
-        val containerFile = projectDir.resolve("Containerfile")
+        val containerFile = extension.containerFile.get().asFile
         if (containerFile.exists()) {
             containerFile.copyTo(contextDir.resolve("Containerfile"), overwrite = true)
+            logger.info("Copied Containerfile from ${containerFile.absolutePath}")
         } else {
-            throw IllegalStateException("Containerfile not found in project root")
+            throw IllegalStateException("Containerfile not found at ${containerFile.absolutePath}")
         }
     }
 }

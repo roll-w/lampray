@@ -16,7 +16,9 @@
 
 package tech.lamprism.lampray.gradle.container
 
-import org.gradle.api.GradleException
+import org.gradle.process.ExecOperations
+import java.io.ByteArrayOutputStream
+import java.io.File
 
 /**
  * Container build context for passing parameters to tools
@@ -27,11 +29,14 @@ data class ContainerBuildContext(
     val platform: String,
     val version: String,
     val architecture: String,
-    val imageName: String = "lampray:${version}-${architecture}",
+    val baseImageName: String = "lampray",
+    val imageName: String = "${baseImageName}:${version}-${architecture}",
     val containerFile: String = "Containerfile",
     val buildContext: String = ".",
     val outputFile: String? = null,
-    val manifestName: String? = null
+    val manifestName: String? = null,
+    val workingDirectory: File? = null,
+    val environment: Map<String, String> = emptyMap()
 )
 
 /**
@@ -44,13 +49,47 @@ interface ContainerTool {
     val supportsSave: Boolean
     val supportsManifest: Boolean
 
-    fun buildCommand(context: ContainerBuildContext): List<String>
-    fun saveCommand(context: ContainerBuildContext): List<String>
-    fun manifestCreateCommand(context: ContainerBuildContext): List<String>
-    fun manifestAddCommand(context: ContainerBuildContext, imageName: String): List<String>
+    /**
+     * Validate if the tool is available and working
+     */
+    fun validateTool(): Boolean
+
+    /**
+     * Get tool version information
+     */
+    fun getToolVersion(): String?
+
+    /**
+     * Execute build operation
+     */
+    fun executeBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean
+
+    /**
+     * Execute save operation
+     */
+    fun executeSave(context: ContainerBuildContext, execOperations: ExecOperations): Boolean
+
+    /**
+     * Execute manifest creation with images
+     */
+    fun executeManifestCreation(
+        context: ContainerBuildContext,
+        imageNames: List<String>,
+        execOperations: ExecOperations
+    ): Boolean
+
+    /**
+     * Generate OCI manifest content by executing container tool commands
+     */
+    fun executeGenerateOCIManifest(
+        manifestName: String,
+        context: ContainerBuildContext,
+        execOperations: ExecOperations
+    ): String
 
     companion object {
         fun getDefaultTools(): List<ContainerTool> = listOf(
+            // DockerBuildxTool(),
             BuildahTool(), DockerTool(), PodmanTool(), NerdctlTool(), KanikoTool()
         )
     }
@@ -61,54 +100,76 @@ interface ContainerTool {
  */
 abstract class BaseContainerTool : ContainerTool {
 
-    override fun buildCommand(context: ContainerBuildContext): List<String> {
+    override fun validateTool(): Boolean {
+        return try {
+            val process = ProcessBuilder()
+                .command(getValidationCommand())
+                .redirectErrorStream(true)
+                .start()
+
+            process.waitFor() == 0
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    override fun getToolVersion(): String? {
+        return try {
+            val process = ProcessBuilder()
+                .command(getVersionCommand())
+                .redirectErrorStream(true)
+                .start()
+
+            if (process.waitFor() == 0) {
+                process.inputStream.bufferedReader().readText().trim()
+            } else {
+                null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    override fun executeBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean {
         if (!supportsBuild) {
-            throw GradleException("Tool $displayName does not support build operations")
+            throw ContainerPluginException("Tool $displayName does not support build operations")
         }
-        return doBuildCommand(context)
+        return doExecuteBuild(context, execOperations)
     }
 
-    override fun saveCommand(context: ContainerBuildContext): List<String> {
+    override fun executeSave(context: ContainerBuildContext, execOperations: ExecOperations): Boolean {
         if (!supportsSave) {
-            throw GradleException("Tool $displayName does not support save operations")
+            throw ContainerPluginException("Tool $displayName does not support save operations")
         }
 
-        val outputFile = context.outputFile
-            ?: throw IllegalArgumentException("Output file must be specified for save operations")
-
-        return doSaveCommand(context, outputFile)
-    }
-
-    override fun manifestCreateCommand(context: ContainerBuildContext): List<String> {
-        if (!supportsManifest) {
-            throw GradleException("Tool $displayName does not support manifest operations")
+        if (context.outputFile == null) {
+            throw ContainerPluginException("Output file must be specified for save operations")
         }
 
-        val manifestName = context.manifestName
-            ?: throw IllegalArgumentException("Manifest name must be specified for manifest operations")
-
-        return doManifestCreateCommand(context, manifestName)
+        return doExecuteSave(context, execOperations)
     }
 
-    override fun manifestAddCommand(context: ContainerBuildContext, imageName: String): List<String> {
-        if (!supportsManifest) {
-            throw GradleException("Tool $displayName does not support manifest operations")
-        }
-
-        val manifestName = context.manifestName
-            ?: throw IllegalArgumentException("Manifest name must be specified for manifest operations")
-
-        return doManifestAddCommand(context, manifestName, imageName)
-    }
-
-    protected abstract fun doBuildCommand(context: ContainerBuildContext): List<String>
-    protected abstract fun doSaveCommand(context: ContainerBuildContext, outputFile: String): List<String>
-    protected abstract fun doManifestCreateCommand(context: ContainerBuildContext, manifestName: String): List<String>
-    protected abstract fun doManifestAddCommand(
+    override fun executeManifestCreation(
         context: ContainerBuildContext,
-        manifestName: String,
-        imageName: String
-    ): List<String>
+        imageNames: List<String>,
+        execOperations: ExecOperations
+    ): Boolean {
+        if (!supportsManifest) {
+            throw ContainerPluginException("Tool $displayName does not support manifest operations")
+        }
+
+        return doExecuteManifestCreation(context, imageNames, execOperations)
+    }
+
+    protected abstract fun getValidationCommand(): List<String>
+    protected abstract fun getVersionCommand(): List<String>
+    protected abstract fun doExecuteBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean
+    protected abstract fun doExecuteSave(context: ContainerBuildContext, execOperations: ExecOperations): Boolean
+    protected abstract fun doExecuteManifestCreation(
+        context: ContainerBuildContext,
+        imageNames: List<String>,
+        execOperations: ExecOperations
+    ): Boolean
 
     protected fun standardBuildArgs(context: ContainerBuildContext) = listOf(
         "--platform", context.platform,
@@ -118,6 +179,37 @@ abstract class BaseContainerTool : ContainerTool {
         "--file", context.containerFile,
         context.buildContext
     )
+
+    protected fun executeCommand(
+        command: List<String>,
+        context: ContainerBuildContext,
+        execOperations: ExecOperations
+    ): Boolean = try {
+        execOperations.exec {
+            workingDir = context.workingDirectory ?: File(".")
+            commandLine = command
+            environment(context.environment)
+        }
+        true
+    } catch (_: Exception) {
+        false
+    }
+
+    protected fun executeCommandForOutput(
+        command: List<String>,
+        context: ContainerBuildContext,
+        execOperations: ExecOperations
+    ): String {
+        val byteOutputStream = ByteArrayOutputStream()
+
+        execOperations.exec {
+            workingDir = context.workingDirectory ?: File(".")
+            commandLine = command
+            environment(context.environment)
+            standardOutput = byteOutputStream
+        }
+        return byteOutputStream.toString("UTF-8").trim()
+    }
 }
 
 /**
@@ -130,21 +222,144 @@ class DockerTool : BaseContainerTool() {
     override val supportsSave = true
     override val supportsManifest = true
 
-    override fun doBuildCommand(context: ContainerBuildContext): List<String> =
-        listOf("docker", "build") + standardBuildArgs(context)
+    override fun getValidationCommand(): List<String> = listOf("docker", "info")
+    override fun getVersionCommand(): List<String> = listOf("docker", "--version")
 
-    override fun doSaveCommand(context: ContainerBuildContext, outputFile: String): List<String> =
-        listOf("docker", "save", "-o", outputFile, context.imageName)
+    override fun doExecuteBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
+        executeCommand(listOf("docker", "build") + standardBuildArgs(context), context, execOperations)
 
-    override fun doManifestCreateCommand(context: ContainerBuildContext, manifestName: String): List<String> =
-        listOf("docker", "manifest", "create", manifestName)
+    override fun doExecuteSave(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
+        executeCommand(listOf("docker", "save", "-o", context.outputFile!!, context.imageName), context, execOperations)
 
-    override fun doManifestAddCommand(
+    override fun doExecuteManifestCreation(
         context: ContainerBuildContext,
+        imageNames: List<String>,
+        execOperations: ExecOperations
+    ): Boolean {
+        val commands = mutableListOf<List<String>>()
+        // Create manifest with all images in one command
+        commands.add(listOf("docker", "manifest", "create", context.manifestName!!) + imageNames)
+        return commands.all { executeCommand(it, context, execOperations) }
+    }
+
+    override fun executeGenerateOCIManifest(
         manifestName: String,
-        imageName: String
-    ): List<String> =
-        listOf("docker", "manifest", "annotate", manifestName, imageName)
+        context: ContainerBuildContext,
+        execOperations: ExecOperations
+    ): String {
+        val inspectCommand = listOf("docker", "manifest", "inspect", manifestName)
+        return executeCommandForOutput(inspectCommand, context, execOperations)
+    }
+}
+
+/**
+ * Docker Buildx tool implementation with multi-platform support
+ */
+class DockerBuildxTool : BaseContainerTool() {
+    override val executable = "docker"
+    override val displayName = "Docker Buildx"
+    override val supportsBuild = true
+    override val supportsSave = true
+    override val supportsManifest = true
+
+    override fun getValidationCommand(): List<String> = listOf("docker", "buildx", "version")
+    override fun getVersionCommand(): List<String> = listOf("docker", "buildx", "version")
+
+    override fun validateTool(): Boolean {
+        return try {
+            val process = ProcessBuilder()
+                .command(getValidationCommand())
+                .redirectErrorStream(true)
+                .start()
+
+            val exitCode = process.waitFor()
+            if (exitCode == 0) {
+                ensureBuilder()
+            } else {
+                false
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun ensureBuilder(): Boolean {
+        return try {
+            val checkProcess = ProcessBuilder()
+                .command("docker", "buildx", "inspect", "multiarch-builder")
+                .redirectErrorStream(true)
+                .start()
+
+            if (checkProcess.waitFor() != 0) {
+                val createProcess = ProcessBuilder()
+                    .command("docker", "buildx", "create", "--name", "multiarch-builder", "--use", "--bootstrap")
+                    .redirectErrorStream(true)
+                    .start()
+                createProcess.waitFor() == 0
+            } else {
+                val useProcess = ProcessBuilder()
+                    .command("docker", "buildx", "use", "multiarch-builder")
+                    .redirectErrorStream(true)
+                    .start()
+                useProcess.waitFor() == 0
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    override fun doExecuteBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean {
+        val buildxArgs = listOf(
+            "docker", "buildx", "build",
+            "--platform", context.platform,
+            "--build-arg", "LAMPRAY_VERSION=${context.version}",
+            "--build-arg", "CTX_PATH=./",
+            "--tag", context.imageName,
+            "--file", context.containerFile,
+            "--load",
+            context.buildContext
+        )
+        return executeCommand(buildxArgs, context, execOperations)
+    }
+
+    override fun doExecuteSave(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
+        executeCommand(listOf("docker", "save", "-o", context.outputFile!!, context.imageName), context, execOperations)
+
+    override fun doExecuteManifestCreation(
+        context: ContainerBuildContext,
+        imageNames: List<String>,
+        execOperations: ExecOperations
+    ): Boolean {
+        val platforms = imageNames.joinToString(",") { imageName ->
+            val arch = imageName.substringAfterLast("-")
+            when (arch) {
+                "amd64" -> "linux/amd64"
+                "arm64" -> "linux/arm64"
+                else -> "linux/amd64"
+            }
+        }
+
+        val buildxManifestArgs = listOf(
+            "docker", "buildx", "build",
+            "--platform", platforms,
+            "--build-arg", "LAMPRAY_VERSION=${context.version}",
+            "--build-arg", "CTX_PATH=./",
+            "--tag", context.manifestName!!,
+            "--file", context.containerFile,
+            "--push",
+            context.buildContext
+        )
+        return executeCommand(buildxManifestArgs, context, execOperations)
+    }
+
+    override fun executeGenerateOCIManifest(
+        manifestName: String,
+        context: ContainerBuildContext,
+        execOperations: ExecOperations
+    ): String {
+        val inspectCommand = listOf("docker", "buildx", "imagetools", "inspect", "--raw", manifestName)
+        return executeCommandForOutput(inspectCommand, context, execOperations)
+    }
 }
 
 /**
@@ -157,21 +372,40 @@ class PodmanTool : BaseContainerTool() {
     override val supportsSave = true
     override val supportsManifest = true
 
-    override fun doBuildCommand(context: ContainerBuildContext): List<String> =
-        listOf("podman", "build") + standardBuildArgs(context)
+    override fun getValidationCommand(): List<String> = listOf("podman", "info")
+    override fun getVersionCommand(): List<String> = listOf("podman", "--version")
 
-    override fun doSaveCommand(context: ContainerBuildContext, outputFile: String): List<String> =
-        listOf("podman", "save", "--format", "oci-archive", "-o", outputFile, context.imageName)
+    override fun doExecuteBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
+        executeCommand(listOf("podman", "build") + standardBuildArgs(context), context, execOperations)
 
-    override fun doManifestCreateCommand(context: ContainerBuildContext, manifestName: String): List<String> =
-        listOf("podman", "manifest", "create", manifestName)
+    override fun doExecuteSave(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
+        executeCommand(
+            listOf("podman", "save", "--format", "oci-archive", "-o", context.outputFile!!, context.imageName),
+            context,
+            execOperations
+        )
 
-    override fun doManifestAddCommand(
+    override fun doExecuteManifestCreation(
         context: ContainerBuildContext,
+        imageNames: List<String>,
+        execOperations: ExecOperations
+    ): Boolean {
+        val commands = mutableListOf<List<String>>()
+        commands.add(listOf("podman", "manifest", "create", context.manifestName!!))
+        imageNames.forEach { imageName ->
+            commands.add(listOf("podman", "manifest", "add", context.manifestName, imageName))
+        }
+        return commands.all { executeCommand(it, context, execOperations) }
+    }
+
+    override fun executeGenerateOCIManifest(
         manifestName: String,
-        imageName: String
-    ): List<String> =
-        listOf("podman", "manifest", "add", manifestName, imageName)
+        context: ContainerBuildContext,
+        execOperations: ExecOperations
+    ): String {
+        val inspectCommand = listOf("podman", "manifest", "inspect", manifestName)
+        return executeCommandForOutput(inspectCommand, context, execOperations)
+    }
 }
 
 /**
@@ -184,21 +418,40 @@ class BuildahTool : BaseContainerTool() {
     override val supportsSave = true
     override val supportsManifest = true
 
-    override fun doBuildCommand(context: ContainerBuildContext): List<String> =
-        listOf("buildah", "build") + standardBuildArgs(context)
+    override fun getValidationCommand(): List<String> = listOf("buildah", "info")
+    override fun getVersionCommand(): List<String> = listOf("buildah", "--version")
 
-    override fun doSaveCommand(context: ContainerBuildContext, outputFile: String): List<String> =
-        listOf("buildah", "push", context.imageName, "oci-archive:$outputFile")
+    override fun doExecuteBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
+        executeCommand(listOf("buildah", "build") + standardBuildArgs(context), context, execOperations)
 
-    override fun doManifestCreateCommand(context: ContainerBuildContext, manifestName: String): List<String> =
-        listOf("buildah", "manifest", "create", manifestName)
+    override fun doExecuteSave(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
+        executeCommand(
+            listOf("buildah", "push", context.imageName, "oci-archive:${context.outputFile}"),
+            context,
+            execOperations
+        )
 
-    override fun doManifestAddCommand(
+    override fun doExecuteManifestCreation(
         context: ContainerBuildContext,
+        imageNames: List<String>,
+        execOperations: ExecOperations
+    ): Boolean {
+        val commands = mutableListOf<List<String>>()
+        commands.add(listOf("buildah", "manifest", "create", context.manifestName!!))
+        imageNames.forEach { imageName ->
+            commands.add(listOf("buildah", "manifest", "add", context.manifestName, imageName))
+        }
+        return commands.all { executeCommand(it, context, execOperations) }
+    }
+
+    override fun executeGenerateOCIManifest(
         manifestName: String,
-        imageName: String
-    ): List<String> =
-        listOf("buildah", "manifest", "add", manifestName, imageName)
+        context: ContainerBuildContext,
+        execOperations: ExecOperations
+    ): String {
+        val inspectCommand = listOf("buildah", "manifest", "inspect", manifestName)
+        return executeCommandForOutput(inspectCommand, context, execOperations)
+    }
 }
 
 /**
@@ -211,21 +464,37 @@ class NerdctlTool : BaseContainerTool() {
     override val supportsSave = true
     override val supportsManifest = true
 
-    override fun doBuildCommand(context: ContainerBuildContext): List<String> =
-        listOf("nerdctl", "build") + standardBuildArgs(context)
+    override fun getValidationCommand(): List<String> = listOf("nerdctl", "info")
+    override fun getVersionCommand(): List<String> = listOf("nerdctl", "--version")
 
-    override fun doSaveCommand(context: ContainerBuildContext, outputFile: String): List<String> =
-        listOf("nerdctl", "save", "-o", outputFile, context.imageName)
+    override fun doExecuteBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
+        executeCommand(listOf("nerdctl", "build") + standardBuildArgs(context), context, execOperations)
 
-    override fun doManifestCreateCommand(context: ContainerBuildContext, manifestName: String): List<String> =
-        listOf("nerdctl", "manifest", "create", manifestName)
+    override fun doExecuteSave(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
+        executeCommand(
+            listOf("nerdctl", "save", "-o", context.outputFile!!, context.imageName),
+            context,
+            execOperations
+        )
 
-    override fun doManifestAddCommand(
+    override fun doExecuteManifestCreation(
         context: ContainerBuildContext,
+        imageNames: List<String>,
+        execOperations: ExecOperations
+    ): Boolean = executeCommand(
+        listOf("nerdctl", "manifest", "create", context.manifestName!!) + imageNames,
+        context,
+        execOperations
+    )
+
+    override fun executeGenerateOCIManifest(
         manifestName: String,
-        imageName: String
-    ): List<String> =
-        listOf("nerdctl", "manifest", "annotate", manifestName, imageName)
+        context: ContainerBuildContext,
+        execOperations: ExecOperations
+    ): String {
+        val inspectCommand = listOf("nerdctl", "manifest", "inspect", manifestName)
+        return executeCommandForOutput(inspectCommand, context, execOperations)
+    }
 }
 
 /**
@@ -238,73 +507,35 @@ class KanikoTool : BaseContainerTool() {
     override val supportsSave = false
     override val supportsManifest = false
 
-    override fun doBuildCommand(context: ContainerBuildContext): List<String> = listOf(
-        "kaniko",
-        "--dockerfile", context.containerFile,
-        "--context", context.buildContext,
-        "--destination", context.imageName,
-        "--build-arg", "LAMPRAY_VERSION=${context.version}",
-        "--build-arg", "CTX_PATH=./"
-    )
+    override fun getValidationCommand(): List<String> = listOf("kaniko", "version")
+    override fun getVersionCommand(): List<String> = listOf("kaniko", "--version")
 
-    override fun doSaveCommand(context: ContainerBuildContext, outputFile: String): List<String> =
+    override fun doExecuteBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
+        executeCommand(
+            listOf(
+                "kaniko",
+                "--dockerfile", context.containerFile,
+                "--context", context.buildContext,
+                "--destination", context.imageName,
+                "--build-arg", "LAMPRAY_VERSION=${context.version}",
+                "--build-arg", "CTX_PATH=./"
+            ),
+            context,
+            execOperations
+        )
+
+    override fun doExecuteSave(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
         throw UnsupportedOperationException("Kaniko does not support save operations")
 
-    override fun doManifestCreateCommand(context: ContainerBuildContext, manifestName: String): List<String> =
-        throw UnsupportedOperationException("Kaniko does not support manifest operations")
-
-    override fun doManifestAddCommand(
+    override fun doExecuteManifestCreation(
         context: ContainerBuildContext,
+        imageNames: List<String>,
+        execOperations: ExecOperations
+    ): Boolean = throw UnsupportedOperationException("Kaniko does not support manifest operations")
+
+    override fun executeGenerateOCIManifest(
         manifestName: String,
-        imageName: String
-    ): List<String> = throw UnsupportedOperationException("Kaniko does not support manifest operations")
-}
-
-/**
- * Custom container tool implementation for user-defined tools
- */
-class CustomContainerTool(
-    override val executable: String,
-    override val displayName: String,
-    override val supportsBuild: Boolean = true,
-    override val supportsSave: Boolean = true,
-    override val supportsManifest: Boolean = true,
-    private val buildCommandBuilder: ((ContainerBuildContext) -> List<String>)? = null,
-    private val saveCommandBuilder: ((ContainerBuildContext, String) -> List<String>)? = null,
-    private val manifestCreateCommandBuilder: ((ContainerBuildContext, String) -> List<String>)? = null,
-    private val manifestAddCommandBuilder: ((ContainerBuildContext, String, String) -> List<String>)? = null
-) : BaseContainerTool() {
-
-    override fun doBuildCommand(context: ContainerBuildContext): List<String> =
-        buildCommandBuilder?.invoke(context) ?: (listOf(executable, "build") + standardBuildArgs(context))
-
-    override fun doSaveCommand(context: ContainerBuildContext, outputFile: String): List<String> =
-        saveCommandBuilder?.invoke(context, outputFile) ?: listOf(
-            executable,
-            "save",
-            "-o",
-            outputFile,
-            context.imageName
-        )
-
-    override fun doManifestCreateCommand(context: ContainerBuildContext, manifestName: String): List<String> =
-        manifestCreateCommandBuilder?.invoke(context, manifestName) ?: listOf(
-            executable,
-            "manifest",
-            "create",
-            manifestName
-        )
-
-    override fun doManifestAddCommand(
         context: ContainerBuildContext,
-        manifestName: String,
-        imageName: String
-    ): List<String> =
-        manifestAddCommandBuilder?.invoke(context, manifestName, imageName) ?: listOf(
-            executable,
-            "manifest",
-            "add",
-            manifestName,
-            imageName
-        )
+        execOperations: ExecOperations
+    ): String = throw UnsupportedOperationException("Kaniko does not support manifest generation")
 }
