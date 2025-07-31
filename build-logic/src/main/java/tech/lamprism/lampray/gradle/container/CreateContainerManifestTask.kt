@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package space.lingu.gradle.container
+package tech.lamprism.lampray.gradle.container
 
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
@@ -23,6 +23,8 @@ import org.gradle.api.tasks.TaskAction
 
 /**
  * Task for creating multi-architecture container manifests
+ *
+ * @author RollW
  */
 abstract class CreateContainerManifestTask : BaseContainerTask() {
 

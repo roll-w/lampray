@@ -23,9 +23,9 @@ plugins {
 
 // Configure container extension
 containerImage {
-    version.set(project.version.toString())
-    imageName.set("lampray")
-    supportedArchitectures.set(listOf("amd64", "arm64"))
+    version = project.version.toString()
+    imageName = "lampray"
+    supportedArchitectures = listOf("amd64", "arm64")
 }
 
 tasks.register<Tar>("package") {

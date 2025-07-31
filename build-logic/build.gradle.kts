@@ -41,8 +41,8 @@ repositories {
 gradlePlugin {
     plugins {
         create("containerPlugin") {
-            id = "space.lingu.gradle.container"
-            implementationClass = "space.lingu.gradle.container.ContainerPlugin"
+            id = "tech.lamprism.lampray.gradle.container"
+            implementationClass = "tech.lamprism.lampray.gradle.container.ContainerPlugin"
         }
     }
 }

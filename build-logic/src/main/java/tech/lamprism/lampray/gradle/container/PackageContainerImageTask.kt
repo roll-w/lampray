@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package space.lingu.gradle.container
+package tech.lamprism.lampray.gradle.container
 
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.OutputFile
@@ -22,6 +22,8 @@ import org.gradle.api.tasks.TaskAction
 
 /**
  * Task for packaging container images as OCI archives
+ *
+ * @author RollW
  */
 abstract class PackageContainerImageTask : BaseContainerTask() {
 

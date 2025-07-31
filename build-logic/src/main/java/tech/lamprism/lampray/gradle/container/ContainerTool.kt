@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package space.lingu.gradle.container
+package tech.lamprism.lampray.gradle.container
 
 import org.gradle.api.GradleException
 
 /**
  * Container build context for passing parameters to tools
+ *
+ * @author RollW
  */
 data class ContainerBuildContext(
     val platform: String,

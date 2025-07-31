@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package space.lingu.gradle.container
+package tech.lamprism.lampray.gradle.container
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -23,6 +23,8 @@ import org.gradle.kotlin.dsl.register
 
 /**
  * Plugin for OCI-compliant container image building and packaging
+ *
+ * @author RollW
  */
 class ContainerPlugin : Plugin<Project> {
 

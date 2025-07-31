@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package space.lingu.gradle.container
+package tech.lamprism.lampray.gradle.container
 
 import org.gradle.api.tasks.TaskAction
 
 /**
  * Task for building OCI-compliant container images
+ *
+ * @author RollW
  */
 abstract class BuildContainerImageTask : BaseContainerTask() {
 

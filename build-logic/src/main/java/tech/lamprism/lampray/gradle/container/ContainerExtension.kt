@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package space.lingu.gradle.container
+package tech.lamprism.lampray.gradle.container
 
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
 /**
  * Extension for configuring container build settings
+ *
+ * @author RollW
  */
 abstract class ContainerExtension {
 

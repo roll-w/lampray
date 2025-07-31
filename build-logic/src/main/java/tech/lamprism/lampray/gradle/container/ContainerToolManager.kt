@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package space.lingu.gradle.container
+package tech.lamprism.lampray.gradle.container
 
 import org.gradle.api.GradleException
 
 
-
 /**
  * Container tool detector for OCI-compliant container operations
+ *
+ * @author RollW
  */
 class ContainerToolManager(private val customTools: List<ContainerTool> = emptyList()) {
 
@@ -32,7 +33,7 @@ class ContainerToolManager(private val customTools: List<ContainerTool> = emptyL
             return detectedTool!!
         }
 
-        val allTools = customTools + ContainerTool.getDefaultTools()
+        val allTools = customTools + ContainerTool.Companion.getDefaultTools()
 
         // Try preferred tool first if specified
         if (preferredTool != null) {

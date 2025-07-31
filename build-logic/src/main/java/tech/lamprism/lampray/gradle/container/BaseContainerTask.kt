@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package space.lingu.gradle.container
+package tech.lamprism.lampray.gradle.container
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
@@ -26,6 +26,8 @@ import javax.inject.Inject
 
 /**
  * Base task for container operations
+ *
+ * @author RollW
  */
 abstract class BaseContainerTask : DefaultTask() {
 
