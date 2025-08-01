@@ -16,9 +16,13 @@
 
 package tech.lamprism.lampray.gradle.container
 
-import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.OutputFile
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.zip.GZIPOutputStream
 
 /**
  * Task for packaging container images as OCI archives
@@ -27,8 +31,8 @@ import org.gradle.api.tasks.TaskAction
  */
 abstract class PackageContainerImageTask : BaseContainerTask() {
 
-    @get:OutputFile
-    abstract val outputFile: RegularFileProperty
+    @get:Input
+    abstract val outputFile: Property<String>
 
     init {
         description = "Package container image as OCI archive"
@@ -41,13 +45,22 @@ abstract class PackageContainerImageTask : BaseContainerTask() {
         val tool = toolManager.detectAvailableTool(preferredTool)
         val extension = containerExtension.get()
 
-        val outputPath = outputFile.get().asFile.absolutePath
+        val outputPath = outputFile.get()
+        val isGzipOutput = outputPath.endsWith(".gz")
+
+        // Use a temporary file for uncompressed output if final output should be gzipped
+        val actualOutputPath = if (isGzipOutput) {
+            outputPath.removeSuffix(".gz")
+        } else {
+            outputPath
+        }
+
         val context = ContainerBuildContext(
             platform = platform.get(),
             version = version.get(),
             architecture = architecture.get(),
             baseImageName = extension.imageName.get(),
-            outputFile = outputPath,
+            outputFile = actualOutputPath,
             workingDirectory = buildContext.get().asFile
         )
 
@@ -55,19 +68,52 @@ abstract class PackageContainerImageTask : BaseContainerTask() {
         logger.lifecycle("Image: ${context.imageName}")
         logger.lifecycle("Output: $outputPath")
 
-
-        if (tool.executeSave(context, execOperations)) {
-            logger.lifecycle("Successfully packaged container image to: $outputPath")
-
-            // Show file size if exists
-            val file = outputFile.get().asFile
-            if (file.exists()) {
-                val sizeInMB = file.length() / (1024 * 1024)
-                logger.lifecycle("Package size: $sizeInMB MB")
-            }
-            return
+        // Execute the container tool save operation
+        if (!tool.executeSave(context, execOperations)) {
+            throw ContainerPluginException("Failed to package container image to: $actualOutputPath")
         }
 
-        throw ContainerPluginException("Failed to package container image to: $outputPath")
+        val tempFile = File(actualOutputPath)
+        if (!tempFile.exists()) {
+            throw ContainerPluginException("Container tool did not create expected output file: $actualOutputPath")
+        }
+
+        // Compress with gzip if needed
+        if (isGzipOutput) {
+            compressWithGzip(tempFile, File(outputPath))
+
+            // Clean up temporary uncompressed file
+            if (tempFile.delete()) {
+                logger.debug("Cleaned up temporary file: $actualOutputPath")
+            } else {
+                logger.warn("Failed to clean up temporary file: $actualOutputPath")
+            }
+        }
+
+        // Show final file size
+        val finalFile = File(outputPath)
+        if (finalFile.exists()) {
+            val sizeInMB = finalFile.length() / (1024 * 1024)
+            logger.lifecycle("Successfully packaged container image to: $outputPath")
+            logger.lifecycle("Package size: $sizeInMB MB")
+        }
+    }
+
+    private fun compressWithGzip(inputFile: File, outputFile: File) {
+        try {
+            FileInputStream(inputFile).use { fis ->
+                FileOutputStream(outputFile).use { fos ->
+                    GZIPOutputStream(fos).use { gzos ->
+                        val buffer = ByteArray(8192)
+                        var bytesRead: Int
+                        while (fis.read(buffer).also { bytesRead = it } != -1) {
+                            gzos.write(buffer, 0, bytesRead)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            throw ContainerPluginException("Failed to compress image archive: ${e.message}", e)
+        }
     }
 }

@@ -77,7 +77,8 @@ class ContainerPlugin : Plugin<Project> {
                 this.buildContext.set(project.layout.buildDirectory.dir("dist"))
                 this.containerExtension.set(extension)
                 this.outputFile.set(
-                    project.layout.buildDirectory.file("dist/${extension.imageName.get()}-${extension.version.get()}-${arch}-image.tar")
+                    project.layout.buildDirectory.file("dist/${extension.imageName.get()}-${extension.version.get()}-${arch}-image.tar.gz")
+                        .get().asFile.absolutePath
                 )
 
                 dependsOn("buildImage$taskSuffix")
@@ -95,9 +96,6 @@ class ContainerPlugin : Plugin<Project> {
             group = CONTAINER_GROUP
             description = "Build container images for all supported architectures"
             dependsOn(SUPPORTED_PLATFORMS.keys.map { "buildImage${it.replaceFirstChar { c -> c.uppercase() }}" })
-
-            // Automatically create manifest after building all architectures
-            finalizedBy("createMultiArchManifest")
         }
 
         project.tasks.register("packageImage") {
@@ -106,31 +104,10 @@ class ContainerPlugin : Plugin<Project> {
             dependsOn("packageImage${currentArch.replaceFirstChar { it.uppercase() }}")
         }
 
-        project.tasks.register("packageImagesMultiArch") {
+        project.tasks.register("packageImageMultiArch") {
             group = CONTAINER_GROUP
             description = "Package container images for all supported architectures"
             dependsOn(SUPPORTED_PLATFORMS.keys.map { "packageImage${it.replaceFirstChar { c -> c.uppercase() }}" })
-
-            // Automatically create manifest after packaging all architectures
-            finalizedBy("createMultiArchManifest")
-        }
-
-        project.tasks.register<CreateContainerManifestTask>("createMultiArchManifest") {
-            group = CONTAINER_GROUP
-            description = "Create multi-architecture container manifest"
-
-            version.set(extension.version)
-            architecture.set(currentArch)
-            platform.set(SUPPORTED_PLATFORMS[currentArch]!!)
-            buildContext.set(project.layout.buildDirectory.dir("dist"))
-            containerExtension.set(extension)
-            manifestName.set("${extension.imageName.get()}:${extension.version.get()}")
-            supportedArchitectures.set(extension.supportedArchitectures)
-            ociManifestFile.set(
-                project.layout.buildDirectory.file("dist/${extension.imageName.get()}-${extension.version.get()}-manifest.json")
-            )
-
-            dependsOn("buildImageMultiArch")
         }
     }
 

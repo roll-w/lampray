@@ -8,7 +8,8 @@ RUN mv /app/lampray-${LAMPRAY_VERSION} /app/lampray
 
 FROM eclipse-temurin:21-jre-alpine
 
-# OCI standard labels
+ARG LAMPRAY_VERSION="0.1.0"
+
 LABEL org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 LABEL org.opencontainers.image.authors="rollw"
 LABEL org.opencontainers.image.title="Lampray"

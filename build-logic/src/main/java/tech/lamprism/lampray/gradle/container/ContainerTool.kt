@@ -226,7 +226,11 @@ class DockerTool : BaseContainerTool() {
     override fun getVersionCommand(): List<String> = listOf("docker", "--version")
 
     override fun doExecuteBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
-        executeCommand(listOf("docker", "build") + standardBuildArgs(context), context, execOperations)
+        executeCommand(
+            listOf("docker", "build", "--provenance", "false") + standardBuildArgs(context),
+            context,
+            execOperations
+        )
 
     override fun doExecuteSave(context: ContainerBuildContext, execOperations: ExecOperations): Boolean =
         executeCommand(listOf("docker", "save", "-o", context.outputFile!!, context.imageName), context, execOperations)
@@ -311,6 +315,7 @@ class DockerBuildxTool : BaseContainerTool() {
     override fun doExecuteBuild(context: ContainerBuildContext, execOperations: ExecOperations): Boolean {
         val buildxArgs = listOf(
             "docker", "buildx", "build",
+            "--provenance", "false",
             "--platform", context.platform,
             "--build-arg", "LAMPRAY_VERSION=${context.version}",
             "--build-arg", "CTX_PATH=./",
