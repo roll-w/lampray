@@ -69,7 +69,7 @@ interface ContainerTool {
 
     companion object {
         fun getDefaultTools(): List<ContainerTool> = listOf(
-            BuildahTool(), DockerTool(), DockerBuildxTool(), PodmanTool(), NerdctlTool()
+            DockerTool(), BuildahTool(), PodmanTool(), DockerBuildxTool(), NerdctlTool()
         )
     }
 }
