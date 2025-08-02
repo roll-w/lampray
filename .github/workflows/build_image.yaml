@@ -31,6 +31,14 @@ jobs:
         with:
           java-version: 17
           distribution: 'temurin'
+      - name: Install regctl
+        uses: regclient/actions/regctl-installer@main
+      - name: regctl login
+        uses: regclient/actions/regctl-login@main
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -40,8 +48,6 @@ jobs:
         run: |
           chmod +x gradlew
           version=$(./gradlew -q :version)
-          commit=$(git rev-parse --short HEAD)
-          echo "raw_version_name=${version}" >> $GITHUB_ENV
           echo "version_name=${version}" >> $GITHUB_ENV
           echo "remote_tag=${version}" >> $GITHUB_ENV
         id: project_version
@@ -60,32 +66,44 @@ jobs:
         run: |
           chmod +x gradlew
           export CI=true
-          ./gradlew -Dci=true -PbuildFrontend=true buildImage
+          ./gradlew -Dci=true -PbuildFrontend=true buildImageMultiArch
+      - name: Package Images
+        run: |
+          ./gradlew packageImageMultiArch
       - name: Upload Dist
         uses: actions/upload-artifact@v4
         with:
           name: lampray-${{ env.version_name }}-dist.tar.gz
           path: build/dist/lampray-${{ env.version_name }}-dist.tar.gz
+      - name: Upload Image Archives (Amd64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lampray-${{ env.version_name }}-amd64-image
+          path: |
+            build/dist/lampray-${{ env.version_name }}-amd64-image.tar.gz
+      - name: Upload Image Archives (Arm64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lampray-${{ env.version_name }}-arm64-image
+          path: |
+            build/dist/lampray-${{ env.version_name }}-arm64-image.tar.gz
       - name: Push Image
         run: |
           if [ "${{ github.event_name }}" == "push" ]; then
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker tag lampray:${{ env.raw_version_name }}-amd64 ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-amd64
-            docker tag lampray:${{ env.raw_version_name }}-arm64 ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-arm64
-            
-            docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-amd64
-            docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-arm64
+            docker tag lampray:${{ env.version_name }}-amd64 ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-amd64
+            docker tag lampray:${{ env.version_name }}-arm64 ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-arm64
           
-            docker manifest create ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }} \
-              ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-amd64 \
-              ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-arm64
+            docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-amd64
+            docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-arm64
+          
+            docker manifest create ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }} \
+              ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-amd64 \
+              ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-arm64
+          
+            docker manifest push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}
             
-            docker manifest push ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}
-        
-            docker tag ghcr.io/lampray:${{ env.raw_version_name }} ghcr.io/${{ env.namespace }}/lampray:main
-            docker push ghcr.io/${{ env.namespace }}/lampray:main
-            sha=$(docker inspect ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }} --format='{{index .RepoDigests 0}}')
-            echo "digest=$sha" >> $GITHUB_ENV
+            regctl image copy ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }} ghcr.io/${{ env.namespace }}/lampray:main
           fi
 
       - name: Output Result
@@ -99,4 +117,19 @@ jobs:
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo 'Pull specific architecture image only:' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}-amd64" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}-arm64" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo 'You can also download the image package from the artifacts, and run command like following to load the image:' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker load -i lampray-${{ env.remote_tag }}-amd64-image.tar.gz" >> $GITHUB_STEP_SUMMARY
+          echo "docker load -i lampray-${{ env.remote_tag }}-arm64-image.tar.gz" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
           echo '' >> $GITHUB_STEP_SUMMARY
