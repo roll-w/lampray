@@ -28,6 +28,18 @@ jobs:
         with:
           java-version: 17
           distribution: 'zulu'
+      - name: Setup Docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -52,7 +64,7 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew -Dci=true -PbuildFrontend=true packageImage
+          ./gradlew -Dci=true -PbuildFrontend=true packageImageMultiArch
       - name: Upload Dist
         uses: actions/upload-artifact@v4
         with:
@@ -62,11 +74,18 @@ jobs:
           path: build/dist/lampray-${{ env.version_name }}-dist.tar.gz
           compression-level: 0
           retention-days: 10 # Retain for 10 days, as this is a PR build and we don't need to keep it long-term.
-      - name: Upload Image
+      - name: Upload Image Archives (Amd64)
         uses: actions/upload-artifact@v4
         with:
-          name: lampray-${{ env.version_name }}-image
-          path: build/dist/lampray-${{ env.version_name }}-image.tar.gz
+          name: lampray-${{ env.version_name }}-amd64-image
+          path: build/dist/lampray-${{ env.version_name }}-amd64-image.tar.gz
+          compression-level: 0
+          retention-days: 10
+      - name: Upload Image Archives (Arm64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lampray-${{ env.version_name }}-arm64-image
+          path: build/dist/lampray-${{ env.version_name }}-arm64-image.tar.gz
           compression-level: 0
           retention-days: 10
       - name: Output Result

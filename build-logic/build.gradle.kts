@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 plugins {
     `kotlin-dsl`
+    `java-gradle-plugin`
 }
 
 val kotlinVersion = findProperty("kotlin.version").toString()
@@ -35,4 +36,13 @@ repositories {
     mavenLocal()
     gradlePluginPortal()
     mavenCentral()
+}
+
+gradlePlugin {
+    plugins {
+        create("containerPlugin") {
+            id = "tech.lamprism.lampray.gradle.container"
+            implementationClass = "tech.lamprism.lampray.gradle.container.ContainerPlugin"
+        }
+    }
 }
