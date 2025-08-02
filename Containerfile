@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre-alpine as builder
+FROM eclipse-temurin:21-jre-alpine AS builder
 
 ARG LAMPRAY_VERSION="0.1.0"
 ARG CTX_PATH="./build/dist/"
