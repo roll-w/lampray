@@ -21,13 +21,7 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.vendor="RollW"
 LABEL org.opencontainers.image.documentation="https://github.com/roll-w/lampray/blob/main/README.md"
 
-# Create non-root user for security
-RUN addgroup -g 1001 lampray && \
-    adduser -D -u 1001 -G lampray lampray
-
 COPY --from=builder --chown=lampray:lampray /app/lampray /app/lampray
-
-USER lampray
 
 ENV PATH="/app/lampray/bin:$PATH"
 WORKDIR /app/lampray
