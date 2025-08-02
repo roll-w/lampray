@@ -1,149 +1,190 @@
-name: Manually Release Workflow
+name: Manually Release
 on:
-    workflow_dispatch:
-        inputs:
-            prerelease:
-                description: 'Is this a pre-release?'
-                required: true
-                default: false
-                type: boolean
-            useRetrievedVersion:
-                description: 'Use the version retrieved from the project?'
-                required: true
-                default: true
-                type: boolean
-            alternativeVersion:
-                description: 'Alternative version to use if not using the retrieved version'
-                required: false
-                type: string
-            namespace:
-                description: 'Namespace to use for the image, default to the repository owner'
-                required: false
-                type: string
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: 'Is this a pre-release?'
+        required: true
+        default: false
+        type: boolean
+      useRetrievedVersion:
+        description: 'Use the version retrieved from the project?'
+        required: true
+        default: true
+        type: boolean
+      alternativeVersion:
+        description: 'Alternative version to use if not using the retrieved version'
+        required: false
+        type: string
+      namespace:
+        description: 'Namespace to use for the image, default to the repository owner'
+        required: false
+        type: string
 permissions: write-all
 jobs:
-    build-release:
-        runs-on:
-            ubuntu-latest
-        timeout-minutes: 360 # 6 hours
-        steps:
-            -   name: Checkout
-                uses: actions/checkout@v4
-            -   name: Set up JDK 17
-                uses: actions/setup-java@v4
-                with:
-                    java-version: 17
-                    distribution: 'zulu'
-            -   name: Setup Gradle
-                uses: gradle/actions/setup-gradle@v4
-                with:
-                    build-scan-publish: false
-            -   name: Retrieve Version
-                run: |
-                    chmod +x gradlew
-                    VERSION_NAME=$(./gradlew -q :version)
-                    echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_OUTPUT"
-                id: project_version
-            -   name: Get version
-                run: |
-                    echo "raw_version_name=${{ steps.project_version.outputs.VERSION_NAME }}" >> $GITHUB_ENV
-                    if ${{ github.event.inputs.useRetrievedVersion }}; then
-                      echo "version_name=v${{ steps.project_version.outputs.VERSION_NAME }}" >> $GITHUB_ENV
-                    else
-                      echo "version_name=${{ github.event.inputs.alternativeVersion }}" >> $GITHUB_ENV
-                    fi
-            -   name: Set Namespace
-                shell: bash
-                run: |
-                    if [[ -z "${{ github.event.inputs.namespace }}" ]]; then
-                      echo "namespace=${{ github.repository_owner }}" >> $GITHUB_ENV
-                    else
-                      echo "namespace=${{ github.event.inputs.namespace }}" >> $GITHUB_ENV
-                    fi
-            -   name: Install Dependencies
-                # TODO: retrieve version from gradle task
-                run: |
-                    git clone https://github.com/roll-w/web-common-starter 
-                    cd web-common-starter
-                    git checkout v0.2.1
-                    mvn -f web-common-parent/ clean install
-                    cd ..
-            -   name: Create Tag
-                uses: actions/github-script@v7.0.1
-                id: create_tag
-                with:
-                    script: |
-                        github.rest.git.createRef({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          ref: 'refs/tags/${{ env.version_name }}',
-                          sha: context.sha
-                        })
-            -   name: Checkout Tag
-                uses: actions/checkout@v4
-                with:
-                    ref:
-                        ${{ env.version_name }}
-            -   name: Build Package and Docker Image
-                id: build
-                continue-on-error: true
-                run: |
-                    chmod +x gradlew
-                    ./gradlew -PbuildFrontend=true packageImage
-            -   name: Push Image
-                id: push
-                run: |
-                    echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-                    docker tag lampray:${{ env.raw_version_name }} ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}
-                    docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}
-                    if ! ${{ github.event.inputs.prerelease }}; then
-                        docker tag ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }} ghcr.io/${{ env.namespace }}/lampray:latest
-                        docker push ghcr.io/${{ env.namespace }}/lampray:latest
-                    fi
-                    sha=$(docker inspect ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }} --format='{{index .RepoDigests 0}}')
-                    echo "digest=$sha" >> $GITHUB_OUTPUT
-            -   name: Release
-                if: steps.build.outcome == 'success'
-                uses: softprops/action-gh-release@v2
-                with:
-                    body: |
-                        # ${{ env.version_name }}
-                        
-                        Release for version ${{ env.raw_version_name }}
-                        
-                        ## Changes
-                        
-                        ## Artifacts
-                        
-                        - Image: `ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}`
-                            - sha: `${{ steps.push.outputs.digest }}`
-                        
-                        Pull image by running the following command:
-                        
-                        ```bash
-                        docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}
-                        ```
-                        
-                        or download the image package from current release assets, 
-                        and run command like following to load the image:
-                        
-                        ```bash
-                        docker load -i lampray-${{ env.raw_version_name }}-image.tar.gz
-                        ```
+  build-release:
+    runs-on:
+      ubuntu-latest
+    timeout-minutes: 360 # 6 hours
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'zulu'
+      - name: Install regctl
+        uses: regclient/actions/regctl-installer@main
+      - name: regctl login
+        uses: regclient/actions/regctl-login@main
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          build-scan-publish: false
+      - name: Retrieve Version
+        run: |
+          chmod +x gradlew
+          VERSION_NAME=$(./gradlew -q :version)
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+        id: project_version
+      - name: Get version
+        run: |
+          echo "raw_version_name=${{ steps.project_version.outputs.VERSION_NAME }}" >> $GITHUB_ENV
+          if ${{ github.event.inputs.useRetrievedVersion }}; then
+            echo "version_name=v${{ steps.project_version.outputs.VERSION_NAME }}" >> $GITHUB_ENV
+          else
+            echo "version_name=${{ github.event.inputs.alternativeVersion }}" >> $GITHUB_ENV
+          fi
+      - name: Set Namespace
+        shell: bash
+        run: |
+          if [[ -z "${{ github.event.inputs.namespace }}" ]]; then
+            echo "namespace=${{ github.repository_owner }}" >> $GITHUB_ENV
+          else
+            echo "namespace=${{ github.event.inputs.namespace }}" >> $GITHUB_ENV
+          fi
+      - name: Install Dependencies
+        # TODO: retrieve version from gradle task
+        run: |
+          git clone https://github.com/roll-w/web-common-starter 
+          cd web-common-starter
+          git checkout v0.2.1
+          mvn -f web-common-parent/ clean install
+          cd ..
+      - name: Create Tag
+        uses: actions/github-script@v7.0.1
+        id: create_tag
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ env.version_name }}',
+              sha: context.sha
+            })
+      - name: Checkout Tag
+        uses: actions/checkout@v4
+        with:
+          ref:
+            ${{ env.version_name }}
+      - name: Build Package and Docker Image
+        id: build
+        continue-on-error: true
+        run: |
+          chmod +x gradlew
+          CI=false ./gradlew -PbuildFrontend=true packageImage
+      - name: Push Image
+        id: push
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker tag lampray:${{ env.raw_version_name }}-amd64 ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-amd64
+          docker tag lampray:${{ env.raw_version_name }}-arm64 ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-arm64
+          docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-amd64
+          docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-arm64
+          
+          docker manifest create ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }} \
+            ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-amd64 \
+            ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-arm64
+          
+          docker manifest push ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}
+          
+          if ! ${{ github.event.inputs.prerelease }}; then
+            regctl image copy ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }} ghcr.io/${{ env.namespace }}/lampray:latest
+          fi
+      - name: Release
+        if: steps.build.outcome == 'success'
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            # ${{ env.version_name }}
+            
+            Release for Lampray version `${{ env.raw_version_name }}`.
+            
+            ## Changes
+            
+            ## Artifacts
+            
+            - Distribution Package
+              - `build/dist/lampray-${{ env.raw_version_name }}-dist.tar.gz`
+            - Image
+              - Amd64: `build/dist/lampray-${{ env.raw_version_name }}-amd64-image.tar.gz`
+              - Arm64: `build/dist/lampray-${{ env.raw_version_name }}-arm64-image.tar.gz`
+              - Multi-arch: `ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}`
+            
+            Pull image by running the following command:
+            
+            ```bash
+            docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}
+            ```
+            
+            For specific architecture, use:
+            
+            ```bash
+            docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-amd64
+            docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-arm64
+            ```
+            
+            or download the image package from current release assets, 
+            and run command like following to load the image:
+            
+            ```bash
+            docker load -i lampray-${{ env.raw_version_name }}-amd64-image.tar.gz
+            docker load -i lampray-${{ env.raw_version_name }}-arm64-image.tar.gz
+            ```
+            
+            Their tags will be `lampray:${{ env.raw_version_name }}-amd64` and `lampray:${{ env.raw_version_name }}-arm64` respectively.
 
-                    draft: true
-                    tag_name: ${{ env.version_name }}
-                    prerelease: ${{ github.event.inputs.prerelease }}
-                    files: |
-                        build/dist/lampray-${{ env.raw_version_name }}-dist.tar.gz
-                        build/dist/lampray-${{ env.raw_version_name }}-image.tar.gz
-            -   name: Remove Tag
-                uses: actions/github-script@v7.0.1
-                if: failure() && steps.build.outcome == 'failure'
-                with:
-                    script: |
-                        github.rest.git.deleteRef({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          ref: 'refs/tags/${{ env.version_name }}'
-                        })
+          draft: true
+          tag_name: ${{ env.version_name }}
+          prerelease: ${{ github.event.inputs.prerelease }}
+          files: |
+            build/dist/lampray-${{ env.raw_version_name }}-dist.tar.gz
+            build/dist/lampray-${{ env.raw_version_name }}-arm64-image.tar.gz
+            build/dist/lampray-${{ env.raw_version_name }}-amd64-image.tar.gz
+      - name: Remove Tag
+        uses: actions/github-script@v7.0.1
+        if: failure() && steps.build.outcome == 'failure'
+        with:
+          script: |
+            github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ env.version_name }}'
+            })

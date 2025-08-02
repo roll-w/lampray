@@ -1,92 +1,147 @@
 name: Build Image
 on:
-    push:
-        branches: [ "master", "main" ]
-        tags-ignore:
-            - "*"
-        paths-ignore:
-            - docs/**
-            - .github/**
-            - .gitignore
-            - .gitattributes
-            - .editorconfig
-            - .gitmodules
-            - .idea/**
-            - .vscode/**
-            - distribution/**
-            - Dockerfile
+  push:
+    branches: [ "master", "main" ]
+    tags-ignore:
+      - "*"
+    paths-ignore:
+      - docs/**
+      - .github/**
+      - .gitignore
+      - .gitattributes
+      - .editorconfig
+      - .gitmodules
+      - .idea/**
+      - .vscode/**
+      - distribution/**
+      - Dockerfile
 env:
-    namespace: ${{ github.repository_owner }}
+  namespace: ${{ github.repository_owner }}
 permissions: write-all
 jobs:
-    build-image:
-        runs-on:
-            ubuntu-latest
-        timeout-minutes: 360 # 6 hours
-        steps:
-            -   name: Checkout
-                uses: actions/checkout@v4
-            -   name: Set up JDK 17
-                uses: actions/setup-java@v4
-                with:
-                    java-version: 17
-                    distribution: 'temurin'
-            -   name: Setup Gradle
-                uses: gradle/actions/setup-gradle@v4
-                with:
-                    build-scan-publish: false
-            -   name: Generate CI Version
-                # TODO: add an gradle compile option to set version from the CI
-                run: |
-                    chmod +x gradlew
-                    version=$(./gradlew -q :version)
-                    commit=$(git rev-parse --short HEAD)
-                    echo "raw_version_name=${version}" >> $GITHUB_ENV
-                    echo "version_name=${version}" >> $GITHUB_ENV
-                    echo "remote_tag=${version}" >> $GITHUB_ENV
-                id: project_version
-            -   name: Install Dependencies
-                run: |
-                    git clone https://github.com/roll-w/web-common-starter 
-                    cd web-common-starter
-                    git checkout v0.2.1
-                    mvn -f web-common-parent/ clean install
-                    cd ..
-            -   name: Install Frontend Dependencies
-                run: |
-                    cd lampray-frontend
-                    npm install
-            -   name: Build
-                run: |
-                    chmod +x gradlew
-                    export CI=true
-                    ./gradlew -Dci=true -PbuildFrontend=true buildImage
-            -   name: Upload Dist
-                uses: actions/upload-artifact@v4
-                with:
-                    name: lampray-${{ env.version_name }}-dist.tar.gz
-                    path: build/dist/lampray-${{ env.version_name }}-dist.tar.gz
-            -   name: Push Image
-                run: |
-                    if [ "${{ github.event_name }}" == "push" ]; then
-                      echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-                      docker tag lampray:${{ env.raw_version_name }} ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}
-                      docker tag lampray:${{ env.raw_version_name }} ghcr.io/${{ env.namespace }}/lampray:main
-                      docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}
-                      docker push ghcr.io/${{ env.namespace }}/lampray:main
-                      sha=$(docker inspect ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }} --format='{{index .RepoDigests 0}}')
-                      echo "digest=$sha" >> $GITHUB_ENV
-                    fi
+  build-image:
+    runs-on:
+      ubuntu-latest
+    timeout-minutes: 360 # 6 hours
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin'
+      - name: Install regctl
+        uses: regclient/actions/regctl-installer@main
+      - name: regctl login
+        uses: regclient/actions/regctl-login@main
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          build-scan-publish: false
+      - name: Generate CI Version
+        # TODO: add an gradle compile option to set version from the CI
+        run: |
+          chmod +x gradlew
+          version=$(./gradlew -q :version)
+          echo "version_name=${version}" >> $GITHUB_ENV
+          echo "remote_tag=${version}" >> $GITHUB_ENV
+        id: project_version
+      - name: Install Dependencies
+        run: |
+          git clone https://github.com/roll-w/web-common-starter 
+          cd web-common-starter
+          git checkout v0.2.1
+          mvn -f web-common-parent/ clean install
+          cd ..
+      - name: Install Frontend Dependencies
+        run: |
+          cd lampray-frontend
+          npm install
+      - name: Build
+        run: |
+          chmod +x gradlew
+          export CI=true
+          ./gradlew -Dci=true -PbuildFrontend=true buildImageMultiArch
+      - name: Package Images
+        run: |
+          ./gradlew packageImageMultiArch
+      - name: Upload Dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: lampray-${{ env.version_name }}-dist.tar.gz
+          path: build/dist/lampray-${{ env.version_name }}-dist.tar.gz
+      - name: Upload Image Archives (Amd64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lampray-${{ env.version_name }}-amd64-image
+          path: |
+            build/dist/lampray-${{ env.version_name }}-amd64-image.tar.gz
+      - name: Upload Image Archives (Arm64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lampray-${{ env.version_name }}-arm64-image
+          path: |
+            build/dist/lampray-${{ env.version_name }}-arm64-image.tar.gz
+      - name: Push Image
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker tag lampray:${{ env.version_name }}-amd64 ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-amd64
+            docker tag lampray:${{ env.version_name }}-arm64 ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-arm64
+          
+            docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-amd64
+            docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-arm64
+          
+            docker manifest create ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }} \
+              ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-amd64 \
+              ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-arm64
+          
+            docker manifest push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}
+            
+            regctl image copy ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }} ghcr.io/${{ env.namespace }}/lampray:main
+          fi
 
-            -   name: Output Result
-                run: |
-                    echo "# Build Summary" >> $GITHUB_STEP_SUMMARY
-                    echo '- Version: `${{ env.version_name }}`' >> $GITHUB_STEP_SUMMARY
-                    echo '- Remote Tag: `${{ env.remote_tag }}`, `main`' >> $GITHUB_STEP_SUMMARY
-                    echo '' >> $GITHUB_STEP_SUMMARY
-                    echo "Image has been pushed, run the following command to pull the image:" >> $GITHUB_STEP_SUMMARY
-                    echo '' >> $GITHUB_STEP_SUMMARY
-                    echo '```bash' >> $GITHUB_STEP_SUMMARY
-                    echo "docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}" >> $GITHUB_STEP_SUMMARY
-                    echo '```' >> $GITHUB_STEP_SUMMARY
-                    echo '' >> $GITHUB_STEP_SUMMARY
+      - name: Output Result
+        run: |
+          echo "# Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo '- Version: `${{ env.version_name }}`' >> $GITHUB_STEP_SUMMARY
+          echo '- Remote Tag: `${{ env.remote_tag }}`, `main`' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo "Image has been pushed, run the following command to pull the image:" >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo 'Pull specific architecture image only:' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}-amd64" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.namespace }}/lampray:${{ env.remote_tag }}-arm64" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo 'You can also download the image package from the artifacts, and run command like following to load the image:' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker load -i lampray-${{ env.remote_tag }}-amd64-image.tar.gz" >> $GITHUB_STEP_SUMMARY
+          echo "docker load -i lampray-${{ env.remote_tag }}-arm64-image.tar.gz" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY

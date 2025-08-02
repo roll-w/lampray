@@ -23,7 +23,9 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import tech.lamprism.lampray.setting.CombinedConfigProvider
 import tech.lamprism.lampray.setting.ConfigProvider
+import tech.lamprism.lampray.setting.EnvironmentConfigReader
 import tech.lamprism.lampray.setting.MessageSourceSettingDescriptionProvider
+import tech.lamprism.lampray.setting.ReadonlyConfigProvider
 import tech.lamprism.lampray.setting.SettingSpecificationProvider
 import tech.lamprism.lampray.setting.event.EventProxyConfigProvider
 
@@ -55,4 +57,10 @@ class SettingConfiguration {
     fun messageSourceSettingDescriptionProvider(
         messageSource: MessageSource
     ) = MessageSourceSettingDescriptionProvider(messageSource)
+
+
+    @Bean
+    fun environmentConfigReader(): ConfigProvider {
+        return ReadonlyConfigProvider(EnvironmentConfigReader())
+    }
 }

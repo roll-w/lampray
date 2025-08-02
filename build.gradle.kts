@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
-import com.bmuschko.gradle.docker.tasks.image.DockerSaveImage
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     id("lampray-project")
-    id("com.bmuschko.docker-remote-api") version "9.4.0"
+    id("tech.lamprism.lampray.gradle.container")
+}
+
+// Configure container extension
+containerImage {
+    version = project.version.toString()
+    imageName = "lampray"
+    containerFile = file("Containerfile")
+    supportedArchitectures = listOf("amd64", "arm64")
 }
 
 tasks.register<Tar>("package") {
@@ -56,36 +62,6 @@ tasks.register<Tar>("package") {
     archiveFileName = "lampray-${version}-dist.tar.gz"
     destinationDirectory = layout.buildDirectory.dir("dist")
     compression = Compression.GZIP
-
-    outputs.upToDateWhen { false }
-}
-
-tasks.register<DockerBuildImage>("buildImage") {
-    group = "build"
-    description = "Build Docker image for lampray."
-    dependsOn(":package")
-    copy {
-        from("Dockerfile")
-        into(layout.buildDirectory.dir("dist"))
-    }
-    inputDir = layout.buildDirectory.dir("dist")
-    images = listOf("lampray:${version}")
-    buildArgs = mapOf(
-        "LAMPRAY_VERSION" to version.toString(),
-        "CTX_PATH" to "./"
-    )
-    // TODO: support multi-arch build
-    outputs.upToDateWhen { false }
-}
-
-tasks.register<DockerSaveImage>("packageImage") {
-    group = "distribution"
-    description = "Creates distribution pack for the project image."
-    dependsOn("buildImage")
-
-    images = listOf("lampray:${version}")
-    destFile = layout.buildDirectory.file("dist/lampray-${version}-image.tar.gz")
-    useCompression = true
 
     outputs.upToDateWhen { false }
 }
@@ -128,4 +104,3 @@ tasks.register("version") {
 
     outputs.upToDateWhen { false }
 }
-
