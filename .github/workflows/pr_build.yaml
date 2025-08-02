@@ -28,6 +28,18 @@ jobs:
         with:
           java-version: 17
           distribution: 'zulu'
+      - name: Setup Docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
