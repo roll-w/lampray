@@ -74,14 +74,11 @@ jobs:
         run: |
           cd lampray-frontend
           npm install
-      - name: Build
+      - name: Package Images
         run: |
           chmod +x gradlew
           export CI=true
-          ./gradlew -Dci=true -PbuildFrontend=true buildImageMultiArch
-      - name: Package Images
-        run: |
-          ./gradlew packageImageMultiArch
+          ./gradlew -Dci=true -PbuildFrontend=true packageImageMultiArch
       - name: Upload Dist
         uses: actions/upload-artifact@v4
         with:
