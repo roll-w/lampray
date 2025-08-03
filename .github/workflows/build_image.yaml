@@ -7,14 +7,15 @@ on:
     paths-ignore:
       - docs/**
       - .github/**
-      - .gitignore
+      - README.md
+      - LICENSE
+      - .*ignore
       - .gitattributes
       - .editorconfig
       - .gitmodules
       - .idea/**
       - .vscode/**
       - distribution/**
-      - Dockerfile
 env:
   namespace: ${{ github.repository_owner }}
 permissions: write-all
