@@ -1,6 +1,7 @@
 # Lampray
 
-[![License][liBadge]][liLink]
+[![License](https://img.shields.io/github/license/roll-w/lampray?color=569cd6&style=flat-square)](https://github.com/roll-w/lampray/blob/master/LICENSE)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/roll-w/lampray)
 
 Lampray is a blog system built with Spring Boot 3 and Vue3.
 
@@ -122,9 +123,8 @@ bin/lampray # Replace with the actual path to `lampray`
 ```
 
 > Current support command line arguments:
-> - `--config`, `-c`: Specify the configuration file to use.
-    > Default will try find `lampray.toml` in the current directory and the
-    > `conf` directory under the working directory.
+> - `--config`, `-c`: Specify the configuration file to use. Default will try find
+    `lampray.toml` in the current directory and the `conf` directory under the working directory.
 
 By default, the application will start on port `5100`. And database
 related configurations must be provided in the configuration file,
@@ -150,9 +150,9 @@ following command:
 > [!NOTE]
 > You need to create a Docker network named `lampray` first, or replace it with
 > your own network.
-> 
+>
 > You can create a Docker network using the following command:
-> 
+>
 > ```shell
 > docker network create lampray
 > ```
@@ -170,8 +170,10 @@ docker run \
 
 > Options:
 > - `--network lampray`: Use the `lampray` network, or replace with your own network.
-> - `-v /path/to/conf:/app/lampray/conf/`: Mount the configuration directory to the container. Needs a configuration file 
->  named `lampray.toml` in the local directory.
+> - `-v /path/to/conf:/app/lampray/conf/`: Mount the configuration directory to the container. Needs a configuration
+    file named `lampray.toml` in the local directory.
+> - `-p 5100:5100 -p 5101:5101`: Port `5100` is the default HTTP port, and `5101` is the default SSH port for the
+    application. You can change the port mapping according to your configuration.
 
 Also, you can use the environment variable `JAVA_OPTS` to specify the
 JVM options, like the following:
@@ -211,7 +213,3 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
-
-[liBadge]: https://img.shields.io/github/license/roll-w/lampray?color=569cd6&style=flat-square
-
-[liLink]: https://github.com/roll-w/lampray/blob/master/LICENSE
