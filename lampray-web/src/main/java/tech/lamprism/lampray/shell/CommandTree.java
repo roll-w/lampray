@@ -17,25 +17,14 @@
 package tech.lamprism.lampray.shell;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author RollW
  */
-public interface CommandTree {
+public interface CommandTree extends CommandSpecification {
     List<CommandTree> getChildren();
 
     CommandTree getParent();
-
-    String getName();
-
-    String getDescription();
-
-    String getHeader();
-
-    String getGroup();
-
-    List<String> getAliases();
 
     default CommandTree findChildByFullName(String name) {
         for (CommandTree child : getChildren()) {
@@ -70,20 +59,4 @@ public interface CommandTree {
     boolean isHidden();
 
     List<Option> getOptions();
-
-    interface Option {
-        Set<String> getNames();
-
-        String getLabel();
-
-        String getDescription();
-
-        boolean isRequired();
-
-        boolean isHidden();
-
-        String getDefaultValue();
-
-        boolean isGlobal();
-    }
 }

@@ -160,7 +160,7 @@ class HelpRenderer(
         }
     }
 
-    private fun List<CommandTree.Option>.isOnlyHelp(): Boolean {
+    private fun List<CommandSpecification.Option>.isOnlyHelp(): Boolean {
         return size == 1 && this.any { it -> it.names.any { it == "help" } }
     }
 

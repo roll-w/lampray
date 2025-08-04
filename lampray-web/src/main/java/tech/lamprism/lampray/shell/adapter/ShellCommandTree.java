@@ -50,45 +50,6 @@ public class ShellCommandTree implements CommandTree {
         return Collections.unmodifiableList(children);
     }
 
-    private static void addChild(ShellCommandTree root, ShellCommandTree child) {
-        String[] parts = child.commandRegistration.getCommand().split(" ");
-        ShellCommandTree current = root;
-
-        for (int i = 0; i < parts.length; i++) {
-            String part = parts[i];
-            if (i == parts.length - 1) {
-                if (current.name.equals(part)) {
-                    return;
-                }
-                ShellCommandTree newChild = new ShellCommandTree(child.commandRegistration);
-                newChild.setParent(current);
-                current.children.add(newChild);
-                return;
-            }
-            ShellCommandTree prev = current;
-            // Move to the next part
-            current = current.children.stream()
-                    .filter(c -> c.name.equals(part))
-                    .findFirst()
-                    .orElse(null);
-            if (current == null) {
-                // Create a new child if it doesn't exist
-                ShellCommandTree newChild = new ShellCommandTree(
-                        CommandRegistration.builder()
-                                .command(String.join(" ", Arrays.copyOf(parts, i + 1)))
-                                .withTarget()
-                                .consumer((context) -> {})
-                                .and()
-                                .build()
-
-                );
-                newChild.setParent(prev);
-                prev.children.add(newChild);
-                current = newChild;
-            }
-        }
-    }
-
     void setParent(ShellCommandTree parent) {
         this.parent = parent;
     }
@@ -171,26 +132,6 @@ public class ShellCommandTree implements CommandTree {
     }
 
     public static ShellCommandTree of(Map<String, CommandRegistration> commandRegistrations) {
-        // Build command tree from command registrations
-
-        // Raw:
-        //  - main1
-        //  - main1 main1-1
-        //  - main1 main1-2
-        //  - main1 main1-1 main1-1-1
-        //  - main1 main1-1 main1-1-2
-        //  - main2
-        //  - main2 main2-1
-        //
-        // Transform to tree:
-        //  - main1
-        //    - main1-1
-        //      - main1-1-1
-        //      - main1-1-2
-        //    - main1-2
-        //  - main2
-        //    - main2-1
-
         CommandRegistration rootRegistration = CommandRegistration.builder()
                 .command("")
                 .withTarget()
@@ -210,6 +151,45 @@ public class ShellCommandTree implements CommandTree {
             addChild(root, child);
         }
         return root;
+    }
+
+    private static void addChild(ShellCommandTree root, ShellCommandTree child) {
+        String[] parts = child.commandRegistration.getCommand().split(" ");
+        ShellCommandTree current = root;
+
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            if (i == parts.length - 1) {
+                if (current.name.equals(part)) {
+                    return;
+                }
+                ShellCommandTree newChild = new ShellCommandTree(child.commandRegistration);
+                newChild.setParent(current);
+                current.children.add(newChild);
+                return;
+            }
+            ShellCommandTree prev = current;
+            // Move to the next part
+            current = current.children.stream()
+                    .filter(c -> c.name.equals(part))
+                    .findFirst()
+                    .orElse(null);
+            if (current == null) {
+                // Create a new child if it doesn't exist
+                ShellCommandTree newChild = new ShellCommandTree(
+                        CommandRegistration.builder()
+                                .command(String.join(" ", Arrays.copyOf(parts, i + 1)))
+                                .withTarget()
+                                .consumer((context) -> {})
+                                .and()
+                                .build()
+
+                );
+                newChild.setParent(prev);
+                prev.children.add(newChild);
+                current = newChild;
+            }
+        }
     }
 
     static class ShellOption implements Option {
@@ -259,6 +239,11 @@ public class ShellCommandTree implements CommandTree {
         @Override
         public boolean isGlobal() {
             return false;
+        }
+
+        @Override
+        public Class<?> getType() {
+            return commandOption.getType().getRawClass();
         }
     }
 }
