@@ -114,19 +114,31 @@ jobs:
         id: push
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker tag lampray:${{ env.raw_version_name }}-amd64 ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-amd64
-          docker tag lampray:${{ env.raw_version_name }}-arm64 ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-arm64
-          docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-amd64
-          docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-arm64
+          docker tag lampray:${{ env.raw_version_name }}-amd64 ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-amd64
+          docker tag lampray:${{ env.raw_version_name }}-arm64 ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-arm64
+          docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-amd64
+          docker push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-arm64
           
-          docker manifest create ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }} \
-            ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-amd64 \
-            ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}-arm64
+          docker manifest create ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }} \
+            ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-amd64 \
+            ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-arm64
           
-          docker manifest push ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }}
+          docker inspect ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }} > manifest.json
+          jq '.annotations += {
+            "org.opencontainers.image.authors": "rollw",
+            "org.opencontainers.image.title": "Lampray",
+            "org.opencontainers.image.description": "Lampray is a blog system based on Spring Boot 3 framework.",
+            "org.opencontainers.image.url": "https://github.com/roll-w/lampray",
+            "org.opencontainers.image.source": "https://github.com/roll-w/lampray",
+            "org.opencontainers.image.version": "${{ env.version_name }}",
+            "org.opencontainers.image.licenses": "Apache-2.0",
+            "org.opencontainers.image.vendor": "RollW",
+            "org.opencontainers.image.documentation": "https://github.com/roll-w/lampray/blob/main/README.md"
+          }' manifest.json > manifest-modified.json
+          regctl manifest push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }} < manifest-modified.json
           
           if ! ${{ github.event.inputs.prerelease }}; then
-            regctl image copy ghcr.io/${{ env.namespace }}/lampray:${{ env.raw_version_name }} ghcr.io/${{ env.namespace }}/lampray:latest
+            regctl manifest push ghcr.io/${{ env.namespace }}/lampray:latest < manifest-modified.json
           fi
       - name: Release
         if: steps.build.outcome == 'success'
