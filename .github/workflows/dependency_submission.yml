@@ -7,14 +7,15 @@ on:
     paths-ignore:
       - docs/**
       - .github/**
-      - .gitignore
+      - README.md
+      - LICENSE
+      - .*ignore
       - .gitattributes
       - .editorconfig
       - .gitmodules
       - .idea/**
       - .vscode/**
       - distribution/**
-      - Dockerfile
 permissions:
   contents: write
 jobs:
