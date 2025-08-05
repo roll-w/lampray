@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.command;
+package tech.lamprism.lampray.cli;
 
 import java.util.Map;
 

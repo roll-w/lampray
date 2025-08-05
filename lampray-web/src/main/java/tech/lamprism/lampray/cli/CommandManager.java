@@ -14,23 +14,11 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.command;
-
-import java.util.Map;
+package tech.lamprism.lampray.cli;
 
 /**
  * @author RollW
  */
-public interface CommandRunContext {
-    String[] getRawArgs();
-
-    Map<String, Object> getArguments();
-
-    void setStartApplication(boolean startApplication);
-
-    boolean isStartApplication();
-
-    void setStartWebServer(boolean startWebServer);
-
-    boolean isStartWebServer();
+public interface CommandManager {
+    int execute(String[] args);
 }

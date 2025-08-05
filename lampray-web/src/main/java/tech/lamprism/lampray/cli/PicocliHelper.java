@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.command;
+package tech.lamprism.lampray.cli;
 
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
@@ -37,6 +37,11 @@ public final class PicocliHelper {
         commandSpecification.getOptions().stream()
                 .map(PicocliHelper::from)
                 .forEach(commandSpec::addOption);
+
+        commandSpec.addOption(OptionSpec.builder("-h", "--help")
+                .usageHelp(true)
+                .description("Print help for current command.")
+                .build());
 
         return commandSpec;
     }

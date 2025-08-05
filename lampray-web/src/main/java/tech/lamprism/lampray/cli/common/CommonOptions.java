@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.command.common;
+package tech.lamprism.lampray.cli.common;
 
 import tech.lamprism.lampray.shell.CommandSpecification;
 import tech.lamprism.lampray.shell.SimpleCommandOption;
@@ -31,7 +31,7 @@ public final class CommonOptions {
      */
     public static final CommandSpecification.Option HELP = SimpleCommandOption.builder()
             .setNames("--help", "-h")
-            .setDescription("Print this help message and exit. Use this option to display detailed " +
+            .setDescription("Print help message and exit. Use this option to display detailed " +
                     "information about the available command-line options and their usage.")
             .build();
 

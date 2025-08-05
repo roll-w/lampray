@@ -185,7 +185,15 @@ public class SimpleCommandSpecification implements CommandSpecification {
         }
 
         public Builder setOptions(List<Option> options) {
-            this.options = options;
+            this.options = new ArrayList<>(options);
+            return this;
+        }
+
+        public Builder addOption(Option option) {
+            if (this.options == null) {
+                this.options = new ArrayList<>();
+            }
+            this.options.add(option);
             return this;
         }
 

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.command;
+package tech.lamprism.lampray.cli;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jline.utils.AttributedString;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
-import space.lingu.NonNull;
+import tech.lamprism.lampray.Version;
 import tech.lamprism.lampray.shell.CommandSpecification;
 import tech.lamprism.lampray.shell.CommandTree;
 import tech.lamprism.lampray.shell.HelpRenderer;
@@ -63,13 +63,9 @@ public class CommandLineManager implements CommandManager {
         root = CommandSpec.create().name("lampray");
         root.usageMessage()
                 .header("Lampray Command Line Interface")
-                .description("Use this command line interface to manage Lampray server and resources.")
-                .commandListHeading("Available commands:\n")
-                .optionListHeading("Options:\n")
-                .footer("For more information, visit https://lampray.tech/docs/cli");
+                .description("Use this command line interface to manage Lampray server and resources.");
         // TODO
-        root.version("Lampray CLI 1.0.0")
-                .addOption(CommandLine.Model.OptionSpec.builder("-v", "--version")
+        root.addOption(CommandLine.Model.OptionSpec.builder("-v", "--version")
                         .description("Print version information")
                         .type(Boolean.class)
                         .build())
@@ -199,14 +195,8 @@ public class CommandLineManager implements CommandManager {
     private static class VersionCommandRunner implements CommandRunner {
         @Override
         public int runCommand(CommandRunContext context) {
-            System.out.println("Lampray CLI 1.0.0");
+            System.out.println(Version.formatVersion());
             return 0;
-        }
-
-        @NonNull
-        @Override
-        public Type getType() {
-            return Type.STANDALONE;
         }
 
         @Override
@@ -236,12 +226,6 @@ public class CommandLineManager implements CommandManager {
                     .filter(arg -> !arg.equals("help"))
                     .filter(StringUtils::isNotBlank)
                     .toArray(String[]::new);
-        }
-
-        @NonNull
-        @Override
-        public Type getType() {
-            return Type.STANDALONE;
         }
 
         @Override

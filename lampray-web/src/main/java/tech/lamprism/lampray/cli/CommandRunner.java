@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.command;
+package tech.lamprism.lampray.cli;
 
-import space.lingu.NonNull;
 import tech.lamprism.lampray.shell.CommandSpecification;
 
 /**
@@ -34,41 +33,5 @@ public interface CommandRunner {
      */
     int runCommand(CommandRunContext context);
 
-    @NonNull
-    Type getType();
-
     CommandSpecification getCommandSpecification();
-
-    enum Type {
-        /**
-         * Run the command in a standalone mode. Do not use the
-         * application context.
-         */
-        STANDALONE,
-
-        /**
-         * Run the command in a full web application context, and don't
-         * exit the application after running the command.
-         */
-        SERVICE,
-
-        /**
-         * Run the command in a full web application context, and exit the
-         * application after running the command.
-         */
-        SERVICE_EXIT,
-
-        /**
-         * Run the command in a limited web application context (don't start
-         * the web server), and exit the application after running the command.
-         */
-        TASK,
-
-        /**
-         * Run the command in a limited web application context (don't start
-         * the web server), and don't exit the application after running the
-         * command.
-         */
-        TASK_KEEP_ALIVE,
-    }
 }
