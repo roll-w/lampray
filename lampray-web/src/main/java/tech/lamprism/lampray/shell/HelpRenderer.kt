@@ -86,17 +86,6 @@ class HelpRenderer(
             appendLine()
         }
 
-        append("Usage: ")
-        val command = if (commandTree.children.isNotEmpty()) {
-            "<COMMAND> [OPTIONS]"
-        } else {
-            "[OPTIONS]"
-        } + "\n"
-        appendLine("${commandTree.fullName} $command")
-        renderDescription(commandTree)
-        renderChildrenCommands(commandTree)
-        renderOptions(commandTree)
-
         fun getCommandName(tree: CommandTree): String {
             val fullName = tree.fullName.trim()
             if (fullName.isBlank()) {
@@ -104,6 +93,17 @@ class HelpRenderer(
             }
             return "$fullName "
         }
+
+        append("Usage: ")
+        val command = if (commandTree.children.isNotEmpty()) {
+            "<COMMAND> [OPTIONS]"
+        } else {
+            "[OPTIONS]"
+        } + "\n"
+        appendLine("${getCommandName(commandTree)}$command")
+        renderDescription(commandTree)
+        renderChildrenCommands(commandTree)
+        renderOptions(commandTree)
 
         val helpCommand = if (commandTree.children.isEmpty())
             "${getCommandName(root)}<COMMAND>" else "${getCommandName(commandTree)}<COMMAND>"

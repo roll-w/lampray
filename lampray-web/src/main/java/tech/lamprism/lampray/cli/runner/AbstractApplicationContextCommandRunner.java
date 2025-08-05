@@ -22,7 +22,8 @@ import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -41,16 +42,30 @@ import tech.lamprism.lampray.web.LoggingPostApplicationPreparedEventListener;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
+ * Base class for command runners that require a full or limited application context
+ * to run commands.
+ *
  * @author RollW
  */
-public abstract class RequireApplicationCommandRunner implements CommandRunner {
-    private ConfigurableApplicationContext run(String[] args,
-                                               WebApplicationType webApplication,
-                                               CommandTask onApplicationPrepared,
-                                               Map<String, Object> additionalProperties) {
+public abstract class AbstractApplicationContextCommandRunner implements CommandRunner {
+    @Override
+    public final int runCommand(CommandRunContext context) {
+        Map<String, Object> overrideProperties = new HashMap<>();
+        overrideProperties.put("spring.application.name", "Lampray");
+        overrideProperties.put(LamprayEnvKeys.RAW_ARGS, context.getRawArgs());
+        setupFixedProperties(overrideProperties);
+        onProcessProperties(overrideProperties);
+        startApplication(new String[0], determineWebApplicationType(),
+                new CommandTask(context, getType()), overrideProperties);
+        return 0;
+    }
+
+    private ConfigurableApplicationContext startApplication(String[] args,
+                                                            WebApplicationType webApplication,
+                                                            CommandTask onApplicationPrepared,
+                                                            Map<String, Object> additionalProperties) {
 
         ConfigurableEnvironment environment = new OverrideSystemPropertiesEnvironment(
                 false,
@@ -64,21 +79,9 @@ public abstract class RequireApplicationCommandRunner implements CommandRunner {
                 .listeners(
                         new LoggingPostApplicationPreparedEventListener(),
                         new BannerPrintListener(),
-                        new StartedApplicationListener(onApplicationPrepared));
+                        new ApplicationStartedListener(onApplicationPrepared));
         SpringApplication application = builder.build();
         return application.run(args);
-    }
-
-    @Override
-    public final int runCommand(CommandRunContext context) {
-        Map<String, Object> overrideProperties = new HashMap<>();
-        overrideProperties.put("spring.application.name", "Lampray");
-        overrideProperties.put(LamprayEnvKeys.RAW_ARGS, context.getRawArgs());
-        setupFixedProperties(overrideProperties);
-        onProcessProperties(overrideProperties);
-        run(new String[0], determineWebApplicationType(),
-                new CommandTask(context, getType()), overrideProperties);
-        return 0;
     }
 
     private WebApplicationType determineWebApplicationType() {
@@ -95,7 +98,7 @@ public abstract class RequireApplicationCommandRunner implements CommandRunner {
      * @param context the command run context
      * @return an integer representing the exit code of the command
      */
-    protected abstract int doRunCommand(CommandRunContext context);
+    protected abstract int doRunCommand(CommandRunContext context, ApplicationContext applicationContext);
 
     /**
      * Returns the type of this command runner.
@@ -182,7 +185,7 @@ public abstract class RequireApplicationCommandRunner implements CommandRunner {
         }
     }
 
-    private class CommandTask implements Callable<Integer> {
+    private class CommandTask {
         private final CommandRunContext context;
         private final Type type;
 
@@ -191,9 +194,14 @@ public abstract class RequireApplicationCommandRunner implements CommandRunner {
             this.type = type;
         }
 
-        @Override
-        public Integer call() {
-            return doRunCommand(context);
+        public int execute(ApplicationContext applicationContext) {
+            try {
+                return doRunCommand(context, applicationContext);
+            } catch (Exception e) {
+                Logger logger = LoggerFactory.getLogger(LampraySystemApplication.class);
+                logger.error("Error occurred while running command: {}", context.getRawArgs(), e);
+                return -1; // Indicate an error occurred
+            }
         }
 
         public Type getType() {
@@ -201,26 +209,29 @@ public abstract class RequireApplicationCommandRunner implements CommandRunner {
         }
     }
 
-    private static class StartedApplicationListener implements ApplicationListener<ApplicationReadyEvent> {
-        private static final Logger logger = LoggerFactory.getLogger(StartedApplicationListener.class);
+    private static class ApplicationStartedListener implements ApplicationListener<ApplicationStartedEvent> {
+        private static final Logger logger = LoggerFactory.getLogger(ApplicationStartedListener.class);
 
-        private final CommandTask onApplicationPrepared;
+        private final CommandTask task;
 
-        public StartedApplicationListener(CommandTask onApplicationPrepared) {
-            this.onApplicationPrepared = onApplicationPrepared;
+        public ApplicationStartedListener(CommandTask task) {
+            this.task = task;
         }
 
         @Override
-        public void onApplicationEvent(@NonNull ApplicationReadyEvent event) {
+        public void onApplicationEvent(@NonNull ApplicationStartedEvent event) {
             ConfigurableApplicationContext applicationContext = event.getApplicationContext();
             try {
-                int call = onApplicationPrepared.call();
-                if (onApplicationPrepared.getType().exitsAfterRun()) {
+                int code = task.execute(applicationContext);
+                if (task.getType().exitsAfterRun()) {
+                    logger.debug("Application will exit after running command since the command type is {}.",
+                            task.getType());
                     applicationContext.close();
-                    System.exit(call);
+                    System.exit(code);
                     return;
                 }
-                logger.info("Command executed successfully, application will keep running.");
+                logger.debug("Command executed for {} with exit code: {}, application will keep running.",
+                        task.getType(), code);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

@@ -20,6 +20,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.jline.utils.AttributedString;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
+import space.lingu.NonNull;
 import tech.lamprism.lampray.Version;
 import tech.lamprism.lampray.shell.CommandSpecification;
 import tech.lamprism.lampray.shell.CommandTree;
@@ -27,6 +29,7 @@ import tech.lamprism.lampray.shell.HelpRenderer;
 import tech.lamprism.lampray.shell.SimpleCommandSpecification;
 import tech.lamprism.lampray.shell.adapter.PicocliCommandTree;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -61,29 +64,41 @@ public class CommandLineManager implements CommandManager {
 
     private void init() {
         root = CommandSpec.create().name("lampray");
+        // TODO
         root.usageMessage()
                 .header("Lampray Command Line Interface")
                 .description("Use this command line interface to manage Lampray server and resources.");
-        // TODO
-        root.addOption(CommandLine.Model.OptionSpec.builder("-v", "--version")
-                        .description("Print version information")
-                        .type(Boolean.class)
-                        .build())
-                .addOption(CommandLine.Model.OptionSpec.builder("-h", "--help")
-                        .description("Print this help message")
-                        .type(Boolean.class)
-                        .build());
         root.addSubcommand("help", CommandSpec.create()
                         .helpCommand(true))
                 .usageMessage()
                 .header("Print help message for a command")
-                .description("Use this command to print the help message for a specific command.");
+                .description("Print help message and exit. Use this option to display detailed " +
+                        "information about the available command-line options and their usage.");
         root.addSubcommand("version", CommandSpec.create())
                 .usageMessage()
                 .header("Print version information")
-                .description("Use this command to print the version information of the Lampray CLI.");
+                .description("Display the version information of the application and exit. " +
+                        "This option provides a quick way to check the current version of " +
+                        "the application you are running.");
         registerCommands(root);
-        root.name("lampray");
+        CommandSpec helpMixin = CommandSpec.create()
+                .addOption(OptionSpec.builder("-h", "--help")
+                        .description("Print help message and exit. Use this option to display detailed " +
+                                "information about the available command-line options and their usage.")
+                        .usageHelp(true)
+                        .defaultValue(null)
+                        .build()
+                )
+                .addOption(OptionSpec.builder("-v", "--version")
+                        .description("Display the version information of the application and exit. " +
+                                "This option provides a quick way to check the current version of " +
+                                "the application you are running.")
+                        .versionHelp(true)
+                        .defaultValue(null)
+                        .build()
+                );
+        root.name("lampray")
+                .addMixin("standardOptions", helpMixin);
         commandLine = new CommandLine(root);
         commandLine.setCaseInsensitiveEnumValuesAllowed(true);
 
@@ -94,28 +109,59 @@ public class CommandLineManager implements CommandManager {
     @Override
     public int execute(String[] args) {
         init();
+        commandLine.setUnmatchedArgumentsAllowed(true);
         CommandLine.ParseResult parseResult = commandLine.parseArgs(args);
         CommandRunner commandRunner = findCommandRunner(parseResult);
-        Map<String, Object> arguments = new HashMap<>();
-        for (CommandLine.Model.OptionSpec matchedOption : parseResult.matchedOptions()) {
-            Object value = matchedOption.getValue();
-            for (String name : matchedOption.names()) {
-                arguments.put(name, value);
-            }
-        }
+        Map<String, Object> arguments = getArguments(parseResult);
         ParsedCommandRunContext context = new ParsedCommandRunContext(args, arguments);
         return commandRunner.runCommand(context);
     }
 
+    @NonNull
+    private Map<String, Object> getArguments(CommandLine.ParseResult parseResult) {
+        Map<String, Object> arguments = new HashMap<>();
+        CommandLine.ParseResult current = parseResult;
+        while (current.hasSubcommand()) {
+            for (OptionSpec matchedOption : parseResult.matchedOptions()) {
+                Object value = matchedOption.getValue();
+                for (String name : matchedOption.names()) {
+                    arguments.put(name, value);
+                }
+            }
+            current = current.subcommand();
+        }
+        return arguments;
+    }
+
     private CommandRunner findCommandRunner(CommandLine.ParseResult parseResult) {
-        if (parseResult.isVersionHelpRequested() || isCommandOf(parseResult, "lampray version")) {
+        if (isVersionRequested(parseResult) || isCommandOf(parseResult, "lampray version")) {
             return new VersionCommandRunner();
         }
-        if (parseResult.isUsageHelpRequested() || isCommandOf(parseResult, "lampray help")) {
+        if (isHelpRequested(parseResult) || isCommandOf(parseResult, "lampray help")) {
             return new HelpCommandRunner(commandTree);
         }
 
         return getCommandRunner(parseResult);
+    }
+
+    private boolean isVersionRequested(CommandLine.ParseResult parseResult) {
+        if (parseResult.isVersionHelpRequested()) {
+            return true;
+        }
+        if (parseResult.hasSubcommand()) {
+            return isVersionRequested(parseResult.subcommand());
+        }
+        return false;
+    }
+
+    private boolean isHelpRequested(CommandLine.ParseResult parseResult) {
+        if (parseResult.isUsageHelpRequested()) {
+            return true;
+        }
+        if (parseResult.hasSubcommand()) {
+            return isHelpRequested(parseResult.subcommand());
+        }
+        return isCommandOf(parseResult, "lampray help");
     }
 
     private boolean isCommandOf(CommandLine.ParseResult parseResult, String commandName) {
@@ -215,17 +261,23 @@ public class CommandLineManager implements CommandManager {
         @Override
         public int runCommand(CommandRunContext context) {
             HelpRenderer helpRenderer = new HelpRenderer(commandTree, "lampray");
+            // TODO: enhance
             AttributedString help = helpRenderer.getHelp(processArgs(context.getRawArgs()));
             System.out.println(help.toAnsi());
             return 0;
         }
 
         private String[] processArgs(String[] args) {
-            return Stream.of(args)
+            List<String> arguments = new ArrayList<>(Stream.of(args)
                     .filter(arg -> !arg.startsWith("-"))
                     .filter(arg -> !arg.equals("help"))
                     .filter(StringUtils::isNotBlank)
-                    .toArray(String[]::new);
+                    .toList());
+            if (arguments.isEmpty()) {
+                return new String[]{};
+            }
+            arguments.add(0, "lampray");
+            return arguments.toArray(new String[0]);
         }
 
         @Override

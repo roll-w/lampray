@@ -16,9 +16,10 @@
 
 package tech.lamprism.lampray.web;
 
+import org.springframework.context.ApplicationContext;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.cli.CommandRunContext;
-import tech.lamprism.lampray.cli.runner.RequireApplicationCommandRunner;
+import tech.lamprism.lampray.cli.runner.AbstractApplicationContextCommandRunner;
 import tech.lamprism.lampray.shell.SimpleCommandSpecification;
 
 import java.util.Map;
@@ -30,7 +31,7 @@ import java.util.Map;
  *
  * @author RollW
  */
-public class StartApplicationCommandRunner extends RequireApplicationCommandRunner {
+public class StartApplicationCommandRunner extends AbstractApplicationContextCommandRunner {
 
     @NonNull
     @Override
@@ -39,7 +40,7 @@ public class StartApplicationCommandRunner extends RequireApplicationCommandRunn
     }
 
     @Override
-    protected int doRunCommand(CommandRunContext context) {
+    protected int doRunCommand(CommandRunContext context, ApplicationContext applicationContext) {
         return 0;
     }
 
