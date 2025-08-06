@@ -113,6 +113,7 @@ public abstract class AbstractApplicationContextCommandRunner implements Command
     @Override
     public final CommandSpecification getCommandSpecification() {
         SimpleCommandSpecification.Builder builder = SimpleCommandSpecification.builder()
+                .setGroup("Application Commands")
                 .setOptions(List.of(CommonOptions.CONFIG));
         onConfigureCommandSpecification(builder);
         return builder.build();

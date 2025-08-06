@@ -35,21 +35,42 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
+ * Command line manager for Lampray CLI operations.
+ * Manages command registration, parsing, and execution with support for hierarchical commands.
+ *
  * @author RollW
  */
 public class CommandLineManager implements CommandManager {
 
     private final List<CommandRunner> commandRunners;
-
     private final Map<String, CommandRunner> commandRunnerMap;
+    private final String commandPrefix;
+    private final String headerText;
 
+    /**
+     * Creates a new CommandLineManager with default configuration.
+     *
+     * @param commandRunners the list of command runners to register
+     */
     public CommandLineManager(List<CommandRunner> commandRunners) {
+        this(commandRunners, "lampray", "Lampray Command Line Interface");
+    }
+
+    /**
+     * Creates a new CommandLineManager with customizable prefix and header.
+     *
+     * @param commandRunners the list of command runners to register
+     * @param commandPrefix  the command prefix (default: "lampray")
+     * @param headerText     the header text for help display
+     */
+    public CommandLineManager(List<CommandRunner> commandRunners, String commandPrefix, String headerText) {
         this.commandRunners = commandRunners;
+        this.commandPrefix = commandPrefix;
+        this.headerText = headerText;
         this.commandRunnerMap = commandRunners.stream().collect(Collectors.toMap(
-                commandRunner -> "lampray " + commandRunner.getCommandSpecification().getFullName(),
+                commandRunner -> commandPrefix + " " + commandRunner.getCommandSpecification().getFullName(),
                 commandRunner -> commandRunner,
                 (existing, replacement) -> {
                     throw new IllegalArgumentException("Duplicate command name: " + existing.getCommandSpecification().getFullName());
@@ -61,44 +82,52 @@ public class CommandLineManager implements CommandManager {
     private CommandLine commandLine;
     private CommandTree commandTree;
 
-
     private void init() {
-        root = CommandSpec.create().name("lampray");
-        // TODO
+        root = CommandSpec.create();
         root.usageMessage()
-                .header("Lampray Command Line Interface")
-                .description("Use this command line interface to manage Lampray server and resources.");
-        root.addSubcommand("help", CommandSpec.create()
-                        .helpCommand(true))
-                .usageMessage()
-                .header("Print help message for a command")
-                .description("Print help message and exit. Use this option to display detailed " +
-                        "information about the available command-line options and their usage.");
-        root.addSubcommand("version", CommandSpec.create())
-                .usageMessage()
-                .header("Print version information")
-                .description("Display the version information of the application and exit. " +
-                        "This option provides a quick way to check the current version of " +
-                        "the application you are running.");
+                .header(headerText)
+                .description("Use this command line interface to manage " + commandPrefix + " server and resources. " +
+                        "Available commands include server management, data operations, and system configuration.");
+
+        // Add built-in help command with enhanced description
+        CommandSpec helpCommand = CommandSpec.create()
+                .helpCommand(true);
+        root.addSubcommand("help", helpCommand);
+        helpCommand.usageMessage()
+                .header("Display help information for commands")
+                .description("Print comprehensive help message and exit. Use this option to display detailed " +
+                        "information about available command-line options, their usage patterns, and examples.");
+
+        // Add built-in version command with enhanced description
+        CommandSpec version = CommandSpec.create();
+        version.usageMessage()
+                .header("Display version and build information")
+                .description("Show the version information of the application including build date, " +
+                        "commit hash, and other version details. This option provides a quick way to " +
+                        "verify the current version of the application you are running.");
+        root.addSubcommand("version", version);
+
         registerCommands(root);
+
         CommandSpec helpMixin = CommandSpec.create()
                 .addOption(OptionSpec.builder("-h", "--help")
-                        .description("Print help message and exit. Use this option to display detailed " +
-                                "information about the available command-line options and their usage.")
+                        .description("Display help information for the command and exit. Shows detailed " +
+                                "information about available options, usage patterns, and examples.")
                         .usageHelp(true)
+                        .paramLabel(HelpRenderer.NO_PARAM)
                         .defaultValue(null)
                         .build()
                 )
                 .addOption(OptionSpec.builder("-v", "--version")
-                        .description("Display the version information of the application and exit. " +
-                                "This option provides a quick way to check the current version of " +
-                                "the application you are running.")
+                        .description("Display version information and exit. Shows the current version, " +
+                                "build information, and other version-related details.")
                         .versionHelp(true)
+                        .paramLabel(HelpRenderer.NO_PARAM)
                         .defaultValue(null)
                         .build()
                 );
-        root.name("lampray")
-                .addMixin("standardOptions", helpMixin);
+
+        root.name(commandPrefix).addMixin("standardOptions", helpMixin);
         commandLine = new CommandLine(root);
         commandLine.setCaseInsensitiveEnumValuesAllowed(true);
 
@@ -134,11 +163,11 @@ public class CommandLineManager implements CommandManager {
     }
 
     private CommandRunner findCommandRunner(CommandLine.ParseResult parseResult) {
-        if (isVersionRequested(parseResult) || isCommandOf(parseResult, "lampray version")) {
+        if (isVersionRequested(parseResult) || isCommandOf(parseResult, commandPrefix + " version", false)) {
             return new VersionCommandRunner();
         }
-        if (isHelpRequested(parseResult) || isCommandOf(parseResult, "lampray help")) {
-            return new HelpCommandRunner(commandTree);
+        if (isHelpRequested(parseResult) || isCommandOf(parseResult, commandPrefix + " help", true)) {
+            return new HelpCommandRunner(commandTree, commandPrefix);
         }
 
         return getCommandRunner(parseResult);
@@ -161,15 +190,21 @@ public class CommandLineManager implements CommandManager {
         if (parseResult.hasSubcommand()) {
             return isHelpRequested(parseResult.subcommand());
         }
-        return isCommandOf(parseResult, "lampray help");
+        return false;
     }
 
-    private boolean isCommandOf(CommandLine.ParseResult parseResult, String commandName) {
-        if (StringUtils.equalsIgnoreCase(parseResult.commandSpec().qualifiedName().trim(), commandName)) {
-            return true;
+    private boolean isCommandOf(CommandLine.ParseResult parseResult, String commandName, boolean startWith) {
+        if (startWith) {
+            if (StringUtils.startsWithIgnoreCase(parseResult.commandSpec().qualifiedName().trim(), commandName)) {
+                return true;
+            }
+        } else {
+            if (StringUtils.equalsIgnoreCase(parseResult.commandSpec().qualifiedName().trim(), commandName)) {
+                return true;
+            }
         }
         if (parseResult.hasSubcommand()) {
-            return isCommandOf(parseResult.subcommand(), commandName);
+            return isCommandOf(parseResult.subcommand(), commandName, startWith);
         }
         return false;
     }
@@ -200,7 +235,6 @@ public class CommandLineManager implements CommandManager {
                 return;
             }
             CommandSpec prev = current;
-            // Move to the next part
             current = current.subcommandsCaseInsensitive(false)
                     .subcommands()
                     .values()
@@ -210,12 +244,12 @@ public class CommandLineManager implements CommandManager {
                     .map(CommandLine::getCommandSpec)
                     .orElse(null);
             if (current == null) {
-                // Create a new child if it doesn't exist
                 CommandSpec newChild = CommandSpec.create().name(part);
                 String commandToThisPart = StringUtils.join(parts, " ", 0, i + 1);
                 newChild.usageMessage()
-                        .header("Command: " + commandToThisPart)
-                        .description("Print the help message for the command: " + commandToThisPart);
+                        .header("Command Group: " + commandToThisPart)
+                        .description("Manage " + commandToThisPart + " operations. Use 'help " +
+                                commandToThisPart + "' to see available subcommands and their descriptions.");
                 prev.addSubcommand(newChild.name(), newChild);
                 current = newChild;
             }
@@ -247,42 +281,64 @@ public class CommandLineManager implements CommandManager {
 
         @Override
         public CommandSpecification getCommandSpecification() {
-            return SimpleCommandSpecification.builder().build();
+            return SimpleCommandSpecification.builder()
+                    .setName("version")
+                    .setDescription("Display version and build information")
+                    .build();
         }
     }
 
     private static class HelpCommandRunner implements CommandRunner {
         private final CommandTree commandTree;
+        private final String commandPrefix;
 
-        private HelpCommandRunner(CommandTree commandTree) {
+        private HelpCommandRunner(CommandTree commandTree, String commandPrefix) {
             this.commandTree = commandTree;
+            this.commandPrefix = commandPrefix;
         }
 
         @Override
         public int runCommand(CommandRunContext context) {
-            HelpRenderer helpRenderer = new HelpRenderer(commandTree, "lampray");
-            // TODO: enhance
+            HelpRenderer helpRenderer = new HelpRenderer(commandTree, commandPrefix);
             AttributedString help = helpRenderer.getHelp(processArgs(context.getRawArgs()));
             System.out.println(help.toAnsi());
             return 0;
         }
 
         private String[] processArgs(String[] args) {
-            List<String> arguments = new ArrayList<>(Stream.of(args)
-                    .filter(arg -> !arg.startsWith("-"))
-                    .filter(arg -> !arg.equals("help"))
-                    .filter(StringUtils::isNotBlank)
-                    .toList());
-            if (arguments.isEmpty()) {
-                return new String[]{};
+            List<String> arguments = new ArrayList<>();
+            boolean foundHelp = false;
+
+            for (String arg : args) {
+                if ("help".equals(arg) || "-h".equals(arg) || "--help".equals(arg)) {
+                    foundHelp = true;
+                    continue; // Skip the help command itself
+                }
+                if (arg.startsWith("-")) {
+                    continue; // Skip option flags
+                }
+                if (StringUtils.isNotBlank(arg)) {
+                    arguments.add(arg);
+                }
             }
-            arguments.add(0, "lampray");
-            return arguments.toArray(new String[0]);
+
+            // If we found help command and there are additional arguments,
+            // they represent the command to get help for
+            if (foundHelp && !arguments.isEmpty()) {
+                arguments.add(0, commandPrefix);
+                return arguments.toArray(new String[0]);
+            }
+
+            // Default case: show general help
+            return new String[]{};
         }
 
         @Override
         public CommandSpecification getCommandSpecification() {
-            return SimpleCommandSpecification.builder().build();
+            return SimpleCommandSpecification.builder()
+                    .setName("help")
+                    .setDescription("Display help information for commands")
+                    .build();
         }
     }
 

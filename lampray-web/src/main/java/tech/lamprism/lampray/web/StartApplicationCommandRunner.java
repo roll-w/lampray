@@ -53,6 +53,6 @@ public class StartApplicationCommandRunner extends AbstractApplicationContextCom
         builder.setNames("start")
                 .setDescription("Start the Lampray system application.")
                 .setHeader("Start the Lampray system application.")
-                .setGroup("Application");
+                .setGroup("Application Commands");
     }
 }

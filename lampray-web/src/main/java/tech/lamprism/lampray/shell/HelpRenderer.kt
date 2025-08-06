@@ -53,6 +53,10 @@ class HelpRenderer(
     private val root: CommandTree,
     private val header: String = "",
 ) {
+    companion object {
+        const val NO_PARAM = "NO_PARAM"
+    }
+
     fun getHelp(vararg commands: String): AttributedString {
         return if (commands.isEmpty()) {
             renderCommands()
@@ -117,9 +121,6 @@ class HelpRenderer(
                 return
             }
 
-            if (it.isNotEmpty()) {
-                appendLine()
-            }
             it.trim().wrap(110).lines().forEach { line ->
                 appendLine(line)
             }
@@ -174,12 +175,15 @@ class HelpRenderer(
                 return@forEach
             }
             append("    ${it.names.sortedBy { it.length }.joinToString(", ")}")
-            append(" <${it.label ?: "VALUE"}")
-            if (it.defaultValue != null) {
-                append("=${it.defaultValue}>")
-            } else {
-                append(">")
+            if (it.type != null && !it.label.isNullOrBlank() && it.label != NO_PARAM) {
+                append(" <${it.label ?: "VALUE"}")
+                if (it.defaultValue != null) {
+                    append("=${it.defaultValue}>")
+                } else {
+                    append(">")
+                }
             }
+
             it.description?.let { it ->
                 if (it.isEmpty()) {
                     return@let

@@ -23,6 +23,7 @@ import org.springframework.core.io.support.ResourcePatternResolver
 import tech.lamprism.lampray.cli.CommandRunContext
 import tech.lamprism.lampray.cli.CommandRunner
 import tech.lamprism.lampray.shell.CommandSpecification
+import tech.lamprism.lampray.shell.SimpleCommandOption
 import tech.lamprism.lampray.shell.SimpleCommandSpecification
 import java.io.File
 import java.net.URLDecoder
@@ -31,7 +32,7 @@ import java.nio.charset.StandardCharsets
 /**
  * @author RollW
  */
-class ResourceExtractCommandRunner : CommandRunner {
+class ResourcesExportCommandRunner : CommandRunner {
     companion object {
         private const val DEFAULT_PATH = "resources"
 
@@ -40,7 +41,7 @@ class ResourceExtractCommandRunner : CommandRunner {
 
     override fun runCommand(context: CommandRunContext): Int {
         val args = context.arguments
-        val path = args["path"]?.toString() ?: return 1
+        val path = args["--path"]?.toString() ?: return 1
         val outputPath = File(path)
         println("Extracting resources to $path")
         val resource = ClassPathResource(ASSET_PATH)
@@ -54,12 +55,6 @@ class ResourceExtractCommandRunner : CommandRunner {
         }
         copyResources(resolver, resource, outputPath)
         return 0
-    }
-
-    override fun getCommandSpecification(): CommandSpecification {
-        return SimpleCommandSpecification.builder()
-            .setNames("resources", "extract")
-            .build()
     }
 
     private fun copyResources(
@@ -110,5 +105,29 @@ class ResourceExtractCommandRunner : CommandRunner {
                 input.copyTo(output)
             }
         }
+    }
+
+    override fun getCommandSpecification(): CommandSpecification {
+        return SimpleCommandSpecification.builder()
+            .setNames("resources", "export")
+            .setGroup("Resources")
+            .addOption(
+                SimpleCommandOption.builder()
+                    .setNames("--path", "-p")
+                    .setDescription("Specify the output file path for the exported resources")
+                    .setType(String::class.java)
+                    .setRequired(true)
+                    .setDefaultValue(DEFAULT_PATH)
+                    .build()
+            ).addOption(
+                SimpleCommandOption.builder()
+                    .setNames("--format", "-f")
+                    .setDescription("Export format (zip, tar, directory). Default: zip")
+                    .setType(String::class.java)
+                    .setRequired(false)
+                    .build()
+            )
+            .setDescription("Export embedded resources to the given path.")
+            .build()
     }
 }

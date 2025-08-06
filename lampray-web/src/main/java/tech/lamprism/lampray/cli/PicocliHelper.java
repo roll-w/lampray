@@ -16,9 +16,11 @@
 
 package tech.lamprism.lampray.cli;
 
+import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import tech.lamprism.lampray.shell.CommandSpecification;
+import tech.lamprism.lampray.shell.HelpRenderer;
 
 /**
  * @author RollW
@@ -38,8 +40,10 @@ public final class PicocliHelper {
                 .map(PicocliHelper::from)
                 .forEach(commandSpec::addOption);
 
+        // Auto append help option to all commands
         commandSpec.addOption(OptionSpec.builder("-h", "--help")
                 .usageHelp(true)
+                .paramLabel(HelpRenderer.NO_PARAM)
                 .description("Print help for current command.")
                 .build());
 
@@ -56,6 +60,9 @@ public final class PicocliHelper {
                 .type(option.getType());
         if (option.getLabel() != null && !option.getLabel().isEmpty()) {
             builder.paramLabel(option.getLabel());
+        }
+        if (StringUtils.isBlank(option.getLabel())) {
+            builder.paramLabel(HelpRenderer.NO_PARAM);
         }
 
         return builder.build();

@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.cli.common;
 
 import tech.lamprism.lampray.shell.CommandSpecification;
+import tech.lamprism.lampray.shell.HelpRenderer;
 import tech.lamprism.lampray.shell.SimpleCommandOption;
 
 /**
@@ -33,6 +34,8 @@ public final class CommonOptions {
             .setNames("--help", "-h")
             .setDescription("Print help message and exit. Use this option to display detailed " +
                     "information about the available command-line options and their usage.")
+            .setRequired(false)
+            .setLabel(HelpRenderer.NO_PARAM)
             .build();
 
     public static final CommandSpecification.Option CONFIG = SimpleCommandOption.builder()
@@ -50,5 +53,7 @@ public final class CommonOptions {
             .setDescription("Display the version information of the application and exit. " +
                     "This option provides a quick way to check the current version of " +
                     "the application you are running.")
+            .setRequired(false)
+            .setLabel(HelpRenderer.NO_PARAM)
             .build();
 }

@@ -159,7 +159,7 @@ public class PicocliCommandTree implements CommandTree {
 
         @Override
         public String getDefaultValue() {
-            return optionSpec.defaultValueString();
+            return optionSpec.defaultValue();
         }
 
         @Override
