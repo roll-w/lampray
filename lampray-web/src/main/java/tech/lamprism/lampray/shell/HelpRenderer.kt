@@ -112,6 +112,7 @@ class HelpRenderer(
         val helpCommand = if (commandTree.children.isEmpty())
             "${getCommandName(root)}<COMMAND>" else "${getCommandName(commandTree)}<COMMAND>"
 
+        // TODO: need remove prefix here
         append("Use \"help $helpCommand\" or \"$helpCommand --help\" for more information about a given command.")
     }
 

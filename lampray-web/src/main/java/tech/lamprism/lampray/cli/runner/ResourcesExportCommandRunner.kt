@@ -43,21 +43,22 @@ class ResourcesExportCommandRunner : CommandRunner {
         val args = context.arguments
         val path = args["--path"]?.toString() ?: return 1
         val outputPath = File(path)
-        println("Extracting resources to $path")
+        context.printStream.println("Extracting resources to $path")
         val resource = ClassPathResource(ASSET_PATH)
         if (!resource.exists()) {
-            println("Error: Not compiled with frontend resources, skipping resource extraction")
+            context.printStream.println("Error: Not compiled with frontend resources, skipping resource extraction")
             return 1
         }
         val resolver = PathMatchingResourcePatternResolver()
         if (!outputPath.exists()) {
             outputPath.mkdirs()
         }
-        copyResources(resolver, resource, outputPath)
+        copyResources(context, resolver, resource, outputPath)
         return 0
     }
 
     private fun copyResources(
+        context: CommandRunContext,
         resourceResolver: ResourcePatternResolver,
         assetResource: Resource,
         outputPath: File
@@ -71,7 +72,7 @@ class ResourcesExportCommandRunner : CommandRunner {
                 return@forEach
             }
             resource.copyTo(outputFile)
-            println("Extracted $path")
+            context.printStream.println("Extracted $path")
         }
     }
 

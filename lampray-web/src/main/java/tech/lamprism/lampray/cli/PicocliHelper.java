@@ -41,13 +41,17 @@ public final class PicocliHelper {
                 .forEach(commandSpec::addOption);
 
         // Auto append help option to all commands
+        appendHelpOption(commandSpec);
+
+        return commandSpec;
+    }
+
+    public static void appendHelpOption(CommandSpec commandSpec) {
         commandSpec.addOption(OptionSpec.builder("-h", "--help")
                 .usageHelp(true)
                 .paramLabel(HelpRenderer.NO_PARAM)
                 .description("Print help for current command.")
                 .build());
-
-        return commandSpec;
     }
 
     private static OptionSpec from(CommandSpecification.Option option) {

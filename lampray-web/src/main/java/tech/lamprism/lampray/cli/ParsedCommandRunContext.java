@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.cli;
 
+import java.io.PrintStream;
 import java.util.Map;
 
 /**
@@ -24,6 +25,7 @@ import java.util.Map;
 public class ParsedCommandRunContext implements CommandRunContext {
     private final String[] args;
     private final Map<String, Object> arguments;
+    private PrintStream printStream = System.out;
 
     private boolean startApplication = true;
     private boolean startWebServer = true;
@@ -41,6 +43,15 @@ public class ParsedCommandRunContext implements CommandRunContext {
     @Override
     public Map<String, Object> getArguments() {
         return arguments;
+    }
+
+    @Override
+    public PrintStream getPrintStream() {
+        return printStream;
+    }
+
+    public void setPrintStream(PrintStream printStream) {
+        this.printStream = printStream;
     }
 
     @Override

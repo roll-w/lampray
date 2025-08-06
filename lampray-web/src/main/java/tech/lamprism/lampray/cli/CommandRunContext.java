@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.cli;
 
+import java.io.PrintStream;
 import java.util.Map;
 
 /**
@@ -25,6 +26,8 @@ public interface CommandRunContext {
     String[] getRawArgs();
 
     Map<String, Object> getArguments();
+
+    PrintStream getPrintStream();
 
     void setStartApplication(boolean startApplication);
 
