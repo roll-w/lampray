@@ -154,8 +154,8 @@ public class CommandLineManager implements CommandManager {
     private Map<String, Object> getArguments(CommandLine.ParseResult parseResult) {
         Map<String, Object> arguments = new HashMap<>();
         CommandLine.ParseResult current = parseResult;
-        while (current.hasSubcommand()) {
-            for (OptionSpec matchedOption : parseResult.matchedOptions()) {
+        while (current != null) {
+            for (OptionSpec matchedOption : current.matchedOptions()) {
                 Object value = matchedOption.getValue();
                 for (String name : matchedOption.names()) {
                     arguments.put(name, value);

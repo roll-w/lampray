@@ -41,7 +41,11 @@ class ResourcesExportCommandRunner : CommandRunner {
 
     override fun runCommand(context: CommandRunContext): Int {
         val args = context.arguments
-        val path = args["--path"]?.toString() ?: return 1
+        val path = args["--path"]?.toString()
+        if (path.isNullOrBlank()) {
+            context.printStream.println("Error: No output path specified. Use --path to specify the output path.")
+            return 1
+        }
         val outputPath = File(path)
         context.printStream.println("Extracting resources to $path")
         val resource = ClassPathResource(ASSET_PATH)
