@@ -87,7 +87,7 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
         }
 
         // Add custom options
-        if (config.customOptions.isNotBlank()) {
+        if (config.customOptions.isNotEmpty()) {
             parseCustomOptions(config.customOptions).forEach { (key, value) ->
                 params[key] = value
             }
@@ -135,19 +135,19 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
 
     /**
      * Parses custom options string into key-value pairs.
-     * Format: key1=value1&key2=value2
+     * Format: ["key1=value1", "key2=value2"]
      */
-    private fun parseCustomOptions(options: String): Map<String, String> {
-        if (options.isBlank()) return emptyMap()
+    private fun parseCustomOptions(options: Collection<String>): Map<String, String> {
+        if (options.isEmpty()) {
+            return emptyMap()
+        }
 
-        return options.split("&")
-            .mapNotNull { pair ->
-                val parts = pair.split("=", limit = 2)
-                if (parts.size == 2) {
-                    parts[0].trim() to parts[1].trim()
-                } else null
-            }
-            .toMap()
+        return options.mapNotNull { pair ->
+            val parts = pair.split("=", limit = 2)
+            if (parts.size == 2) {
+                parts[0].trim() to parts[1].trim()
+            } else null
+        }.toMap()
     }
 
     /**

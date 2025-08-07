@@ -48,14 +48,14 @@ object SslCertificateUtils {
      * @param clientCert Client certificate (optional)
      * @param clientKey Client private key (optional)
      * @param caCert CA certificate for server verification (optional)
-     * @param allowSelfSigned Whether to allow self-signed certificates
+     * @param allowAll Whether to allow all certificates (self-signed, etc.)
      * @return Configured SSL context
      */
     fun createSslContext(
         clientCert: CertificateValue? = null,
         clientKey: CertificateValue? = null,
         caCert: CertificateValue? = null,
-        allowSelfSigned: Boolean = false
+        allowAll: Boolean = false
     ): SSLContext {
         val sslContext = SSLContext.getInstance("TLS")
 
@@ -65,8 +65,8 @@ object SslCertificateUtils {
         } else null
 
         // Create trust manager if CA certificate is provided
-        val trustManagers = if (caCert != null || allowSelfSigned) {
-            createTrustManagers(caCert, allowSelfSigned)
+        val trustManagers = if (caCert != null || allowAll) {
+            createTrustManagers(caCert, allowAll)
         } else null
 
         sslContext.init(keyManagers, trustManagers, null)
@@ -103,9 +103,9 @@ object SslCertificateUtils {
      */
     private fun createTrustManagers(
         caCert: CertificateValue?,
-        allowSelfSigned: Boolean
+        allowAll: Boolean
     ): Array<TrustManager> {
-        return if (allowSelfSigned) {
+        return if (allowAll) {
             // Create trust manager that accepts all certificates
             arrayOf(object : X509TrustManager {
                 override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}

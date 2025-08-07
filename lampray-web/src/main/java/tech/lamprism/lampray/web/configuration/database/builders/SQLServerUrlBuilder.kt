@@ -75,7 +75,7 @@ class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
         }
 
         // Handle self-signed certificates
-        if (config.sslConfig.allowSelfSignedCertificates) {
+        if (config.sslConfig.allowAllCertificates) {
             params["trustServerCertificate"] = "true"
         }
     }

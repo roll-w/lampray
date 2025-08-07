@@ -29,7 +29,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.web.ServerInitializeException
-import tech.lamprism.lampray.web.common.keys.DatabaseConfigKeys
+import tech.lamprism.lampray.web.configuration.database.DatabaseConfigKeys
 import tech.lamprism.lampray.web.configuration.database.CertificateValue
 import tech.lamprism.lampray.web.configuration.database.ConnectionPoolConfig
 import tech.lamprism.lampray.web.configuration.database.DatabaseConfig
@@ -68,6 +68,8 @@ class DataSourceConfiguration(
             val databaseConfig = databaseConfig()
             url = DatabaseUrlBuilderFactory.buildUrl(databaseConfig)
             logger.info("Database URL configured: $url")
+        } catch (e: ServerInitializeException) {
+            throw e
         } catch (e: Exception) {
             throw ServerInitializeException(
                 ServerInitializeException.Detail(
@@ -137,7 +139,7 @@ class DataSourceConfiguration(
             databaseName = configProvider[DatabaseConfigKeys.DATABASE_NAME]
                 ?: DatabaseConfigKeys.DATABASE_NAME.defaultValue!!,
             charset = configProvider[DatabaseConfigKeys.DATABASE_CHARSET],
-            customOptions = configProvider[DatabaseConfigKeys.DATABASE_OPTIONS] ?: "",
+            customOptions = configProvider[DatabaseConfigKeys.DATABASE_OPTIONS] ?: emptySet(),
             sslConfig = buildSslConfig(),
             connectionPoolConfig = buildConnectionPoolConfig()
         )
@@ -177,7 +179,7 @@ class DataSourceConfiguration(
             clientPrivateKey = clientKey,
             caCertificate = caCert,
             verifyServerCertificate = configProvider[DatabaseConfigKeys.DATABASE_SSL_VERIFY_SERVER] ?: true,
-            allowSelfSignedCertificates = configProvider[DatabaseConfigKeys.DATABASE_SSL_ALLOW_SELF_SIGNED] ?: false
+            allowAllCertificates = configProvider[DatabaseConfigKeys.DATABASE_SSL_ALLOW_ALL] ?: false
         )
     }
 
@@ -259,7 +261,7 @@ class DataSourceConfiguration(
     } catch (e: Exception) {
         throw ServerInitializeException(
             ServerInitializeException.Detail(
-                "Failed to configure database connection pool.",
+                "Failed to configure database connection pool. ${e.message}",
                 "Please check the connection pool and database configuration settings in the configuration file or environment variables." +
                         " Ensure that the values are valid and accessible."
             ), e
@@ -282,7 +284,7 @@ class DataSourceConfiguration(
                     clientCert = sslConfig.clientCertificate,
                     clientKey = sslConfig.clientPrivateKey,
                     caCert = sslConfig.caCertificate,
-                    allowSelfSigned = sslConfig.allowSelfSignedCertificates
+                    allowAll = sslConfig.allowAllCertificates
                 )
 
                 // Apply SSL context to HikariCP data source properties
@@ -298,7 +300,7 @@ class DataSourceConfiguration(
         } catch (e: Exception) {
             throw ServerInitializeException(
                 ServerInitializeException.Detail(
-                    "Failed to configure SSL for data source.",
+                    "Failed to configure SSL for data source. ${e.message}",
                     "Please check the SSL configuration settings in the configuration file or environment variables." +
                             " Ensure that the certificates are valid and accessible."
                 ), e

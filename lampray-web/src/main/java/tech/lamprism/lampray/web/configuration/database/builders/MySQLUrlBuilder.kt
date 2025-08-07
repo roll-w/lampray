@@ -80,7 +80,7 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         }
 
         // Handle self-signed certificates
-        if (config.sslConfig.allowSelfSignedCertificates) {
+        if (config.sslConfig.allowAllCertificates) {
             params["allowPublicKeyRetrieval"] = "true"
             params["trustCertificateKeyStoreUrl"] = ""
         }

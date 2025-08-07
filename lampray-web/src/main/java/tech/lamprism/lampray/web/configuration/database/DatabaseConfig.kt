@@ -26,7 +26,7 @@ data class DatabaseConfig(
     val databaseName: String,
     val type: DatabaseType,
     val charset: String?,
-    val customOptions: String,
+    val customOptions: Collection<String>,
     val sslConfig: SslConfig,
     val connectionPoolConfig: ConnectionPoolConfig
 )
@@ -49,7 +49,7 @@ enum class DatabaseType(
 
     companion object {
         fun fromString(type: String): DatabaseType {
-            return values().find { it.typeName.equals(type, ignoreCase = true) }
+            return entries.find { it.typeName.equals(type, ignoreCase = true) }
                 ?: throw IllegalArgumentException("Unsupported database type: $type")
         }
     }
@@ -67,7 +67,7 @@ data class SslConfig(
     val clientPrivateKey: CertificateValue? = null,
     val caCertificate: CertificateValue? = null,
     val verifyServerCertificate: Boolean = true,
-    val allowSelfSignedCertificates: Boolean = false
+    val allowAllCertificates: Boolean = false
 ) {
     enum class Mode {
         /**
