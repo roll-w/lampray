@@ -144,11 +144,7 @@ public class CommandLineManager implements CommandManager {
         CommandRunner commandRunner = findCommandRunner(parseResult);
         Map<String, Object> arguments = getArguments(parseResult);
         ParsedCommandRunContext context = new ParsedCommandRunContext(args, arguments);
-        try {
-            return commandRunner.runCommand(context);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return commandRunner.runCommand(context);
     }
 
     @NonNull

@@ -180,7 +180,8 @@ public class ShellCommandTree implements CommandTree {
                         CommandRegistration.builder()
                                 .command(String.join(" ", Arrays.copyOf(parts, i + 1)))
                                 .withTarget()
-                                .consumer((context) -> {})
+                                .consumer((context) -> {
+                                })
                                 .and()
                                 .build()
 
@@ -194,21 +195,31 @@ public class ShellCommandTree implements CommandTree {
 
     static class ShellOption implements Option {
         private final CommandOption commandOption;
+        private final Set<String> names;
 
         private ShellOption(CommandOption commandOption) {
             this.commandOption = commandOption;
+            this.names = initNames();
         }
 
-        @Override
-        public Set<String> getNames() {
-            String[] longNames = commandOption.getLongNames();
+        private Set<String> initNames() {
+            String[] longNames = Arrays.stream(commandOption.getLongNames())
+                    .map(String::valueOf)
+                    .map(it -> "--" + it)
+                    .toArray(String[]::new);
             String[] shortNames = Arrays.stream(commandOption.getShortNames())
                     .map(String::valueOf)
+                    .map(it -> "-" + it)
                     .toArray(String[]::new);
             String[] names = new String[longNames.length + shortNames.length];
             System.arraycopy(longNames, 0, names, 0, longNames.length);
             System.arraycopy(shortNames, 0, names, longNames.length, shortNames.length);
             return Set.of(names);
+        }
+
+        @Override
+        public Set<String> getNames() {
+            return names;
         }
 
         @Override
