@@ -10,7 +10,6 @@ FROM eclipse-temurin:21-jre-alpine
 
 ARG LAMPRAY_VERSION="0.1.0"
 
-LABEL org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 LABEL org.opencontainers.image.authors="rollw"
 LABEL org.opencontainers.image.title="Lampray"
 LABEL org.opencontainers.image.description="Lampray is a blog system based on Spring Boot 3 framework."
@@ -28,5 +27,5 @@ WORKDIR /app/lampray
 
 EXPOSE 5100 5101
 
-ENTRYPOINT ["/bin/sh", "-c", "/app/lampray/bin/lampray"]
-CMD [""]
+ENTRYPOINT ["lampray"]
+CMD ["start"]

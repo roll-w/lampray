@@ -56,7 +56,7 @@ tasks.register<Tar>("package") {
     }
 
     into("${baseDir}/conf") {
-        from("${project(":lampray-web").projectDir}/src/main/resources/lampray.conf")
+        from("${project(":lampray-web").projectDir}/src/main/resources/lampray.toml")
     }
 
     archiveFileName = "lampray-${version}-dist.tar.gz"

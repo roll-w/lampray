@@ -132,6 +132,8 @@ public class CommandLineManager implements CommandManager {
         commandLine.setCaseInsensitiveEnumValuesAllowed(true);
 
         commandTree = PicocliCommandTree.of(root);
+        commandRunnerMap.put(commandPrefix,
+                new HelpCommandRunner(commandTree, commandPrefix, headerText));
     }
 
 
@@ -318,7 +320,7 @@ public class CommandLineManager implements CommandManager {
             boolean foundHelp = false;
 
             for (String arg : args) {
-                if ("help" .equals(arg) || "-h" .equals(arg) || "--help" .equals(arg)) {
+                if ("help".equals(arg) || "-h".equals(arg) || "--help".equals(arg)) {
                     foundHelp = true;
                     continue; // Skip the help command itself
                 }
