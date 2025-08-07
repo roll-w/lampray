@@ -19,10 +19,10 @@ package tech.lamprism.lampray.web;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
-import tech.lamprism.lampray.cli.CommandLineManager;
-import tech.lamprism.lampray.cli.CommandManager;
-import tech.lamprism.lampray.cli.CommandRunner;
-import tech.lamprism.lampray.cli.runner.ResourcesExportCommandRunner;
+import tech.lamprism.lampray.system.console.cli.CommandLineManager;
+import tech.lamprism.lampray.system.console.cli.CommandManager;
+import tech.lamprism.lampray.system.console.cli.CommandRunner;
+import tech.lamprism.lampray.system.console.cli.runner.ResourcesExportCommandRunner;
 
 import java.util.List;
 

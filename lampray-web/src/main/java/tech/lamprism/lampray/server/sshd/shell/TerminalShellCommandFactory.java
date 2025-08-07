@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import org.apache.sshd.server.channel.ChannelSession;
 import org.apache.sshd.server.command.Command;
 import org.apache.sshd.server.shell.ShellFactory;
 import org.springframework.shell.ShellRunner;
-import tech.lamprism.lampray.shell.TerminalRegistry;
-import tech.lamprism.lampray.shell.reader.LineReaderFactory;
+import tech.lamprism.lampray.system.console.shell.TerminalRegistry;
+import tech.lamprism.lampray.system.console.shell.reader.LineReaderFactory;
 
 /**
  * @author RollW

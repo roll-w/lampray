@@ -23,9 +23,9 @@ import org.springframework.shell.standard.CommandValueProvider
 import org.springframework.shell.standard.ShellComponent
 import org.springframework.shell.standard.ShellMethod
 import org.springframework.shell.standard.ShellOption
-import tech.lamprism.lampray.shell.HelpRenderer
-import tech.lamprism.lampray.shell.adapter.ShellCommandTree
-import tech.lamprism.lampray.shell.command.HelpCommandProvider
+import tech.lamprism.lampray.system.console.HelpRenderer
+import tech.lamprism.lampray.system.console.shell.ShellCommandTree
+import tech.lamprism.lampray.system.console.shell.command.HelpCommandProvider
 
 private const val HEADER = "Lampray Command Line Interface"
 

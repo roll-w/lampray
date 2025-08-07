@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import org.springframework.shell.context.ShellContext;
 import org.springframework.shell.exit.ExitCodeMappings;
 import org.springframework.shell.result.GenericResultHandlerService;
 import org.springframework.shell.result.ResultHandlerConfig;
-import tech.lamprism.lampray.shell.OperatorSupportedShell;
+import tech.lamprism.lampray.system.console.shell.OperatorSupportedShell;
 
 import java.util.Set;
 

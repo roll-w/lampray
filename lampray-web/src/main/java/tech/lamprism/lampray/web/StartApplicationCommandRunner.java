@@ -18,9 +18,9 @@ package tech.lamprism.lampray.web;
 
 import org.springframework.context.ApplicationContext;
 import space.lingu.NonNull;
-import tech.lamprism.lampray.cli.CommandRunContext;
-import tech.lamprism.lampray.cli.runner.AbstractApplicationContextCommandRunner;
-import tech.lamprism.lampray.shell.SimpleCommandSpecification;
+import tech.lamprism.lampray.system.console.SimpleCommandSpecification;
+import tech.lamprism.lampray.system.console.cli.CommandRunContext;
+import tech.lamprism.lampray.system.console.cli.runner.AbstractApplicationContextCommandRunner;
 
 import java.util.Map;
 

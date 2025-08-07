@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import org.springframework.shell.ShellRunner;
 import tech.lamprism.lampray.Version;
 import tech.lamprism.lampray.server.sshd.shell.TerminalShellCommandFactory;
 import tech.lamprism.lampray.setting.ConfigReader;
-import tech.lamprism.lampray.shell.TerminalRegistry;
-import tech.lamprism.lampray.shell.reader.LineReaderFactory;
+import tech.lamprism.lampray.system.console.shell.TerminalRegistry;
+import tech.lamprism.lampray.system.console.shell.reader.LineReaderFactory;
 import tech.lamprism.lampray.web.common.keys.ServerConfigKeys;
 import tech.lamprism.lampray.web.configuration.LocalConfigConfiguration;
 

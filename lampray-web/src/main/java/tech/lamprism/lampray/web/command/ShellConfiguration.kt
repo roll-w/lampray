@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,16 +39,16 @@ import org.springframework.shell.command.annotation.CommandScan
 import org.springframework.shell.context.ShellContext
 import org.springframework.shell.jline.ExtendedDefaultParser
 import org.springframework.shell.jline.PromptProvider
-import tech.lamprism.lampray.shell.DefaultTerminalContext
-import tech.lamprism.lampray.shell.MultiInteractiveShellRunner
-import tech.lamprism.lampray.shell.TerminalContext
-import tech.lamprism.lampray.shell.TerminalContextHolder
-import tech.lamprism.lampray.shell.TerminalContextHolderStrategy
-import tech.lamprism.lampray.shell.TerminalRegistry
-import tech.lamprism.lampray.shell.ThreadLocalTerminalContextHolderStrategy
-import tech.lamprism.lampray.shell.reader.LamprayLineReaderFactory
-import tech.lamprism.lampray.shell.reader.LineReaderFactory
-import tech.lamprism.lampray.shell.terminal.MultiTerminal
+import tech.lamprism.lampray.system.console.shell.DefaultTerminalContext
+import tech.lamprism.lampray.system.console.shell.MultiInteractiveShellRunner
+import tech.lamprism.lampray.system.console.shell.TerminalContext
+import tech.lamprism.lampray.system.console.shell.TerminalContextHolder
+import tech.lamprism.lampray.system.console.shell.TerminalContextHolderStrategy
+import tech.lamprism.lampray.system.console.shell.TerminalRegistry
+import tech.lamprism.lampray.system.console.shell.ThreadLocalTerminalContextHolderStrategy
+import tech.lamprism.lampray.system.console.shell.reader.LamprayLineReaderFactory
+import tech.lamprism.lampray.system.console.shell.reader.LineReaderFactory
+import tech.lamprism.lampray.system.console.shell.terminal.MultiTerminal
 
 /**
  * @author RollW
