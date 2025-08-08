@@ -27,6 +27,8 @@ import java.util.Map;
 public interface CommandRunContext {
     String[] getRawArgs();
 
+    String[] getCommand();
+
     Map<String, Object> getArguments();
 
     PrintStream getPrintStream();

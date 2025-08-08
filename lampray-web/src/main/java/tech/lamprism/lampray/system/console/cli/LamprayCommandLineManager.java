@@ -21,7 +21,6 @@ import org.jline.utils.AttributedString;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
-import space.lingu.NonNull;
 import tech.lamprism.lampray.Version;
 import tech.lamprism.lampray.system.console.CommandSpecification;
 import tech.lamprism.lampray.system.console.CommandTree;
@@ -29,6 +28,7 @@ import tech.lamprism.lampray.system.console.HelpRenderer;
 import tech.lamprism.lampray.system.console.SimpleCommandSpecification;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  *
  * @author RollW
  */
-public class CommandLineManager implements CommandManager {
+public class LamprayCommandLineManager implements CommandManager {
 
     private final List<CommandRunner> commandRunners;
     private final Map<String, CommandRunner> commandRunnerMap;
@@ -53,7 +53,7 @@ public class CommandLineManager implements CommandManager {
      *
      * @param commandRunners the list of command runners to register
      */
-    public CommandLineManager(List<CommandRunner> commandRunners) {
+    public LamprayCommandLineManager(List<CommandRunner> commandRunners) {
         this(commandRunners, "lampray", "Lampray Command Line Interface");
     }
 
@@ -61,15 +61,15 @@ public class CommandLineManager implements CommandManager {
      * Creates a new CommandLineManager with customizable prefix and header.
      *
      * @param commandRunners the list of command runners to register
-     * @param commandPrefix  the command prefix (default: "lampray")
+     * @param commandPrefix  the command prefix
      * @param headerText     the header text for help display
      */
-    public CommandLineManager(List<CommandRunner> commandRunners, String commandPrefix, String headerText) {
+    public LamprayCommandLineManager(List<CommandRunner> commandRunners, String commandPrefix, String headerText) {
         this.commandRunners = commandRunners;
-        this.commandPrefix = commandPrefix;
+        this.commandPrefix = StringUtils.defaultIfEmpty(commandPrefix, "");
         this.headerText = StringUtils.defaultIfEmpty(headerText, "");
         this.commandRunnerMap = commandRunners.stream().collect(Collectors.toMap(
-                commandRunner -> commandPrefix + " " + commandRunner.getCommandSpecification().getFullName(),
+                commandRunner -> commandRunner.getCommandSpecification().getFullName(),
                 commandRunner -> commandRunner,
                 (existing, replacement) -> {
                     throw new IllegalArgumentException("Duplicate command name: " + existing.getCommandSpecification().getFullName());
@@ -85,11 +85,19 @@ public class CommandLineManager implements CommandManager {
         root = CommandSpec.create();
         root.usageMessage()
                 .header(headerText)
-                .description("Use this command line interface to manage " + commandPrefix + " server and resources. " +
+                .description("Use this command line interface to manage server and resources. " +
                         "Available commands include server management, data operations, and system configuration.");
 
         // Add built-in help command with enhanced description
         CommandSpec helpCommand = CommandSpec.create()
+                // TODO
+                .addOption(OptionSpec.builder("--command", "-C")
+                        .paramLabel("COMMAND")
+                        .arity("0..*")
+                        .type(List.class)
+                        .auxiliaryTypes(String.class)
+                        .required(false)
+                        .build())
                 .helpCommand(true);
         root.addSubcommand("help", helpCommand);
         helpCommand.usageMessage()
@@ -126,13 +134,12 @@ public class CommandLineManager implements CommandManager {
                         .build()
                 );
 
-        root.name(commandPrefix).addMixin("standardOptions", helpMixin);
+        root.name("").addMixin("standardOptions", helpMixin);
         commandLine = new CommandLine(root);
         commandLine.setCaseInsensitiveEnumValuesAllowed(true);
 
         commandTree = PicocliCommandTree.of(root);
-        commandRunnerMap.put(commandPrefix,
-                new HelpCommandRunner(commandTree, commandPrefix, headerText));
+        commandRunnerMap.put("", helpCommandRunner);
     }
 
 
@@ -142,15 +149,15 @@ public class CommandLineManager implements CommandManager {
         commandLine.setUnmatchedArgumentsAllowed(true);
         CommandLine.ParseResult parseResult = commandLine.parseArgs(args);
         CommandRunner commandRunner = findCommandRunner(parseResult);
-        Map<String, Object> arguments = getArguments(parseResult);
-        ParsedCommandRunContext context = new ParsedCommandRunContext(args, arguments);
+        ParsedCommandRunContext context = buildParsedCommandRunContext(parseResult);
         return commandRunner.runCommand(context);
     }
 
-    @NonNull
-    private Map<String, Object> getArguments(CommandLine.ParseResult parseResult) {
+    private ParsedCommandRunContext buildParsedCommandRunContext(CommandLine.ParseResult parseResult) {
+        String[] rawArgs = parseResult.originalArgs().toArray(new String[0]);
         Map<String, Object> arguments = new HashMap<>();
         CommandLine.ParseResult current = parseResult;
+        String command = null;
         while (current != null) {
             for (OptionSpec matchedOption : current.matchedOptions()) {
                 Object value = matchedOption.getValue();
@@ -158,17 +165,18 @@ public class CommandLineManager implements CommandManager {
                     arguments.put(name, value);
                 }
             }
+            command = current.commandSpec().qualifiedName().trim();
             current = current.subcommand();
         }
-        return arguments;
+        return new ParsedCommandRunContext(command.split(" "), rawArgs, arguments);
     }
 
     private CommandRunner findCommandRunner(CommandLine.ParseResult parseResult) {
-        if (isVersionRequested(parseResult) || isCommandOf(parseResult, commandPrefix + " version", false)) {
+        if (isVersionRequested(parseResult) || isCommandOf(parseResult, "version", false)) {
             return new VersionCommandRunner();
         }
-        if (isHelpRequested(parseResult) || isCommandOf(parseResult, commandPrefix + " help", true)) {
-            return new HelpCommandRunner(commandTree, commandPrefix, headerText);
+        if (isHelpRequested(parseResult) || isCommandOf(parseResult, "help", true)) {
+            return helpCommandRunner;
         }
 
         return getCommandRunner(parseResult);
@@ -252,7 +260,7 @@ public class CommandLineManager implements CommandManager {
                         .description("Manage " + commandToThisPart + " operations. Use 'help " +
                                 commandToThisPart + "' to see available subcommands and their descriptions.");
                 PicocliHelper.appendHelpOption(newChild);
-                commandRunnerMap.put(commandPrefix + " " + commandToThisPart, subcommandHelpCommandRunner);
+                commandRunnerMap.put(commandToThisPart, helpCommandRunner);
                 prev.addSubcommand(newChild.name(), newChild);
                 current = newChild;
             }
@@ -278,7 +286,7 @@ public class CommandLineManager implements CommandManager {
     private static class VersionCommandRunner implements CommandRunner {
         @Override
         public int runCommand(CommandRunContext context) {
-            System.out.println(Version.formatVersion());
+            context.getPrintStream().println(Version.formatVersion());
             return 0;
         }
 
@@ -291,91 +299,32 @@ public class CommandLineManager implements CommandManager {
         }
     }
 
-    private static class HelpCommandRunner implements CommandRunner {
-        private final CommandTree commandTree;
-        private final String commandPrefix;
-        private final String header;
+    private final HelpCommandRunner helpCommandRunner = new HelpCommandRunner();
 
-        private HelpCommandRunner(CommandTree commandTree, String commandPrefix, String header) {
-            this.commandTree = commandTree;
-            this.commandPrefix = commandPrefix;
-            this.header = header;
-        }
-
+    private class HelpCommandRunner implements CommandRunner {
         @Override
         public int runCommand(CommandRunContext context) {
-            HelpRenderer helpRenderer = new HelpRenderer(commandTree, header);
-            AttributedString help = helpRenderer.getHelp(processArgs(context.getRawArgs()));
-            System.out.println(help.toAnsi());
+            HelpRenderer helpRenderer = new HelpRenderer(commandTree, commandPrefix, headerText);
+            AttributedString help = helpRenderer.getHelp(processCommand(context.getCommand()));
+            context.getPrintStream().println(help);
             return 0;
         }
 
-        private String[] processArgs(String[] args) {
-            List<String> arguments = new ArrayList<>();
-            boolean foundHelp = false;
-
-            for (String arg : args) {
-                if ("help".equals(arg) || "-h".equals(arg) || "--help".equals(arg)) {
-                    foundHelp = true;
-                    continue; // Skip the help command itself
-                }
-                if (arg.startsWith("-")) {
-                    continue; // Skip option flags
-                }
-                if (StringUtils.isNotBlank(arg)) {
-                    arguments.add(arg);
-                }
+        private String[] processCommand(String[] args) {
+            if (args == null || args.length == 0) {
+                return new String[]{};
             }
-
-            // If we found help command and there are additional arguments,
-            // they represent the command to get help for
-            if (foundHelp && !arguments.isEmpty()) {
-                arguments.add(0, commandPrefix);
-                return arguments.toArray(new String[0]);
+            List<String> arguments = new ArrayList<>(Arrays.asList(args));
+            if (arguments.get(0).equals("help")) {
+                arguments.remove(0);
             }
-
-            // Default case: show general help
-            return new String[]{};
-        }
-
-        @Override
-        public CommandSpecification getCommandSpecification() {
-            return SimpleCommandSpecification.builder()
-                    .setName("help")
-                    .setDescription("Display help information for commands")
-                    .build();
-        }
-    }
-
-    private final SubcommandHelpCommandRunner subcommandHelpCommandRunner = new SubcommandHelpCommandRunner();
-
-    private class SubcommandHelpCommandRunner implements CommandRunner {
-        @Override
-        public int runCommand(CommandRunContext context) {
-            HelpRenderer helpRenderer = new HelpRenderer(commandTree, headerText);
-            AttributedString help = helpRenderer.getHelp(processArgs(context.getRawArgs()));
-            System.out.println(help.toAnsi());
-            return 0;
-        }
-
-        private String[] processArgs(String[] args) {
-            List<String> arguments = new ArrayList<>();
-            for (String arg : args) {
-                if (StringUtils.isNotBlank(arg)) {
-                    arguments.add(arg);
-                }
-            }
-            arguments.add(0, commandPrefix);
             return arguments.toArray(new String[0]);
         }
 
         @Override
         public CommandSpecification getCommandSpecification() {
             return SimpleCommandSpecification.builder()
-                    .setName("help")
-                    .setDescription("Display help information for commands")
                     .build();
         }
     }
-
 }

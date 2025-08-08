@@ -103,7 +103,11 @@ public class PicocliCommandTree implements CommandTree {
 
     @Override
     public String getGroup() {
-        return "";
+        CommandLine.IHelpSectionRenderer helpSectionRenderer = commandSpec.usageMessage().sectionMap().get("group");
+        if (helpSectionRenderer == null) {
+            return "";
+        }
+        return helpSectionRenderer.render(null);
     }
 
     @Override

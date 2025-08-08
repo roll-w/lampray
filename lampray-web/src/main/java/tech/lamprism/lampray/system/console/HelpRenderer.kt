@@ -30,7 +30,7 @@ private const val LINE_LENGTH = 110
  * ```text
  * HEADER OF HELP
  *
- * Usage: <COMMAND> [OPTIONS]
+ * Usage: prefix <COMMAND> [OPTIONS]
  *
  * Description of the command.
  *
@@ -44,13 +44,14 @@ private const val LINE_LENGTH = 110
  *     --option2 <VALUE>:
  *         Description of option2
  *
- * Use "help <COMMAND>" or "<COMMAND> --help" for more information about a given command.
+ * Use "help prefix <COMMAND>" or "prefix <COMMAND> --help" for more information about a given command.
  * ```
  *
  * @author RollW
  */
 class HelpRenderer(
     private val root: CommandTree,
+    private val prefix: String = "",
     private val header: String = "",
 ) {
     companion object {
@@ -98,13 +99,14 @@ class HelpRenderer(
             return "$fullName "
         }
 
+        val prefixPadding = if (prefix.isBlank()) "" else "$prefix "
         append("Usage: ")
         val command = if (commandTree.children.isNotEmpty()) {
             "<COMMAND> [OPTIONS]"
         } else {
             "[OPTIONS]"
         } + "\n"
-        appendLine("${getCommandName(commandTree)}$command")
+        appendLine("$prefixPadding${getCommandName(commandTree)}$command")
         renderDescription(commandTree)
         renderChildrenCommands(commandTree)
         renderOptions(commandTree)
@@ -112,8 +114,8 @@ class HelpRenderer(
         val helpCommand = if (commandTree.children.isEmpty())
             "${getCommandName(root)}<COMMAND>" else "${getCommandName(commandTree)}<COMMAND>"
 
-        // TODO: need remove prefix here
-        append("Use \"help $helpCommand\" or \"$helpCommand --help\" for more information about a given command.")
+
+        append("Use \"${prefixPadding}help $helpCommand\" or \"$prefixPadding$helpCommand --help\" for more information about a given command.")
     }
 
     private fun AttributedStringBuilder.renderDescription(commandTree: CommandTree) =

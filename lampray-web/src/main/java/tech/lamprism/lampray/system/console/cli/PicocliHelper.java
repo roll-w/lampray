@@ -35,6 +35,8 @@ public final class PicocliHelper {
         commandSpec.usageMessage()
                 .header(commandSpecification.getHeader())
                 .description(commandSpecification.getDescription());
+        commandSpec.usageMessage().sectionMap().put("group", help ->
+                commandSpecification.getGroup());
 
         commandSpecification.getOptions().stream()
                 .map(PicocliHelper::from)

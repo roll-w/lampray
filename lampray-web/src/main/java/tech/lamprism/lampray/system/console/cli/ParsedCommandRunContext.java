@@ -23,16 +23,20 @@ import java.util.Map;
  * @author RollW
  */
 public class ParsedCommandRunContext implements CommandRunContext {
+    private final String[] command;
     private final String[] args;
     private final Map<String, Object> arguments;
     private PrintStream printStream;
 
-    public ParsedCommandRunContext(String[] args, Map<String, Object> arguments) {
-        this(args, arguments, System.out);
+    public ParsedCommandRunContext(String[] command, String[] args,
+                                   Map<String, Object> arguments) {
+        this(command, args, arguments, System.out);
     }
 
-    public ParsedCommandRunContext(String[] args, Map<String, Object> arguments,
+    public ParsedCommandRunContext(String[] command, String[] args,
+                                   Map<String, Object> arguments,
                                    PrintStream printStream) {
+        this.command = command;
         this.args = args;
         this.arguments = arguments;
         this.printStream = printStream;
@@ -41,6 +45,11 @@ public class ParsedCommandRunContext implements CommandRunContext {
     @Override
     public String[] getRawArgs() {
         return args;
+    }
+
+    @Override
+    public String[] getCommand() {
+        return command;
     }
 
     @Override
