@@ -1,0 +1,68 @@
+/*
+ * Copyright (C) 2023-2025 RollW
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package tech.lamprism.lampray.system.console.cli;
+
+import java.io.PrintStream;
+import java.util.Map;
+
+/**
+ * @author RollW
+ */
+public class ParsedCommandRunContext implements CommandRunContext {
+    private final String[] command;
+    private final String[] args;
+    private final Map<String, Object> arguments;
+    private PrintStream printStream;
+
+    public ParsedCommandRunContext(String[] command, String[] args,
+                                   Map<String, Object> arguments) {
+        this(command, args, arguments, System.out);
+    }
+
+    public ParsedCommandRunContext(String[] command, String[] args,
+                                   Map<String, Object> arguments,
+                                   PrintStream printStream) {
+        this.command = command;
+        this.args = args;
+        this.arguments = arguments;
+        this.printStream = printStream;
+    }
+
+    @Override
+    public String[] getRawArgs() {
+        return args;
+    }
+
+    @Override
+    public String[] getCommand() {
+        return command;
+    }
+
+    @Override
+    public Map<String, Object> getArguments() {
+        return arguments;
+    }
+
+    @Override
+    public PrintStream getPrintStream() {
+        return printStream;
+    }
+
+    public void setPrintStream(PrintStream printStream) {
+        this.printStream = printStream;
+    }
+}
