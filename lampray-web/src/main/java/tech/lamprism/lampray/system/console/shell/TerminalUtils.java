@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web;
+package tech.lamprism.lampray.system.console.shell;
 
 /**
- * Environment keys used in startup.
- *
  * @author RollW
  */
-public final class LamprayEnvKeys {
-    public static final String RAW_ARGS = "lampray.startup.raw-args";
-    public static final String CONFIG_PATH = "lampray.startup.config-path";
-    public static final String LOCAL_CONFIG_LOADER = "lampray.config.local-provider";
+public final class TerminalUtils {
 
-    private LamprayEnvKeys() {
+    private static final String MAIN_THREAD_NAME = "main";
+
+    public static boolean isMainLoop() {
+        return MAIN_THREAD_NAME.equals(Thread.currentThread().getName());
+    }
+
+    private TerminalUtils() {
     }
 }

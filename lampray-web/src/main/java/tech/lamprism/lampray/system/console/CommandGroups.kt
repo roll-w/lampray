@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web;
+package tech.lamprism.lampray.system.console
 
 /**
- * Environment keys used in startup.
- *
  * @author RollW
  */
-public final class LamprayEnvKeys {
-    public static final String RAW_ARGS = "lampray.startup.raw-args";
-    public static final String CONFIG_PATH = "lampray.startup.config-path";
-    public static final String LOCAL_CONFIG_LOADER = "lampray.config.local-provider";
+object CommandGroups {
+    const val COMMON = "Common Commands"
 
-    private LamprayEnvKeys() {
-    }
+    const val APPLICATION = "Application Commands"
+
+    const val RESOURCE = "Resource Commands"
 }

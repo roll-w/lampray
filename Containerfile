@@ -27,5 +27,5 @@ WORKDIR /app/lampray
 
 EXPOSE 5100 5101
 
-ENTRYPOINT ["/bin/sh", "-c", "/app/lampray/bin/lampray"]
-CMD [""]
+ENTRYPOINT ["lampray"]
+CMD ["start"]

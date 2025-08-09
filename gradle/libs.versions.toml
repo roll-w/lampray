@@ -16,6 +16,7 @@
 [versions]
 caffeine = "3.1.8"
 commons-text="1.12.0"
+commons-compress = "1.28.0"
 guava = "33.2.1-jre"
 jjwt= "0.11.5"
 rollw-web-common = "0.2.1"
@@ -23,9 +24,11 @@ spring-shell = "3.4.0"
 sshd = "2.14.0"
 jline = "3.26.3"
 seancfoley-ipaddress = "5.5.1"
+picocli = "4.7.7"
 [libraries]
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text" }
+commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commons-compress" }
 com-google-guava = { module = "com.google.guava:guava", version.ref = "guava" }
 spring-shell-starter = { module = "org.springframework.shell:spring-shell-starter", version.ref = "spring-shell" }
 io-jsonwebtoken-jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
@@ -36,6 +39,7 @@ rollw-web-common-spring-boot-starter = { module = "tech.rollw.common:web-common-
 sshd-core = { module = "org.apache.sshd:sshd-core", version.ref = "sshd" }
 jline-terminal-jna = { module = "org.jline:jline-terminal-jna", version.ref = "jline" }
 seancfoley-ipaddress = { module = "com.github.seancfoley:ipaddress", version.ref = "seancfoley-ipaddress" }
+picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 [bundles]
 
 [plugins]

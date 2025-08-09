@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.shell.ShellRunner;
 import tech.lamprism.lampray.server.sshd.SshdPasswordAuthenticator;
-import tech.lamprism.lampray.shell.TerminalContext;
-import tech.lamprism.lampray.shell.TerminalContextHolder;
-import tech.lamprism.lampray.shell.TerminalRegistry;
-import tech.lamprism.lampray.shell.reader.LineReaderFactory;
+import tech.lamprism.lampray.system.console.shell.TerminalContext;
+import tech.lamprism.lampray.system.console.shell.TerminalContextHolder;
+import tech.lamprism.lampray.system.console.shell.TerminalRegistry;
+import tech.lamprism.lampray.system.console.shell.reader.LineReaderFactory;
 
 import java.io.IOException;
 import java.util.Arrays;

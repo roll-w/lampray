@@ -7,7 +7,9 @@ on:
     paths-ignore:
       - docs/**
       - .github/**
-      - .gitignore
+      - README.md
+      - LICENSE
+      - .*ignore
       - .gitattributes
       - .editorconfig
       - .gitmodules
@@ -47,7 +49,7 @@ jobs:
       - name: Generate CI Version
         run: |
           chmod +x gradlew
-          version=$(./gradlew -q :version)
+          version=$(./gradlew -q -Dci=true :version)
           echo "version_name=${version}" >> $GITHUB_ENV
         id: project_version
       - name: Install Dependencies

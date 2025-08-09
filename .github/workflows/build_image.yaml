@@ -59,7 +59,7 @@ jobs:
         # TODO: add an gradle compile option to set version from the CI
         run: |
           chmod +x gradlew
-          version=$(./gradlew -q :version)
+          version=$(./gradlew -q -Dci=false :version)
           echo "version_name=${version}" >> $GITHUB_ENV
           echo "remote_tag=${version}" >> $GITHUB_ENV
         id: project_version
@@ -77,7 +77,6 @@ jobs:
       - name: Package Images
         run: |
           chmod +x gradlew
-          export CI=true
           ./gradlew -Dci=true -PbuildFrontend=true packageImageMultiArch
       - name: Upload Dist
         uses: actions/upload-artifact@v4
@@ -110,9 +109,20 @@ jobs:
               ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-amd64 \
               ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}-arm64
           
-            docker manifest push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }}
-            
-            regctl image copy ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }} ghcr.io/${{ env.namespace }}/lampray:main
+            docker inspect ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }} > manifest.json
+            jq '.annotations += {
+              "org.opencontainers.image.authors": "rollw",
+              "org.opencontainers.image.title": "Lampray",
+              "org.opencontainers.image.description": "Lampray is a blog system based on Spring Boot 3 framework.",
+              "org.opencontainers.image.url": "https://github.com/roll-w/lampray",
+              "org.opencontainers.image.source": "https://github.com/roll-w/lampray",
+              "org.opencontainers.image.version": "${{ env.version_name }}",
+              "org.opencontainers.image.licenses": "Apache-2.0",
+              "org.opencontainers.image.vendor": "RollW",
+              "org.opencontainers.image.documentation": "https://github.com/roll-w/lampray/blob/main/README.md"
+            }' manifest.json > manifest-modified.json
+            regctl manifest push ghcr.io/${{ env.namespace }}/lampray:${{ env.version_name }} < manifest-modified.json
+            regctl manifest push ghcr.io/${{ env.namespace }}/lampray:main < manifest-modified.json
           fi
 
       - name: Output Result
