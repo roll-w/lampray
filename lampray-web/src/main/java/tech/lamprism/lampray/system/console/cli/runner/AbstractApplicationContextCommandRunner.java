@@ -81,8 +81,7 @@ public abstract class AbstractApplicationContextCommandRunner implements Command
      * injecting dependencies, and executing the command logic. The context type and behavior
      * are determined by the {@link #getType()} method implementation.</p>
      *
-     * <p>The method automatically configures Spring properties optimized for CLI execution,
-     * including disabled web resources, ANSI output support, and appropriate JPA settings.</p>
+     * <p>The method automatically configures Spring properties, including ANSI output support.</p>
      */
     @Override
     public final int runCommand(CommandRunContext context) {

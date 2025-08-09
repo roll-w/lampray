@@ -25,13 +25,13 @@ import tech.lamprism.lampray.system.console.cli.CommandRunContext;
 import java.util.Map;
 
 /**
- * Command runner for starting the Lampray blog system application.
+ * Command runner for starting the Lampray system application.
  *
  * <p>This command initializes and starts the complete Lampray application server,
  * including web services, database connections, and all configured modules.
  * The application will run until manually stopped or terminated.</p>
  *
- * <p>Use this command to launch the Lampray blog system in production or
+ * <p>Use this command to launch the Lampray application in production or
  * development environments. The application will start with default configuration
  * unless overridden by environment variables or configuration files.</p>
  *
