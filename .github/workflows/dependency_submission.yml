@@ -7,7 +7,7 @@ on:
     paths-ignore:
       - docs/**
       - .github/**
-      - README.md
+      - "**.md"
       - LICENSE
       - .*ignore
       - .gitattributes
