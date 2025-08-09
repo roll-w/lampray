@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.command
+package tech.lamprism.lampray.system.console.shell.command
 
 import org.jline.utils.AttributedString
 import org.springframework.shell.Utils
@@ -23,9 +23,9 @@ import org.springframework.shell.standard.CommandValueProvider
 import org.springframework.shell.standard.ShellComponent
 import org.springframework.shell.standard.ShellMethod
 import org.springframework.shell.standard.ShellOption
+import tech.lamprism.lampray.system.console.CommandGroups
 import tech.lamprism.lampray.system.console.HelpRenderer
 import tech.lamprism.lampray.system.console.shell.ShellCommandTree
-import tech.lamprism.lampray.system.console.shell.command.HelpCommandProvider
 
 private const val HEADER = "Lampray Command Line Interface"
 

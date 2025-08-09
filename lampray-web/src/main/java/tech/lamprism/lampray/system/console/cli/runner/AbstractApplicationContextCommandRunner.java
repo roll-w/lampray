@@ -29,6 +29,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.OverrideSystemPropertiesEnvironment;
 import space.lingu.NonNull;
+import tech.lamprism.lampray.LampraySystemApplication;
 import tech.lamprism.lampray.system.console.CommandSpecification;
 import tech.lamprism.lampray.system.console.SimpleCommandSpecification;
 import tech.lamprism.lampray.system.console.cli.CommandRunContext;
@@ -36,7 +37,6 @@ import tech.lamprism.lampray.system.console.cli.CommandRunner;
 import tech.lamprism.lampray.system.console.cli.CommonOptions;
 import tech.lamprism.lampray.web.BannerPrintListener;
 import tech.lamprism.lampray.web.LamprayEnvKeys;
-import tech.lamprism.lampray.web.LampraySystemApplication;
 import tech.lamprism.lampray.web.LoggingPostApplicationPreparedEventListener;
 
 import java.util.HashMap;
@@ -62,11 +62,10 @@ public abstract class AbstractApplicationContextCommandRunner implements Command
         return 0;
     }
 
-    private ConfigurableApplicationContext startApplication(String[] args,
-                                                            WebApplicationType webApplication,
-                                                            CommandTask onApplicationPrepared,
-                                                            Map<String, Object> additionalProperties) {
-
+    private void startApplication(String[] args,
+                                  WebApplicationType webApplication,
+                                  CommandTask onApplicationPrepared,
+                                  Map<String, Object> additionalProperties) {
         ConfigurableEnvironment environment = new OverrideSystemPropertiesEnvironment(
                 false,
                 false
@@ -81,7 +80,7 @@ public abstract class AbstractApplicationContextCommandRunner implements Command
                         new BannerPrintListener(),
                         new ApplicationStartedListener(onApplicationPrepared));
         SpringApplication application = builder.build();
-        return application.run(args);
+        application.run(args);
     }
 
     private WebApplicationType determineWebApplicationType() {

@@ -136,7 +136,8 @@ class HelpRenderer(
         if (commandTree.children.isEmpty()) {
             return
         }
-        commandTree.children.groupBy { it.group }.forEach { (group, commands) ->
+        // TODO: support custom group sorting
+        commandTree.children.groupBy { it.group }.toSortedMap().forEach { (group, commands) ->
             append("${(group ?: "").ifEmpty { "Available Commands" }}: \n", AttributedStyle.DEFAULT)
             commands.forEach {
                 if (it.isHidden) {

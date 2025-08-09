@@ -20,6 +20,7 @@ import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.core.io.support.ResourcePatternResolver
+import tech.lamprism.lampray.system.console.CommandGroups
 import tech.lamprism.lampray.system.console.CommandSpecification
 import tech.lamprism.lampray.system.console.SimpleCommandOption
 import tech.lamprism.lampray.system.console.SimpleCommandSpecification
@@ -115,7 +116,7 @@ class ResourcesExportCommandRunner : CommandRunner {
     override fun getCommandSpecification(): CommandSpecification {
         return SimpleCommandSpecification.builder()
             .setNames("resources", "export")
-            .setGroup("Resources")
+            .setGroup(CommandGroups.RESOURCE)
             .addOption(
                 SimpleCommandOption.builder()
                     .setNames("--path", "-p")

@@ -35,9 +35,7 @@ public final class PicocliHelper {
         commandSpec.usageMessage()
                 .header(commandSpecification.getHeader())
                 .description(commandSpecification.getDescription());
-        commandSpec.usageMessage().sectionMap().put("group", help ->
-                commandSpecification.getGroup());
-
+        setCommandGroup(commandSpec, commandSpecification.getGroup());
         commandSpecification.getOptions().stream()
                 .map(PicocliHelper::from)
                 .forEach(commandSpec::addOption);
@@ -52,8 +50,14 @@ public final class PicocliHelper {
         commandSpec.addOption(OptionSpec.builder("-h", "--help")
                 .usageHelp(true)
                 .paramLabel(HelpRenderer.NO_PARAM)
-                .description("Print help for current command.")
+                .description(CommonOptions.HELP.getDescription())
                 .build());
+    }
+
+    public static void setCommandGroup(CommandSpec commandSpec, String group) {
+        if (StringUtils.isNotBlank(group)) {
+            commandSpec.usageMessage().sectionMap().put("group", help -> group);
+        }
     }
 
     private static OptionSpec from(CommandSpecification.Option option) {

@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web;
+package tech.lamprism.lampray.system.console.cli.runner;
 
 import org.springframework.context.ApplicationContext;
 import space.lingu.NonNull;
+import tech.lamprism.lampray.system.console.CommandGroups;
 import tech.lamprism.lampray.system.console.SimpleCommandSpecification;
 import tech.lamprism.lampray.system.console.cli.CommandRunContext;
-import tech.lamprism.lampray.system.console.cli.runner.AbstractApplicationContextCommandRunner;
 
 import java.util.Map;
 
 /**
- * Command runner for starting the Lampray system application.
+ * Command runner for starting the Lampray application.
  * This command is used to start the application with the specified configuration.
- * It is a service type command that requires the application to be running.
  *
  * @author RollW
  */
@@ -51,8 +50,8 @@ public class StartApplicationCommandRunner extends AbstractApplicationContextCom
     @Override
     protected void onConfigureCommandSpecification(SimpleCommandSpecification.Builder builder) {
         builder.setNames("start")
-                .setDescription("Start the Lampray system application.")
-                .setHeader("Start the Lampray system application.")
-                .setGroup("Application Commands");
+                .setDescription("Start the Lampray application with the specified configuration.")
+                .setHeader("Start the Lampray application.")
+                .setGroup(CommandGroups.APPLICATION);
     }
 }

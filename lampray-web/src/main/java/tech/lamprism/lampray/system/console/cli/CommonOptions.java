@@ -33,7 +33,7 @@ public final class CommonOptions {
     public static final CommandSpecification.Option HELP = SimpleCommandOption.builder()
             .setNames("--help", "-h")
             .setDescription("Print help message and exit. Use this option to display detailed " +
-                    "information about the available command-line options and their usage.")
+                    "information about the available commands and options.")
             .setRequired(false)
             .setLabel(HelpRenderer.NO_PARAM)
             .build();
@@ -50,9 +50,8 @@ public final class CommonOptions {
 
     public static final CommandSpecification.Option VERSION = SimpleCommandOption.builder()
             .setNames("--version", "-v")
-            .setDescription("Display the version information of the application and exit. " +
-                    "This option provides a quick way to check the current version of " +
-                    "the application you are running.")
+            .setDescription("Display version information and exit. Shows the current version, " +
+                    "build information, and other details.")
             .setRequired(false)
             .setLabel(HelpRenderer.NO_PARAM)
             .build();

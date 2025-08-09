@@ -16,6 +16,8 @@
 
 package tech.lamprism.lampray.system.console;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
 
 /**
@@ -26,6 +28,12 @@ public interface CommandTree extends CommandSpecification {
 
     CommandTree getParent();
 
+    /**
+     * Finds a child command by its full name recursively.
+     *
+     * @param name the full name of the child command
+     * @return the matching child CommandTree, or null if not found
+     */
     default CommandTree findChildByFullName(String name) {
         for (CommandTree child : getChildren()) {
             String fullName = child.getFullName();
@@ -39,17 +47,28 @@ public interface CommandTree extends CommandSpecification {
         return null;
     }
 
+    /**
+     * Gets the full name of this command, which is the concatenation of
+     * the names of this command and all its parent commands.
+     *
+     * @return the full name of the command
+     */
     default String getFullName() {
         CommandTree commandTree = this;
-        StringBuilder name = new StringBuilder();
+        StringBuilder fullName = new StringBuilder();
         while (commandTree != null) {
-            if (name.length() > 0) {
-                name.insert(0, " ");
+            String name = commandTree.getName();
+            if (StringUtils.isBlank(name)) {
+                commandTree = commandTree.getParent();
+                continue;
             }
-            name.insert(0, commandTree.getName());
+            if (fullName.length() > 0) {
+                fullName.insert(0, " ");
+            }
+            fullName.insert(0, name);
             commandTree = commandTree.getParent();
         }
-        return name.toString();
+        return fullName.toString();
     }
 
     default boolean isRoot() {

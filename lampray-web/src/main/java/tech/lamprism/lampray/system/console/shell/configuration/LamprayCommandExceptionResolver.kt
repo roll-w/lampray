@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.command
+package tech.lamprism.lampray.system.console.shell.configuration
 
 import org.apache.commons.text.similarity.LevenshteinDistance
 import org.springframework.shell.command.CommandExceptionResolver
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component
  * @author RollW
  */
 @Component
-class LampCommandExceptionResolver : CommandExceptionResolver, CommandNotFoundMessageProvider {
+class LamprayCommandExceptionResolver : CommandExceptionResolver, CommandNotFoundMessageProvider {
     override fun resolve(ex: Exception): CommandHandlingResult {
         return CommandHandlingResult.of("Error: ${ex.message}\n")
     }
@@ -50,7 +50,7 @@ class LampCommandExceptionResolver : CommandExceptionResolver, CommandNotFoundMe
             return ""
         }
         return registrations.keys.minByOrNull {
-             levenshteinDistance.apply(command, it).apply {
+            levenshteinDistance.apply(command, it).apply {
                 if (this < 0) {
                     return@minByOrNull Int.MAX_VALUE
                 }

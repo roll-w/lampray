@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.command;
+package tech.lamprism.lampray.system.console.shell.configuration;
 
 import org.jline.terminal.Terminal;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;

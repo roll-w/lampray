@@ -25,6 +25,7 @@ import org.springframework.boot.logging.DeferredLogFactory;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
+import tech.lamprism.lampray.LampraySystemApplication;
 import tech.lamprism.lampray.logging.FileCommonStructuredLogFormatter;
 import tech.lamprism.lampray.logging.JsonStructuredLogFormatter;
 import tech.lamprism.lampray.setting.ConfigProvider;

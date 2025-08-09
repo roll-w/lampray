@@ -22,13 +22,13 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import tech.lamprism.lampray.Version;
+import tech.lamprism.lampray.system.console.CommandGroups;
 import tech.lamprism.lampray.system.console.CommandSpecification;
 import tech.lamprism.lampray.system.console.CommandTree;
 import tech.lamprism.lampray.system.console.HelpRenderer;
 import tech.lamprism.lampray.system.console.SimpleCommandSpecification;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -85,58 +85,40 @@ public class LamprayCommandLineManager implements CommandManager {
         root = CommandSpec.create();
         root.usageMessage()
                 .header(headerText)
-                .description("Use this command line interface to manage server and resources. " +
-                        "Available commands include server management, data operations, and system configuration.");
+                .description("Lampray command line interface provides a set of commands to manage and interact with Lampray application.");
 
-        // Add built-in help command with enhanced description
         CommandSpec helpCommand = CommandSpec.create()
-                // TODO
-                .addOption(OptionSpec.builder("--command", "-C")
-                        .paramLabel("COMMAND")
-                        .arity("0..*")
-                        .type(List.class)
-                        .auxiliaryTypes(String.class)
-                        .required(false)
-                        .build())
                 .helpCommand(true);
-        root.addSubcommand("help", helpCommand);
+        PicocliHelper.appendHelpOption(helpCommand);
+        PicocliHelper.setCommandGroup(helpCommand, CommandGroups.COMMON);
         helpCommand.usageMessage()
                 .header("Display help information for commands")
-                .description("Print comprehensive help message and exit. Use this option to display detailed " +
-                        "information about available command-line options, their usage patterns, and examples.");
+                .description(CommonOptions.HELP.getDescription());
+        root.addSubcommand("help", helpCommand);
 
-        // Add built-in version command with enhanced description
-        CommandSpec version = CommandSpec.create();
-        version.usageMessage()
+        CommandSpec versionCommand = CommandSpec.create();
+        PicocliHelper.appendHelpOption(versionCommand);
+        PicocliHelper.setCommandGroup(versionCommand, CommandGroups.COMMON);
+        versionCommand.usageMessage()
                 .header("Display version and build information")
-                .description("Show the version information of the application including build date, " +
-                        "commit hash, and other version details. This option provides a quick way to " +
-                        "verify the current version of the application you are running.");
-        root.addSubcommand("version", version);
+                .description(CommonOptions.VERSION.getDescription());
+        root.addSubcommand("version", versionCommand);
 
         registerCommands(root);
 
-        CommandSpec helpMixin = CommandSpec.create()
-                .addOption(OptionSpec.builder("-h", "--help")
-                        .description("Display help information for the command and exit. Shows detailed " +
-                                "information about available options, usage patterns, and examples.")
-                        .usageHelp(true)
-                        .paramLabel(HelpRenderer.NO_PARAM)
-                        .defaultValue(null)
-                        .build()
-                )
+        CommandSpec standardOptions = CommandSpec.create()
                 .addOption(OptionSpec.builder("-v", "--version")
-                        .description("Display version information and exit. Shows the current version, " +
-                                "build information, and other version-related details.")
+                        .description(CommonOptions.VERSION.getDescription())
                         .versionHelp(true)
                         .paramLabel(HelpRenderer.NO_PARAM)
                         .defaultValue(null)
                         .build()
                 );
-
-        root.name("").addMixin("standardOptions", helpMixin);
-        commandLine = new CommandLine(root);
-        commandLine.setCaseInsensitiveEnumValuesAllowed(true);
+        PicocliHelper.appendHelpOption(standardOptions);
+        root.name("").addMixin("standardOptions", standardOptions);
+        commandLine = new CommandLine(root)
+                .setCaseInsensitiveEnumValuesAllowed(true)
+                .setUnmatchedArgumentsAllowed(true);
 
         commandTree = PicocliCommandTree.of(root);
         commandRunnerMap.put("", helpCommandRunner);
@@ -150,7 +132,12 @@ public class LamprayCommandLineManager implements CommandManager {
         CommandLine.ParseResult parseResult = commandLine.parseArgs(args);
         CommandRunner commandRunner = findCommandRunner(parseResult);
         ParsedCommandRunContext context = buildParsedCommandRunContext(parseResult);
-        return commandRunner.runCommand(context);
+        try {
+            return commandRunner.runCommand(context);
+        } catch (CommandLineRuntimeException e) {
+            context.getPrintStream().println(e.getMessage());
+            return -1;
+        }
     }
 
     private ParsedCommandRunContext buildParsedCommandRunContext(CommandLine.ParseResult parseResult) {
@@ -234,6 +221,9 @@ public class LamprayCommandLineManager implements CommandManager {
 
         for (int i = 0; i < parts.length; i++) {
             String part = parts[i];
+            if (StringUtils.isBlank(part)) {
+                throw new IllegalArgumentException("Command part cannot be blank: " + String.join(" ", parts));
+            }
             if (i == parts.length - 1) {
                 if (current.name().equals(part)) {
                     return;
@@ -257,9 +247,12 @@ public class LamprayCommandLineManager implements CommandManager {
                 String commandToThisPart = StringUtils.join(parts, " ", 0, i + 1);
                 newChild.usageMessage()
                         .header("Command Group: " + commandToThisPart)
-                        .description("Manage " + commandToThisPart + " operations. Use 'help " +
-                                commandToThisPart + "' to see available subcommands and their descriptions.");
+                        .description("Manage " + commandToThisPart + " operations. " +
+                                "Use this command to see available subcommands and their descriptions.");
                 PicocliHelper.appendHelpOption(newChild);
+                // only capitalize the first letter of the command name
+                String group = Character.toUpperCase(part.charAt(0)) + part.substring(1) + " Commands";
+                PicocliHelper.setCommandGroup(newChild, group);
                 commandRunnerMap.put(commandToThisPart, helpCommandRunner);
                 prev.addSubcommand(newChild.name(), newChild);
                 current = newChild;
@@ -278,7 +271,7 @@ public class LamprayCommandLineManager implements CommandManager {
     private CommandRunner getCommandRunner(String commandName) {
         CommandRunner commandRunner = commandRunnerMap.get(commandName);
         if (commandRunner == null) {
-            throw new IllegalArgumentException("Unknown command: " + commandName);
+            throw new CommandLineRuntimeException("Unknown command: " + commandName);
         }
         return commandRunner;
     }
@@ -292,9 +285,8 @@ public class LamprayCommandLineManager implements CommandManager {
 
         @Override
         public CommandSpecification getCommandSpecification() {
+            // Create a dummy command specification for the version command
             return SimpleCommandSpecification.builder()
-                    .setName("version")
-                    .setDescription("Display version and build information")
                     .build();
         }
     }
@@ -305,24 +297,37 @@ public class LamprayCommandLineManager implements CommandManager {
         @Override
         public int runCommand(CommandRunContext context) {
             HelpRenderer helpRenderer = new HelpRenderer(commandTree, commandPrefix, headerText);
-            AttributedString help = helpRenderer.getHelp(processCommand(context.getCommand()));
+            AttributedString help = helpRenderer.getHelp(processCommand(context));
             context.getPrintStream().println(help);
             return 0;
         }
 
-        private String[] processCommand(String[] args) {
-            if (args == null || args.length == 0) {
+        private String[] processCommand(CommandRunContext context) {
+            String[] command = context.getCommand();
+            if (command == null || command.length == 0) {
                 return new String[]{};
             }
-            List<String> arguments = new ArrayList<>(Arrays.asList(args));
-            if (arguments.get(0).equals("help")) {
-                arguments.remove(0);
+            List<String> arguments = new ArrayList<>();
+            String[] rawArgs = context.getRawArgs();
+            for (int i = 0; i < rawArgs.length; i++) {
+                String arg = rawArgs[i].trim();
+                if (i == 0 && arg.equals("help")) {
+                    continue;
+                }
+                if (arg.startsWith("-")) {
+                    // If the argument starts with '-', it is an option.
+                    // Any elements after the first option are considered arguments
+                    // and should not be included in the help command.
+                    break;
+                }
+                arguments.add(arg);
             }
             return arguments.toArray(new String[0]);
         }
 
         @Override
         public CommandSpecification getCommandSpecification() {
+            // Create a dummy command specification for the help command
             return SimpleCommandSpecification.builder()
                     .build();
         }

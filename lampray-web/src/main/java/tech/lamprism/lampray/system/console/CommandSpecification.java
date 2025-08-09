@@ -20,40 +20,92 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * @author RollW
+ * Represents a command specification for the console system.
+ * Provides metadata and configuration for a command.
  */
 public interface CommandSpecification {
+    /**
+     * Gets the primary name of the command.
+     */
     String getName();
 
+    /**
+     * Gets the description of the command.
+     */
     String getDescription();
 
+    /**
+     * Gets the header information for the command.
+     */
     String getHeader();
 
+    /**
+     * Gets the group to which the command belongs.
+     */
     String getGroup();
 
+    /**
+     * Gets the list of aliases for the command.
+     */
     List<String> getAliases();
 
+    /**
+     * Gets the full name of the command, including group or namespace if applicable.
+     */
     String getFullName();
 
+    /**
+     * Indicates whether the command is hidden from help or listing.
+     */
     boolean isHidden();
 
+    /**
+     * Gets the list of options available for the command.
+     */
     List<Option> getOptions();
 
+    /**
+     * Represents an option for a command, including its metadata and configuration.
+     */
     interface Option {
+        /**
+         * Gets all names (including aliases) for this option.
+         */
         Set<String> getNames();
 
+        /**
+         * Gets the label for this option.
+         */
         String getLabel();
 
+        /**
+         * Gets the description of this option.
+         */
         String getDescription();
 
+        /**
+         * Indicates whether this option is required.
+         */
         boolean isRequired();
 
+        /**
+         * Indicates whether this option is hidden from help or listing.
+         */
         boolean isHidden();
 
+        /**
+         * Gets the default value for this option, if any.
+         */
         String getDefaultValue();
 
+        /**
+         * Indicates whether this option is global (applies to all commands).
+         */
         boolean isGlobal();
 
+        /**
+         * Gets the type of value expected for this option.
+         */
         Class<?> getType();
     }
 }

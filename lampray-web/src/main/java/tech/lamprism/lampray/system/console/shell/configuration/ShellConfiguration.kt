@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.command
+package tech.lamprism.lampray.system.console.shell.configuration
 
 import org.jline.reader.Completer
 import org.jline.reader.LineReader

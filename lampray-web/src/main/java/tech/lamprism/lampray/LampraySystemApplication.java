@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web;
+package tech.lamprism.lampray;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration;
@@ -23,6 +23,7 @@ import tech.lamprism.lampray.system.console.cli.CommandManager;
 import tech.lamprism.lampray.system.console.cli.CommandRunner;
 import tech.lamprism.lampray.system.console.cli.LamprayCommandLineManager;
 import tech.lamprism.lampray.system.console.cli.runner.ResourcesExportCommandRunner;
+import tech.lamprism.lampray.system.console.cli.runner.StartApplicationCommandRunner;
 
 import java.util.List;
 
