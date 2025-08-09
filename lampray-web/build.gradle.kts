@@ -38,6 +38,7 @@ dependencies {
     implementation("org.apache.commons:commons-lang3")
     implementation(libs.com.google.guava)
     implementation(libs.commons.text)
+    implementation(libs.commons.compress)
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation(libs.spring.shell.starter)
     implementation(libs.jline.terminal.jna)
