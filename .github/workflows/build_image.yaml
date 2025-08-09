@@ -59,7 +59,7 @@ jobs:
         # TODO: add an gradle compile option to set version from the CI
         run: |
           chmod +x gradlew
-          version=$(./gradlew -q :version)
+          version=$(./gradlew -q -Dci=false :version)
           echo "version_name=${version}" >> $GITHUB_ENV
           echo "remote_tag=${version}" >> $GITHUB_ENV
         id: project_version
@@ -77,7 +77,6 @@ jobs:
       - name: Package Images
         run: |
           chmod +x gradlew
-          export CI=true
           ./gradlew -Dci=true -PbuildFrontend=true packageImageMultiArch
       - name: Upload Dist
         uses: actions/upload-artifact@v4

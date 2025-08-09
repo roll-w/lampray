@@ -61,7 +61,7 @@ jobs:
       - name: Retrieve Version
         run: |
           chmod +x gradlew
-          VERSION_NAME=$(./gradlew -q :version)
+          VERSION_NAME=$(./gradlew -q -Dci=false :version)
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_OUTPUT"
         id: project_version
       - name: Get version
