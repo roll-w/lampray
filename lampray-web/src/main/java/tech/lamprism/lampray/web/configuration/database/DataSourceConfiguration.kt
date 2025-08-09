@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.configuration
+package tech.lamprism.lampray.web.configuration.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -29,16 +29,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.web.ServerInitializeException
-import tech.lamprism.lampray.web.configuration.database.DatabaseConfigKeys
-import tech.lamprism.lampray.web.configuration.database.CertificateValue
-import tech.lamprism.lampray.web.configuration.database.ConnectionPoolConfig
-import tech.lamprism.lampray.web.configuration.database.DatabaseConfig
-import tech.lamprism.lampray.web.configuration.database.DatabaseTarget
-import tech.lamprism.lampray.web.configuration.database.DatabaseType
-import tech.lamprism.lampray.web.configuration.database.DatabaseUrlBuilderFactory
-import tech.lamprism.lampray.web.configuration.database.SslConfig
 import tech.lamprism.lampray.web.configuration.database.ssl.SslCertificateUtils
 import javax.sql.DataSource
+import tech.lamprism.lampray.web.configuration.LocalConfigConfiguration
 
 private val logger = logger<DataSourceConfiguration>()
 
@@ -120,7 +113,7 @@ class DataSourceConfiguration(
                 ServerInitializeException.Detail(
                     "Invalid database type configuration. ${e.message}",
                     "The 'database.type' config must be one of: ${
-                        DatabaseType.values().joinToString(", ") { it.typeName }
+                        DatabaseType.entries.joinToString(", ") { it.typeName }
                     }, but got '$type'. Please check your configuration file or environment variables."
                 ), e
             )
