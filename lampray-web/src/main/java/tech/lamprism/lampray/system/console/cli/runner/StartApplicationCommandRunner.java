@@ -25,8 +25,15 @@ import tech.lamprism.lampray.system.console.cli.CommandRunContext;
 import java.util.Map;
 
 /**
- * Command runner for starting the Lampray application.
- * This command is used to start the application with the specified configuration.
+ * Command runner for starting the Lampray blog system application.
+ *
+ * <p>This command initializes and starts the complete Lampray application server,
+ * including web services, database connections, and all configured modules.
+ * The application will run until manually stopped or terminated.</p>
+ *
+ * <p>Use this command to launch the Lampray blog system in production or
+ * development environments. The application will start with default configuration
+ * unless overridden by environment variables or configuration files.</p>
  *
  * @author RollW
  */
@@ -50,8 +57,8 @@ public class StartApplicationCommandRunner extends AbstractApplicationContextCom
     @Override
     protected void onConfigureCommandSpecification(SimpleCommandSpecification.Builder builder) {
         builder.setNames("start")
-                .setDescription("Start the Lampray application with the specified configuration.")
-                .setHeader("Start the Lampray application.")
+                .setDescription("Start the Lampray application server with all services and modules")
+                .setHeader("Start Lampray application server")
                 .setGroup(CommandGroups.APPLICATION);
     }
 }

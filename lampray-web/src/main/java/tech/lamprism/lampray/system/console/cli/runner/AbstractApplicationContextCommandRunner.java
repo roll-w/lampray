@@ -42,19 +42,56 @@ import tech.lamprism.lampray.web.LoggingPostApplicationPreparedEventListener;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
- * Base class for command runners that require a full or limited application context
- * to run commands.
+ * Abstract base class for command runners that require Spring application context.
+ *
+ * <p>This class provides a foundation for commands that need access to Spring beans,
+ * services, and other application components. It handles the complexity of bootstrapping
+ * a Spring application context with appropriate configuration for CLI execution.</p>
+ *
+ * <p>The class supports different execution types:</p>
+ * <ul>
+ *   <li>SERVICE - Full web context, keeps running (for server commands)</li>
+ *   <li>SERVICE_EXIT - Full web context, exits after completion</li>
+ *   <li>TASK - Limited context without web server, exits after completion (for batch operations)</li>
+ *   <li>TASK_KEEP_ALIVE - Limited context without web server, keeps running</li>
+ * </ul>
+ *
+ * <p>Subclasses must implement:</p>
+ * <ul>
+ *   <li>{@link #doRunCommand(CommandRunContext, ApplicationContext)} - The actual command logic</li>
+ *   <li>{@link #getType()} - The execution type determining context behavior</li>
+ * </ul>
+ *
+ * <p>Optional hooks for customization:</p>
+ * <ul>
+ *   <li>{@link #onProcessProperties(Map)} - Modify Spring properties before context creation</li>
+ *   <li>{@link #onConfigureCommandSpecification(SimpleCommandSpecification.Builder)} - Customize command specification</li>
+ * </ul>
  *
  * @author RollW
  */
 public abstract class AbstractApplicationContextCommandRunner implements CommandRunner {
+    /**
+     * Execute the command with full Spring application context support.
+     *
+     * <p>This method handles the complete lifecycle of creating a Spring application context,
+     * injecting dependencies, and executing the command logic. The context type and behavior
+     * are determined by the {@link #getType()} method implementation.</p>
+     *
+     * <p>The method automatically configures Spring properties optimized for CLI execution,
+     * including disabled web resources, ANSI output support, and appropriate JPA settings.</p>
+     */
     @Override
     public final int runCommand(CommandRunContext context) {
         Map<String, Object> overrideProperties = new HashMap<>();
         overrideProperties.put("spring.application.name", "Lampray");
+        String configPath = Objects.requireNonNullElse(context.getArguments().get("--config"), "")
+                .toString();
         overrideProperties.put(LamprayEnvKeys.RAW_ARGS, context.getRawArgs());
+        overrideProperties.put(LamprayEnvKeys.CONFIG_PATH, configPath);
         setupFixedProperties(overrideProperties);
         onProcessProperties(overrideProperties);
         startApplication(new String[0], determineWebApplicationType(),
@@ -91,19 +128,35 @@ public abstract class AbstractApplicationContextCommandRunner implements Command
     }
 
     /**
-     * This method is called to run the command with the given context.
-     * It should be implemented by subclasses to provide the actual command logic.
+     * Execute the actual command logic with access to Spring application context.
      *
-     * @param context the command run context
-     * @return an integer representing the exit code of the command
+     * <p>This method is called after the Spring application context has been fully
+     * initialized and all beans are available for dependency injection. Implementations
+     * should contain the core business logic for the command.</p>
+     *
+     * <p>Exception handling is managed by the framework - uncaught exceptions will be
+     * logged and result in appropriate exit codes.</p>
+     *
+     * @param context the command execution context with arguments and output streams
+     * @param applicationContext the fully initialized Spring application context
+     * @return exit code following Unix conventions (0 for success, non-zero for failure)
      */
     protected abstract int doRunCommand(CommandRunContext context, ApplicationContext applicationContext);
 
     /**
-     * Returns the type of this command runner.
-     * The type determines how the command is executed in the application context.
+     * Determine the execution type for this command runner.
      *
-     * @return the type of this command runner
+     * <p>The type controls how the Spring application context is configured and
+     * whether the application continues running after command completion:</p>
+     *
+     * <ul>
+     *   <li>{@link Type#SERVICE} - Full web application with embedded server, keeps running</li>
+     *   <li>{@link Type#SERVICE_EXIT} - Full web application, exits after command completion</li>
+     *   <li>{@link Type#TASK} - Non-web context for batch operations, exits after completion</li>
+     *   <li>{@link Type#TASK_KEEP_ALIVE} - Non-web context, keeps running for monitoring</li>
+     * </ul>
+     *
+     * @return the execution type that determines context configuration and lifecycle
      */
     @NonNull
     public abstract Type getType();
@@ -119,19 +172,43 @@ public abstract class AbstractApplicationContextCommandRunner implements Command
     }
 
     /**
-     * This method is called to process the properties before running the command.
-     * It can be overridden by subclasses to add or modify properties.
+     * Hook for customizing Spring application properties before context creation.
      *
-     * @param properties the properties to be processed
+     * <p>This method is called during application context initialization and allows
+     * subclasses to add or override Spring configuration properties. Common use cases
+     * include setting database connections, enabling specific profiles, or configuring
+     * external service connections.</p>
+     *
+     * <p>Properties set here take precedence over default configuration but may be
+     * overridden by command-line arguments or environment variables.</p>
+     *
+     * @param properties mutable map of Spring application properties that will be
+     *                   applied to the application context
      */
     protected void onProcessProperties(Map<String, Object> properties) {
     }
 
     /**
-     * This method is called to configure the command specification.
-     * It can be overridden by subclasses to add or modify command specifications.
+     * Hook for customizing the command specification with additional options or metadata.
      *
-     * @param builder the command specification builder
+     * <p>This method allows subclasses to define their command structure, including
+     * command names, descriptions, options, and help text. The builder is pre-configured
+     * with common options like {@code --config}.</p>
+     *
+     * <p>Example usage:</p>
+     * <pre>{@code
+     * protected void onConfigureCommandSpecification(SimpleCommandSpecification.Builder builder) {
+     *     builder.setNames("my-command")
+     *            .setDescription("Execute my custom command")
+     *            .addOption(SimpleCommandOption.builder()
+     *                .setNames("--input", "-i")
+     *                .setDescription("Input file path")
+     *                .setType(String.class)
+     *                .build());
+     * }
+     * }</pre>
+     *
+     * @param builder the command specification builder for configuring command metadata
      */
     protected void onConfigureCommandSpecification(SimpleCommandSpecification.Builder builder) {
     }
@@ -153,32 +230,50 @@ public abstract class AbstractApplicationContextCommandRunner implements Command
         properties.put("management.endpoints.jmx.exposure.exclude", "*");
     }
 
+    /**
+     * Enumeration of command execution types that determine Spring context behavior.
+     *
+     * <p>Each type configures the Spring application context differently to optimize
+     * for the specific use case, from full web applications to lightweight batch tasks.</p>
+     */
     public enum Type {
         /**
-         * Run the command in a full web application context, and don't
-         * exit the application after running the command.
+         * Full web application context with embedded server, continues running.
+         *
+         * <p>Use for server commands that need to handle HTTP requests and
+         * should remain active until manually stopped.</p>
          */
         SERVICE,
 
         /**
-         * Run the command in a full web application context, and exit the
-         * application after running the command.
+         * Full web application context with embedded server, exits after completion.
+         *
+         * <p>Use for setup or maintenance commands that need web components
+         * but should terminate after executing their logic.</p>
          */
         SERVICE_EXIT,
 
         /**
-         * Run the command in a limited web application context (don't start
-         * the web server), and exit the application after running the command.
+         * Limited application context without web server, exits after completion.
+         *
+         * <p>Use for batch operations, data processing, or maintenance tasks
+         * that need database access and Spring services but no web interface.</p>
          */
         TASK,
 
         /**
-         * Run the command in a limited web application context (don't start
-         * the web server), and don't exit the application after running the
-         * command.
+         * Limited application context without web server, continues running.
+         *
+         * <p>Use for monitoring, background processing, or daemon-like tasks
+         * that need Spring services but should run continuously without web interface.</p>
          */
         TASK_KEEP_ALIVE;
 
+        /**
+         * Check if this execution type terminates the application after command completion.
+         *
+         * @return true if the application should exit after command execution
+         */
         public boolean exitsAfterRun() {
             return this == SERVICE_EXIT || this == TASK;
         }

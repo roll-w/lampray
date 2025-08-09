@@ -59,11 +59,12 @@ public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor
     public void postProcessEnvironment(ConfigurableEnvironment environment,
                                        SpringApplication application) {
         String[] rawArgs = environment.getProperty(LamprayEnvKeys.RAW_ARGS, String[].class);
+        String configPath = environment.getProperty(LamprayEnvKeys.CONFIG_PATH, String.class);
         logger.debug("Passed rawArgs: " + Arrays.toString(rawArgs));
         if (rawArgs == null) {
             throw new IllegalStateException("Raw arguments not found.");
         }
-        ConfigProvider localProvider = createLocalProvider(rawArgs);
+        ConfigProvider localProvider = createLocalProvider(configPath);
         Map<String, Object> setupProperties = new HashMap<>();
         setPropertiesNeedsInStartup(setupProperties, localProvider);
 
@@ -126,8 +127,7 @@ public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor
         }
     }
 
-    private static ReadonlyConfigProvider createLocalProvider(String[] args) {
-        String path = getConfigPath(args);
+    private ReadonlyConfigProvider createLocalProvider(String path) {
         boolean allowFail = Strings.isNullOrEmpty(path);
 
         try {
@@ -148,29 +148,5 @@ public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor
                     "Check the file path and file content."
             ), e);
         }
-    }
-
-    public static final String CONFIG_PATH = "--config";
-    public static final String SHORTAGE_CONFIG_PATH = "-c";
-
-    private static String getConfigPath(String[] args) {
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].equals(CONFIG_PATH) || args[i].equals(SHORTAGE_CONFIG_PATH)) {
-                if (i + 1 >= args.length) {
-                    throw configPathNotSpecified(args[i]);
-                }
-                return args[i + 1];
-            }
-        }
-        return null;
-    }
-
-    private static ServerInitializeException configPathNotSpecified(String argName) {
-        ServerInitializeException.Detail detail = new ServerInitializeException.Detail(
-                "You are using config file path option: '" + argName +
-                        "', but not specify the config file path.",
-                "Use '" + argName + " <path>' to specify the config file path."
-        );
-        return new ServerInitializeException(detail);
     }
 }

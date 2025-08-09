@@ -23,6 +23,7 @@ package tech.lamprism.lampray.web;
  */
 public final class LamprayEnvKeys {
     public static final String RAW_ARGS = "lampray.startup.raw-args";
+    public static final String CONFIG_PATH = "lampray.startup.config-path";
     public static final String LOCAL_CONFIG_LOADER = "lampray.config.local-provider";
 
     private LamprayEnvKeys() {

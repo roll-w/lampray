@@ -19,19 +19,56 @@ package tech.lamprism.lampray.system.console.cli;
 import tech.lamprism.lampray.system.console.CommandSpecification;
 
 /**
+ * Interface for command runners that execute CLI commands.
+ *
+ * <p>Command runners are responsible for executing specific commands with their
+ * associated arguments and options. Each runner must provide both execution logic
+ * and command specification for help and validation purposes.</p>
+ *
+ * <p>Example implementation:</p>
+ * <pre>{@code
+ * public class MyCommandRunner implements CommandRunner {
+ *     public int runCommand(CommandRunContext context) {
+ *         // Execute command logic
+ *         return 0; // Success
+ *     }
+ *
+ *     public CommandSpecification getCommandSpecification() {
+ *         return SimpleCommandSpecification.builder()
+ *             .setNames("my-command")
+ *             .setDescription("Description of my command")
+ *             .build();
+ *     }
+ * }
+ * }</pre>
+ *
  * @author RollW
  */
 public interface CommandRunner {
 
     /**
-     * Run a command.
+     * Execute a command with the provided context.
      *
-     * @param context the context of the command to run, which contains
-     *                the arguments and other information.
-     * @return exit code of the command. 0 means success, non-zero
-     * means failure.
+     * <p>The context contains all necessary information for command execution,
+     * including parsed arguments, options, and output streams. Implementations
+     * should handle errors gracefully and provide meaningful feedback to users.</p>
+     *
+     * @param context the command execution context containing arguments,
+     *                options, and output streams for user interaction
+     * @return exit code following Unix conventions: 0 for success,
+     * non-zero values for various failure conditions
      */
     int runCommand(CommandRunContext context);
 
+    /**
+     * Get the command specification for this runner.
+     *
+     * <p>The specification defines the command structure, including names,
+     * descriptions, options, and help text. This information is used for
+     * command registration, help generation, and argument validation.</p>
+     *
+     * @return the command specification containing all metadata
+     * and option definitions for this command
+     */
     CommandSpecification getCommandSpecification();
 }
