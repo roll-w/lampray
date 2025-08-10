@@ -30,7 +30,7 @@ interface DatabaseUrlBuilder {
      * @param config Database configuration containing connection details
      * @return Complete JDBC URL string
      */
-    fun buildUrl(config: DatabaseConfig): String
+    fun buildUrl(config: DatabaseConfig): DatabaseUrl
 
     /**
      * Checks if this builder supports the given database type.

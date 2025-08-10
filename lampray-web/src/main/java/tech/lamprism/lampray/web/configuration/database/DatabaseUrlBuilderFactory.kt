@@ -35,7 +35,7 @@ object DatabaseUrlBuilderFactory {
      * @return Complete JDBC URL string
      * @throws IllegalArgumentException if no builder supports the database type
      */
-    fun buildUrl(config: DatabaseConfig): String {
+    fun buildUrl(config: DatabaseConfig): DatabaseUrl {
         val builder = getBuilder(config.type)
         return builder.buildUrl(config)
     }

@@ -47,36 +47,44 @@ private val logger = logger<DataSourceConfiguration>()
 @EntityScan(value = ["tech.lamprism.lampray"])
 @EnableTransactionManagement
 class DataSourceConfiguration(
-    @Qualifier(LocalConfigConfiguration.LOCAL_CONFIG_PROVIDER)
+    @param:Qualifier(LocalConfigConfiguration.LOCAL_CONFIG_PROVIDER)
     private val configProvider: ConfigProvider
 ) {
 
+    /**
+     * @throws ServerInitializeException if the database URL cannot be built
+     */
     @Bean
-    @Primary
-    fun dataSourceProperties(): DataSourceProperties = DataSourceProperties().apply {
-        username = configProvider[DatabaseConfigKeys.DATABASE_USERNAME]
-        password = configProvider[DatabaseConfigKeys.DATABASE_PASSWORD]
-
-        try {
-            val databaseConfig = databaseConfig()
-            url = DatabaseUrlBuilderFactory.buildUrl(databaseConfig)
-            logger.info("Database URL configured: $url")
-        } catch (e: ServerInitializeException) {
-            throw e
-        } catch (e: Exception) {
-            throw ServerInitializeException(
-                ServerInitializeException.Detail(
-                    "Failed to build database URL. ${e.message}",
-                    "Please check the 'database.type' and 'database.target' config in the configuration file or " +
-                            "environment variables. Ensure that the values are valid and accessible."
-                ), e
-            )
-        }
+    fun databaseUrl(databaseConfig: DatabaseConfig): DatabaseUrl = try {
+        DatabaseUrlBuilderFactory.buildUrl(databaseConfig)
+    } catch (e: ServerInitializeException) {
+        throw e
+    } catch (e: Exception) {
+        throw ServerInitializeException(
+            ServerInitializeException.Detail(
+                "Failed to build database URL. ${e.message}",
+                "Please check the database config in the configuration file or " +
+                        "environment variables. Ensure that the values are valid and accessible."
+            ), e
+        )
     }
 
     @Bean
     @Primary
-    fun dataSource(databaseConfig: DatabaseConfig, dataSourceProperties: DataSourceProperties): DataSource {
+    fun dataSourceProperties(databaseUrl: DatabaseUrl): DataSourceProperties = DataSourceProperties().apply {
+        username = configProvider[DatabaseConfigKeys.DATABASE_USERNAME]
+        password = configProvider[DatabaseConfigKeys.DATABASE_PASSWORD]
+        url = databaseUrl.url
+        logger.info("Database URL configured: $url")
+    }
+
+    @Bean
+    @Primary
+    fun dataSource(
+        databaseConfig: DatabaseConfig,
+        dataSourceProperties: DataSourceProperties,
+        databaseUrl: DatabaseUrl
+    ): DataSource {
 
         return HikariDataSource(HikariConfig().apply {
             // Basic connection properties
@@ -84,13 +92,10 @@ class DataSourceConfiguration(
             username = dataSourceProperties.username
             password = dataSourceProperties.password
 
+            this.dataSourceProperties.putAll(databaseUrl.properties)
+
             // Apply HikariCP connection pool configuration
             configureHikariCP(this, databaseConfig.connectionPoolConfig, databaseConfig.type)
-
-            // Apply SSL configuration if is network connection
-            if (databaseConfig.target.isNetwork()) {
-                configureHikariSsl(this, databaseConfig.sslConfig)
-            }
         })
     }
 
@@ -154,15 +159,15 @@ class DataSourceConfiguration(
             return SslConfig(mode = mode)
         }
 
-        val clientCert = createCertificateValueWithAutoDetection(
+        val clientCert = createCertificateValue(
             configProvider[DatabaseConfigKeys.DATABASE_SSL_CLIENT_CERT]
         )
 
-        val clientKey = createCertificateValueWithAutoDetection(
+        val clientKey = createCertificateValue(
             configProvider[DatabaseConfigKeys.DATABASE_SSL_CLIENT_KEY]
         )
 
-        val caCert = createCertificateValueWithAutoDetection(
+        val caCert = createCertificateValue(
             configProvider[DatabaseConfigKeys.DATABASE_SSL_CA_CERT]
         )
 
@@ -186,7 +191,6 @@ class DataSourceConfiguration(
             connectionTimeout = configProvider[DatabaseConfigKeys.DATABASE_POOL_CONNECTION_TIMEOUT] ?: 30000L,
             timeBetweenEvictionRuns = configProvider[DatabaseConfigKeys.DATABASE_POOL_IDLE_TIMEOUT] ?: 600000L,
             minEvictableIdleTime = configProvider[DatabaseConfigKeys.DATABASE_POOL_MAX_LIFETIME] ?: 1800000L,
-            removeAbandoned = false, // HikariCP doesn't use this concept
             logAbandoned = (configProvider[DatabaseConfigKeys.DATABASE_POOL_LEAK_DETECTION_THRESHOLD] ?: 0L) > 0
         )
     }
@@ -198,7 +202,7 @@ class DataSourceConfiguration(
      * - If PEM headers are detected (-----BEGIN), treats as certificate content
      * - Otherwise, treats as file path
      */
-    private fun createCertificateValueWithAutoDetection(input: String?): CertificateValue? {
+    private fun createCertificateValue(input: String?): CertificateValue? {
         if (input.isNullOrBlank()) {
             return null
         }

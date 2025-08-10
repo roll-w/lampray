@@ -19,6 +19,7 @@ package tech.lamprism.lampray.web.configuration.database.builders
 import tech.lamprism.lampray.web.configuration.database.DatabaseConfig
 import tech.lamprism.lampray.web.configuration.database.DatabaseTarget
 import tech.lamprism.lampray.web.configuration.database.DatabaseType
+import tech.lamprism.lampray.web.configuration.database.DatabaseUrl
 import tech.lamprism.lampray.web.configuration.database.DatabaseUrlBuilder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -34,17 +35,13 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
 
     override fun supports(type: DatabaseType): Boolean = supportedTypes.contains(type)
 
-    override fun buildUrl(config: DatabaseConfig): String {
+    override fun buildUrl(config: DatabaseConfig): DatabaseUrl {
         validateConfig(config)
 
         val baseUrl = buildBaseUrl(config)
-        val parameters = buildUrlParameters(config)
+        val parameters = buildAdditionalProperties(config)
 
-        return if (parameters.isNotEmpty()) {
-            "$baseUrl?${parameters.entries.joinToString("&") { "${urlEncode(it.key)}=${urlEncode(it.value)}" }}"
-        } else {
-            baseUrl
-        }
+        return DatabaseUrl(baseUrl, parameters)
     }
 
     /**
@@ -68,12 +65,12 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
     protected abstract fun buildBaseUrl(config: DatabaseConfig): String
 
     /**
-     * Builds URL parameters map from configuration.
+     * Builds additional properties for the JDBC driver.
      *
      * @param config Database configuration
      * @return Map of parameter key-value pairs
      */
-    protected open fun buildUrlParameters(config: DatabaseConfig): Map<String, String> {
+    protected open fun buildAdditionalProperties(config: DatabaseConfig): Map<String, String> {
         val params = mutableMapOf<String, String>()
 
         // Add charset if specified
@@ -122,18 +119,6 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
     abstract override fun getDefaultValidationQuery(): String
 
     /**
-     * Parses target string to DatabaseTarget with type classification.
-     * Handles various target formats: file paths, memory, host:port, host only.
-     *
-     * @param target Target string from configuration
-     * @param defaultPort Default port for this database type
-     * @return DatabaseTarget instance with parsed information
-     */
-    protected fun parseTarget(target: String, defaultPort: Int): DatabaseTarget {
-        return DatabaseTarget.parse(target, defaultPort)
-    }
-
-    /**
      * Parses custom options string into key-value pairs.
      * Format: ["key1=value1", "key2=value2"]
      */
@@ -148,12 +133,5 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
                 parts[0].trim() to parts[1].trim()
             } else null
         }.toMap()
-    }
-
-    /**
-     * URL encodes a string for use in JDBC URLs.
-     */
-    private fun urlEncode(value: String): String {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8)
     }
 }

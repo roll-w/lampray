@@ -104,35 +104,19 @@ data class SslConfig(
 /**
  * Connection pool configuration for database connections.
  *
- * @param initialSize Initial number of connections in the pool
  * @param maxActive Maximum number of active connections in the pool
- * @param maxIdle Maximum number of idle connections in the pool
  * @param minIdle Minimum number of idle connections in the pool
- * @param maxWait Maximum wait time (in milliseconds) when getting a connection from the pool
  * @param connectionTimeout Connection timeout (in milliseconds)
- * @param testOnBorrow Whether to validate connections before borrowing from the pool
- * @param testOnReturn Whether to validate connections before returning to the pool
- * @param testWhileIdle Whether to validate idle connections
  * @param timeBetweenEvictionRuns Time between eviction runs (in milliseconds)
  * @param minEvictableIdleTime Minimum time a connection may sit idle before being evicted (in milliseconds)
- * @param removeAbandoned Whether to remove abandoned connections
- * @param removeAbandonedTimeout Timeout for abandoned connections (in seconds)
  * @param logAbandoned Whether to log abandoned connections
  * @author RollW
  */
 data class ConnectionPoolConfig(
-    val initialSize: Int = 5,
     val maxActive: Int = 20,
-    val maxIdle: Int = 10,
     val minIdle: Int = 2,
-    val maxWait: Long = 30000,
     val connectionTimeout: Long = 30000,
-    val testOnBorrow: Boolean = true,
-    val testOnReturn: Boolean = false,
-    val testWhileIdle: Boolean = true,
     val timeBetweenEvictionRuns: Long = 60000,
     val minEvictableIdleTime: Long = 300000,
-    val removeAbandoned: Boolean = true,
-    val removeAbandonedTimeout: Int = 300,
     val logAbandoned: Boolean = false
 )
