@@ -47,13 +47,15 @@ object ServerConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val PROCESS_PROXY_HEADERS =
-        SettingSpecificationBuilder(SettingKey.ofBoolean("server.http.proxy.headers"))
-            .setTextDescription("Process proxy headers for HTTP server, if enabled, the server will " +
-                    "process the Forwarded, X-Forwarded-For and X-Forwarded-Proto and other headers " +
-                    "to determine the original request information, such as the original IP address and protocol.")
+        SettingSpecificationBuilder(SettingKey.ofBoolean("server.http.process-proxy-headers"))
+            .setTextDescription(
+                "Process proxy headers for HTTP server, if enabled, the server will " +
+                        "process the Forwarded, X-Forwarded-For and X-Forwarded-Proto and other headers " +
+                        "to determine the original request information, such as the original IP address and protocol."
+            )
             .setDefaultValue(false)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
-            .setRequired(false)
+            .setRequired(true)
             .build()
 
     @JvmField
@@ -77,8 +79,10 @@ object ServerConfigKeys : SettingSpecificationSupplier {
     @JvmField
     val SSH_HOST_KEY =
         SettingSpecificationBuilder(SettingKey.ofString("server.ssh.host.key"))
-            .setTextDescription("Private key path for SSH host, if specified file does not exist, " +
-                    "a new key will be generated")
+            .setTextDescription(
+                "Private key path for SSH host, if specified file does not exist, " +
+                        "a new key will be generated"
+            )
             .setDefaultValue("conf/ssh_host.key")
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .setRequired(false)
