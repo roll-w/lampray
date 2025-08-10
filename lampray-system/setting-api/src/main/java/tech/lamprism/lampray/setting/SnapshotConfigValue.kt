@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,35 @@ import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 data class SnapshotConfigValue<T, V>(
     override val value: T?,
     override val source: SettingSource,
-    private val settingSpecification: SettingSpecification<T, V>
-) : ConfigValue<T, V>, SettingSpecification<T, V> by settingSpecification {
+    override val specification: SettingSpecification<T, V>
+) : ConfigValue<T, V> {
+    init {
+        require(!specification.isTemplate()) {
+            "SnapshotConfigValue cannot be created from a template specification: ${specification.keyName}"
+        }
+    }
+
     override fun toString(): String {
-        return "SnapshotConfigValue[${settingSpecification.keyName}](value=$value, source=$source)"
+        return "SnapshotConfigValue[${specification.keyName}](value=$value, source=$source)"
+    }
+
+    companion object {
+        /**
+         * Create a snapshot of the given [ConfigValue].
+         *
+         * @param specification The specification of the setting.
+         */
+        @JvmStatic
+        fun <T, V> ConfigValue<T, V>.takeSnapshot(): SnapshotConfigValue<T, V> {
+            if (this is SnapshotConfigValue<T, V>) {
+                return this
+            }
+
+            return SnapshotConfigValue(
+                value = value,
+                source = source,
+                specification = specification
+            )
+        }
     }
 }

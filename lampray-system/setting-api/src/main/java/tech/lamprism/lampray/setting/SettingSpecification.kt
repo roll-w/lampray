@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,20 @@ package tech.lamprism.lampray.setting
 interface SettingSpecification<T, V> {
     val key: SettingKey<T, V>
 
+    fun isTemplate(): Boolean {
+        return key.isTemplate()
+    }
+
+    fun withParameters(parameters: Map<String, String>): SettingSpecification<T, V>
+
+    fun withParameters(vararg parameters: Pair<String, String>): SettingSpecification<T, V> {
+        return withParameters(parameters.toMap())
+    }
+
+    fun withParameter(name: String, value: String): SettingSpecification<T, V> {
+        return withParameters(mapOf(name to value))
+    }
+
     /**
      * The default value indexes in [valueEntries].
      *
@@ -49,10 +63,18 @@ interface SettingSpecification<T, V> {
      */
     val isRequired : Boolean
 
+    /**
+     * If the setting spec has predefined values, return the value at
+     * the given index. Or return null.
+     */
     operator fun get(index: Int): V?
 
     fun hasValue(value: V?): Boolean
 
+    /**
+     * Whether the setting allows any value. If not, only the values in
+     * [valueEntries] are allowed.
+     */
     fun allowAnyValue(): Boolean
 
     companion object {

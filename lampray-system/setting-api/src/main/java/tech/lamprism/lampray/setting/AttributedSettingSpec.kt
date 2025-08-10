@@ -26,6 +26,30 @@ data class AttributedSettingSpec<T, V> @JvmOverloads constructor(
     override val supportedSources: List<SettingSource> = SettingSource.LOCAL_ONLY
 ) : SettingSpecification<T, V> by specification, AttributedSettingSpecification<T, V> {
 
+    override fun withParameters(parameters: Map<String, String>): AttributedSettingSpec<T, V> {
+        val newSpecification = specification.withParameters(parameters)
+        if (newSpecification === specification) {
+            return this
+        }
+        return AttributedSettingSpec(
+            newSpecification,
+            description,
+            secret,
+            supportedSources
+        )
+    }
+
+    override fun withParameters(vararg parameters: Pair<String, String>): AttributedSettingSpec<T, V> {
+        return withParameters(parameters.toMap())
+    }
+
+    override fun withParameter(
+        name: String,
+        value: String
+    ): AttributedSettingSpec<T, V> {
+        return withParameters(mapOf(name to value))
+    }
+
     companion object {
         @JvmStatic
         fun <T, V> SettingSpecification<T, V>.withAttributes(

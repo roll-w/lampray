@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package tech.lamprism.lampray.setting.event
 import org.springframework.context.ApplicationEventPublisher
 import tech.lamprism.lampray.setting.AttributedSettingSpecification
 import tech.lamprism.lampray.setting.ConfigProvider
+import tech.lamprism.lampray.setting.ConfigValue
 import tech.lamprism.lampray.setting.SettingSource
 import tech.lamprism.lampray.setting.SettingSpecification
 import tech.lamprism.lampray.setting.SettingSpecificationHelper.deserialize
@@ -33,21 +34,34 @@ class EventProxyConfigProvider(
 ) : ConfigProvider by configProvider {
 
     override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?): SettingSource {
-        val res = configProvider.set(spec, value)
-        if (res != SettingSource.NONE) {
+        return configProvider.set(spec, value).also {
+            if (it == SettingSource.NONE) {
+                return@also
+            }
             applicationEventPublisher.publishEvent(
                 SettingValueChangedEvent(spec, value)
             )
         }
-        return res
+    }
+
+    override fun <T, V> set(configValue: ConfigValue<T, V>): SettingSource {
+        return configProvider.set(configValue).also {
+            if (it == SettingSource.NONE) {
+                return@also
+            }
+            applicationEventPublisher.publishEvent(
+                SettingValueChangedEvent(configValue.specification, configValue.value)
+            )
+        }
     }
 
     override fun set(key: String, value: String?): SettingSource {
-        val res = configProvider.set(key, value)
-        if (res != SettingSource.NONE) {
+        return configProvider.set(key, value).also {
+            if (it == SettingSource.NONE) {
+                return@also
+            }
             publishEvent<Any, Any>(key, value)
         }
-        return res
     }
 
     @Suppress("UNCHECKED_CAST")

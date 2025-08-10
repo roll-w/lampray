@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,33 @@ data class SimpleSettingSpec<T, V> @JvmOverloads constructor(
         if (defaults.any { it >= valueEntries.size }) {
             throw IllegalArgumentException("Invalid default index: $defaults for ${valueEntries.size}")
         }
+    }
+
+    override fun withParameters(parameters: Map<String, String>): SimpleSettingSpec<T, V> {
+        val newKey = key.withParameters(parameters)
+        // We only need to check the memory address of the key, no need for equals comparison
+        // since the key will not change if it has no parameters.
+        if (newKey === key) {
+            return this
+        }
+        return copy(
+            key = newKey,
+            allowAnyValue = allowAnyValue,
+            defaults = defaults,
+            valueEntries = valueEntries,
+            isRequired = isRequired
+        )
+    }
+
+    override fun withParameters(vararg parameters: Pair<String, String>): SimpleSettingSpec<T, V> {
+        return withParameters(parameters.toMap())
+    }
+
+    override fun withParameter(
+        name: String,
+        value: String
+    ): SimpleSettingSpec<T, V> {
+        return withParameters(mapOf(name to value))
     }
 
     /**

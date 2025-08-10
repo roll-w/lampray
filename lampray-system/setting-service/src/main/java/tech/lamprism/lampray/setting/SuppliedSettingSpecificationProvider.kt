@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,11 @@ class SuppliedSettingSpecificationProvider(
 
     override fun getSettingSpecification(key: String): AttributedSettingSpecification<*, *> {
         return specs[key] ?: throw IllegalArgumentException("No such setting: $key")
+    }
+
+    override fun checkValidSettingKey(key: String): Boolean {
+        // TODO: check templates
+        return specs.containsKey(key)
     }
 
     override val settingSpecifications: List<AttributedSettingSpecification<*, *>>

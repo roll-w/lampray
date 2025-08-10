@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ interface ConfigWriter {
      * or [SettingSource.NONE] if the value is not stored.
      */
     fun <T, V> set(configValue: ConfigValue<T, V>): SettingSource {
-        return set(configValue, configValue.value)
+        return set(configValue.specification, configValue.value)
     }
 
     fun supports(spec: SettingSpecification<*, *>): Boolean {

@@ -19,7 +19,10 @@ package tech.lamprism.lampray.setting
 /**
  * @author RollW
  */
-interface ConfigValue<T, V> : SettingSpecification<T, V> {
+@JvmDefaultWithoutCompatibility
+interface ConfigValue<T, V> {
+    val specification: SettingSpecification<T, V>
+
     val value: T?
 
     /**
