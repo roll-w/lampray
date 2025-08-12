@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.configuration.database
+package tech.lamprism.lampray.system.database
 
-import tech.lamprism.lampray.web.configuration.database.builders.DatabaseUrlBuilders
+import tech.lamprism.lampray.system.database.builders.DatabaseUrlBuilders
 
 /**
  * Factory for creating and managing database URL builders.

@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.configuration.database.builders
+package tech.lamprism.lampray.system.database.builders
 
-import tech.lamprism.lampray.web.configuration.database.DatabaseConfig
-import tech.lamprism.lampray.web.configuration.database.DatabaseTarget
-import tech.lamprism.lampray.web.configuration.database.DatabaseType
-import tech.lamprism.lampray.web.configuration.database.DatabaseUrl
-import tech.lamprism.lampray.web.configuration.database.DatabaseUrlBuilder
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
+import tech.lamprism.lampray.system.database.DatabaseConfig
+import tech.lamprism.lampray.system.database.DatabaseType
+import tech.lamprism.lampray.system.database.DatabaseUrl
+import tech.lamprism.lampray.system.database.DatabaseUrlBuilder
 
 /**
  * Abstract base class for database URL builders providing common functionality.

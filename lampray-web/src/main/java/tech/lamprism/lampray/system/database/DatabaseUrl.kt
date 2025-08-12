@@ -1,4 +1,4 @@
-package tech.lamprism.lampray.web.configuration.database
+package tech.lamprism.lampray.system.database
 
 /**
  * @author RollW

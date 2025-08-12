@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.configuration.database
+package tech.lamprism.lampray.system.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -29,8 +29,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.web.ServerInitializeException
-import tech.lamprism.lampray.web.configuration.database.ssl.SslCertificateUtils
 import javax.sql.DataSource
+import tech.lamprism.lampray.system.database.ssl.SslCertificateUtils
 import tech.lamprism.lampray.web.configuration.LocalConfigConfiguration
 
 private val logger = logger<DataSourceConfiguration>()

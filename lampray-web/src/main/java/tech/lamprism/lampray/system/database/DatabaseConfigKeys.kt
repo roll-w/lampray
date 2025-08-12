@@ -1,5 +1,6 @@
-package tech.lamprism.lampray.web.configuration.database
+package tech.lamprism.lampray.system.database
 
+import org.springframework.stereotype.Component
 import tech.lamprism.lampray.setting.AttributedSettingSpecification
 import tech.lamprism.lampray.setting.SettingDescription
 import tech.lamprism.lampray.setting.SettingKey
@@ -15,6 +16,7 @@ import tech.lamprism.lampray.setting.SettingSpecificationSupplier
  *
  * @author RollW
  */
+@Component
 object DatabaseConfigKeys : SettingSpecificationSupplier {
 
     private val LOCAL_SOURCE = SettingSource.LOCAL_ONLY

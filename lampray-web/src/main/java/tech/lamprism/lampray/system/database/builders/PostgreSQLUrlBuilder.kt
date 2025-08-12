@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.configuration.database.builders
+package tech.lamprism.lampray.system.database.builders
 
-import tech.lamprism.lampray.web.configuration.database.CertificateValue
-import tech.lamprism.lampray.web.configuration.database.DatabaseConfig
-import tech.lamprism.lampray.web.configuration.database.DatabaseType
-import tech.lamprism.lampray.web.configuration.database.SslConfig
+import tech.lamprism.lampray.system.database.CertificateValue
+import tech.lamprism.lampray.system.database.DatabaseConfig
+import tech.lamprism.lampray.system.database.DatabaseType
+import tech.lamprism.lampray.system.database.SslConfig
 
 /**
  * URL builder for PostgreSQL databases.

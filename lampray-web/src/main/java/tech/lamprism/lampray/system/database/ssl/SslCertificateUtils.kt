@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.configuration.database.ssl
+package tech.lamprism.lampray.system.database.ssl
 
 import space.lingu.Experimental
-import tech.lamprism.lampray.web.configuration.database.CertificateValue
 import java.io.ByteArrayInputStream
 import java.security.KeyFactory
 import java.security.KeyStore
@@ -32,6 +31,7 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import tech.lamprism.lampray.system.database.CertificateValue
 
 /**
  * Utility class for handling SSL/TLS certificates in database connections.

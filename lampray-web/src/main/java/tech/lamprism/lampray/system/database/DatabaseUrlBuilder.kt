@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.configuration.database
+package tech.lamprism.lampray.system.database
 
 /**
  * Interface for building JDBC URLs for different database types.
