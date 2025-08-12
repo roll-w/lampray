@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConf
 import tech.lamprism.lampray.system.console.cli.CommandManager;
 import tech.lamprism.lampray.system.console.cli.CommandRunner;
 import tech.lamprism.lampray.system.console.cli.LamprayCommandLineManager;
+import tech.lamprism.lampray.system.console.cli.runner.ConnectShellCommandRunner;
 import tech.lamprism.lampray.system.console.cli.runner.ResourcesExportCommandRunner;
 import tech.lamprism.lampray.system.console.cli.runner.StartApplicationCommandRunner;
 
@@ -35,7 +36,8 @@ public class LampraySystemApplication {
 
     private static final List<CommandRunner> COMMAND_RUNNERS = List.of(
             new StartApplicationCommandRunner(),
-            new ResourcesExportCommandRunner()
+            new ResourcesExportCommandRunner(),
+            new ConnectShellCommandRunner()
     );
 
     public static void main(String[] args) {
