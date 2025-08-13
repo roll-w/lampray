@@ -58,7 +58,8 @@ public class SecurityConfigKeys implements SettingSpecificationSupplier {
 
     private static final List<AttributedSettingSpecification<?, ?>> KEYS = List.of(
             TOKEN_ISSUER,
-            TOKEN_EXPIRE_TIME
+            TOKEN_EXPIRE_TIME,
+            TOKEN_SIGN_KEY
     );
 
     public static final SecurityConfigKeys INSTANCE = new SecurityConfigKeys();

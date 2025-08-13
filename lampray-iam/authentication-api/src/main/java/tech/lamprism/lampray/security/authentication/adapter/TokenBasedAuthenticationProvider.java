@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import tech.lamprism.lampray.authentication.token.AuthenticationTokenService;
-import tech.lamprism.lampray.authentication.token.TokenAuthResult;
 import tech.lamprism.lampray.security.authorization.PrivilegedUser;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
 import tech.lamprism.lampray.security.authorization.adapter.PrivilegedUserAuthenticationToken;
+import tech.lamprism.lampray.security.token.AuthorizationToken;
+import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
+import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
+import tech.lamprism.lampray.security.token.SimpleAuthorizationToken;
 import tech.lamprism.lampray.user.UserSignatureProvider;
 import tech.rollw.common.web.CommonRuntimeException;
 
@@ -35,16 +37,16 @@ import tech.rollw.common.web.CommonRuntimeException;
 public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthenticationProvider {
     private static final Logger logger = LoggerFactory.getLogger(TokenBasedAuthenticationProvider.class);
 
-    private final AuthenticationTokenService authenticationTokenService;
+    private final AuthorizationTokenProvider authorizationTokenProvider;
     private final PrivilegedUserProvider privilegedUserProvider;
     private final UserSignatureProvider userSignatureProvider;
 
     public TokenBasedAuthenticationProvider(
-            AuthenticationTokenService authenticationTokenService,
+            AuthorizationTokenProvider authorizationTokenProvider,
             PrivilegedUserProvider privilegedUserProvider,
             UserSignatureProvider userSignatureProvider
     ) {
-        this.authenticationTokenService = authenticationTokenService;
+        this.authorizationTokenProvider = authorizationTokenProvider;
         this.privilegedUserProvider = privilegedUserProvider;
         this.userSignatureProvider = userSignatureProvider;
     }
@@ -57,21 +59,28 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         TokenBasedAuthenticationToken tokenBasedAuthenticationToken = (TokenBasedAuthenticationToken) authentication;
-        String token = tokenBasedAuthenticationToken.getCredentials();
-        Long id = authenticationTokenService.getUserId(token);
-        if (id == null) {
-            throw new BadCredentialsException("Invalid token");
-        }
+        AuthorizationToken token = parseToken(tokenBasedAuthenticationToken.getCredentials());
         try {
-            String signature = userSignatureProvider.getSignature(id);
-            TokenAuthResult tokenAuthResult = authenticationTokenService.verifyToken(token, signature);
-            long userId = tokenAuthResult.userId();
-            PrivilegedUser privilegedUser = privilegedUserProvider.loadPrivilegedUserById(userId);
+            MetadataAuthorizationToken authorizationToken = authorizationTokenProvider.parseToken(
+                    token, userSignatureProvider);
+            PrivilegedUser privilegedUser = privilegedUserProvider.loadPrivilegedUser(
+                    authorizationToken.getSubject());
             check(privilegedUser);
             return new PrivilegedUserAuthenticationToken(privilegedUser);
         } catch (CommonRuntimeException e) {
             throw new TokenAuthenticationException(e);
         }
+    }
+
+    private AuthorizationToken parseToken(String credentials) {
+        // Parse header, format like: "<Type> <Token>"
+        int index = credentials.indexOf(' ');
+        if (index < 0) {
+            throw new BadCredentialsException("Invalid token format");
+        }
+        String type = credentials.substring(0, index);
+        String token = credentials.substring(index + 1);
+        return new SimpleAuthorizationToken(type, token);
     }
 
     @Override

@@ -43,11 +43,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import tech.lamprism.lampray.authentication.token.AuthenticationTokenService;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationProvider;
 import tech.lamprism.lampray.security.authentication.adapter.TokenBasedAuthenticationProvider;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
 import tech.lamprism.lampray.security.firewall.FirewallFilter;
+import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
 import tech.lamprism.lampray.user.UserSignatureProvider;
 import tech.lamprism.lampray.web.configuration.compenent.ForwardedHeaderDelegateFilter;
 import tech.lamprism.lampray.web.configuration.compenent.WebDelegateSecurityHandler;
@@ -153,11 +153,11 @@ public class WebSecurityConfiguration {
 
     @Bean
     public TokenBasedAuthenticationProvider tokenBasedAuthenticationProvider(
-            AuthenticationTokenService authenticationTokenService,
+            AuthorizationTokenProvider authorizationTokenProvider,
             PrivilegedUserProvider privilegedUserProvider,
             UserSignatureProvider userSignatureProvider) {
         return new TokenBasedAuthenticationProvider(
-                authenticationTokenService,
+                authorizationTokenProvider,
                 privilegedUserProvider,
                 userSignatureProvider
         );

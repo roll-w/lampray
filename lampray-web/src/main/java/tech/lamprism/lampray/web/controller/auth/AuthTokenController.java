@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,60 +18,65 @@ package tech.lamprism.lampray.web.controller.auth;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import tech.lamprism.lampray.authentication.token.AuthenticationTokenService;
-import tech.lamprism.lampray.authentication.token.TokenAuthResult;
+import org.springframework.web.bind.annotation.RestController;
+import tech.lamprism.lampray.security.token.AuthorizationToken;
+import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
+import tech.lamprism.lampray.security.token.AuthorizationTokenUtils;
+import tech.lamprism.lampray.security.token.BearerAuthorizationToken;
+import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
+import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.user.UserSignatureProvider;
-import tech.rollw.common.web.AuthErrorCode;
+import tech.lamprism.lampray.web.controller.auth.model.RefreshTokenRequest;
 import tech.rollw.common.web.HttpResponseEntity;
-import tech.rollw.common.web.system.AuthenticationException;
+
+import java.time.Duration;
+import java.util.List;
 
 /**
  * @author RollW
  */
-@AuthApi
+@RestController
+@RequestMapping("/api/v1/auth/")
 public class AuthTokenController {
-    private final AuthenticationTokenService tokenService;
+    private final AuthorizationTokenProvider authorizationTokenProvider;
     private final UserSignatureProvider userSignatureProvider;
 
-    public AuthTokenController(AuthenticationTokenService tokenService,
+    public AuthTokenController(AuthorizationTokenProvider authorizationTokenProvider,
                                UserSignatureProvider userSignatureProvider) {
-        this.tokenService = tokenService;
+        this.authorizationTokenProvider = authorizationTokenProvider;
         this.userSignatureProvider = userSignatureProvider;
     }
 
-    @PostMapping("/token/r")
+    // TODO: support refresh token
+    @PostMapping("/token:refresh")
     public HttpResponseEntity<String> refreshToken(
-            @RequestParam(name = "token") String oldToken) {
-        Long userId = tokenService.getUserId(oldToken);
-        if (userId == null) {
-            return HttpResponseEntity.of(AuthErrorCode.ERROR_INVALID_TOKEN);
-        }
-        String sig = userSignatureProvider.getSignature(userId);
-        try {
-            tokenService.verifyToken(oldToken, sig);
-            return HttpResponseEntity.success(
-                    tokenService.generateAuthToken(userId, sig)
-            );
-        } catch (AuthenticationException e) {
-            if (e.getErrorCode() == AuthErrorCode.ERROR_TOKEN_EXPIRED) {
-                return HttpResponseEntity.success(
-                        tokenService.generateAuthToken(userId, sig)
-                );
-            }
-        }
-        return HttpResponseEntity.of(AuthErrorCode.ERROR_INVALID_TOKEN);
+            @RequestBody RefreshTokenRequest refreshTokenRequest) {
+        MetadataAuthorizationToken metadataAuthorizationToken = authorizationTokenProvider.parseToken(
+                new BearerAuthorizationToken(refreshTokenRequest.getRefreshToken()),
+                userSignatureProvider
+        );
+        UserIdentity userIdentity = metadataAuthorizationToken.getSubject();
+        AuthorizationToken token = authorizationTokenProvider.createToken(
+                userIdentity,
+                userSignatureProvider,
+                Duration.ofDays(7),
+                List.of()
+        );
+        return HttpResponseEntity.success(
+                AuthorizationTokenUtils.toHeaderValue(token)
+        );
     }
 
-    @GetMapping("/token/v")
-    public HttpResponseEntity<TokenAuthResult> verifyToken(
+    @GetMapping("/token:verify")
+    public HttpResponseEntity<Void> verifyToken(
             @RequestParam String token) {
-        Long userId = tokenService.getUserId(token);
-        if (userId == null) {
-            return HttpResponseEntity.of(AuthErrorCode.ERROR_INVALID_TOKEN);
-        }
-        String sig = userSignatureProvider.getSignature(userId);
-        TokenAuthResult authResult = tokenService.verifyToken(token, sig);
-        return HttpResponseEntity.success(authResult);
+        MetadataAuthorizationToken metadataAuthorizationToken = authorizationTokenProvider.parseToken(
+                new BearerAuthorizationToken(token),
+                userSignatureProvider
+        );
+        return HttpResponseEntity.success();
     }
 }
