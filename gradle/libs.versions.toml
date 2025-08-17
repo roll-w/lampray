@@ -14,11 +14,12 @@
 # limitations under the License.
 #
 [versions]
+bouncycastle = "1.81"
 caffeine = "3.1.8"
 commons-text="1.12.0"
 commons-compress = "1.28.0"
 guava = "33.2.1-jre"
-jjwt= "0.11.5"
+jjwt= "0.12.7"
 rollw-web-common = "0.2.1"
 spring-shell = "3.4.0"
 sshd = "2.14.0"
@@ -26,6 +27,8 @@ jline = "3.26.3"
 seancfoley-ipaddress = "5.5.1"
 picocli = "4.7.7"
 [libraries]
+bouncycastle-prov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
+bouncycastle-pkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text" }
 commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commons-compress" }
