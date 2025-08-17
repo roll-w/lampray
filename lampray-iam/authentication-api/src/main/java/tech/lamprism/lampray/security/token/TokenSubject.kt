@@ -19,9 +19,18 @@ package tech.lamprism.lampray.security.token
 /**
  * @author RollW
  */
-data class SimpleAuthorizationToken(
-    override val token: String,
-    override val tokenType: TokenType,
-    override val tokenFormat: TokenFormat
-) : AuthorizationToken {
+interface TokenSubject {
+    val id: String
+
+    val name: String
+
+    val type: SubjectType
+
+    val detail: Any
+
+    interface Factory {
+        fun fromSubject(id: String, subjectType: SubjectType): TokenSubject
+
+        fun supports(type: SubjectType): Boolean
+    }
 }

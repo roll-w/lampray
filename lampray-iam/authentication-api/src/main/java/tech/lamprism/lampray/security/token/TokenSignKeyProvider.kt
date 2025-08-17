@@ -16,12 +16,11 @@
 
 package tech.lamprism.lampray.security.token
 
+import java.security.Key
+
 /**
  * @author RollW
  */
-data class SimpleAuthorizationToken(
-    override val token: String,
-    override val tokenType: TokenType,
-    override val tokenFormat: TokenFormat
-) : AuthorizationToken {
+interface TokenSignKeyProvider {
+    fun getSignKey(tokenSubject: TokenSubject): Key
 }

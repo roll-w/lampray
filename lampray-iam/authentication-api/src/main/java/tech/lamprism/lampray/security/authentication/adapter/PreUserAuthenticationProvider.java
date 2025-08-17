@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,9 @@ public class PreUserAuthenticationProvider extends PrivilegedUserBasedAuthentica
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        PreUserAuthenticationToken token = (PreUserAuthenticationToken) authentication;
+        if (!(authentication instanceof PreUserAuthenticationToken token)) {
+            throw new IllegalArgumentException("Authentication must be an instance of PreUserAuthenticationToken");
+        }
         try {
             PrivilegedUser privilegedUser = privilegedUserProvider.loadPrivilegedUserById(
                     token.getCredentials().getUserId()

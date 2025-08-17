@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.token
+package tech.lamprism.lampray.security.token;
+
+import space.lingu.NonNull;
 
 /**
  * @author RollW
  */
-data class SimpleAuthorizationToken(
-    override val token: String,
-    override val tokenType: TokenType,
-    override val tokenFormat: TokenFormat
-) : AuthorizationToken {
+public interface TokenSubjectProvider {
+    @NonNull
+    TokenSubject getTokenSubject(@NonNull String subjectId, @NonNull SubjectType subjectType);
 }

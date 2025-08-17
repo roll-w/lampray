@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@
 package tech.lamprism.lampray.security.token
 
 /**
+ * Bearer format authorization token implementation.
+ *
  * @author RollW
  */
 data class BearerAuthorizationToken(
-    override val token: String
+    override val token: String,
+    override val tokenType: TokenType = TokenType.ACCESS
 ) : AuthorizationToken {
 
-    override val tokenType: String
-        get() = "Bearer"
+    override val tokenFormat: TokenFormat
+        get() = TokenFormat.BEARER
 }

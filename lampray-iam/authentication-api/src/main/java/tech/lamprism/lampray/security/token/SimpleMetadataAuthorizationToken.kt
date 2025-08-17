@@ -20,22 +20,33 @@ import tech.lamprism.lampray.security.authorization.AuthorizationScope
 import java.time.OffsetDateTime
 
 /**
+ * Enhanced implementation of MetadataAuthorizationToken with improved type handling.
+ *
  * @author RollW
  */
-class SimpleMetadataAuthorizationToken(
+data class SimpleMetadataAuthorizationToken(
     override val token: String,
-    override val tokenType: String,
+    override val tokenType: TokenType,
     override val subject: TokenSubject,
+    override val tokenId: String,
     override val scopes: List<AuthorizationScope>,
-    override val expirationAt: OffsetDateTime
+    override val expirationAt: OffsetDateTime,
+    override val tokenFormat: TokenFormat
 ) : MetadataAuthorizationToken {
+
     constructor(
         authorizationToken: AuthorizationToken,
         subject: TokenSubject,
+        tokenId: String,
         scopes: List<AuthorizationScope>,
         expirationTime: OffsetDateTime
     ) : this(
-        authorizationToken.token, authorizationToken.tokenType,
-        subject, scopes, expirationTime
+        token = authorizationToken.token,
+        tokenType = authorizationToken.tokenType,
+        tokenFormat = authorizationToken.tokenFormat,
+        tokenId = tokenId,
+        expirationAt = expirationTime,
+        subject = subject,
+        scopes = scopes
     )
 }

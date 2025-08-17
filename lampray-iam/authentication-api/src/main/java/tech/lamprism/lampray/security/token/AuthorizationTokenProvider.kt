@@ -17,44 +17,49 @@
 package tech.lamprism.lampray.security.token
 
 import tech.lamprism.lampray.security.authorization.AuthorizationScope
-import tech.lamprism.lampray.user.UserSignatureProvider
 import tech.rollw.common.web.system.AuthenticationException
 import java.time.Duration
 
 /**
+ * Enhanced authorization token provider that supports different token types and formats.
+ *
  * @author RollW
  */
 interface AuthorizationTokenProvider {
     /**
-     * Create a token for the user.
+     * Create a token for the user with specified type.
      *
      * @param subject the subject to create the token for.
-     * @param signatureProvider the signature provider to sign the token.
+     * @param tokenSignKeyProvider the signature provider to sign the token.
+     * @param tokenType the type of token to create.
      * @param expiryDuration the expiry duration of the token from now.
-     * @param authorizedScopes the authorized scopes of the token. If empty,
-     * use the default scopes of target user.
+     * @param authorizedScopes the authorized scopes of the token.
+     * @param tokenFormat the format of the token (Bearer, Basic, etc.).
      * @return the token.
      */
     fun createToken(
         subject: TokenSubject,
-        signatureProvider: UserSignatureProvider,
+        tokenSignKeyProvider: TokenSignKeyProvider,
+        tokenId: String,
+        tokenType: TokenType,
         expiryDuration: Duration = Duration.ofDays(1),
-        authorizedScopes: Collection<AuthorizationScope> = emptyList()
+        authorizedScopes: Collection<AuthorizationScope> = emptyList(),
+        tokenFormat: TokenFormat = TokenFormat.BEARER
     ): AuthorizationToken
 
     /**
      * Parse the token to get the user identity.
      *
      * @param token The token.
-     * @param signatureProvider The signature provider to verify the token.
+     * @param tokenSignKeyProvider The signature provider to verify the token.
      * @return The user identity.
      * @throws AuthenticationException If the token is invalid or expired.
      */
     @Throws(AuthenticationException::class)
     fun parseToken(
         token: AuthorizationToken,
-        signatureProvider: UserSignatureProvider
+        tokenSignKeyProvider: TokenSignKeyProvider
     ): MetadataAuthorizationToken
 
-    fun supports(tokenType: String): Boolean
+    fun supports(tokenType: TokenType): Boolean
 }
