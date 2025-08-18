@@ -21,8 +21,14 @@ import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.PtyMode;
+import org.apache.sshd.common.session.Session;
+import org.apache.sshd.common.session.SessionListener;
 import org.apache.sshd.common.util.io.input.NoCloseInputStream;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
+import org.apache.sshd.core.CoreModuleProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tech.lamprism.lampray.Version;
 import tech.lamprism.lampray.system.console.CommandSpecification;
 import tech.lamprism.lampray.system.console.SimpleCommandOption;
 import tech.lamprism.lampray.system.console.SimpleCommandSpecification;
@@ -36,6 +42,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -43,6 +50,7 @@ import java.util.concurrent.TimeUnit;
  * @author RollW
  */
 public class ConnectShellCommandRunner implements CommandRunner {
+private static final Logger logger = LoggerFactory.getLogger(ConnectShellCommandRunner.class);
 
     public ConnectShellCommandRunner() {
     }
@@ -55,6 +63,15 @@ public class ConnectShellCommandRunner implements CommandRunner {
         String port = (String) context.getArguments().get("--port");
 
         try (SshClient sshClient = SshClient.setUpDefaultClient()) {
+            CoreModuleProperties.CLIENT_IDENTIFICATION.set(sshClient, "LAMPRAY-" + Version.VERSION);
+            sshClient.addSessionListener(new SessionListener() {
+                @Override
+                public void sessionPeerIdentificationReceived(Session session, String version, List<String> extraLines) {
+                    if (!version.startsWith("SSH-2.0-LAMPRAY-")) {
+                        throw new CommandLineRuntimeException("Unsupported Lampray server version, please use a compatible version of Lampray server. ");
+                    }
+                }
+            });
             sshClient.start();
             ClientSession session = sshClient.connect(username, host, Integer.parseInt(port))
                     .verify()
@@ -107,7 +124,6 @@ public class ConnectShellCommandRunner implements CommandRunner {
             outputThread.setDaemon(true);
             outputThread.start();
 
-            // 启动错误输出处理线程
             Thread errorThread = new Thread(() -> {
                 try {
                     byte[] buffer = new byte[1024];

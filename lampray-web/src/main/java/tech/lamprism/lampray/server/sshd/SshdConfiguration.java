@@ -75,6 +75,7 @@ public class SshdConfiguration {
 
         CoreModuleProperties.SERVER_IDENTIFICATION.set(sshd, "LAMPRAY-" + Version.VERSION);
         CoreModuleProperties.CLIENT_IDENTIFICATION.set(sshd, "LAMPRAY-" + Version.VERSION);
+        CoreModuleProperties.SERVER_EXTRA_IDENTIFICATION_LINES.set(sshd, "Lampray SSHD Server");
         return sshd;
     }
 }
