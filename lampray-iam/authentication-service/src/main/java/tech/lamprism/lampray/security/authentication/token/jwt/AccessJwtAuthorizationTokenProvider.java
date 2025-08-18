@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.authentication.token;
+package tech.lamprism.lampray.security.authentication.token.jwt;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;

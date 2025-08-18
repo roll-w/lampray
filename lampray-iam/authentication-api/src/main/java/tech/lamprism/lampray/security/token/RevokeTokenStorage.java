@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tech.lamprism.lampray.security.token
 
-import tech.lamprism.lampray.security.authorization.AuthorizationScope
-import tech.lamprism.lampray.security.authorization.AuthorizationScopeSupplier
+package tech.lamprism.lampray.security.token;
+
+import java.time.OffsetDateTime;
 
 /**
- * Represents the scope for refreshing tokens in the authorization system.
+ * Interface for storage of revoked tokens.
+ * <p>
+ * Token revocation is a part of the security mechanism to block leaked or compromised tokens.
  *
  * @author RollW
  */
-object RefreshTokenAuthorizationScope : AuthorizationScope, AuthorizationScopeSupplier {
-    override val scope: String
-        get() = "token:refresh"
+public interface RevokeTokenStorage {
+    void revokeToken(MetadataAuthorizationToken token);
 
-    override val authorizationScopes: Collection<AuthorizationScope>
-        get() = listOf(this)
+    boolean isTokenRevoked(MetadataAuthorizationToken token);
+
+    void cleanupExpiredRevocations(OffsetDateTime expiredAt);
 }

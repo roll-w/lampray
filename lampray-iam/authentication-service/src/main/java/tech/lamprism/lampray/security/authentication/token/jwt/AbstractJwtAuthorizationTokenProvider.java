@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.authentication.token;
+package tech.lamprism.lampray.security.authentication.token.jwt;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
@@ -69,18 +69,18 @@ import java.util.List;
  * @author RollW
  */
 public abstract class AbstractJwtAuthorizationTokenProvider implements AuthorizationTokenProvider {
-    private static final String SIGN_FIELD = "sign";
-    private static final String SCOPES_FIELD = "scopes";
-    private static final String TOKEN_ID_FIELD = "jti";
-    private static final String TOKEN_TYPE_FIELD = "type";
+    public static final String SIGN_FIELD = "sign";
+    public static final String SCOPES_FIELD = "scopes";
+    public static final String TOKEN_ID_FIELD = "jti";
+    public static final String TOKEN_TYPE_FIELD = "token_type";
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractJwtAuthorizationTokenProvider.class);
 
-    private final ConfigReader configReader;
-    private final AuthorizationScopeProvider authorizationScopeProvider;
-    private final TokenSubjectProvider tokenSubjectProvider;
+    protected final ConfigReader configReader;
+    protected final AuthorizationScopeProvider authorizationScopeProvider;
+    protected final TokenSubjectProvider tokenSubjectProvider;
 
-    private final Key signKey;
+    protected final Key signKey;
 
     public AbstractJwtAuthorizationTokenProvider(ConfigReader configReader,
                                                  AuthorizationScopeProvider authorizationScopeProvider,
@@ -163,12 +163,19 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
                 .claim(SIGN_FIELD, signForToken(tokenSignKey, jwtSubject))
                 .claim(SCOPES_FIELD, scopes)
                 .claim(TOKEN_TYPE_FIELD, tokenType.getValue());
-        buildJwt(jwtBuilder);
+        buildJwt(subject, tokenSignKeyProvider, tokenId, tokenType, expiryDuration, authorizedScopes, tokenFormat, jwtBuilder);
         String token = jwtBuilder.signWith(signKey).compact();
         return new BearerAuthorizationToken(token, tokenType);
     }
 
-    protected void buildJwt(JwtBuilder builder) {
+    protected void buildJwt(@NonNull TokenSubject subject,
+                            @NotNull TokenSignKeyProvider tokenSignKeyProvider,
+                            @NotNull String tokenId,
+                            @NonNull TokenType tokenType,
+                            @NonNull Duration expiryDuration,
+                            @NonNull Collection<? extends AuthorizationScope> authorizedScopes,
+                            @NonNull TokenFormat tokenFormat,
+                            @NonNull JwtBuilder builder) {
         // Default implementation does nothing, subclasses can override to add custom claims
         // or other properties to the JWT.
     }

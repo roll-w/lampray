@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package tech.lamprism.lampray.security.token
 
 import tech.lamprism.lampray.security.authorization.AuthorizationScope
-import tech.lamprism.lampray.security.authorization.AuthorizationScopeSupplier
 
 /**
- * Represents the scope for refreshing tokens in the authorization system.
+ * Represents a refresh token for metadata authorization.
+ *
+ * Refresh token cannot be used to access resources that are not explicitly allowed (except for the refresh operation itself).
  *
  * @author RollW
  */
-object RefreshTokenAuthorizationScope : AuthorizationScope, AuthorizationScopeSupplier {
-    override val scope: String
-        get() = "token:refresh"
+interface RefreshMetadataAuthorizationToken : MetadataAuthorizationToken {
 
-    override val authorizationScopes: Collection<AuthorizationScope>
-        get() = listOf(this)
+    /**
+     * The scopes that are permitted for this token, when use the refresh token to
+     * exchange for a new access token, the new access token will have these scopes
+     * granted by default.
+     */
+    val permittedScopes: List<AuthorizationScope>
 }

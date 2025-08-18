@@ -48,7 +48,7 @@ import tech.lamprism.lampray.security.authentication.adapter.TokenBasedAuthentic
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
 import tech.lamprism.lampray.security.firewall.FirewallFilter;
 import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
-import tech.lamprism.lampray.user.UserSignatureProvider;
+import tech.lamprism.lampray.security.token.TokenSignKeyProvider;
 import tech.lamprism.lampray.web.configuration.compenent.ForwardedHeaderDelegateFilter;
 import tech.lamprism.lampray.web.configuration.compenent.WebDelegateSecurityHandler;
 import tech.lamprism.lampray.web.configuration.filter.ApiContextInitializeFilter;
@@ -153,13 +153,14 @@ public class WebSecurityConfiguration {
 
     @Bean
     public TokenBasedAuthenticationProvider tokenBasedAuthenticationProvider(
+            @Qualifier("accessJwtAuthorizationTokenProvider")
             AuthorizationTokenProvider authorizationTokenProvider,
             PrivilegedUserProvider privilegedUserProvider,
-            UserSignatureProvider userSignatureProvider) {
+            TokenSignKeyProvider tokenSignKeyProvider) {
         return new TokenBasedAuthenticationProvider(
                 authorizationTokenProvider,
                 privilegedUserProvider,
-                userSignatureProvider
+                tokenSignKeyProvider
         );
     }
 

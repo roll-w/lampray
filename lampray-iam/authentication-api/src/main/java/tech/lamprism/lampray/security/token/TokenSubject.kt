@@ -17,6 +17,8 @@
 package tech.lamprism.lampray.security.token
 
 /**
+ * Represents a subject of a token, which can be a user, an application, or any other entity
+ *
  * @author RollW
  */
 interface TokenSubject {
@@ -26,11 +28,27 @@ interface TokenSubject {
 
     val type: SubjectType
 
+    /**
+     * The detail of the subject, which can be any additional information
+     * such as user details, application details, etc.
+     */
     val detail: Any
 
+    /**
+     * The factory interface for creating token subjects.
+     */
     interface Factory {
+        /**
+         * Gets a token subject from the given ID and subject type.
+         */
         fun fromSubject(id: String, subjectType: SubjectType): TokenSubject
 
+        /**
+         * Checks if this factory supports the given subject type.
+         *
+         * @param type The subject type to check.
+         * @return true if this factory supports the subject type, false otherwise.
+         */
         fun supports(type: SubjectType): Boolean
     }
 }

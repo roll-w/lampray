@@ -85,11 +85,6 @@ interface AuthorizationTokenManager {
     fun revokeToken(token: MetadataAuthorizationToken)
 
     /**
-     * Revoke all tokens for a specific subject.
-     */
-    fun revokeTokensForSubject(subject: TokenSubject)
-
-    /**
      * Check if a token is revoked.
      */
     fun isTokenRevoked(token: MetadataAuthorizationToken): Boolean
