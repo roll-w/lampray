@@ -75,7 +75,7 @@ interface AuthorizationTokenManager {
         expiryDuration: Duration = Duration.ofHours(1),
         authorizedScopes: Collection<AuthorizationScope> = emptyList(),
         tokenFormat: TokenFormat = token.tokenFormat
-    ): AuthorizationToken
+    ): MetadataAuthorizationToken
 
     /**
      * Revoke a token, making it invalid for future use.

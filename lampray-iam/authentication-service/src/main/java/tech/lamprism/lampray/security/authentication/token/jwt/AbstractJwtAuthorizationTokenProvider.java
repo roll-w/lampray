@@ -30,7 +30,6 @@ import kotlin.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.lingu.NonNull;
@@ -40,7 +39,6 @@ import tech.lamprism.lampray.security.authorization.AuthorizationScopeProvider;
 import tech.lamprism.lampray.security.token.AuthorizationToken;
 import tech.lamprism.lampray.security.token.AuthorizationTokenConfigKeys;
 import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
-import tech.lamprism.lampray.security.token.BearerAuthorizationToken;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.SimpleMetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.SubjectType;
@@ -107,8 +105,8 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
         throw new IllegalArgumentException("Unsupported key type: " + secretKey.getClass().getName());
     }
 
-    private Date getExpirationDateFromNow(Duration duration) {
-        return new Date(System.currentTimeMillis() + duration.toMillis());
+    private OffsetDateTime getExpirationDateFromNow(Duration duration) {
+        return OffsetDateTime.now().plus(duration);
     }
 
     @SuppressWarnings("UnstableApiUsage")
@@ -141,13 +139,13 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
 
     @Override
     @NonNull
-    public final AuthorizationToken createToken(@NonNull TokenSubject subject,
-                                                @NotNull TokenSignKeyProvider tokenSignKeyProvider,
-                                                @NotNull String tokenId,
-                                                @NonNull TokenType tokenType,
-                                                @NonNull Duration expiryDuration,
-                                                @NonNull Collection<? extends AuthorizationScope> authorizedScopes,
-                                                @NonNull TokenFormat tokenFormat) {
+    public final MetadataAuthorizationToken createToken(@NonNull TokenSubject subject,
+                                                        @NonNull TokenSignKeyProvider tokenSignKeyProvider,
+                                                        @NonNull String tokenId,
+                                                        @NonNull TokenType tokenType,
+                                                        @NonNull Duration expiryDuration,
+                                                        @NonNull Collection<? extends AuthorizationScope> authorizedScopes,
+                                                        @NonNull TokenFormat tokenFormat) {
         String issuer = configReader.get(SecurityConfigKeys.TOKEN_ISSUER);
         String jwtSubject = toSubject(subject);
 
@@ -156,21 +154,27 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
                 .stream()
                 .map(AuthorizationScope::getScope)
                 .toList();
+
+        OffsetDateTime expirationDate = getExpirationDateFromNow(expiryDuration);
         JwtBuilder jwtBuilder = Jwts.builder()
                 .subject(jwtSubject)
-                .expiration(getExpirationDateFromNow(expiryDuration))
+                .expiration(Date.from(expirationDate.toInstant()))
                 .issuer(issuer)
                 .claim(SIGN_FIELD, signForToken(tokenSignKey, jwtSubject))
                 .claim(SCOPES_FIELD, scopes)
                 .claim(TOKEN_TYPE_FIELD, tokenType.getValue());
         buildJwt(subject, tokenSignKeyProvider, tokenId, tokenType, expiryDuration, authorizedScopes, tokenFormat, jwtBuilder);
         String token = jwtBuilder.signWith(signKey).compact();
-        return new BearerAuthorizationToken(token, tokenType);
+        return new SimpleMetadataAuthorizationToken(
+                token, tokenType, subject, tokenId,
+                List.copyOf(authorizedScopes), expirationDate,
+                TokenFormat.BEARER
+        );
     }
 
     protected void buildJwt(@NonNull TokenSubject subject,
-                            @NotNull TokenSignKeyProvider tokenSignKeyProvider,
-                            @NotNull String tokenId,
+                            @NonNull TokenSignKeyProvider tokenSignKeyProvider,
+                            @NonNull String tokenId,
                             @NonNull TokenType tokenType,
                             @NonNull Duration expiryDuration,
                             @NonNull Collection<? extends AuthorizationScope> authorizedScopes,
@@ -183,7 +187,7 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
     @Override
     @NonNull
     public MetadataAuthorizationToken parseToken(@NonNull AuthorizationToken token,
-                                                 @NotNull TokenSignKeyProvider tokenSignKeyProvider) {
+                                                 @NonNull TokenSignKeyProvider tokenSignKeyProvider) {
         if (token instanceof MetadataAuthorizationToken metadataAuthorizationToken) {
             // Already parsed
             return metadataAuthorizationToken;

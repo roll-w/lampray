@@ -22,13 +22,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import tech.lamprism.lampray.security.token.AuthorizationToken;
-import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
+import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.AuthorizationTokenUtils;
 import tech.lamprism.lampray.security.token.BearerAuthorizationToken;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
-import tech.lamprism.lampray.user.UserIdentity;
-import tech.lamprism.lampray.user.UserSignatureProvider;
+import tech.lamprism.lampray.security.token.TokenFormat;
+import tech.lamprism.lampray.security.token.TokenSignKeyProvider;
+import tech.lamprism.lampray.security.token.TokenType;
 import tech.lamprism.lampray.web.controller.auth.model.RefreshTokenRequest;
 import tech.rollw.common.web.HttpResponseEntity;
 
@@ -41,42 +41,36 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/auth/")
 public class AuthTokenController {
-    private final AuthorizationTokenProvider authorizationTokenProvider;
-    private final UserSignatureProvider userSignatureProvider;
+    private final AuthorizationTokenManager authorizationTokenManager;
+    private final TokenSignKeyProvider tokenSignKeyProvider;
 
-    public AuthTokenController(AuthorizationTokenProvider authorizationTokenProvider,
-                               UserSignatureProvider userSignatureProvider) {
-        this.authorizationTokenProvider = authorizationTokenProvider;
-        this.userSignatureProvider = userSignatureProvider;
+    public AuthTokenController(AuthorizationTokenManager authorizationTokenManager,
+                               TokenSignKeyProvider tokenSignKeyProvider) {
+        this.authorizationTokenManager = authorizationTokenManager;
+        this.tokenSignKeyProvider = tokenSignKeyProvider;
     }
 
     // TODO: support refresh token
     @PostMapping("/token:refresh")
     public HttpResponseEntity<String> refreshToken(
             @RequestBody RefreshTokenRequest refreshTokenRequest) {
-        MetadataAuthorizationToken metadataAuthorizationToken = authorizationTokenProvider.parseToken(
-                new BearerAuthorizationToken(refreshTokenRequest.getRefreshToken()),
-                userSignatureProvider
-        );
-        UserIdentity userIdentity = metadataAuthorizationToken.getSubject();
-        AuthorizationToken token = authorizationTokenProvider.createToken(
-                userIdentity,
-                userSignatureProvider,
-                Duration.ofDays(7),
-                List.of()
+        MetadataAuthorizationToken exchangedToken = authorizationTokenManager.exchangeToken(
+                new BearerAuthorizationToken(refreshTokenRequest.getRefreshToken(), TokenType.REFRESH),
+                tokenSignKeyProvider, TokenType.ACCESS, Duration.ofHours(1),
+                List.of(), TokenFormat.BEARER
         );
         return HttpResponseEntity.success(
-                AuthorizationTokenUtils.toHeaderValue(token)
+                AuthorizationTokenUtils.toHeaderValue(exchangedToken)
         );
     }
 
     @GetMapping("/token:verify")
     public HttpResponseEntity<Void> verifyToken(
             @RequestParam String token) {
-        MetadataAuthorizationToken metadataAuthorizationToken = authorizationTokenProvider.parseToken(
-                new BearerAuthorizationToken(token),
-                userSignatureProvider
-        );
+//        MetadataAuthorizationToken metadataAuthorizationToken = authorizationTokenProvider.parseToken(
+//                new BearerAuthorizationToken(token),
+//                userSignatureProvider
+//        );
         return HttpResponseEntity.success();
     }
 }

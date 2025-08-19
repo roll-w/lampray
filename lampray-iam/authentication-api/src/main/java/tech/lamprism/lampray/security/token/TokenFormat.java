@@ -33,12 +33,7 @@ public enum TokenFormat {
     /**
      * Basic token format (Authorization: Basic &lt;base64-encoded-credentials&gt;)
      */
-    BASIC("Basic"),
-
-    /**
-     * Custom token format
-     */
-    CUSTOM("Custom");
+    BASIC("Basic");
 
     private final String value;
 

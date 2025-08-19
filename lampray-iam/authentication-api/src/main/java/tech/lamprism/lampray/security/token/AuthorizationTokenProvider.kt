@@ -45,7 +45,7 @@ interface AuthorizationTokenProvider {
         expiryDuration: Duration = Duration.ofDays(1),
         authorizedScopes: Collection<AuthorizationScope> = emptyList(),
         tokenFormat: TokenFormat = TokenFormat.BEARER
-    ): AuthorizationToken
+    ): MetadataAuthorizationToken
 
     /**
      * Parse the token to get the user identity.
@@ -57,6 +57,7 @@ interface AuthorizationTokenProvider {
      */
     @Throws(AuthenticationException::class)
     fun parseToken(
+        // TODO: support parse unknown token type
         token: AuthorizationToken,
         tokenSignKeyProvider: TokenSignKeyProvider
     ): MetadataAuthorizationToken

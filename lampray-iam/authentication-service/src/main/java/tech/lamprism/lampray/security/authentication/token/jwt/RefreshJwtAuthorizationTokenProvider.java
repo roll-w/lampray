@@ -62,11 +62,9 @@ public class RefreshJwtAuthorizationTokenProvider extends AbstractJwtAuthorizati
                             @NonNull JwtBuilder builder) {
         builder.claim(SCOPES_FIELD, List.of(RefreshTokenAuthorizationScope.INSTANCE.getScope()));
         builder.claim(TOKEN_ID_FIELD, tokenId);
-        if (tokenType == TokenType.REFRESH) {
-            builder.claim(PERMITTED_SCOPES_FIELD, authorizedScopes.stream()
-                    .map(AuthorizationScope::getScope)
-                    .toList());
-        }
+        builder.claim(PERMITTED_SCOPES_FIELD, authorizedScopes.stream()
+                .map(AuthorizationScope::getScope)
+                .toList());
     }
 
     @Override

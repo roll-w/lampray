@@ -70,7 +70,7 @@ class AuthorizationTokenManagerImpl(
         expiryDuration: Duration,
         authorizedScopes: Collection<AuthorizationScope>,
         tokenFormat: TokenFormat
-    ): AuthorizationToken {
+    ): MetadataAuthorizationToken {
         val parseToken = findAuthorizationTokenProvider(token.tokenType)
             .parseToken(token, tokenSignKeyProvider)
         // TODO: support other token types in exchange

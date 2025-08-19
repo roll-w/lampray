@@ -25,7 +25,7 @@ import tech.lamprism.lampray.security.authorization.PrivilegedUser;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
 import tech.lamprism.lampray.security.authorization.adapter.PrivilegedUserAuthenticationToken;
 import tech.lamprism.lampray.security.token.AuthorizationToken;
-import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
+import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.SimpleAuthorizationToken;
 import tech.lamprism.lampray.security.token.TokenFormat;
@@ -40,16 +40,16 @@ import tech.rollw.common.web.CommonRuntimeException;
 public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthenticationProvider {
     private static final Logger logger = LoggerFactory.getLogger(TokenBasedAuthenticationProvider.class);
 
-    private final AuthorizationTokenProvider authorizationTokenProvider;
+    private final AuthorizationTokenManager authorizationTokenManager;
     private final PrivilegedUserProvider privilegedUserProvider;
     private final TokenSignKeyProvider tokenSignKeyProvider;
 
     public TokenBasedAuthenticationProvider(
-            AuthorizationTokenProvider authorizationTokenProvider,
+            AuthorizationTokenManager authorizationTokenManager,
             PrivilegedUserProvider privilegedUserProvider,
             TokenSignKeyProvider tokenSignKeyProvider
     ) {
-        this.authorizationTokenProvider = authorizationTokenProvider;
+        this.authorizationTokenManager = authorizationTokenManager;
         this.privilegedUserProvider = privilegedUserProvider;
         this.tokenSignKeyProvider = tokenSignKeyProvider;
     }
@@ -62,9 +62,9 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         TokenBasedAuthenticationToken tokenBasedAuthenticationToken = (TokenBasedAuthenticationToken) authentication;
-        AuthorizationToken token = parseToken(tokenBasedAuthenticationToken.getCredentials());
+        AuthorizationToken token = parseCredentials(tokenBasedAuthenticationToken.getCredentials());
         try {
-            MetadataAuthorizationToken authorizationToken = authorizationTokenProvider.parseToken(
+            MetadataAuthorizationToken authorizationToken = authorizationTokenManager.parseToken(
                     token, tokenSignKeyProvider);
             TokenSubject subject = authorizationToken.getSubject();
             return switch (subject.getType()) {
@@ -85,7 +85,7 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
         }
     }
 
-    private AuthorizationToken parseToken(String credentials) {
+    private AuthorizationToken parseCredentials(String credentials) {
         // Parse header, format like: "<Type> <Token>"
         int index = credentials.indexOf(' ');
         if (index < 0) {
