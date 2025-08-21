@@ -20,6 +20,7 @@ import space.lingu.NonNull;
 import tech.lamprism.lampray.user.UserSignatureProvider;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 
 /**
@@ -42,6 +43,6 @@ public class DelegateTokenSignKeyProvider implements TokenSignKeyProvider {
         if (signature == null) {
             throw new InvalidTokenException("User signature not found for user ID: " + tokenSubject.getId());
         }
-        return new SecretKeySpec(signature.getBytes(), "HmacSHA256");
+        return new SecretKeySpec(signature.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     }
 }

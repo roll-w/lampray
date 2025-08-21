@@ -24,12 +24,11 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.JwtParserBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SecurityException;
 import kotlin.Pair;
 import org.apache.commons.lang3.StringUtils;
-import org.bouncycastle.asn1.ASN1BitString;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.lingu.NonNull;
@@ -56,6 +55,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -93,16 +93,25 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
         return AuthorizationTokenConfigKeys.parseSecretKey(configReader);
     }
 
-    private Key getVerifyKey(Key secretKey) {
+    private PublicKey getPublicKey(Key secretKey) {
         if (secretKey instanceof SecretKey) {
-            return secretKey;
+            throw new IllegalArgumentException("SecretKey cannot be used as a public key");
         }
-        if (secretKey instanceof PrivateKey privateKey) {
-            PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(privateKey.getEncoded());
-            ASN1BitString publicKeyData = privateKeyInfo.getPublicKeyData();
+        if (!(secretKey instanceof PrivateKey privateKey)) {
+            throw new IllegalArgumentException("Key must be a PrivateKey to derive a public key");
+        }
+        try {
+            return KeyUtils.derivePublicKey(privateKey);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    private JwtParserBuilder verifyWith(JwtParserBuilder jwtParserBuilder, Key signKey) {
+        if (signKey instanceof SecretKey secretKey) {
+            return jwtParserBuilder.verifyWith(secretKey);
         }
-        throw new IllegalArgumentException("Unsupported key type: " + secretKey.getClass().getName());
+        return jwtParserBuilder.verifyWith(getPublicKey(signKey));
     }
 
     private OffsetDateTime getExpirationDateFromNow(Duration duration) {
@@ -160,8 +169,9 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
                 .subject(jwtSubject)
                 .expiration(Date.from(expirationDate.toInstant()))
                 .issuer(issuer)
-                .claim(SIGN_FIELD, signForToken(tokenSignKey, jwtSubject))
+                .claim(SIGN_FIELD, signForToken(tokenSignKey, toSignPayload(subject, tokenId)))
                 .claim(SCOPES_FIELD, scopes)
+                .claim(TOKEN_ID_FIELD, tokenId)
                 .claim(TOKEN_TYPE_FIELD, tokenType.getValue());
         buildJwt(subject, tokenSignKeyProvider, tokenId, tokenType, expiryDuration, authorizedScopes, tokenFormat, jwtBuilder);
         String token = jwtBuilder.signWith(signKey).compact();
@@ -195,8 +205,8 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
 
         String rawToken = token.getToken();
         try {
-            Jws<Claims> jws = Jwts.parser()
-                    .verifyWith((SecretKey) signKey)
+            JwtParserBuilder parserBuilder = Jwts.parser();
+            Jws<Claims> jws = verifyWith(parserBuilder, signKey)
                     .build()
                     .parseSignedClaims(rawToken);
             Claims claims = jws.getPayload();
@@ -207,12 +217,10 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
             String sign = claims.get(SIGN_FIELD, String.class);
             String tokenId = claims.get(TOKEN_ID_FIELD, String.class);
 
-            String payload = subject + ":" + tokenId;
-
             // Two steps validation, when a user changes the password,
             // the signature associated with the user will be changed,
             // so the previous token will be invalid.
-            if (!validateSign(tokenSignKey, payload, sign)) {
+            if (!validateSign(tokenSignKey, toSignPayload(tokenSubject, tokenId), sign)) {
                 throw new AuthenticationException(AuthErrorCode.ERROR_INVALID_TOKEN, "invalid sign");
             }
             TokenType tokenType = TokenType.fromValue(claims.get(TOKEN_TYPE_FIELD, String.class));
@@ -252,6 +260,10 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
 
     private String toSubject(TokenSubject tokenSubject) {
         return tokenSubject.getType().getValue() + ":" + tokenSubject.getId();
+    }
+
+    private String toSignPayload(TokenSubject tokenSubject, String tokenId) {
+        return toSubject(tokenSubject) + ":" + tokenId;
     }
 
     private Pair<String, SubjectType> parseSubject(String subject) {

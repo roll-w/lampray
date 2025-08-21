@@ -28,7 +28,15 @@ import java.time.Duration
  */
 interface AuthorizationTokenManager {
     /**
-     * Create a token with specified type (generic method).
+     * Create a token with specified type and format.
+     *
+     * @param subject The subject of the token, which can be a user or a service.
+     * @param tokenSignKeyProvider The signature provider to sign the token.
+     * @param tokenType The type of the token (e.g., ACCESS, REFRESH).
+     * @param expiryDuration The expiry duration of the token from now.
+     * @param authorizedScopes The authorized scopes of the token. If empty, no scopes are authorized.
+     * @param tokenFormat The format of the token (Bearer, Basic, etc.).
+     * @return The created token with metadata.
      */
     fun createToken(
         subject: TokenSubject,

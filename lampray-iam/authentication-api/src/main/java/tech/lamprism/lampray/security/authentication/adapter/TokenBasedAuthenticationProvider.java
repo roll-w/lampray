@@ -75,10 +75,8 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
                     check(privilegedUser);
                     yield new PrivilegedUserAuthenticationToken(privilegedUser);
                 }
-                case GROUP, APPLICATION, default -> {
-                    // TODO: Group, Application subject type was not yet supported
-                    throw new BadCredentialsException("Not support subject type.");
-                }
+                case GROUP, APPLICATION -> // TODO: Group, Application subject type was not yet supported
+                        throw new BadCredentialsException("Not support subject type.");
             };
         } catch (CommonRuntimeException e) {
             throw new TokenAuthenticationException(e);
