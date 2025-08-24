@@ -66,10 +66,10 @@ import java.util.List;
  * @author RollW
  */
 public abstract class AbstractJwtAuthorizationTokenProvider implements AuthorizationTokenProvider {
-    public static final String SIGN_FIELD = "sign";
-    public static final String SCOPES_FIELD = "scopes";
-    public static final String TOKEN_ID_FIELD = "jti";
-    public static final String TOKEN_TYPE_FIELD = "token_type";
+    public static final String FIELD_SIGN = "sign";
+    public static final String FIELD_AUTHORIZED_SCOPES = "authorized_scopes";
+    public static final String FIELD_TOKEN_ID = "sid";
+    public static final String FIELD_TOKEN_TYPE = "token_type";
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractJwtAuthorizationTokenProvider.class);
 
@@ -170,10 +170,10 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
                 .claim("auth_time", now)
                 .expiration(Date.from(expirationDate.toInstant()))
                 .issuer(issuer)
-                .claim(SIGN_FIELD, signForToken(tokenSignKey, toSignPayload(subject, tokenId)))
-                .claim(SCOPES_FIELD, scopes)
-                .claim(TOKEN_ID_FIELD, tokenId)
-                .claim(TOKEN_TYPE_FIELD, tokenType.getValue());
+                .claim(FIELD_SIGN, signForToken(tokenSignKey, toSignPayload(subject, tokenId)))
+                .claim(FIELD_AUTHORIZED_SCOPES, scopes)
+                .claim(FIELD_TOKEN_ID, tokenId)
+                .claim(FIELD_TOKEN_TYPE, tokenType.getValue());
         buildJwt(subject, tokenSubjectSignKeyProvider, tokenId, tokenType, expiryDuration, authorizedScopes, jwtBuilder);
         String token = jwtBuilder.signWith(signKey).compact();
         return new SimpleMetadataAuthorizationToken(
@@ -213,8 +213,8 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
             Pair<String, SubjectType> parsedSubject = parseSubject(subject);
             TokenSubject tokenSubject = tokenSubjectProvider.getTokenSubject(parsedSubject.getFirst(), parsedSubject.getSecond());
             Key tokenSignKey = tokenSubjectSignKeyProvider.getSignKey(tokenSubject);
-            String sign = claims.get(SIGN_FIELD, String.class);
-            String tokenId = claims.get(TOKEN_ID_FIELD, String.class);
+            String sign = claims.get(FIELD_SIGN, String.class);
+            String tokenId = claims.get(FIELD_TOKEN_ID, String.class);
 
             // Two steps validation, when a user changes the password,
             // the signature associated with the user will be changed,
@@ -222,11 +222,11 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
             if (!validateSign(tokenSignKey, toSignPayload(tokenSubject, tokenId), sign)) {
                 throw new AuthenticationException(AuthErrorCode.ERROR_INVALID_TOKEN, "invalid sign");
             }
-            TokenType tokenType = TokenType.fromValue(claims.get(TOKEN_TYPE_FIELD, String.class));
+            TokenType tokenType = TokenType.fromValue(claims.get(FIELD_TOKEN_TYPE, String.class));
             if (tokenType == null) {
                 throw new AuthenticationException(AuthErrorCode.ERROR_INVALID_TOKEN, "invalid token type");
             }
-            List<String> scopes = claims.get(SCOPES_FIELD, List.class);
+            List<String> scopes = claims.get(FIELD_AUTHORIZED_SCOPES, List.class);
             List<AuthorizationScope> authorizationScopes = authorizationScopeProvider.findScopes(scopes);
             OffsetDateTime expirationTime = OffsetDateTime.ofInstant(claims.getExpiration().toInstant(), ZoneOffset.UTC);
             return constructMetadataAuthorizationToken(token, tokenType, tokenSubject, tokenId, authorizationScopes, expirationTime, jws);

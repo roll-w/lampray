@@ -168,7 +168,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
     private static SecretKey generateRandomKey(@NonNull ConfigReader configReader) {
         try {
             String algorithmConfig = configReader.get(TOKEN_KEY_ALGORITHM);
-            String algorithm = extractHmacAlgorithm(algorithmConfig != null ? algorithmConfig : "HmacSHA256");
+            String algorithm = algorithmConfig != null ? algorithmConfig : "HmacSHA256";
             KeyGenerator keyGenerator = KeyGenerator.getInstance(algorithm);
             keyGenerator.init(256, new SecureRandom());
             return keyGenerator.generateKey();
@@ -206,18 +206,11 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
         try {
             byte[] keyBytes = Base64.getDecoder().decode(keyContent.trim());
             String algorithmConfig = configReader.get(TOKEN_KEY_ALGORITHM);
-            String algorithm = extractHmacAlgorithm(algorithmConfig != null ? algorithmConfig : "HmacSHA256");
+            String algorithm = algorithmConfig != null ? algorithmConfig : "HmacSHA256";
             return new SecretKeySpec(keyBytes, algorithm);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Failed to parse secret key from base64 format", e);
         }
-    }
-
-    /**
-     * Extracts the HMAC algorithm name from the full algorithm string.
-     */
-    private static String extractHmacAlgorithm(String algorithm) {
-        return algorithm.startsWith("Hmac") ? algorithm : "Hmac" + algorithm;
     }
 
     /**

@@ -43,7 +43,7 @@ import java.util.List;
  */
 @Service
 public class RefreshJwtAuthorizationTokenProvider extends AbstractJwtAuthorizationTokenProvider {
-    public static final String PERMITTED_SCOPES_FIELD = "permitted_scopes";
+    public static final String FIELD_PERMITTED_SCOPES = "permitted_scopes";
 
     public RefreshJwtAuthorizationTokenProvider(ConfigReader configReader, AuthorizationScopeProvider authorizationScopeProvider,
                                                 TokenSubjectProvider tokenSubjectProvider) {
@@ -58,9 +58,12 @@ public class RefreshJwtAuthorizationTokenProvider extends AbstractJwtAuthorizati
                             @NonNull Duration expiryDuration,
                             @NonNull Collection<? extends AuthorizationScope> authorizedScopes,
                             @NonNull JwtBuilder builder) {
-        builder.claim(SCOPES_FIELD, List.of(RefreshTokenAuthorizationScope.INSTANCE.getScope()));
-        builder.claim(TOKEN_ID_FIELD, tokenId);
-        builder.claim(PERMITTED_SCOPES_FIELD, authorizedScopes.stream()
+        // To avoid using refresh token to access resources, the authorized scopes of
+        // refresh token only contains the scope of refresh token. The permitted scopes
+        // contains the scopes that the access token can have.
+        builder.claim(FIELD_AUTHORIZED_SCOPES, List.of(RefreshTokenAuthorizationScope.INSTANCE.getScope()));
+        builder.claim(FIELD_TOKEN_ID, tokenId);
+        builder.claim(FIELD_PERMITTED_SCOPES, authorizedScopes.stream()
                 .map(AuthorizationScope::getScope)
                 .toList());
     }
@@ -75,7 +78,7 @@ public class RefreshJwtAuthorizationTokenProvider extends AbstractJwtAuthorizati
             @NonNull OffsetDateTime expirationTime,
             @NonNull Jws<Claims> jws) {
         Claims payload = jws.getPayload();
-        List<String> permittedScopes = payload.get(PERMITTED_SCOPES_FIELD, List.class);
+        List<String> permittedScopes = payload.get(FIELD_PERMITTED_SCOPES, List.class);
         List<AuthorizationScope> permittedAuthorizationScopes = authorizationScopeProvider.findScopes(permittedScopes);
         return new SimpleRefreshMetadataAuthorizationToken(
                 token, subject, tokenId, authorizedScopes,
