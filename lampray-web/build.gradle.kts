@@ -51,7 +51,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-quartz")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-cache")
-    implementation(libs.caffeine)
+    implementation("com.github.ben-manes.caffeine:caffeine")
     implementation("com.mysql:mysql-connector-j")
     kapt("org.springframework.boot:spring-boot-configuration-processor")
     implementation("com.zaxxer:HikariCP")
