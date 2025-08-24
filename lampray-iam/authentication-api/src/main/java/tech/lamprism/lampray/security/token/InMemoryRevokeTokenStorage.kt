@@ -20,11 +20,11 @@ import java.time.OffsetDateTime
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * In-memory implementation of RevokeTokenStorage for development and testing.
+ * In-memory implementation of [RevokeTokenStorage].
  *
  * @author RollW
  */
-class InMemoryTokenRevokeStorage : RevokeTokenStorage {
+class InMemoryRevokeTokenStorage : RevokeTokenStorage {
     private val revokedTokens = ConcurrentHashMap<String, OffsetDateTime>()
 
     override fun cleanupExpiredRevocations(expireAt: OffsetDateTime) {

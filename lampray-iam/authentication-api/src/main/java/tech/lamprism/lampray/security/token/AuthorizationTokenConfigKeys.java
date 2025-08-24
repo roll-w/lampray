@@ -91,6 +91,8 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                     .build();
 
     public static final AttributedSettingSpecification<String, String> TOKEN_SECRET_KEY =
+            // TODO: support generation of RSA/ECDSA key pairs
+            // TODO: support rotation of keys
             new SettingSpecificationBuilder<>(SettingKey.ofString("token.authorization.sign-key.secret-key"))
                     .setDefaultValue(RANDOM)
                     .setTextDescription("""
@@ -100,10 +102,10 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                             - For 'keypair' type: PEM-encoded private key
                             
                             Special values:
-                            - '[random]': Generates a new random key on each startup (development only)
+                            - '[random]': Generates a new random secret key on each startup (development only)
                             
                             Key source formats:
-                            - Direct value: 'key-value:<base64-secret>' or 'key-value:<pem-private-key>'
+                            - Direct value: 'memory:<base64-secret>' or 'memory:<pem-private-key>'
                             - File reference: 'file:<path-to-key-file>'
                             
                             Note: Random keys are not suitable for production as they invalidate
@@ -117,8 +119,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
             new SettingSpecificationBuilder<>(SettingKey.ofString("token.authorization.sign-key.algorithm"))
                     .setDefaultValue("HmacSHA256")
                     .setTextDescription("The cryptographic algorithm for token signing. " +
-                            "Commonly used: HmacSHA256, HmacSHA384, HmacSHA512 for secret keys. " +
-                            "This setting is ignored when using keypair signing.")
+                            "Commonly used: HmacSHA256, HmacSHA384, HmacSHA512 for secret keys.")
                     .setSupportedSources(SettingSource.VALUES)
                     .setAllowAnyValue(true)
                     .setRequired(true)
@@ -228,11 +229,11 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
         }
 
         if (value.startsWith("file:")) {
-            return readFromFile(value.substring(5).trim());
+            return readFromFile(value.substring("file:".length()).trim());
         }
 
-        if (value.startsWith("key-value:")) {
-            return value.substring(10).trim();
+        if (value.startsWith("memory:")) {
+            return value.substring("memory:".length()).trim();
         }
 
         // Direct value

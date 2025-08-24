@@ -25,7 +25,7 @@ import java.util.UUID
 /**
  * @author RollW
  */
-class AuthorizationTokenManagerImpl(
+class AuthorizationTokenManagerService(
     private val authorizationTokenProviders: List<AuthorizationTokenProvider>,
     private val revokeTokenStorage: RevokeTokenStorage
 ) : AuthorizationTokenManager {
@@ -41,38 +41,36 @@ class AuthorizationTokenManagerImpl(
 
     override fun createToken(
         subject: TokenSubject,
-        tokenSignKeyProvider: TokenSignKeyProvider,
+        tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider,
         tokenType: TokenType,
         expiryDuration: Duration,
-        authorizedScopes: Collection<AuthorizationScope>,
-        tokenFormat: TokenFormat
+        authorizedScopes: Collection<AuthorizationScope>
     ): AuthorizationToken {
         val tokenId = UUID.randomUUID().toString()
         val authorizationToken = findAuthorizationTokenProvider(tokenType).createToken(
-            subject, tokenSignKeyProvider, tokenId,
-            tokenType, expiryDuration, authorizedScopes, tokenFormat
+            subject, tokenSubjectSignKeyProvider, tokenId,
+            tokenType, expiryDuration, authorizedScopes
         )
         return authorizationToken
     }
 
     override fun parseToken(
         token: AuthorizationToken,
-        tokenSignKeyProvider: TokenSignKeyProvider
+        tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider
     ): MetadataAuthorizationToken {
         val provider = findAuthorizationTokenProvider(token.tokenType)
-        return provider.parseToken(token, tokenSignKeyProvider)
+        return provider.parseToken(token, tokenSubjectSignKeyProvider)
     }
 
     override fun exchangeToken(
         token: AuthorizationToken,
-        tokenSignKeyProvider: TokenSignKeyProvider,
+        tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider,
         newTokenType: TokenType,
         expiryDuration: Duration,
-        authorizedScopes: Collection<AuthorizationScope>,
-        tokenFormat: TokenFormat
+        authorizedScopes: Collection<AuthorizationScope>
     ): MetadataAuthorizationToken {
         val parseToken = findAuthorizationTokenProvider(token.tokenType)
-            .parseToken(token, tokenSignKeyProvider)
+            .parseToken(token, tokenSubjectSignKeyProvider)
         // TODO: support other token types in exchange
         if (parseToken.tokenType != TokenType.REFRESH) {
             throw AuthenticationException(AuthErrorCode.ERROR_INVALID_TOKEN, "Only refresh tokens can be exchanged.")
@@ -83,11 +81,44 @@ class AuthorizationTokenManagerImpl(
                 "The token has been revoked and cannot be exchanged."
             )
         }
+        val originalScopes = parseToken.getScopes()
+        val targetScopes = if (authorizedScopes.isEmpty()) {
+            originalScopes
+        } else {
+            if (!checkScopes(originalScopes, authorizedScopes)) {
+                throw AuthenticationException(
+                    AuthErrorCode.ERROR_INVALID_TOKEN,
+                    "The authorized scopes are not a subset of the original token's scopes."
+                )
+            }
+            authorizedScopes
+        }
+
         val newToken = findAuthorizationTokenProvider(newTokenType).createToken(
-            parseToken.subject, tokenSignKeyProvider, parseToken.tokenId,
-            newTokenType, expiryDuration, authorizedScopes, tokenFormat
+            parseToken.subject, tokenSubjectSignKeyProvider, parseToken.tokenId,
+            newTokenType, expiryDuration, targetScopes
         )
         return newToken
+    }
+
+    private fun MetadataAuthorizationToken.getScopes(): List<AuthorizationScope> {
+        if (this is RefreshMetadataAuthorizationToken) {
+            return permittedScopes
+        }
+        return scopes
+    }
+
+
+    private fun checkScopes(
+        tokenScopes: Collection<AuthorizationScope>,
+        requiredScopes: Collection<AuthorizationScope>
+    ): Boolean {
+        if (requiredScopes.isEmpty()) {
+            return true
+        }
+        // TODO: support scope hierarchy
+        val tokenScopeSet = tokenScopes.map { it.scope }.toSet()
+        return requiredScopes.all { it.scope in tokenScopeSet }
     }
 
     override fun revokeToken(token: MetadataAuthorizationToken) {

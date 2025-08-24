@@ -16,16 +16,11 @@
 
 package tech.lamprism.lampray.security.token
 
+import java.security.Key
+
 /**
- * Bearer format authorization token implementation.
- *
  * @author RollW
  */
-data class BearerAuthorizationToken(
-    override val token: String,
-    override val tokenType: TokenType = TokenType.ACCESS
-) : AuthorizationToken {
-
-    override val tokenFormat: TokenFormat
-        get() = TokenFormat.BEARER
+interface TokenSubjectSignKeyProvider {
+    fun getSignKey(tokenSubject: TokenSubject): Key
 }

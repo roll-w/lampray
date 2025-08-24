@@ -41,10 +41,9 @@ import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.SimpleMetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.SubjectType;
-import tech.lamprism.lampray.security.token.TokenFormat;
-import tech.lamprism.lampray.security.token.TokenSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenSubject;
 import tech.lamprism.lampray.security.token.TokenSubjectProvider;
+import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenType;
 import tech.lamprism.lampray.setting.ConfigReader;
 import tech.rollw.common.web.AuthErrorCode;
@@ -149,46 +148,46 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
     @Override
     @NonNull
     public final MetadataAuthorizationToken createToken(@NonNull TokenSubject subject,
-                                                        @NonNull TokenSignKeyProvider tokenSignKeyProvider,
+                                                        @NonNull TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider,
                                                         @NonNull String tokenId,
                                                         @NonNull TokenType tokenType,
                                                         @NonNull Duration expiryDuration,
-                                                        @NonNull Collection<? extends AuthorizationScope> authorizedScopes,
-                                                        @NonNull TokenFormat tokenFormat) {
+                                                        @NonNull Collection<? extends AuthorizationScope> authorizedScopes) {
         String issuer = configReader.get(SecurityConfigKeys.TOKEN_ISSUER);
         String jwtSubject = toSubject(subject);
 
-        Key tokenSignKey = tokenSignKeyProvider.getSignKey(subject);
+        Key tokenSignKey = tokenSubjectSignKeyProvider.getSignKey(subject);
         List<String> scopes = authorizedScopes
                 .stream()
                 .map(AuthorizationScope::getScope)
                 .toList();
 
         OffsetDateTime expirationDate = getExpirationDateFromNow(expiryDuration);
+        Date now = new Date();
         JwtBuilder jwtBuilder = Jwts.builder()
                 .subject(jwtSubject)
+                .issuedAt(now)
+                .claim("auth_time", now)
                 .expiration(Date.from(expirationDate.toInstant()))
                 .issuer(issuer)
                 .claim(SIGN_FIELD, signForToken(tokenSignKey, toSignPayload(subject, tokenId)))
                 .claim(SCOPES_FIELD, scopes)
                 .claim(TOKEN_ID_FIELD, tokenId)
                 .claim(TOKEN_TYPE_FIELD, tokenType.getValue());
-        buildJwt(subject, tokenSignKeyProvider, tokenId, tokenType, expiryDuration, authorizedScopes, tokenFormat, jwtBuilder);
+        buildJwt(subject, tokenSubjectSignKeyProvider, tokenId, tokenType, expiryDuration, authorizedScopes, jwtBuilder);
         String token = jwtBuilder.signWith(signKey).compact();
         return new SimpleMetadataAuthorizationToken(
                 token, tokenType, subject, tokenId,
-                List.copyOf(authorizedScopes), expirationDate,
-                TokenFormat.BEARER
+                List.copyOf(authorizedScopes), expirationDate
         );
     }
 
     protected void buildJwt(@NonNull TokenSubject subject,
-                            @NonNull TokenSignKeyProvider tokenSignKeyProvider,
+                            @NonNull TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider,
                             @NonNull String tokenId,
                             @NonNull TokenType tokenType,
                             @NonNull Duration expiryDuration,
                             @NonNull Collection<? extends AuthorizationScope> authorizedScopes,
-                            @NonNull TokenFormat tokenFormat,
                             @NonNull JwtBuilder builder) {
         // Default implementation does nothing, subclasses can override to add custom claims
         // or other properties to the JWT.
@@ -197,7 +196,7 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
     @Override
     @NonNull
     public MetadataAuthorizationToken parseToken(@NonNull AuthorizationToken token,
-                                                 @NonNull TokenSignKeyProvider tokenSignKeyProvider) {
+                                                 @NonNull TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider) {
         if (token instanceof MetadataAuthorizationToken metadataAuthorizationToken) {
             // Already parsed
             return metadataAuthorizationToken;
@@ -213,7 +212,7 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
             String subject = claims.getSubject();
             Pair<String, SubjectType> parsedSubject = parseSubject(subject);
             TokenSubject tokenSubject = tokenSubjectProvider.getTokenSubject(parsedSubject.getFirst(), parsedSubject.getSecond());
-            Key tokenSignKey = tokenSignKeyProvider.getSignKey(tokenSubject);
+            Key tokenSignKey = tokenSubjectSignKeyProvider.getSignKey(tokenSubject);
             String sign = claims.get(SIGN_FIELD, String.class);
             String tokenId = claims.get(TOKEN_ID_FIELD, String.class);
 

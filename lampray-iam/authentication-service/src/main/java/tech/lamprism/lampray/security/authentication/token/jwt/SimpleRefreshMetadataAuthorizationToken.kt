@@ -19,7 +19,6 @@ package tech.lamprism.lampray.security.authentication.token.jwt
 import tech.lamprism.lampray.security.authorization.AuthorizationScope
 import tech.lamprism.lampray.security.token.AuthorizationToken
 import tech.lamprism.lampray.security.token.RefreshMetadataAuthorizationToken
-import tech.lamprism.lampray.security.token.TokenFormat
 import tech.lamprism.lampray.security.token.TokenSubject
 import tech.lamprism.lampray.security.token.TokenType
 import java.time.OffsetDateTime
@@ -35,7 +34,6 @@ data class SimpleRefreshMetadataAuthorizationToken(
     override val scopes: List<AuthorizationScope>,
     override val permittedScopes: List<AuthorizationScope>,
     override val expirationAt: OffsetDateTime,
-    override val tokenFormat: TokenFormat
 ) : RefreshMetadataAuthorizationToken {
 
     constructor(
@@ -48,7 +46,6 @@ data class SimpleRefreshMetadataAuthorizationToken(
     ) : this(
         token = authorizationToken.token,
         tokenType = authorizationToken.tokenType,
-        tokenFormat = authorizationToken.tokenFormat,
         tokenId = tokenId,
         expirationAt = expirationTime,
         subject = subject,

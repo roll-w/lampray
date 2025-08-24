@@ -22,6 +22,5 @@ package tech.lamprism.lampray.security.token
 data class SimpleAuthorizationToken(
     override val token: String,
     override val tokenType: TokenType,
-    override val tokenFormat: TokenFormat
 ) : AuthorizationToken {
 }

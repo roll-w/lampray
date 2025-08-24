@@ -21,8 +21,7 @@ import tech.rollw.common.web.system.AuthenticationException
 import java.time.Duration
 
 /**
- * Enhanced authorization token manager that supports different token types
- * and clear separation between transport format and functional type.
+ * Manages the creation, parsing, exchange, and revocation of authorization tokens.
  *
  * @author RollW
  */
@@ -31,34 +30,32 @@ interface AuthorizationTokenManager {
      * Create a token with specified type and format.
      *
      * @param subject The subject of the token, which can be a user or a service.
-     * @param tokenSignKeyProvider The signature provider to sign the token.
+     * @param tokenSubjectSignKeyProvider The signature provider to sign the token.
      * @param tokenType The type of the token (e.g., ACCESS, REFRESH).
      * @param expiryDuration The expiry duration of the token from now.
      * @param authorizedScopes The authorized scopes of the token. If empty, no scopes are authorized.
-     * @param tokenFormat The format of the token (Bearer, Basic, etc.).
      * @return The created token with metadata.
      */
     fun createToken(
         subject: TokenSubject,
-        tokenSignKeyProvider: TokenSignKeyProvider,
+        tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider,
         tokenType: TokenType = TokenType.ACCESS,
         expiryDuration: Duration = Duration.ofHours(1),
-        authorizedScopes: Collection<AuthorizationScope> = emptyList(),
-        tokenFormat: TokenFormat = TokenFormat.BEARER
+        authorizedScopes: Collection<AuthorizationScope> = emptyList()
     ): AuthorizationToken
 
     /**
      * Parse the token to get the user identity and metadata.
      *
      * @param token The token.
-     * @param tokenSignKeyProvider The signature provider to verify the token.
+     * @param tokenSubjectSignKeyProvider The signature provider to verify the token.
      * @return The parsed token with metadata.
      * @throws AuthenticationException If the token is invalid or expired.
      */
     @Throws(AuthenticationException::class)
     fun parseToken(
         token: AuthorizationToken,
-        tokenSignKeyProvider: TokenSignKeyProvider,
+        tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider,
     ): MetadataAuthorizationToken
 
     /**
@@ -68,21 +65,20 @@ interface AuthorizationTokenManager {
      *
      * @param token The token to exchange. For example, a refresh token to exchange for an access token.
      * If provides a raw token, will auto call [parseToken] to acquire parsed token.
-     * @param tokenSignKeyProvider The signature provider to sign the new token.
+     * @param tokenSubjectSignKeyProvider The signature provider to sign the new token.
      * @param newTokenType The type of the new token.
      * @param expiryDuration The expiry duration of the new token from now.
-     * @param authorizedScopes The authorized scopes of the new token. If empty, the scopes of the original token will be used.
-     * @param tokenFormat The format of the new token (Bearer, Basic, etc.).
+     * @param authorizedScopes The authorized scopes of the new token, can be the same or a subset of the original token's scopes.
+     * If empty, will use the permission scopes of the original token (i.e., for a refresh token, will use the permitted scopes of it).
      * @return The exchanged token.
      */
     @Throws(AuthenticationException::class)
     fun exchangeToken(
         token: AuthorizationToken,
-        tokenSignKeyProvider: TokenSignKeyProvider,
+        tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider,
         newTokenType: TokenType = TokenType.ACCESS,
         expiryDuration: Duration = Duration.ofHours(1),
-        authorizedScopes: Collection<AuthorizationScope> = emptyList(),
-        tokenFormat: TokenFormat = token.tokenFormat
+        authorizedScopes: Collection<AuthorizationScope> = emptyList()
     ): MetadataAuthorizationToken
 
     /**

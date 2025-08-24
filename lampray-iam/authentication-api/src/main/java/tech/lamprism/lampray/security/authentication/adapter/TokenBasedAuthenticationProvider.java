@@ -29,8 +29,8 @@ import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.SimpleAuthorizationToken;
 import tech.lamprism.lampray.security.token.TokenFormat;
-import tech.lamprism.lampray.security.token.TokenSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenSubject;
+import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenType;
 import tech.rollw.common.web.CommonRuntimeException;
 
@@ -42,16 +42,16 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
 
     private final AuthorizationTokenManager authorizationTokenManager;
     private final PrivilegedUserProvider privilegedUserProvider;
-    private final TokenSignKeyProvider tokenSignKeyProvider;
+    private final TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider;
 
     public TokenBasedAuthenticationProvider(
             AuthorizationTokenManager authorizationTokenManager,
             PrivilegedUserProvider privilegedUserProvider,
-            TokenSignKeyProvider tokenSignKeyProvider
+            TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider
     ) {
         this.authorizationTokenManager = authorizationTokenManager;
         this.privilegedUserProvider = privilegedUserProvider;
-        this.tokenSignKeyProvider = tokenSignKeyProvider;
+        this.tokenSubjectSignKeyProvider = tokenSubjectSignKeyProvider;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
         AuthorizationToken token = parseCredentials(tokenBasedAuthenticationToken.getCredentials());
         try {
             MetadataAuthorizationToken authorizationToken = authorizationTokenManager.parseToken(
-                    token, tokenSignKeyProvider);
+                    token, tokenSubjectSignKeyProvider);
             TokenSubject subject = authorizationToken.getSubject();
             return switch (subject.getType()) {
                 case USER -> {
@@ -73,10 +73,11 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
                             Long.parseLong(subject.getId())
                     );
                     check(privilegedUser);
+                    // TODO: use the token.scopes to override user authorities.
                     yield new PrivilegedUserAuthenticationToken(privilegedUser);
                 }
-                case GROUP, APPLICATION -> // TODO: Group, Application subject type was not yet supported
-                        throw new BadCredentialsException("Not support subject type.");
+                // TODO: other subject type was not yet supported
+                default -> throw new BadCredentialsException("Not support subject type.");
             };
         } catch (CommonRuntimeException e) {
             throw new TokenAuthenticationException(e);
@@ -95,7 +96,7 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
         if (tokenFormat == null) {
             throw new BadCredentialsException("Invalid token format");
         }
-        return new SimpleAuthorizationToken(token, TokenType.ACCESS, tokenFormat);
+        return new SimpleAuthorizationToken(token, TokenType.ACCESS);
     }
 
     @Override

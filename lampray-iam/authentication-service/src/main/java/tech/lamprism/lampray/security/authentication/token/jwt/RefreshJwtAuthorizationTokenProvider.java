@@ -27,10 +27,9 @@ import tech.lamprism.lampray.security.authorization.AuthorizationScopeProvider;
 import tech.lamprism.lampray.security.token.AuthorizationToken;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.RefreshTokenAuthorizationScope;
-import tech.lamprism.lampray.security.token.TokenFormat;
-import tech.lamprism.lampray.security.token.TokenSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenSubject;
 import tech.lamprism.lampray.security.token.TokenSubjectProvider;
+import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenType;
 import tech.lamprism.lampray.setting.ConfigReader;
 
@@ -53,12 +52,11 @@ public class RefreshJwtAuthorizationTokenProvider extends AbstractJwtAuthorizati
 
     @Override
     protected void buildJwt(@NonNull TokenSubject subject,
-                            @NonNull TokenSignKeyProvider tokenSignKeyProvider,
+                            @NonNull TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider,
                             @NonNull String tokenId,
                             @NonNull TokenType tokenType,
                             @NonNull Duration expiryDuration,
                             @NonNull Collection<? extends AuthorizationScope> authorizedScopes,
-                            @NonNull TokenFormat tokenFormat,
                             @NonNull JwtBuilder builder) {
         builder.claim(SCOPES_FIELD, List.of(RefreshTokenAuthorizationScope.INSTANCE.getScope()));
         builder.claim(TOKEN_ID_FIELD, tokenId);

@@ -30,17 +30,7 @@ public enum TokenType {
     /**
      * Refresh token, used for refreshing access tokens.
      */
-    REFRESH,
-
-    /**
-     * ID token, used for identifying the user.
-     */
-    ID,
-
-    /**
-     * Custom token, can be used for any custom purpose.
-     */
-    CUSTOM;
+    REFRESH;
 
 
     public String getValue() {

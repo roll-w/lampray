@@ -20,7 +20,6 @@ import space.lingu.Nullable;
 
 /**
  * Token format types for different transport mechanisms.
- * This enum represents HOW tokens are transmitted, not WHAT they are used for.
  *
  * @author RollW
  */

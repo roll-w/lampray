@@ -25,8 +25,6 @@ import space.lingu.Nullable;
 public enum SubjectType {
     USER("user"),
 
-    GROUP("group"),
-
     APPLICATION("application");
 
     private final String value;

@@ -26,10 +26,10 @@ import java.security.Key;
 /**
  * @author RollW
  */
-public class DelegateTokenSignKeyProvider implements TokenSignKeyProvider {
+public class DelegateTokenSubjectSignKeyProvider implements TokenSubjectSignKeyProvider {
     private final UserSignatureProvider userSignatureProvider;
 
-    public DelegateTokenSignKeyProvider(UserSignatureProvider userSignatureProvider) {
+    public DelegateTokenSubjectSignKeyProvider(UserSignatureProvider userSignatureProvider) {
         this.userSignatureProvider = userSignatureProvider;
     }
 

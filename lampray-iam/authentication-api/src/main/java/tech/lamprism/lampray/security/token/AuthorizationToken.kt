@@ -23,11 +23,6 @@ package tech.lamprism.lampray.security.token
  */
 interface AuthorizationToken {
     /**
-     * The transport format of the token (e.g., "Bearer", "Basic")
-     */
-    val tokenFormat: TokenFormat
-
-    /**
      * The functional type of the token.
      *
      * - For a raw token, this means the *expected* type of the token. And the parser will try to verify

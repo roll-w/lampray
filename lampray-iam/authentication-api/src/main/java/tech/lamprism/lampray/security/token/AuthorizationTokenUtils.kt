@@ -21,7 +21,7 @@ package tech.lamprism.lampray.security.token
  */
 object AuthorizationTokenUtils {
     @JvmStatic
-    fun AuthorizationToken.toHeaderValue(): String {
+    fun AuthorizationToken.toHeaderValue(tokenFormat: TokenFormat): String {
         return "${tokenFormat.value} $token"
     }
 }

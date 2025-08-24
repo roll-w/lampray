@@ -18,11 +18,12 @@ package tech.lamprism.lampray.security.authentication.token.jwt;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import tech.lamprism.lampray.security.token.AuthorizationTokenManagerImpl;
+import tech.lamprism.lampray.security.token.AuthorizationTokenManagerService;
 import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
-import tech.lamprism.lampray.security.token.DelegateTokenSignKeyProvider;
+import tech.lamprism.lampray.security.token.DelegateTokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.FactoryTokenSubjectProvider;
-import tech.lamprism.lampray.security.token.InMemoryTokenRevokeStorage;
+import tech.lamprism.lampray.security.token.InMemoryRevokeTokenStorage;
+import tech.lamprism.lampray.security.token.RevokeTokenStorage;
 import tech.lamprism.lampray.security.token.TokenSubject;
 import tech.lamprism.lampray.security.token.UserTokenSubject;
 import tech.lamprism.lampray.user.UserProvider;
@@ -47,12 +48,18 @@ public class AuthorizationTokenConfiguration {
     }
 
     @Bean
-    public DelegateTokenSignKeyProvider delegateTokenSignKeyProvider(UserSignatureProvider userSignatureProvider) {
-        return new DelegateTokenSignKeyProvider(userSignatureProvider);
+    public DelegateTokenSubjectSignKeyProvider delegateTokenSignKeyProvider(UserSignatureProvider userSignatureProvider) {
+        return new DelegateTokenSubjectSignKeyProvider(userSignatureProvider);
     }
 
     @Bean
-    public AuthorizationTokenManagerImpl authorizationTokenManager(List<AuthorizationTokenProvider> authorizationTokenProviders) {
-        return new AuthorizationTokenManagerImpl(authorizationTokenProviders, new InMemoryTokenRevokeStorage());
+    public InMemoryRevokeTokenStorage inMemoryTokenRevokeStorage() {
+        return new InMemoryRevokeTokenStorage();
+    }
+
+    @Bean
+    public AuthorizationTokenManagerService authorizationTokenManager(List<AuthorizationTokenProvider> authorizationTokenProviders,
+                                                                      RevokeTokenStorage revokeTokenStorage) {
+        return new AuthorizationTokenManagerService(authorizationTokenProviders,  revokeTokenStorage);
     }
 }

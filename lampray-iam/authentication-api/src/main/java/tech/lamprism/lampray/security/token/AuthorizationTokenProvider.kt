@@ -21,7 +21,7 @@ import tech.rollw.common.web.system.AuthenticationException
 import java.time.Duration
 
 /**
- * Enhanced authorization token provider that supports different token types and formats.
+ * Represents a provider for creating and parsing authorization tokens.
  *
  * @author RollW
  */
@@ -30,28 +30,26 @@ interface AuthorizationTokenProvider {
      * Create a token for the user with specified type.
      *
      * @param subject the subject to create the token for.
-     * @param tokenSignKeyProvider the signature provider to sign the token.
+     * @param tokenSubjectSignKeyProvider the signature provider to sign the token.
      * @param tokenType the type of token to create.
      * @param expiryDuration the expiry duration of the token from now.
      * @param authorizedScopes the authorized scopes of the token.
-     * @param tokenFormat the format of the token (Bearer, Basic, etc.).
      * @return the token.
      */
     fun createToken(
         subject: TokenSubject,
-        tokenSignKeyProvider: TokenSignKeyProvider,
+        tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider,
         tokenId: String,
         tokenType: TokenType,
         expiryDuration: Duration = Duration.ofDays(1),
-        authorizedScopes: Collection<AuthorizationScope> = emptyList(),
-        tokenFormat: TokenFormat = TokenFormat.BEARER
+        authorizedScopes: Collection<AuthorizationScope> = emptyList()
     ): MetadataAuthorizationToken
 
     /**
      * Parse the token to get the user identity.
      *
      * @param token The token.
-     * @param tokenSignKeyProvider The signature provider to verify the token.
+     * @param tokenSubjectSignKeyProvider The signature provider to verify the token.
      * @return The user identity.
      * @throws AuthenticationException If the token is invalid or expired.
      */
@@ -59,7 +57,7 @@ interface AuthorizationTokenProvider {
     fun parseToken(
         // TODO: support parse unknown token type
         token: AuthorizationToken,
-        tokenSignKeyProvider: TokenSignKeyProvider
+        tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider
     ): MetadataAuthorizationToken
 
     fun supports(tokenType: TokenType): Boolean

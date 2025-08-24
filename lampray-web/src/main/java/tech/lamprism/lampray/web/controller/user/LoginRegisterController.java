@@ -130,10 +130,10 @@ public class LoginRegisterController {
                         userInfoSignature.signature().getBytes(StandardCharsets.UTF_8), "HmacSHA256"),
                 TokenType.ACCESS,
                 Duration.ofSeconds(expireTime),
-                List.of(),
-                TokenFormat.BEARER);
+                List.of()
+        );
         LoginResponse response = new LoginResponse(
-                AuthorizationTokenUtils.toHeaderValue(token),
+                AuthorizationTokenUtils.toHeaderValue(token, TokenFormat.BEARER),
                 userInfoSignature
         );
         return HttpResponseEntity.success(response);

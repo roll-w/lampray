@@ -31,7 +31,6 @@ data class SimpleMetadataAuthorizationToken(
     override val tokenId: String,
     override val scopes: List<AuthorizationScope>,
     override val expirationAt: OffsetDateTime,
-    override val tokenFormat: TokenFormat
 ) : MetadataAuthorizationToken {
 
     constructor(
@@ -43,7 +42,6 @@ data class SimpleMetadataAuthorizationToken(
     ) : this(
         token = authorizationToken.token,
         tokenType = authorizationToken.tokenType,
-        tokenFormat = authorizationToken.tokenFormat,
         tokenId = tokenId,
         expirationAt = expirationTime,
         subject = subject,
