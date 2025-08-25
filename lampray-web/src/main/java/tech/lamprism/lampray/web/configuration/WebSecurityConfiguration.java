@@ -47,8 +47,8 @@ import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticati
 import tech.lamprism.lampray.security.authentication.adapter.TokenBasedAuthenticationProvider;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
 import tech.lamprism.lampray.security.firewall.FirewallFilter;
-import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
-import tech.lamprism.lampray.user.UserSignatureProvider;
+import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
+import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.web.configuration.compenent.ForwardedHeaderDelegateFilter;
 import tech.lamprism.lampray.web.configuration.compenent.WebDelegateSecurityHandler;
 import tech.lamprism.lampray.web.configuration.filter.ApiContextInitializeFilter;
@@ -153,13 +153,13 @@ public class WebSecurityConfiguration {
 
     @Bean
     public TokenBasedAuthenticationProvider tokenBasedAuthenticationProvider(
-            AuthorizationTokenProvider authorizationTokenProvider,
+            AuthorizationTokenManager authorizationTokenManager,
             PrivilegedUserProvider privilegedUserProvider,
-            UserSignatureProvider userSignatureProvider) {
+            TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider) {
         return new TokenBasedAuthenticationProvider(
-                authorizationTokenProvider,
+                authorizationTokenManager,
                 privilegedUserProvider,
-                userSignatureProvider
+                tokenSubjectSignKeyProvider
         );
     }
 

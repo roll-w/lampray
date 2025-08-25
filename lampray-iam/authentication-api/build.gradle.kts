@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ dependencies {
     api(libs.seancfoley.ipaddress)
     api("org.springframework.security:spring-security-core")
     api("jakarta.servlet:jakarta.servlet-api")
+    api(libs.bouncycastle.pkix)
+    api(libs.bouncycastle.prov)
 }
 
 description = "lampray-authentication-api"

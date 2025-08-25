@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,21 @@
 
 package tech.lamprism.lampray.security.token
 
+import tech.lamprism.lampray.security.authorization.AuthorizationScope
+
 /**
+ * Represents a refresh token for metadata authorization.
+ *
+ * Refresh token cannot be used to access resources that are not explicitly allowed (except for the refresh operation itself).
+ *
  * @author RollW
  */
-data class BearerAuthorizationToken(
-    override val token: String
-) : AuthorizationToken {
+interface RefreshMetadataAuthorizationToken : MetadataAuthorizationToken {
 
-    override val tokenType: String
-        get() = "Bearer"
+    /**
+     * The scopes that are permitted for this token, when use the refresh token to
+     * exchange for a new access token, the new access token will have these scopes
+     * granted by default.
+     */
+    val permittedScopes: List<AuthorizationScope>
 }

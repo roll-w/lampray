@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package tech.lamprism.lampray.security.token
 
+import tech.lamprism.lampray.security.authorization.AuthorizationScope
+import tech.lamprism.lampray.security.authorization.AuthorizationScopeSupplier
+
 /**
+ * Represents the scope for refreshing tokens in the authorization system.
+ *
  * @author RollW
  */
-object AuthorizationTokenUtils {
-    @JvmStatic
-    fun AuthorizationToken.toHeaderValue(tokenFormat: TokenFormat): String {
-        return "${tokenFormat.value} $token"
-    }
+object RefreshTokenAuthorizationScope : AuthorizationScope, AuthorizationScopeSupplier {
+    override val scope: String
+        get() = "token:refresh"
+
+    override val authorizationScopes: Collection<AuthorizationScope>
+        get() = listOf(this)
 }

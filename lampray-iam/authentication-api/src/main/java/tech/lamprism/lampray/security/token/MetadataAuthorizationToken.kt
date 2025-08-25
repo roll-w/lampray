@@ -18,10 +18,7 @@ package tech.lamprism.lampray.security.token
 
 import tech.lamprism.lampray.security.authorization.AuthorizationScope
 import tech.lamprism.lampray.security.authorization.Privilege
-import tech.lamprism.lampray.user.UserIdentity
 import java.time.OffsetDateTime
-
-typealias TokenSubject = UserIdentity
 
 /**
  * Token for authorization with metadata. Used for a parsed-down version of [AuthorizationToken].
@@ -31,8 +28,17 @@ typealias TokenSubject = UserIdentity
 interface MetadataAuthorizationToken : AuthorizationToken, Privilege {
     val expirationAt: OffsetDateTime
 
-    // TODO: subject maybe change to a data class or generic type
     val subject : TokenSubject
 
+    /**
+     * Unique identifier for the token, typically used to reference the token in a database or cache.
+     *
+     * Access tokens share the same ID with the refresh token they are associated with.
+     */
+    val tokenId : String
+
     override val scopes: List<AuthorizationScope>
+
+    override val authorized: Boolean
+        get() = true
 }

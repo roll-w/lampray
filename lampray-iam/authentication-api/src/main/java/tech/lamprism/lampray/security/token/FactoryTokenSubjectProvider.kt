@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package tech.lamprism.lampray.security.token
 
 /**
  * @author RollW
  */
-object AuthorizationTokenUtils {
-    @JvmStatic
-    fun AuthorizationToken.toHeaderValue(tokenFormat: TokenFormat): String {
-        return "${tokenFormat.value} $token"
+class FactoryTokenSubjectProvider(
+    private val factories: List<TokenSubject.Factory>
+) : TokenSubjectProvider {
+    override fun getTokenSubject(id: String, subjectType: SubjectType): TokenSubject {
+        val factory = factories.find { it.supports(subjectType) }
+            ?: throw IllegalArgumentException("No factory registered for subject type: $subjectType")
+        return factory.fromSubject(id, subjectType)
     }
 }

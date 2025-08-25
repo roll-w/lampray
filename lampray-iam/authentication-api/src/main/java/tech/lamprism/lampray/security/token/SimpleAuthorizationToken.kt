@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ package tech.lamprism.lampray.security.token
  * @author RollW
  */
 data class SimpleAuthorizationToken(
-    override val tokenType: String,
-    override val token: String
-) : AuthorizationToken
+    override val token: String,
+    override val tokenType: TokenType,
+) : AuthorizationToken {
+}

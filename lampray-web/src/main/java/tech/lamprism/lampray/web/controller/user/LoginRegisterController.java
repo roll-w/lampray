@@ -31,8 +31,11 @@ import tech.lamprism.lampray.authentication.login.LoginStrategyType;
 import tech.lamprism.lampray.security.authentication.registration.RegisterProvider;
 import tech.lamprism.lampray.security.authentication.registration.SimpleRegistration;
 import tech.lamprism.lampray.security.token.AuthorizationToken;
-import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
+import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.AuthorizationTokenUtils;
+import tech.lamprism.lampray.security.token.TokenFormat;
+import tech.lamprism.lampray.security.token.TokenType;
+import tech.lamprism.lampray.security.token.UserTokenSubject;
 import tech.lamprism.lampray.setting.ConfigReader;
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.AttributedUserDetails;
@@ -44,7 +47,9 @@ import tech.lamprism.lampray.web.controller.user.model.UserLoginRequest;
 import tech.lamprism.lampray.web.controller.user.model.UserRegisterRequest;
 import tech.rollw.common.web.HttpResponseEntity;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 
@@ -57,20 +62,20 @@ public class LoginRegisterController {
 
     private final LoginProvider loginProvider;
     private final RegisterProvider registerProvider;
-    private final AuthorizationTokenProvider authorizationTokenProvider;
+    private final AuthorizationTokenManager authorizationTokenManager;
     private final ConfigReader configReader;
     private final UserProvider userProvider;
 
     public LoginRegisterController(LoginProvider loginProvider,
                                    RegisterProvider registerProvider,
-                                   AuthorizationTokenProvider authorizationTokenProvider,
+                                   AuthorizationTokenManager authorizationTokenManager,
                                    ConfigReader configReader,
                                    UserProvider userProvider) {
         this.loginProvider = loginProvider;
         this.registerProvider = registerProvider;
+        this.authorizationTokenManager = authorizationTokenManager;
         this.configReader = configReader;
         this.userProvider = userProvider;
-        this.authorizationTokenProvider = authorizationTokenProvider;
     }
 
     @PostMapping("/login/password")
@@ -118,14 +123,16 @@ public class LoginRegisterController {
 
     private HttpResponseEntity<LoginResponse> loginResponse(UserInfoSignature userInfoSignature) {
         Long expireTime = configReader.get(SecurityConfigKeys.TOKEN_EXPIRE_TIME);
-        AuthorizationToken token = authorizationTokenProvider.createToken(
-                userInfoSignature,
-                userId -> userInfoSignature.signature(),
+        AuthorizationToken token = authorizationTokenManager.createToken(
+                new UserTokenSubject(userInfoSignature),
+                subject -> new SecretKeySpec(
+                        userInfoSignature.signature().getBytes(StandardCharsets.UTF_8), "HmacSHA256"),
+                TokenType.ACCESS,
                 Duration.ofSeconds(expireTime),
                 List.of()
         );
         LoginResponse response = new LoginResponse(
-                AuthorizationTokenUtils.toHeaderValue(token),
+                AuthorizationTokenUtils.toHeaderValue(token, TokenFormat.BEARER),
                 userInfoSignature
         );
         return HttpResponseEntity.success(response);
