@@ -35,7 +35,9 @@ class InMemoryRevokeTokenStorage : RevokeTokenStorage {
     }
 
     override fun revokeToken(token: MetadataAuthorizationToken) {
-        revokedTokens[token.tokenId] = OffsetDateTime.now()
+        val now = OffsetDateTime.now()
+        revokedTokens[token.tokenId] = now
+        cleanupExpiredRevocations(now)
     }
 
     override fun isTokenRevoked(token: MetadataAuthorizationToken): Boolean {

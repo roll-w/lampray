@@ -78,7 +78,6 @@ public class LoginRegisterController {
         this.userProvider = userProvider;
     }
 
-    // TODO: add check for origin (since this is a sensitive api, we don't want others to use it)
     @PostMapping("/login/password")
     public HttpResponseEntity<LoginResponse> loginByPassword(
             RequestMetadata requestMetadata,
