@@ -26,6 +26,7 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParserBuilder;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SecurityException;
 import kotlin.Pair;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +36,7 @@ import space.lingu.NonNull;
 import tech.lamprism.lampray.authentication.SecurityConfigKeys;
 import tech.lamprism.lampray.security.authorization.AuthorizationScope;
 import tech.lamprism.lampray.security.authorization.AuthorizationScopeProvider;
+import tech.lamprism.lampray.security.crypto.KeyUtils;
 import tech.lamprism.lampray.security.token.AuthorizationToken;
 import tech.lamprism.lampray.security.token.AuthorizationTokenConfigKeys;
 import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
@@ -235,8 +237,8 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
         } catch (SecurityException e) {
             logger.warn("Invalid jwt due to security exception: {}", e.getMessage());
             throw new AuthenticationException(AuthErrorCode.ERROR_INVALID_TOKEN);
-        } catch (NumberFormatException e) {
-            logger.debug("Invalid jwt token number format: {}", rawToken);
+        } catch (NumberFormatException | MalformedJwtException e) {
+            logger.debug("Invalid jwt token format: {}", rawToken);
             throw new AuthenticationException(AuthErrorCode.ERROR_INVALID_TOKEN);
         } catch (CommonRuntimeException e) {
             throw e;
