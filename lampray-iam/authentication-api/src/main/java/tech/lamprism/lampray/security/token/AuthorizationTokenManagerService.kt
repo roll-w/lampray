@@ -45,7 +45,7 @@ class AuthorizationTokenManagerService(
         tokenType: TokenType,
         expiryDuration: Duration,
         authorizedScopes: Collection<AuthorizationScope>
-    ): AuthorizationToken {
+    ): MetadataAuthorizationToken {
         val tokenId = UUID.randomUUID().toString()
         val authorizationToken = findAuthorizationTokenProvider(tokenType).createToken(
             subject, tokenSubjectSignKeyProvider, tokenId,

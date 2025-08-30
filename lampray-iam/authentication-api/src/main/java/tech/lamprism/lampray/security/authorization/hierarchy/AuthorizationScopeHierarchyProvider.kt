@@ -14,26 +14,17 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.controller.user.model;
+package tech.lamprism.lampray.security.authorization.hierarchy
 
-import tech.lamprism.lampray.user.AttributedUser;
-import tech.lamprism.lampray.user.UserIdentity;
+import tech.lamprism.lampray.security.authorization.AuthorizationScope
 
 /**
  * @author RollW
  */
-public record LoginResponse(
-        String accessToken,
-        String refreshToken,
-        UserVo user
-) {
-    public LoginResponse(String accessToken, String refreshToken, UserIdentity userIdentity) {
-        this(accessToken, refreshToken, UserVo.toVo(userIdentity));
-    }
+interface AuthorizationScopeHierarchyProvider {
+    fun flattenAuthorizationScopes(
+        authorizationScopes: Collection<AuthorizationScope>
+    ): Collection<AuthorizationScope>
 
-    public static final LoginResponse NULL = new LoginResponse(null, null, (AttributedUser) null);
-
-    public static LoginResponse nullResponse() {
-        return NULL;
-    }
+    fun supports(scope: AuthorizationScope): Boolean
 }

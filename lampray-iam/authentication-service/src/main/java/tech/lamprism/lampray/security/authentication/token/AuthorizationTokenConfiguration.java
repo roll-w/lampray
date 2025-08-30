@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.authentication.token.jwt;
+package tech.lamprism.lampray.security.authentication.token;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,8 +23,11 @@ import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
 import tech.lamprism.lampray.security.token.DelegateTokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.FactoryTokenSubjectProvider;
 import tech.lamprism.lampray.security.token.InMemoryRevokeTokenStorage;
+import tech.lamprism.lampray.security.token.InheritedAuthorizationScopeHierarchyProvider;
 import tech.lamprism.lampray.security.token.RevokeTokenStorage;
 import tech.lamprism.lampray.security.token.TokenSubject;
+import tech.lamprism.lampray.security.token.TokenSubjectProvider;
+import tech.lamprism.lampray.security.token.TokenSubjectScopeProvider;
 import tech.lamprism.lampray.security.token.UserTokenSubject;
 import tech.lamprism.lampray.user.UserProvider;
 import tech.lamprism.lampray.user.UserSignatureProvider;
@@ -60,6 +63,15 @@ public class AuthorizationTokenConfiguration {
     @Bean
     public AuthorizationTokenManagerService authorizationTokenManager(List<AuthorizationTokenProvider> authorizationTokenProviders,
                                                                       RevokeTokenStorage revokeTokenStorage) {
-        return new AuthorizationTokenManagerService(authorizationTokenProviders,  revokeTokenStorage);
+        return new AuthorizationTokenManagerService(authorizationTokenProviders, revokeTokenStorage);
     }
+
+
+    @Bean
+    public InheritedAuthorizationScopeHierarchyProvider inheritedAuthorizationScopeHierarchyProvider(
+            TokenSubjectProvider tokenSubjectProvider,
+            TokenSubjectScopeProvider tokenSubjectScopeProvider) {
+        return new InheritedAuthorizationScopeHierarchyProvider(tokenSubjectProvider, tokenSubjectScopeProvider);
+    }
+
 }

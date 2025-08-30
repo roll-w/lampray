@@ -42,7 +42,7 @@ interface AuthorizationTokenManager {
         tokenType: TokenType = TokenType.ACCESS,
         expiryDuration: Duration = Duration.ofHours(1),
         authorizedScopes: Collection<AuthorizationScope> = emptyList()
-    ): AuthorizationToken
+    ): MetadataAuthorizationToken
 
     /**
      * Parse the token to get the user identity and metadata.

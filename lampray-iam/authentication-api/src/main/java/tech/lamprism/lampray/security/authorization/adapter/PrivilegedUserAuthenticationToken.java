@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ package tech.lamprism.lampray.security.authorization.adapter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import tech.lamprism.lampray.security.authorization.AuthorityHelper;
+import tech.lamprism.lampray.security.authorization.AuthorizationScope;
 import tech.lamprism.lampray.security.authorization.PrivilegedUser;
 
 import java.io.Serial;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -35,6 +37,11 @@ public class PrivilegedUserAuthenticationToken extends AbstractAuthenticationTok
 
     public PrivilegedUserAuthenticationToken(PrivilegedUser user) {
         super(toAuthorities(user));
+        this.user = user;
+    }
+
+    public PrivilegedUserAuthenticationToken(PrivilegedUser user, Collection<? extends AuthorizationScope> scopes) {
+        super(AuthorityHelper.toAuthorities(scopes));
         this.user = user;
     }
 

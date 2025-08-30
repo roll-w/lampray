@@ -30,10 +30,9 @@ import tech.lamprism.lampray.authentication.login.LoginProvider;
 import tech.lamprism.lampray.authentication.login.LoginStrategyType;
 import tech.lamprism.lampray.security.authentication.registration.RegisterProvider;
 import tech.lamprism.lampray.security.authentication.registration.SimpleRegistration;
-import tech.lamprism.lampray.security.token.AuthorizationToken;
 import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
-import tech.lamprism.lampray.security.token.AuthorizationTokenUtils;
-import tech.lamprism.lampray.security.token.TokenFormat;
+import tech.lamprism.lampray.security.token.InheritedAuthorizationScope;
+import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.TokenType;
 import tech.lamprism.lampray.security.token.UserTokenSubject;
 import tech.lamprism.lampray.setting.ConfigReader;
@@ -123,16 +122,25 @@ public class LoginRegisterController {
 
     private HttpResponseEntity<LoginResponse> loginResponse(UserInfoSignature userInfoSignature) {
         Long expireTime = configReader.get(SecurityConfigKeys.TOKEN_EXPIRE_TIME);
-        AuthorizationToken token = authorizationTokenManager.createToken(
-                new UserTokenSubject(userInfoSignature),
-                subject -> new SecretKeySpec(
-                        userInfoSignature.signature().getBytes(StandardCharsets.UTF_8), "HmacSHA256"),
+        UserTokenSubject tokenSubject = new UserTokenSubject(userInfoSignature);
+        SecretKeySpec signKey = new SecretKeySpec(userInfoSignature.signature().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        MetadataAuthorizationToken refreshToken = authorizationTokenManager.createToken(
+                tokenSubject,
+                subject -> signKey,
+                TokenType.REFRESH,
+                Duration.ofSeconds(expireTime),
+                List.of(InheritedAuthorizationScope.fromSubject(tokenSubject))
+        );
+        MetadataAuthorizationToken accessToken = authorizationTokenManager.exchangeToken(refreshToken,
+                subject -> signKey,
                 TokenType.ACCESS,
                 Duration.ofSeconds(expireTime),
-                List.of()
+                List.of(InheritedAuthorizationScope.fromSubject(tokenSubject))
         );
+
         LoginResponse response = new LoginResponse(
-                AuthorizationTokenUtils.toHeaderValue(token, TokenFormat.BEARER),
+                accessToken.getToken(),
+                refreshToken.getToken(),
                 userInfoSignature
         );
         return HttpResponseEntity.success(response);
