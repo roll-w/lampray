@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.token
+package tech.lamprism.lampray.security.token;
+
+import space.lingu.NonNull;
 
 /**
  * @author RollW
  */
-object AuthorizationTokenUtils {
-    @JvmStatic
-    fun AuthorizationToken.toHeaderValue(tokenFormat: TokenFormat): String {
-        return "${tokenFormat.value} $token"
-    }
+public interface TokenSubjectProvider {
+    @NonNull
+    TokenSubject getTokenSubject(@NonNull String subjectId, @NonNull SubjectType subjectType);
 }

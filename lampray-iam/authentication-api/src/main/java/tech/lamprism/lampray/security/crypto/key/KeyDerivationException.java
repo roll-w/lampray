@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.token
+package tech.lamprism.lampray.security.crypto.key;
 
 /**
+ * Runtime exception thrown when key derivation operations fail.
+ *
  * @author RollW
  */
-object AuthorizationTokenUtils {
-    @JvmStatic
-    fun AuthorizationToken.toHeaderValue(tokenFormat: TokenFormat): String {
-        return "${tokenFormat.value} $token"
+public class KeyDerivationException extends RuntimeException {
+
+    public KeyDerivationException(String message) {
+        super(message);
+    }
+
+    public KeyDerivationException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

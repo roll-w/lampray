@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication.token;
+package tech.lamprism.lampray.security.token;
+
+import java.time.OffsetDateTime;
 
 /**
+ * Interface for storage of revoked tokens.
+ * <p>
+ * Token revocation is a part of the security mechanism to block leaked or compromised tokens.
+ *
  * @author RollW
  */
-public record TokenAuthResult(
-        long userId,
-        String token
-) {
+public interface RevokeTokenStorage {
+    void revokeToken(MetadataAuthorizationToken token);
 
-    public static TokenAuthResult success(long userId, String token) {
-        return new TokenAuthResult(userId, token);
-    }
+    boolean isTokenRevoked(MetadataAuthorizationToken token);
+
+    void cleanupExpiredRevocations(OffsetDateTime expiredAt);
 }

@@ -25,10 +25,13 @@ import tech.lamprism.lampray.security.authorization.PrivilegedUser;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
 import tech.lamprism.lampray.security.authorization.adapter.PrivilegedUserAuthenticationToken;
 import tech.lamprism.lampray.security.token.AuthorizationToken;
-import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
+import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.SimpleAuthorizationToken;
-import tech.lamprism.lampray.user.UserSignatureProvider;
+import tech.lamprism.lampray.security.token.TokenFormat;
+import tech.lamprism.lampray.security.token.TokenSubject;
+import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
+import tech.lamprism.lampray.security.token.TokenType;
 import tech.rollw.common.web.CommonRuntimeException;
 
 /**
@@ -37,18 +40,18 @@ import tech.rollw.common.web.CommonRuntimeException;
 public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthenticationProvider {
     private static final Logger logger = LoggerFactory.getLogger(TokenBasedAuthenticationProvider.class);
 
-    private final AuthorizationTokenProvider authorizationTokenProvider;
+    private final AuthorizationTokenManager authorizationTokenManager;
     private final PrivilegedUserProvider privilegedUserProvider;
-    private final UserSignatureProvider userSignatureProvider;
+    private final TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider;
 
     public TokenBasedAuthenticationProvider(
-            AuthorizationTokenProvider authorizationTokenProvider,
+            AuthorizationTokenManager authorizationTokenManager,
             PrivilegedUserProvider privilegedUserProvider,
-            UserSignatureProvider userSignatureProvider
+            TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider
     ) {
-        this.authorizationTokenProvider = authorizationTokenProvider;
+        this.authorizationTokenManager = authorizationTokenManager;
         this.privilegedUserProvider = privilegedUserProvider;
-        this.userSignatureProvider = userSignatureProvider;
+        this.tokenSubjectSignKeyProvider = tokenSubjectSignKeyProvider;
     }
 
     @Override
@@ -59,20 +62,29 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         TokenBasedAuthenticationToken tokenBasedAuthenticationToken = (TokenBasedAuthenticationToken) authentication;
-        AuthorizationToken token = parseToken(tokenBasedAuthenticationToken.getCredentials());
+        AuthorizationToken token = parseCredentials(tokenBasedAuthenticationToken.getCredentials());
         try {
-            MetadataAuthorizationToken authorizationToken = authorizationTokenProvider.parseToken(
-                    token, userSignatureProvider);
-            PrivilegedUser privilegedUser = privilegedUserProvider.loadPrivilegedUser(
-                    authorizationToken.getSubject());
-            check(privilegedUser);
-            return new PrivilegedUserAuthenticationToken(privilegedUser);
+            MetadataAuthorizationToken authorizationToken = authorizationTokenManager.parseToken(
+                    token, tokenSubjectSignKeyProvider);
+            TokenSubject subject = authorizationToken.getSubject();
+            return switch (subject.getType()) {
+                case USER -> {
+                    PrivilegedUser privilegedUser = privilegedUserProvider.loadPrivilegedUserById(
+                            Long.parseLong(subject.getId())
+                    );
+                    check(privilegedUser);
+                    // TODO: use the token.scopes to override user authorities.
+                    yield new PrivilegedUserAuthenticationToken(privilegedUser);
+                }
+                // TODO: other subject type was not yet supported
+                default -> throw new BadCredentialsException("Not support subject type.");
+            };
         } catch (CommonRuntimeException e) {
             throw new TokenAuthenticationException(e);
         }
     }
 
-    private AuthorizationToken parseToken(String credentials) {
+    private AuthorizationToken parseCredentials(String credentials) {
         // Parse header, format like: "<Type> <Token>"
         int index = credentials.indexOf(' ');
         if (index < 0) {
@@ -80,7 +92,11 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
         }
         String type = credentials.substring(0, index);
         String token = credentials.substring(index + 1);
-        return new SimpleAuthorizationToken(type, token);
+        TokenFormat tokenFormat = TokenFormat.fromValue(type);
+        if (tokenFormat == null) {
+            throw new BadCredentialsException("Invalid token format");
+        }
+        return new SimpleAuthorizationToken(token, TokenType.ACCESS);
     }
 
     @Override

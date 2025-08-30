@@ -14,29 +14,28 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication.token;
+package tech.lamprism.lampray.security.token;
 
+import tech.rollw.common.web.AuthErrorCode;
 import tech.rollw.common.web.system.AuthenticationException;
 
 /**
- * Authentication token service.
- *
- * @deprecated Move to {@link tech.lamprism.lampray.security.token.AuthorizationTokenProvider}
  * @author RollW
  */
-@Deprecated
-public interface AuthenticationTokenService {
-    String generateAuthToken(long userId, String signature);
+public class InvalidTokenException extends AuthenticationException {
+    public InvalidTokenException() {
+        super(AuthErrorCode.ERROR_INVALID_TOKEN);
+    }
 
-    String generateAuthToken(long userId, String signature,
-                             long expireTimeInSecond);
+    public InvalidTokenException(String message) {
+        super(AuthErrorCode.ERROR_INVALID_TOKEN, message);
+    }
 
-    /**
-     * Only verifies the legality of the token
-     * does not take responsibility for confirming user status.
-     */
-    TokenAuthResult verifyToken(String token, String signature)
-            throws AuthenticationException;
+    public InvalidTokenException(String message, Throwable cause) {
+        super(AuthErrorCode.ERROR_INVALID_TOKEN, message, cause);
+    }
 
-    Long getUserId(String token);
+    public InvalidTokenException(Throwable cause) {
+        super(AuthErrorCode.ERROR_INVALID_TOKEN, cause);
+    }
 }

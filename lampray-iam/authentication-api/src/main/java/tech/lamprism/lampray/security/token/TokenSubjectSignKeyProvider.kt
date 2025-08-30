@@ -16,12 +16,11 @@
 
 package tech.lamprism.lampray.security.token
 
+import java.security.Key
+
 /**
  * @author RollW
  */
-object AuthorizationTokenUtils {
-    @JvmStatic
-    fun AuthorizationToken.toHeaderValue(tokenFormat: TokenFormat): String {
-        return "${tokenFormat.value} $token"
-    }
+interface TokenSubjectSignKeyProvider {
+    fun getSignKey(tokenSubject: TokenSubject): Key
 }

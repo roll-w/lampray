@@ -14,37 +14,42 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.token
+package tech.lamprism.lampray.security.authentication.token.jwt
 
 import tech.lamprism.lampray.security.authorization.AuthorizationScope
+import tech.lamprism.lampray.security.token.AuthorizationToken
+import tech.lamprism.lampray.security.token.RefreshMetadataAuthorizationToken
+import tech.lamprism.lampray.security.token.TokenSubject
+import tech.lamprism.lampray.security.token.TokenType
 import java.time.OffsetDateTime
 
 /**
- * Enhanced implementation of MetadataAuthorizationToken with improved type handling.
- *
  * @author RollW
  */
-data class SimpleMetadataAuthorizationToken(
+data class SimpleRefreshMetadataAuthorizationToken(
     override val token: String,
     override val tokenType: TokenType,
     override val subject: TokenSubject,
     override val tokenId: String,
     override val scopes: List<AuthorizationScope>,
+    override val permittedScopes: List<AuthorizationScope>,
     override val expirationAt: OffsetDateTime,
-) : MetadataAuthorizationToken {
+) : RefreshMetadataAuthorizationToken {
 
     constructor(
         authorizationToken: AuthorizationToken,
         subject: TokenSubject,
         tokenId: String,
         scopes: List<AuthorizationScope>,
-        expirationTime: OffsetDateTime
+        permittedScopes: List<AuthorizationScope>,
+        expirationTime: OffsetDateTime,
     ) : this(
         token = authorizationToken.token,
         tokenType = authorizationToken.tokenType,
         tokenId = tokenId,
         expirationAt = expirationTime,
         subject = subject,
-        scopes = scopes
+        scopes = scopes,
+        permittedScopes = permittedScopes
     )
 }
