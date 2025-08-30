@@ -139,8 +139,7 @@ public class LoginRegisterController {
         );
 
         LoginResponse response = new LoginResponse(
-                accessToken.getToken(),
-                refreshToken.getToken(),
+                accessToken, refreshToken,
                 userInfoSignature
         );
         return HttpResponseEntity.success(response);

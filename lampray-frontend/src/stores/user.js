@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,40 +24,50 @@ export const useUserStore = defineStore('user', {
     state: () => ({
         /** @type {{ username: string, id: number, role: string }} */
         user: {},
-        /** @type {string} */
-        token: "",
+        /** @type {{refreshToken: string, accessToken: string, prefix: string, accessTokenExpiry: Date, refreshTokenExpiry: Date}} */
+        token: {},
         /** @type {{ avatar: string, nickname: string, setup: boolean }} */
         userData: {},
         remember: false,
+        /** @type {boolean} */
+        block: false,
     }),
     getters: {
         /** @return {boolean} */
         isLogin: state => state.token !== "",
         /** @return {{ username: string, id: number, role: string }} */
         getUser: state => state.user,
-        /** @return {string} */
+        /** @return {{refreshToken: string, accessToken: string, prefix: string, accessTokenExpiry: Date, refreshTokenExpiry: Date}} */
         getToken: state => state.token,
-
+        /** @return {{ avatar: string, nickname: string, setup: boolean }} */
         getUserData: state => state.userData,
+
+        /** @return {boolean} */
+        isBlocked: state => state.block,
 
         canAccessAdmin: state => state.user.role && state.user.role !== "USER",
     },
     actions: {
         /**
          * @param {{ username: string, id: number, role: string }} user
-         * @param {string} token
+         * @param {{refreshToken: string, accessToken: string, prefix: string, accessTokenExpiry: Date, refreshTokenExpiry: Date}} token
          * @param {boolean} remember
+         * @param {boolean} block
          */
-        loginUser(user, token, remember) {
+        loginUser(user, token, remember, block) {
             this.user = user
             this.token = token
             this.remember = remember
+            this.block = block
         },
 
         logout() {
             this.user = {}
-            this.token = ""
+            this.token = {}
             this.userData = {}
+            this.remember = false
+            this.block = false
+
             localStorage.removeItem(tokenKey)
             localStorage.removeItem(userKey)
             localStorage.removeItem(userDataKey)

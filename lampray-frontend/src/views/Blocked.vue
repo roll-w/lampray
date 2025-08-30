@@ -17,7 +17,7 @@
 <template>
     <div class="h-[75vh] flex flex-col justify-center items-center">
         <div class="p-5 ">
-            <n-result status="404" title="您尝试访问的页面不存在">
+            <n-result status="403" title="您的访问被阻止了">
                 <template #default>
                     <div class="text-center text-xl">
                         <div>{{ result }}</div>
@@ -26,7 +26,7 @@
                     </div>
                 </template>
                 <template #footer>
-                    <n-button type="primary" @click="() => $router.push('/')">回到首页</n-button>
+                    <n-button secondary type="primary" @click="">对您的封禁有疑问？</n-button>
                 </template>
             </n-result>
         </div>
@@ -42,7 +42,6 @@ const result = router.currentRoute.value.query.result
 const tip = router.currentRoute.value.query.tip
 const message = router.currentRoute.value.query.message
 const source = router.currentRoute.value.query.source
-
 </script>
 
 <style scoped>
