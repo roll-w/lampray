@@ -55,7 +55,6 @@ interface AuthorizationTokenProvider {
      */
     @Throws(AuthenticationException::class)
     fun parseToken(
-        // TODO: support parse unknown token type
         token: AuthorizationToken,
         tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider
     ): MetadataAuthorizationToken

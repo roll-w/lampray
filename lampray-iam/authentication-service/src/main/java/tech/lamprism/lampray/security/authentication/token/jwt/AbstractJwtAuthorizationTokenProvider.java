@@ -222,11 +222,11 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
             // the signature associated with the user will be changed,
             // so the previous token will be invalid.
             if (!validateSign(tokenSignKey, toSignPayload(tokenSubject, tokenId), sign)) {
-                throw new AuthenticationException(AuthErrorCode.ERROR_INVALID_TOKEN, "invalid sign");
+                throw new AuthenticationException(AuthErrorCode.ERROR_INVALID_TOKEN, "Invalid sign");
             }
             TokenType tokenType = TokenType.fromValue(claims.get(FIELD_TOKEN_TYPE, String.class));
-            if (tokenType == null) {
-                throw new AuthenticationException(AuthErrorCode.ERROR_INVALID_TOKEN, "invalid token type");
+            if (tokenType == null || tokenType != token.getTokenType()) {
+                throw new AuthenticationException(AuthErrorCode.ERROR_INVALID_TOKEN, "Invalid token type");
             }
             List<String> scopes = claims.get(FIELD_AUTHORIZED_SCOPES, List.class);
             List<AuthorizationScope> authorizationScopes = authorizationScopeProvider.findScopes(scopes);
