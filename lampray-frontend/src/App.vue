@@ -95,7 +95,7 @@ const encodeToken = (token) => {
 }
 
 const restoreToken = (token) => {
-    if (!token) {
+    if (!token || !token.startsWith(prefix)) {
         return null
     }
 

@@ -30,10 +30,13 @@ data class InheritedAuthorizationScope(
     val type: SubjectType
 ) : AuthorizationScope {
     override val scope: String
-        get() = "inherited:${type}:$id"
+        get() = "${PREFIX}${type}:$id"
 
 
     companion object {
+
+        const val PREFIX = "inherited:"
+
         /**
          * Creates an instance of [InheritedAuthorizationScope] for the given subject.
          *
@@ -53,8 +56,8 @@ data class InheritedAuthorizationScope(
          */
         @JvmStatic
         fun parse(scope: String): InheritedAuthorizationScope? {
-            return if (scope.startsWith("inherited:")) {
-                val subject = scope.removePrefix("inherited:")
+            return if (scope.startsWith(PREFIX)) {
+                val subject = scope.removePrefix(PREFIX)
                 val index = subject.indexOf(':')
                 if (index <= 0 || index >= subject.length - 1) {
                     return null

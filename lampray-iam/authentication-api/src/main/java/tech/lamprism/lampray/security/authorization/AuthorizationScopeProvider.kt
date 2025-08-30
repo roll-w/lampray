@@ -24,5 +24,5 @@ interface AuthorizationScopeProvider {
 
     fun findScopes(scopes: List<String>): List<AuthorizationScope>
 
-    val scopes: List<AuthorizationScope>
+    fun supports(scope: String): Boolean
 }

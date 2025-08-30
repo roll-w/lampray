@@ -24,6 +24,7 @@ import tech.lamprism.lampray.security.token.DelegateTokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.FactoryTokenSubjectProvider;
 import tech.lamprism.lampray.security.token.InMemoryRevokeTokenStorage;
 import tech.lamprism.lampray.security.token.InheritedAuthorizationScopeHierarchyProvider;
+import tech.lamprism.lampray.security.token.InheritedAuthorizationScopeProvider;
 import tech.lamprism.lampray.security.token.RevokeTokenStorage;
 import tech.lamprism.lampray.security.token.TokenSubject;
 import tech.lamprism.lampray.security.token.TokenSubjectProvider;
@@ -72,6 +73,11 @@ public class AuthorizationTokenConfiguration {
             TokenSubjectProvider tokenSubjectProvider,
             TokenSubjectScopeProvider tokenSubjectScopeProvider) {
         return new InheritedAuthorizationScopeHierarchyProvider(tokenSubjectProvider, tokenSubjectScopeProvider);
+    }
+
+    @Bean
+    public InheritedAuthorizationScopeProvider inheritedAuthorizationScopeProvider() {
+        return new InheritedAuthorizationScopeProvider();
     }
 
 }

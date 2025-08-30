@@ -16,7 +16,7 @@
 
 import {defineStore} from 'pinia'
 
-export const tokenKey = window.btoa("L2w9t0k3n")
+export const tokenKey = "token"
 export const userKey = "user"
 export const userDataKey = "user_data"
 
@@ -34,7 +34,7 @@ export const useUserStore = defineStore('user', {
     }),
     getters: {
         /** @return {boolean} */
-        isLogin: state => state.token !== "",
+        isLogin: state => state.token && state.token.accessToken,
         /** @return {{ username: string, id: number, role: string }} */
         getUser: state => state.user,
         /** @return {{refreshToken: string, accessToken: string, prefix: string, accessTokenExpiry: Date, refreshTokenExpiry: Date}} */
