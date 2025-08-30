@@ -32,11 +32,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Utility class for deriving public keys from private keys using various cryptographic algorithms.
- *
- * <p>This class uses the Strategy pattern to handle different key derivation algorithms
- * in a clean and extensible way. Supported algorithms include RSA, DSA, EC, Ed25519, and Ed448.</p>
- *
  * @author RollW
  */
 public class KeyUtils {
@@ -97,10 +92,6 @@ public class KeyUtils {
                 .toList();
     }
 
-    /**
-     * Private constructor to prevent instantiation of utility class.
-     */
     private KeyUtils() {
-        throw new UnsupportedOperationException("Utility class cannot be instantiated");
     }
 }
