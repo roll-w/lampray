@@ -41,7 +41,6 @@ dependencies {
     implementation(libs.commons.compress)
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation(libs.spring.shell.starter)
-    implementation(libs.jline.terminal.jna)
     implementation(libs.sshd.core)
     implementation(libs.picocli)
     implementation("org.springframework.boot:spring-boot-starter-websocket")

@@ -70,7 +70,7 @@ public class SshdConfiguration {
         generatorHostKeyProvider.setKeySpec(new RSAKeyGenParameterSpec(4096, RSAKeyGenParameterSpec.F4));
         sshd.setKeyPairProvider(generatorHostKeyProvider);
         sshd.setPasswordAuthenticator(sshdPasswordAuthenticator);
-        sshd.setKeyboardInteractiveAuthenticator(new SshdKeyboardInteractiveAuthenticator());
+        sshd.setKeyboardInteractiveAuthenticator(null);
         sshd.setShellFactory(new TerminalShellCommandFactory(terminalRegistry, lineReaderFactory, shellRunner));
 
         CoreModuleProperties.SERVER_IDENTIFICATION.set(sshd, "LAMPRAY-" + Version.VERSION);
