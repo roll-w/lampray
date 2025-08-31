@@ -31,6 +31,6 @@ import tech.lamprism.lampray.system.console.CommandGroups;
 public class VersionCommand extends AbstractShellComponent {
     @Command
     public void version() {
-        getTerminal().writer().println(Version.formatVersion());
+        getTerminal().writer().print(Version.formatVersion());
     }
 }

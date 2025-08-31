@@ -279,7 +279,7 @@ public class LamprayCommandLineManager implements CommandManager {
     private static class VersionCommandRunner implements CommandRunner {
         @Override
         public int runCommand(CommandRunContext context) {
-            context.getPrintStream().println(Version.formatVersion());
+            context.getPrintStream().print(Version.formatVersion());
             return 0;
         }
 

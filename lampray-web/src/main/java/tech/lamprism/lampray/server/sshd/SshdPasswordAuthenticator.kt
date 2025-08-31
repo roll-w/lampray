@@ -19,7 +19,7 @@ package tech.lamprism.lampray.server.sshd
 import org.apache.sshd.common.AttributeRepository
 import org.apache.sshd.server.auth.password.PasswordAuthenticator
 import org.apache.sshd.server.session.ServerSession
-import org.slf4j.debug
+import org.slf4j.info
 import org.slf4j.logger
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
@@ -51,8 +51,9 @@ class SshdPasswordAuthenticator(
                 AUTHENTICATION_KEY,
                 SecurityContextHolder.getContext().authentication
             )
-            logger.debug {
-                "Admin '${user.username}' login successfully through SSH"
+            logger.info {
+                "User '${user.username}' login successfully through SSH connection, remote address: " +
+                        "${session.clientAddress} using ${session.clientVersion}"
             }
             true
         } catch (e: CommonRuntimeException) {
