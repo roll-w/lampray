@@ -24,12 +24,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import tech.lamprism.lampray.RequestMetadata;
-import tech.lamprism.lampray.authentication.SecurityConfigKeys;
 import tech.lamprism.lampray.authentication.UserInfoSignature;
 import tech.lamprism.lampray.authentication.login.LoginProvider;
 import tech.lamprism.lampray.authentication.login.LoginStrategyType;
 import tech.lamprism.lampray.security.authentication.registration.RegisterProvider;
 import tech.lamprism.lampray.security.authentication.registration.SimpleRegistration;
+import tech.lamprism.lampray.security.token.AuthorizationTokenConfigKeys;
 import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.InheritedAuthorizationScope;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author RollW
@@ -121,20 +122,22 @@ public class LoginRegisterController {
     }
 
     private HttpResponseEntity<LoginResponse> loginResponse(UserInfoSignature userInfoSignature) {
-        Long expireTime = configReader.get(SecurityConfigKeys.TOKEN_EXPIRE_TIME);
+        long accessTokenExpireTime = Objects.requireNonNull(configReader.get(AuthorizationTokenConfigKeys.ACCESS_TOKEN_EXPIRE_TIME));
+        long refreshTokenExpireTime = Objects.requireNonNull(configReader.get(AuthorizationTokenConfigKeys.REFRESH_TOKEN_EXPIRE_TIME));
+
         UserTokenSubject tokenSubject = new UserTokenSubject(userInfoSignature);
         SecretKeySpec signKey = new SecretKeySpec(userInfoSignature.signature().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         MetadataAuthorizationToken refreshToken = authorizationTokenManager.createToken(
                 tokenSubject,
                 subject -> signKey,
                 TokenType.REFRESH,
-                Duration.ofSeconds(expireTime),
+                Duration.ofSeconds(refreshTokenExpireTime),
                 List.of(InheritedAuthorizationScope.fromSubject(tokenSubject))
         );
         MetadataAuthorizationToken accessToken = authorizationTokenManager.exchangeToken(refreshToken,
                 subject -> signKey,
                 TokenType.ACCESS,
-                Duration.ofSeconds(expireTime),
+                Duration.ofSeconds(accessTokenExpireTime),
                 List.of(InheritedAuthorizationScope.fromSubject(tokenSubject))
         );
 

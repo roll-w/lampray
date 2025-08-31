@@ -34,7 +34,11 @@ export const useUserStore = defineStore('user', {
     }),
     getters: {
         /** @return {boolean} */
-        isLogin: state => state.token && state.token.accessToken,
+        isLogin: state => state.token &&
+            state.token.accessToken &&
+            state.token.refreshToken &&
+            new Date().getTime() < new Date(state.token.refreshTokenExpiry).getTime(),
+
         /** @return {{ username: string, id: number, role: string }} */
         getUser: state => state.user,
         /** @return {{refreshToken: string, accessToken: string, prefix: string, accessTokenExpiry: Date, refreshTokenExpiry: Date}} */
@@ -59,6 +63,13 @@ export const useUserStore = defineStore('user', {
             this.token = token
             this.remember = remember
             this.block = block
+        },
+
+        /**
+         * @param {{refreshToken: string, accessToken: string, prefix: string, accessTokenExpiry: Date, refreshTokenExpiry: Date}} token
+         */
+        refreshToken(token) {
+            this.token = token
         },
 
         logout() {

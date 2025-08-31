@@ -16,16 +16,13 @@
 
 import axios from 'axios'
 import {useUserStore} from "@/stores/user";
+import {refreshToken} from "@/request/api_urls.js";
 
 axios.defaults.withCredentials = true
 
 export function createConfig(isJson = false) {
-    const userStore = useUserStore()
     const config = {
         headers: {}
-    }
-    if (userStore.isLogin) {
-        config.headers["Authorization"] = userStore.token.prefix + userStore.token.accessToken
     }
     if (isJson) {
         config.headers["Content-Type"] = "application/json"
@@ -42,6 +39,20 @@ const blockErrorCodes = [
     "A1011",
 ]
 
+const refreshExpired = (userStore) => {
+    if (userStore.token && userStore.token.refreshTokenExpiry) {
+        return new Date().getTime() > new Date(userStore.token.refreshTokenExpiry).getTime()
+    }
+    return true
+}
+
+const accessExpired = (userStore) => {
+    if (userStore.token && userStore.token.accessTokenExpiry) {
+        return new Date().getTime() > new Date(userStore.token.accessTokenExpiry).getTime()
+    }
+    return true
+}
+
 export function createAxios(onLoginExpired = () => {
                             },
                             onUserBlocked = () => {
@@ -49,11 +60,45 @@ export function createAxios(onLoginExpired = () => {
     const instance = axios.create({
         withCredentials: true,
     })
+    instance.interceptors.request.use(
+        async config => {
+            if (config.url === refreshToken) {
+                // Skip adding token for refresh token request
+                return config
+            }
+            const userStore = useUserStore()
+            const rawToken = userStore.getToken
+            if (accessExpired(userStore) && !refreshExpired(userStore)) {
+                const promise = instance.post(refreshToken, {
+                    refreshToken: rawToken.refreshToken
+                });
+                // TODO: avoid multiple refresh token requests
+                await promise.then(resp => {
+                    userStore.refreshToken({
+                        accessToken: resp.data.accessToken,
+                        accessTokenExpiry: new Date(resp.data.accessTokenExpiry),
+                        refreshToken: rawToken.refreshToken,
+                        refreshTokenExpiry: rawToken.refreshTokenExpiry,
+                        prefix: rawToken.prefix
+                    })
+                    config.headers["Authorization"] = userStore.token.prefix + userStore.token.accessToken
+                }).catch((error) => {
+                    return Promise.reject(error.response.data)
+                })
+            }
+
+            if (userStore.isLogin) {
+                config.headers["Authorization"] = userStore.token.prefix + userStore.token.accessToken
+            }
+            return config
+        }, error => {
+            return Promise.reject(error.response.data)
+        }
+    )
+
     instance.interceptors.response.use(
         response => {
             console.log(response)
-
-
             if (response.data.errorCode !== "00000") {
                 return Promise.reject(response.data)
             }

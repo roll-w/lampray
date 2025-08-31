@@ -24,19 +24,11 @@ class AuthorizationScopeHierarchyService(
     private val providers: MutableList<AuthorizationScopeHierarchyProvider>
 ) : AuthorizationScopeHierarchy {
 
-    override fun getReachableAuthorizationScopes(authorizationScopes: Collection<AuthorizationScope>): Collection<AuthorizationScope> {
-        val scopes = mutableMapOf<AuthorizationScopeHierarchyProvider, MutableList<AuthorizationScope>>()
-        for (scope in authorizationScopes) {
-            providers.firstOrNull { it.supports(scope) }.let { provider ->
-                if (provider != null) {
-                    scopes.computeIfAbsent(provider) { mutableListOf() }.add(scope)
-                }
+    override fun getReachableAuthorizationScopes(authorizationScopes: Collection<AuthorizationScope>): Collection<AuthorizationScope> =
+        authorizationScopes
+            .groupBy { scope -> providers.firstOrNull { it.supports(scope) } }
+            .flatMap { (provider, scopes) ->
+                provider?.flattenAuthorizationScopes(scopes).orEmpty()
             }
-        }
-        val result = mutableSetOf<AuthorizationScope>()
-        for ((provider, authScopes) in scopes) {
-            result.addAll(provider.flattenAuthorizationScopes(authScopes))
-        }
-        return result
-    }
+            .toMutableSet()
 }

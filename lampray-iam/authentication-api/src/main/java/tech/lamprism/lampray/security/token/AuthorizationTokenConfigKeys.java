@@ -51,19 +51,26 @@ import java.util.Locale;
  */
 @Component
 public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplier {
-
     public static final AttributedSettingSpecification<String, String> TOKEN_ISSUER =
-            new SettingSpecificationBuilder<>(SettingKey.ofString("token.authorization.issuer"))
+            new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.authorization.issuer"))
                     .setDefaultValue("Lampray")
                     .setSupportedSources(SettingSource.VALUES)
                     .setTextDescription("The issuer name for JWT tokens. This identifies who issued the token.")
                     .setRequired(true)
                     .build();
 
-    public static final AttributedSettingSpecification<Long, Long> TOKEN_EXPIRE_TIME =
-            new SettingSpecificationBuilder<>(SettingKey.ofLong("token.authorization.expire-time"))
+    public static final AttributedSettingSpecification<Long, Long> ACCESS_TOKEN_EXPIRE_TIME =
+            new SettingSpecificationBuilder<>(SettingKey.ofLong("security.token.authorization.access.expire-time"))
                     .setDefaultValue(3600L)
-                    .setTextDescription("Token expiration time in seconds. Default is 3600 seconds (1 hour).")
+                    .setTextDescription("Access token expiration time in seconds. Default is 3600 seconds (1 hour).")
+                    .setSupportedSources(SettingSource.VALUES)
+                    .setRequired(true)
+                    .build();
+
+    public static final AttributedSettingSpecification<Long, Long> REFRESH_TOKEN_EXPIRE_TIME =
+            new SettingSpecificationBuilder<>(SettingKey.ofLong("security.token.authorization.refresh.expire-time"))
+                    .setDefaultValue(86400L)
+                    .setTextDescription("Refresh token expiration time in seconds. Default is 86400 seconds (24 hours).")
                     .setSupportedSources(SettingSource.VALUES)
                     .setRequired(true)
                     .build();
@@ -74,9 +81,9 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
     public static final String SIGN_KEY_SECRET = "secret";
 
     public static final AttributedSettingSpecification<String, String> TOKEN_KEY_TYPE =
-            new SettingSpecificationBuilder<>(SettingKey.ofString("token.authorization.sign-key.type"))
+            new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.authorization.sign-key.type"))
+                    .setValueEntries(List.of(SIGN_KEY_SECRET, SIGN_KEY_KEYPAIR))
                     .setDefaultValue(SIGN_KEY_SECRET)
-                    .setValueEntries(List.of(SIGN_KEY_KEYPAIR, SIGN_KEY_SECRET))
                     .setTextDescription("""
                             The cryptographic signing method for JWT tokens:
                             
@@ -93,7 +100,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
     public static final AttributedSettingSpecification<String, String> TOKEN_SECRET_KEY =
             // TODO: support generation of RSA/ECDSA key pairs
             // TODO: support rotation of keys
-            new SettingSpecificationBuilder<>(SettingKey.ofString("token.authorization.sign-key.secret-key"))
+            new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.authorization.sign-key.secret-key"))
                     .setDefaultValue(RANDOM)
                     .setTextDescription("""
                             The signing key for JWT tokens. The format depends on the key type:
@@ -116,7 +123,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                     .build();
 
     public static final AttributedSettingSpecification<String, String> TOKEN_KEY_ALGORITHM =
-            new SettingSpecificationBuilder<>(SettingKey.ofString("token.authorization.sign-key.algorithm"))
+            new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.authorization.sign-key.algorithm"))
                     .setDefaultValue("HmacSHA256")
                     .setTextDescription("The cryptographic algorithm for token signing. " +
                             "Commonly used: HmacSHA256, HmacSHA384, HmacSHA512 for secret keys.")
@@ -126,7 +133,12 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                     .build();
 
     private static final List<AttributedSettingSpecification<?, ?>> SPECIFICATIONS =
-            List.of(TOKEN_ISSUER, TOKEN_EXPIRE_TIME, TOKEN_KEY_TYPE, TOKEN_SECRET_KEY, TOKEN_KEY_ALGORITHM);
+            List.of(TOKEN_ISSUER,
+                    ACCESS_TOKEN_EXPIRE_TIME,
+                    REFRESH_TOKEN_EXPIRE_TIME,
+                    TOKEN_KEY_TYPE,
+                    TOKEN_SECRET_KEY,
+                    TOKEN_KEY_ALGORITHM);
 
     @Override
     @NonNull

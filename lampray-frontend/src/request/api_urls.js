@@ -37,6 +37,7 @@ export const passwordLogin = `${prefix()}/user/login/password`;
 export const emailLogin = `${prefix()}/user/login/email`;
 export const logout = `${prefix()}/user/logout`;
 export const register = `${prefix()}/user/register`;
+export const refreshToken = `${prefix()}/auth/token:refresh`;
 export const registerActivate = (token) =>
     `${prefix()}/user/register/token/${token}`;
 

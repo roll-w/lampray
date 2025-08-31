@@ -16,21 +16,23 @@
 
 package tech.lamprism.lampray.web.controller.auth;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import tech.lamprism.lampray.authentication.SecurityConfigKeys;
+import tech.lamprism.lampray.security.token.AuthorizationTokenConfigKeys;
 import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
-import tech.lamprism.lampray.security.token.AuthorizationTokenUtils;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.SimpleAuthorizationToken;
-import tech.lamprism.lampray.security.token.TokenFormat;
 import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenType;
 import tech.lamprism.lampray.setting.ConfigReader;
 import tech.lamprism.lampray.web.controller.auth.model.RefreshTokenRequest;
+import tech.lamprism.lampray.web.controller.auth.model.RefreshTokenResponse;
+import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.HttpResponseEntity;
 
 import java.time.Duration;
@@ -55,18 +57,22 @@ public class AuthTokenController {
     }
 
     @PostMapping("/token:refresh")
-    public HttpResponseEntity<String> refreshToken(
+    public HttpResponseEntity<RefreshTokenResponse> refreshToken(
             @RequestBody RefreshTokenRequest refreshTokenRequest) {
-        Long expireTime = configReader.get(SecurityConfigKeys.TOKEN_EXPIRE_TIME);
+        if (refreshTokenRequest == null || StringUtils.isBlank(refreshTokenRequest.getRefreshToken())) {
+            throw new CommonRuntimeException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "Refresh token is required");
+        }
+
+        Long accessTokenExpireTime = configReader.get(AuthorizationTokenConfigKeys.ACCESS_TOKEN_EXPIRE_TIME);
         MetadataAuthorizationToken exchangedToken = authorizationTokenManager.exchangeToken(
                 new SimpleAuthorizationToken(refreshTokenRequest.getRefreshToken(), TokenType.REFRESH),
                 tokenSubjectSignKeyProvider,
                 TokenType.ACCESS,
-                Duration.ofSeconds(expireTime),
+                Duration.ofSeconds(accessTokenExpireTime),
                 List.of()
         );
         return HttpResponseEntity.success(
-                AuthorizationTokenUtils.toHeaderValue(exchangedToken, TokenFormat.BEARER)
+                new RefreshTokenResponse(exchangedToken.getToken(), exchangedToken.getExpirationAt())
         );
     }
 

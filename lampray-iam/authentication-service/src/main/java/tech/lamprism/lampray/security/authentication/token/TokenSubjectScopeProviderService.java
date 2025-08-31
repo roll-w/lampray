@@ -30,17 +30,17 @@ import java.util.Collection;
  * @author RollW
  */
 @Service
-public class TokenSubjectScopeProviderImpl implements TokenSubjectScopeProvider {
+public class TokenSubjectScopeProviderService implements TokenSubjectScopeProvider {
     private final PrivilegedUserProvider privilegedUserProvider;
 
-    public TokenSubjectScopeProviderImpl(PrivilegedUserProvider privilegedUserProvider) {
+    public TokenSubjectScopeProviderService(PrivilegedUserProvider privilegedUserProvider) {
         this.privilegedUserProvider = privilegedUserProvider;
     }
 
     @Override
     public Collection<AuthorizationScope> getAuthorizationScopes(TokenSubject tokenSubject) {
         if (tokenSubject.getType() != SubjectType.USER) {
-            throw new IllegalArgumentException("tokenSubject type must be USER");
+            throw new IllegalArgumentException("Subject type not supported: " + tokenSubject.getType());
         }
 
         PrivilegedUser privilegedUser = privilegedUserProvider.loadPrivilegedUserById(Long.parseLong(tokenSubject.getId()));

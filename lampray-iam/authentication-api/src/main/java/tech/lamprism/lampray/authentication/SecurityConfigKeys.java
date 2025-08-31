@@ -16,10 +16,8 @@
 
 package tech.lamprism.lampray.authentication;
 
+import space.lingu.NonNull;
 import tech.lamprism.lampray.setting.AttributedSettingSpecification;
-import tech.lamprism.lampray.setting.SettingKey;
-import tech.lamprism.lampray.setting.SettingSource;
-import tech.lamprism.lampray.setting.SettingSpecificationBuilder;
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier;
 
 import java.util.List;
@@ -28,42 +26,15 @@ import java.util.List;
  * @author RollW
  */
 public class SecurityConfigKeys implements SettingSpecificationSupplier {
-    public static final AttributedSettingSpecification<String, String> TOKEN_ISSUER =
-            new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.issuer"))
-                    .setDefaultValue("Lampray")
-                    .setSupportedSources(SettingSource.VALUES)
-                    .setTextDescription("Token issuer.")
-                    .setRequired(true)
-                    .build();
-
-    public static final AttributedSettingSpecification<Long, Long> TOKEN_EXPIRE_TIME =
-            new SettingSpecificationBuilder<>(SettingKey.ofLong("security.token.expire-time"))
-                    .setDefaultValue(3600L)
-                    .setTextDescription("Token expiration time in seconds.")
-                    .setSupportedSources(SettingSource.VALUES)
-                    .setRequired(true)
-                    .build();
-
-    public static final String RANDOM = "[random]";
-
-    public static final AttributedSettingSpecification<String, String> TOKEN_SIGN_KEY =
-            new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.sign-key"))
-                    .setDefaultValue(RANDOM)
-                    .setTextDescription("Key used to sign and verify token.")
-                    .setSupportedSources(SettingSource.VALUES)
-                    .setRequired(true)
-                    .build();
 
     public static final String PREFIX = "security.";
 
     private static final List<AttributedSettingSpecification<?, ?>> KEYS = List.of(
-            TOKEN_ISSUER,
-            TOKEN_EXPIRE_TIME,
-            TOKEN_SIGN_KEY
     );
 
     public static final SecurityConfigKeys INSTANCE = new SecurityConfigKeys();
 
+    @NonNull
     @Override
     public List<AttributedSettingSpecification<?, ?>> getSpecifications() {
         return KEYS;
