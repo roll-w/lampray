@@ -14,32 +14,19 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication;
+package tech.lamprism.lampray.security.authentication;
 
 import space.lingu.NonNull;
-import tech.lamprism.lampray.setting.AttributedSettingSpecification;
-import tech.lamprism.lampray.setting.SettingSpecificationSupplier;
-
-import java.util.List;
 
 /**
  * @author RollW
  */
-public class SecurityConfigKeys implements SettingSpecificationSupplier {
-
-    public static final String PREFIX = "security.";
-
-    private static final List<AttributedSettingSpecification<?, ?>> KEYS = List.of(
-    );
-
-    public static final SecurityConfigKeys INSTANCE = new SecurityConfigKeys();
-
+public interface VerifiableToken {
     @NonNull
-    @Override
-    public List<AttributedSettingSpecification<?, ?>> getSpecifications() {
-        return KEYS;
-    }
+    String token();
 
-    private SecurityConfigKeys() {
-    }
+    /**
+     * @return true if the token is usable.
+     */
+    boolean isUsable();
 }

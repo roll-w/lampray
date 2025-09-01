@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication.login;
+package tech.lamprism.lampray.security.authentication.login;
 
 import com.google.common.io.ByteStreams;
 import jakarta.mail.internet.MimeMessage;
@@ -70,7 +70,7 @@ public class EmailTokenLoginStrategy implements LoginStrategy {
 
     @Override
     public LoginVerifiableToken createToken(AttributedUserDetails user) throws LoginTokenException {
-        String token = RandomStringUtils.random(5, FULL_SEQUENCE);
+        String token = RandomStringUtils.secure().next(5, FULL_SEQUENCE);
         long expireTime = System.currentTimeMillis() + 1000 * 5 * 60;
         // save to cache if it already has a token in it
         LoginConfirmToken oldToken =

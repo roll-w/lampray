@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication.register;
+package tech.lamprism.lampray.security.authentication.registration;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.DataEntity;
 import tech.lamprism.lampray.LongEntityBuilder;
-import tech.lamprism.lampray.authentication.VerifiableToken;
+import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.rollw.common.web.system.SystemResourceKind;
 
 import java.time.OffsetDateTime;
@@ -90,6 +90,11 @@ public record RegisterVerificationToken(
 
     public RegisterVerificationToken markVerified() {
         return toBuilder().setUsed(true).build();
+    }
+
+    @Override
+    public boolean isUsable() {
+        return !used && !isExpired();
     }
 
     public static final class Builder implements LongEntityBuilder<RegisterVerificationToken> {

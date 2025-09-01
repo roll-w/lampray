@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication.login;
+package tech.lamprism.lampray.security.authentication.login;
+
+import space.lingu.NonNull;
+import space.lingu.Nullable;
+import tech.lamprism.lampray.security.authentication.VerifiableToken;
 
 /**
  * @author RollW
  */
-public record LoginConfirmToken(
-        String token,
-        long userId,
-        Long expireTime,
-        LoginStrategyType strategyType
-) implements LoginVerifiableToken {
+public interface LoginVerifiableToken extends VerifiableToken {
+    @NonNull
+    @Override
+    String token();
 
-    public static LoginConfirmToken emailToken(String token, long userId, long expireTime) {
-        return new LoginConfirmToken(token, userId,
-                expireTime, LoginStrategyType.EMAIL_TOKEN);
-    }
+    long userId();
 
+    @Nullable
+    Long expireTime();
+
+    LoginStrategyType strategyType();
 }

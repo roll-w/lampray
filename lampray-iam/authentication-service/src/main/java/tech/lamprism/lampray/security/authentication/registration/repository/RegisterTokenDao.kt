@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication.register.repository
+package tech.lamprism.lampray.security.authentication.registration.repository
 
-import org.springframework.stereotype.Repository
-import tech.lamprism.lampray.common.data.CommonRepository
+import org.springframework.data.jpa.repository.Query
+import tech.lamprism.lampray.common.data.CommonDao
+import tech.lamprism.lampray.common.data.Dao
 
 /**
  * @author RollW
  */
-@Repository
-class RegisterTokenRepository(
-    private val registerTokenDao: RegisterTokenDao
-): CommonRepository<RegisterTokenDo, Long>(registerTokenDao) {
-    fun findByToken(token: String): RegisterTokenDo? {
-        return registerTokenDao.findByToken(token)
-    }
+@Dao
+interface RegisterTokenDao : CommonDao<RegisterTokenDo, Long> {
+    @Query("SELECT t FROM RegisterTokenDo t WHERE t.token = :token")
+    fun findByToken(token: String): RegisterTokenDo?
 }

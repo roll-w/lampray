@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication.login;
+package tech.lamprism.lampray.security.authentication.registration.repository
+
+import org.springframework.stereotype.Repository
+import tech.lamprism.lampray.common.data.CommonRepository
 
 /**
  * @author RollW
  */
-public enum LoginStrategyType {
-    PASSWORD,
-    PHONE_TOKEN,
-    EMAIL_TOKEN,
-    // can be used for QR code login
-    CODE_TOKEN,
-    ;
+@Repository
+class RegisterTokenRepository(
+    private val registerTokenDao: RegisterTokenDao
+): CommonRepository<RegisterTokenDo, Long>(registerTokenDao) {
+    fun findByToken(token: String): RegisterTokenDo? {
+        return registerTokenDao.findByToken(token)
+    }
 }

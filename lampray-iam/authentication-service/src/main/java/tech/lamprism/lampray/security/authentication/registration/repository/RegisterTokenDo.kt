@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication.register.repository
+package tech.lamprism.lampray.security.authentication.registration.repository
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -25,9 +25,9 @@ import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.TimeAttributed
-import tech.lamprism.lampray.authentication.VerifiableToken
-import tech.lamprism.lampray.authentication.register.RegisterTokenResourceKind
-import tech.lamprism.lampray.authentication.register.RegisterVerificationToken
+import tech.lamprism.lampray.security.authentication.VerifiableToken
+import tech.lamprism.lampray.security.authentication.registration.RegisterTokenResourceKind
+import tech.lamprism.lampray.security.authentication.registration.RegisterVerificationToken
 import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 
@@ -61,6 +61,10 @@ class RegisterTokenDo(
 ) : VerifiableToken, DataEntity<Long> {
     override fun token(): String {
         return token
+    }
+
+    override fun isUsable(): Boolean {
+        return !used && !isExpired()
     }
 
     fun setId(id: Long?) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication;
-
-import space.lingu.NonNull;
+package tech.lamprism.lampray.security.authentication.login;
 
 /**
  * @author RollW
  */
-public interface VerifiableToken {
-    @NonNull
-    String token();
+public enum LoginStrategyType {
+    PASSWORD,
+    PHONE_TOKEN,
+    EMAIL_TOKEN,
+    // can be used for QR code login
+    CODE_TOKEN,
+    ;
 }

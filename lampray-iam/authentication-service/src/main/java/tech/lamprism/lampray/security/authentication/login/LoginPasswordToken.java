@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,38 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication.login;
+package tech.lamprism.lampray.security.authentication.login;
 
 import space.lingu.NonNull;
 import space.lingu.Nullable;
-import tech.lamprism.lampray.authentication.VerifiableToken;
 
 /**
  * @author RollW
  */
-public interface LoginVerifiableToken extends VerifiableToken {
+public record LoginPasswordToken(
+        String password,
+        long userId
+) implements LoginVerifiableToken {
+
     @NonNull
     @Override
-    String token();
+    public String token() {
+        return password;
+    }
 
-    long userId();
+    @Override
+    public boolean isUsable() {
+        return true;
+    }
 
     @Nullable
-    Long expireTime();
+    @Override
+    public Long expireTime() {
+        return null;
+    }
 
-    LoginStrategyType strategyType();
+    @Override
+    public LoginStrategyType strategyType() {
+        return LoginStrategyType.PASSWORD;
+    }
 }

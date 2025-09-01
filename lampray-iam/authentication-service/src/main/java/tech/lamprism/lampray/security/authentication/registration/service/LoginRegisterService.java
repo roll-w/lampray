@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication.register.service;
+package tech.lamprism.lampray.security.authentication.registration.service;
 
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -28,22 +28,22 @@ import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.LampException;
 import tech.lamprism.lampray.RequestMetadata;
-import tech.lamprism.lampray.authentication.UserInfoSignature;
-import tech.lamprism.lampray.authentication.VerifiableToken;
-import tech.lamprism.lampray.authentication.event.OnUserLoginEvent;
-import tech.lamprism.lampray.authentication.event.OnUserRegistrationEvent;
-import tech.lamprism.lampray.authentication.login.LoginProvider;
-import tech.lamprism.lampray.authentication.login.LoginStrategy;
-import tech.lamprism.lampray.authentication.login.LoginStrategyType;
-import tech.lamprism.lampray.authentication.login.LoginVerifiableToken;
-import tech.lamprism.lampray.authentication.register.RegisterVerificationToken;
-import tech.lamprism.lampray.authentication.register.repository.RegisterTokenDo;
-import tech.lamprism.lampray.authentication.register.repository.RegisterTokenRepository;
+import tech.lamprism.lampray.security.authentication.UserInfoSignature;
+import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationToken;
+import tech.lamprism.lampray.security.authentication.login.LoginProvider;
+import tech.lamprism.lampray.security.authentication.login.LoginStrategy;
+import tech.lamprism.lampray.security.authentication.login.LoginStrategyType;
+import tech.lamprism.lampray.security.authentication.login.LoginVerifiableToken;
+import tech.lamprism.lampray.security.authentication.login.OnUserLoginEvent;
+import tech.lamprism.lampray.security.authentication.registration.OnUserRegistrationEvent;
 import tech.lamprism.lampray.security.authentication.registration.RegisterProvider;
 import tech.lamprism.lampray.security.authentication.registration.RegisterTokenProvider;
+import tech.lamprism.lampray.security.authentication.registration.RegisterVerificationToken;
 import tech.lamprism.lampray.security.authentication.registration.Registration;
 import tech.lamprism.lampray.security.authentication.registration.RegistrationInterceptor;
+import tech.lamprism.lampray.security.authentication.registration.repository.RegisterTokenDo;
+import tech.lamprism.lampray.security.authentication.registration.repository.RegisterTokenRepository;
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.AttributedUserDetails;
 import tech.lamprism.lampray.user.UserIdentity;

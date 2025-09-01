@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.authentication;
+package tech.lamprism.lampray.security.authentication;
 
 import tech.lamprism.lampray.user.Role;
 import tech.lamprism.lampray.user.UserIdentity;
