@@ -1,6 +1,7 @@
 # Lampray
 
 [![License](https://img.shields.io/github/license/roll-w/lampray?color=569cd6&style=flat-square)](https://github.com/roll-w/lampray/blob/master/LICENSE)
+[![Build Image](https://github.com/roll-w/lampray/actions/workflows/build_image.yaml/badge.svg?branch=master)](https://github.com/roll-w/lampray/actions/workflows/build_image.yaml)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/roll-w/lampray)
 
 Lampray is a blog system built with Spring Boot 3 and Vue3.
