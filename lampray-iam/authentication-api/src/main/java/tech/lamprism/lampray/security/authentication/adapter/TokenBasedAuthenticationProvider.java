@@ -21,9 +21,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import tech.lamprism.lampray.security.authorization.AuthorizationScope;
 import tech.lamprism.lampray.security.authorization.PrivilegedUser;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
 import tech.lamprism.lampray.security.authorization.adapter.PrivilegedUserAuthenticationToken;
+import tech.lamprism.lampray.security.authorization.hierarchy.AuthorizationScopeHierarchy;
 import tech.lamprism.lampray.security.token.AuthorizationToken;
 import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
@@ -34,6 +36,8 @@ import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenType;
 import tech.rollw.common.web.CommonRuntimeException;
 
+import java.util.Collection;
+
 /**
  * @author RollW
  */
@@ -43,15 +47,18 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
     private final AuthorizationTokenManager authorizationTokenManager;
     private final PrivilegedUserProvider privilegedUserProvider;
     private final TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider;
+    private final AuthorizationScopeHierarchy authorizationScopeHierarchy;
 
     public TokenBasedAuthenticationProvider(
             AuthorizationTokenManager authorizationTokenManager,
             PrivilegedUserProvider privilegedUserProvider,
-            TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider
+            TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider,
+            AuthorizationScopeHierarchy authorizationScopeHierarchy
     ) {
         this.authorizationTokenManager = authorizationTokenManager;
         this.privilegedUserProvider = privilegedUserProvider;
         this.tokenSubjectSignKeyProvider = tokenSubjectSignKeyProvider;
+        this.authorizationScopeHierarchy = authorizationScopeHierarchy;
     }
 
     @Override
@@ -67,14 +74,15 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
             MetadataAuthorizationToken authorizationToken = authorizationTokenManager.parseToken(
                     token, tokenSubjectSignKeyProvider);
             TokenSubject subject = authorizationToken.getSubject();
+            Collection<AuthorizationScope> reachableAuthorizationScopes = authorizationScopeHierarchy
+                    .getReachableAuthorizationScopes(authorizationToken.getScopes());
             return switch (subject.getType()) {
                 case USER -> {
                     PrivilegedUser privilegedUser = privilegedUserProvider.loadPrivilegedUserById(
                             Long.parseLong(subject.getId())
                     );
                     check(privilegedUser);
-                    // TODO: use the token.scopes to override user authorities.
-                    yield new PrivilegedUserAuthenticationToken(privilegedUser);
+                    yield new PrivilegedUserAuthenticationToken(privilegedUser, reachableAuthorizationScopes);
                 }
                 // TODO: other subject type was not yet supported
                 default -> throw new BadCredentialsException("Not support subject type.");

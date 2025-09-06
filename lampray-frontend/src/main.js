@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 import {createApp} from 'vue'
 import {createPinia} from 'pinia'
 import App from './App.vue'
-import router, {login} from './router'
 import './style.css'
+import router, {login, pageBlocked} from "@/router"
 import naive from "naive-ui";
 import {createAxios} from "@/request/axios_config";
 import {useUserStore} from "@/stores/user";
@@ -41,8 +41,7 @@ if (!debug) {
 }
 
 const onLoginExpired = () => {
-    console.log('登录已过期，请重新登录')
-    window.$message.error('登录已过期，请重新登录')
+    window.$message.error("登录已过期，请重新登录")
     const userStore = useUserStore()
     userStore.logout()
 
@@ -56,7 +55,21 @@ const onLoginExpired = () => {
     })
 }
 
-const axios = createAxios(onLoginExpired)
+const onUserBlocked = () => {
+    window.$message.error("您的账号已被封禁")
+    const userStore = useUserStore()
+    userStore.block = true
+    router.push({
+        name: pageBlocked,
+        query: {
+            source: router.currentRoute.value.fullPath
+        }
+    }).then((failure) => {
+        console.log(failure)
+    })
+}
+
+const axios = createAxios(onLoginExpired, onUserBlocked)
 app.config.globalProperties.$axios = axios
 
 app.mount('#app')
