@@ -18,6 +18,7 @@ package tech.lamprism.lampray.security.authentication.token;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import tech.lamprism.lampray.security.authorization.hierarchy.AuthorizationScopeHierarchy;
 import tech.lamprism.lampray.security.token.AuthorizationTokenManagerService;
 import tech.lamprism.lampray.security.token.AuthorizationTokenProvider;
 import tech.lamprism.lampray.security.token.DelegateTokenSubjectSignKeyProvider;
@@ -63,8 +64,9 @@ public class AuthorizationTokenConfiguration {
 
     @Bean
     public AuthorizationTokenManagerService authorizationTokenManager(List<AuthorizationTokenProvider> authorizationTokenProviders,
-                                                                      RevokeTokenStorage revokeTokenStorage) {
-        return new AuthorizationTokenManagerService(authorizationTokenProviders, revokeTokenStorage);
+                                                                      RevokeTokenStorage revokeTokenStorage,
+                                                                      AuthorizationScopeHierarchy authorizationScopeHierarchy) {
+        return new AuthorizationTokenManagerService(authorizationTokenProviders, revokeTokenStorage, authorizationScopeHierarchy);
     }
 
 
