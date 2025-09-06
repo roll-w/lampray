@@ -15,121 +15,182 @@
  */
 
 import axios from 'axios'
-import {useUserStore} from "@/stores/user";
-import {refreshToken} from "@/request/api_urls.js";
+import {useUserStore} from "@/stores/user"
+import {refreshToken} from "@/request/api_urls.js"
 
 axios.defaults.withCredentials = true
 
+// Error codes configuration
+const ERROR_CODES = {
+    TOKEN: ["A1001", "A1002"],
+    BLOCK: ["A1011"]
+}
+
+// Global refresh promise to prevent multiple concurrent refresh requests
+let refreshPromise = null
+
+/**
+ * Create request configuration
+ */
 export function createConfig(isJson = false) {
-    const config = {
-        headers: {}
-    }
+    const config = {headers: {}}
     if (isJson) {
         config.headers["Content-Type"] = "application/json"
     }
     return config
 }
 
-const tokenErrorCodes = [
-    "A1001",
-    "A1002"
-]
-
-const blockErrorCodes = [
-    "A1011",
-]
-
-const refreshExpired = (userStore) => {
-    if (userStore.token && userStore.token.refreshTokenExpiry) {
-        return new Date().getTime() > new Date(userStore.token.refreshTokenExpiry).getTime()
-    }
-    return true
+/**
+ * Check if token is expired
+ */
+const isTokenExpired = (expiry) => {
+    if (!expiry) return true
+    return Date.now() > new Date(expiry).getTime()
 }
 
-const accessExpired = (userStore) => {
-    if (userStore.token && userStore.token.accessTokenExpiry) {
-        return new Date().getTime() > new Date(userStore.token.accessTokenExpiry).getTime()
-    }
-    return true
+/**
+ * Get authorization header value
+ */
+const getAuthHeader = (userStore) => {
+    const token = userStore.token
+    return token ? `${token.prefix}${token.accessToken}` : null
 }
 
-export function createAxios(onLoginExpired = () => {
-                            },
-                            onUserBlocked = () => {
-                            }) {
+/**
+ * Refresh access token
+ */
+const performTokenRefresh = async (instance, userStore) => {
+    const currentToken = userStore.getToken
+
+    if (!currentToken?.refreshToken || isTokenExpired(currentToken.refreshTokenExpiry)) {
+        throw new Error('Refresh token expired')
+    }
+
+    const response = await instance.post(refreshToken, {
+        refreshToken: currentToken.refreshToken
+    })
+
+    userStore.refreshToken({
+        accessToken: response.data.accessToken,
+        accessTokenExpiry: new Date(response.data.accessTokenExpiry),
+        refreshToken: currentToken.refreshToken,
+        refreshTokenExpiry: currentToken.refreshTokenExpiry,
+        prefix: currentToken.prefix
+    })
+
+    return response.data
+}
+
+/**
+ * Handle token refresh with concurrent request protection
+ */
+const handleTokenRefresh = async (instance, userStore) => {
+    if (refreshPromise) {
+        await refreshPromise
+        return
+    }
+
+    refreshPromise = performTokenRefresh(instance, userStore)
+        .finally(() => {
+            refreshPromise = null
+        })
+
+    await refreshPromise
+}
+
+/**
+ * Check if error code is in specific error list
+ */
+const isErrorCodeMatch = (errorCode, errorList) => {
+    return errorList.includes(errorCode || "00000")
+}
+
+/**
+ * Create axios instance with interceptors
+ */
+export function createAxios(onLoginExpired = () => {}, onUserBlocked = () => {}) {
     const instance = axios.create({
         withCredentials: true,
     })
+
+    // Request interceptor
     instance.interceptors.request.use(
-        async config => {
+        async (config) => {
+            // Skip token handling for refresh token requests
             if (config.url === refreshToken) {
-                // Skip adding token for refresh token request
                 return config
             }
+
             const userStore = useUserStore()
-            const rawToken = userStore.getToken
-            if (accessExpired(userStore) && !refreshExpired(userStore)) {
-                const promise = instance.post(refreshToken, {
-                    refreshToken: rawToken.refreshToken
-                });
-                // TODO: avoid multiple refresh token requests
-                await promise.then(resp => {
-                    userStore.refreshToken({
-                        accessToken: resp.data.accessToken,
-                        accessTokenExpiry: new Date(resp.data.accessTokenExpiry),
-                        refreshToken: rawToken.refreshToken,
-                        refreshTokenExpiry: rawToken.refreshTokenExpiry,
-                        prefix: rawToken.prefix
-                    })
-                    config.headers["Authorization"] = userStore.token.prefix + userStore.token.accessToken
-                }).catch((error) => {
-                    return Promise.reject(error.response.data)
-                })
+
+            if (!userStore.isLogin) {
+                return config
             }
 
-            if (userStore.isLogin) {
-                config.headers["Authorization"] = userStore.token.prefix + userStore.token.accessToken
+            const token = userStore.token
+
+            // Check if access token needs refresh
+            if (isTokenExpired(token?.accessTokenExpiry) && !isTokenExpired(token?.refreshTokenExpiry)) {
+                try {
+                    await handleTokenRefresh(instance, userStore)
+                } catch (error) {
+                    console.error('Token refresh failed:', error)
+                    return Promise.reject({
+                        tip: "Login expired",
+                        message: "Token refresh failed",
+                        status: 401
+                    })
+                }
             }
+
+            // Add authorization header
+            const authHeader = getAuthHeader(userStore)
+            if (authHeader) {
+                config.headers["Authorization"] = authHeader
+            }
+
             return config
-        }, error => {
-            return Promise.reject(error.response.data)
-        }
+        },
+        (error) => Promise.reject(error.response?.data || error)
     )
 
+    // Response interceptor
     instance.interceptors.response.use(
-        response => {
-            console.log(response)
+        (response) => {
             if (response.data.errorCode !== "00000") {
                 return Promise.reject(response.data)
             }
             return response.data
-        }, error => {
-            console.log(error)
-            if (isInError(error.response.data.errorCode || "00000", blockErrorCodes)) {
+        },
+        (error) => {
+            const errorData = error.response?.data
+            const errorCode = errorData?.errorCode || "00000"
+
+            // Handle user blocked error
+            if (isErrorCodeMatch(errorCode, ERROR_CODES.BLOCK)) {
                 onUserBlocked()
                 return Promise.reject({
-                    tip: "账号已被封禁",
-                    message: "账号已被封禁",
-                    errorCode: response.data.errorCode,
+                    tip: "Account blocked",
+                    message: "Account has been blocked",
+                    errorCode: errorCode,
                     status: 403
                 })
             }
-            if (isInError(error.response.data.errorCode || "00000", tokenErrorCodes)) {
+
+            // Handle token error
+            if (isErrorCodeMatch(errorCode, ERROR_CODES.TOKEN)) {
                 onLoginExpired()
                 return Promise.reject({
-                    tip: "登录过期",
-                    message: "登录过期",
-                    errorCode: error.response.data.errorCode,
+                    tip: "Login expired",
+                    message: "Please login again",
+                    errorCode: errorCode,
                     status: 401
                 })
             }
-            return Promise.reject(error.response.data)
+
+            return Promise.reject(errorData || error)
         }
     )
+
     return instance
 }
-
-function isInError(errorCode = '00000', errorCodes = tokenErrorCodes) {
-    return errorCodes.includes(errorCode)
-}
-

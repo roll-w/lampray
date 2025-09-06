@@ -17,8 +17,8 @@
 import {createApp} from 'vue'
 import {createPinia} from 'pinia'
 import App from './App.vue'
-import router, {login} from './router'
 import './style.css'
+import router, {login, pageBlocked} from "@/router"
 import naive from "naive-ui";
 import {createAxios} from "@/request/axios_config";
 import {useUserStore} from "@/stores/user";
