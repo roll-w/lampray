@@ -125,15 +125,27 @@ class AuthorizationTokenManagerService(
         if (requiredScopes.isEmpty()) {
             return true
         }
-        val expandedTokenScopes = authorizationScopeHierarchy.getReachableAuthorizationScopes(tokenScopes)
+        if (tokenScopes.isEmpty()) {
+            return false
+        }
+
+        // We first check the raw scopes for a quick match, as this is the most common case.
+        val rawTokenScopeSet = tokenScopes.map { it.scope }.toSet()
+        if (requiredScopes.all { it.scope in rawTokenScopeSet }) {
+            return true
+        }
+
+        // If not all required scopes are directly present, we expand both sets using the hierarchy.
+        val expandedTokenScopes = authorizationScopeHierarchy
+            .getReachableAuthorizationScopes(tokenScopes)
         if (expandedTokenScopes.isEmpty()) {
             return false
         }
-        val requiredScopes = authorizationScopeHierarchy
+        val expandedRequiredScopes = authorizationScopeHierarchy
             .getReachableAuthorizationScopes(requiredScopes)
 
         val expandedTokenScopeSet = expandedTokenScopes.map { it.scope }.toSet()
-        return requiredScopes.all { it.scope in expandedTokenScopeSet }
+        return expandedRequiredScopes.all { it.scope in expandedTokenScopeSet }
     }
 
     override fun revokeToken(token: MetadataAuthorizationToken) {
