@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import org.slf4j.logger
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
-import tech.lamprism.lampray.authentication.login.LoginProvider
-import tech.lamprism.lampray.authentication.login.LoginStrategyType
+import tech.lamprism.lampray.security.authentication.login.LoginProvider
+import tech.lamprism.lampray.security.authentication.login.LoginStrategyType
 import tech.rollw.common.web.CommonRuntimeException
 
 /**

@@ -19,8 +19,8 @@ import org.slf4j.debug
 import org.slf4j.logger
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import tech.lamprism.lampray.authentication.SecurityConfigKeys
 import tech.lamprism.lampray.push.mail.MailConfigKeys
+import tech.lamprism.lampray.security.authentication.SecurityConfigKeys
 import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import tech.lamprism.lampray.setting.SettingSpecificationProvider
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier
