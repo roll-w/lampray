@@ -15,8 +15,10 @@
  */
 package tech.lamprism.lampray.system.console.shell.command.security
 
+import org.jline.utils.AttributedString
 import org.springframework.shell.command.annotation.Command
 import org.springframework.shell.command.annotation.Option
+import org.springframework.shell.component.StringInput
 import org.springframework.shell.standard.AbstractShellComponent
 import org.springframework.shell.table.AbsoluteWidthSizeConstraints
 import org.springframework.shell.table.ArrayTableModel
@@ -32,11 +34,12 @@ import tech.lamprism.lampray.security.firewall.filtertable.FilterEntry
 import tech.lamprism.lampray.security.firewall.filtertable.FilterMode
 import tech.lamprism.lampray.security.firewall.filtertable.FilterTable
 import tech.lamprism.lampray.system.console.CommandGroups
+import tech.lamprism.lampray.system.console.shell.command.HelpCommandProvider
+import tech.lamprism.lampray.system.console.shell.command.HelpCommandProviderAware
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
-import java.util.regex.Pattern
 
 /**
  * Command for managing the system's filter table that controls access
@@ -46,11 +49,24 @@ import java.util.regex.Pattern
  */
 @Component
 @Command(
-    command = ["filter"],
+    command = ["filtertable"],
     description = "Manage the system's filter table for blocking or allowing specific identifiers (IP addresses, user IDs, etc.)",
     group = CommandGroups.SECURITY
 )
-class FilterTableCommand(private val filterTable: FilterTable) : AbstractShellComponent() {
+class FilterTableCommand(
+    private val filterTable: FilterTable,
+) : AbstractShellComponent(), HelpCommandProviderAware {
+    private lateinit var helpCommandProvider: HelpCommandProvider
+
+    override fun setHelpCommandProvider(helpCommandProvider: HelpCommandProvider) {
+        this.helpCommandProvider = helpCommandProvider
+    }
+
+    @Command
+    fun main() {
+        helpCommandProvider.displayHelp("filtertable")
+    }
+
     @Command(command = ["add"], description = "Add a new filter entry to block or allow specific identifiers")
     fun addEntry(
         @Option(
@@ -75,7 +91,7 @@ class FilterTableCommand(private val filterTable: FilterTable) : AbstractShellCo
             longNames = ["reason"],
             shortNames = ['r'],
             description = "Reason for this filter rule (for administrative reference)",
-            defaultValue = "Manual rule"
+            defaultValue = "Manual added filter entry"
         ) reason: String,
         @Option(
             longNames = ["expires"],
@@ -85,27 +101,29 @@ class FilterTableCommand(private val filterTable: FilterTable) : AbstractShellCo
         @Option(
             longNames = ["duration"],
             shortNames = ['d'],
-            description = "Duration for which the rule is valid (e.g., '1h', '30m', '1d', 'inf' for permanent). Overrides --expires if both are provided."
+            description = "Duration for which the rule is valid (e.g., '1h', '30m', '1d', '2d3h', '2h10m10s', 'inf' for permanent). Overrides --expires if both are provided."
         ) duration: String?
     ) {
-        val identifierType = IdentifierType.fromString(type)
-        val filterMode = FilterMode.fromString(mode)
+        try {
+            val identifierType = IdentifierType.fromString(type)
+            val filterMode = FilterMode.fromString(mode)
+            val expirationTime = calculateExpirationTime(expires, duration)
 
-        val expirationTime = calculateExpirationTime(expires, duration)
+            val entry = FilterEntry(identifier, identifierType, filterMode, expirationTime, reason)
+            filterTable.plusAssign(entry)
 
-        val entry = FilterEntry(identifier, identifierType, filterMode, expirationTime, reason)
-        filterTable.plusAssign(entry)
-
-        terminal.writer().println(
-            String.format(
-                "Successfully added filter entry: %s %s [%s] expires at %s - %s",
-                filterMode.name.lowercase(Locale.getDefault()),
-                identifier,
-                identifierType.name,
-                formatDateTime(expirationTime),
-                reason
+            terminal.writer().println(
+                "Successfully added filter entry: ${filterMode.name.lowercase()} $identifier [${identifierType.name}] expires at ${
+                    formatDateTime(
+                        expirationTime
+                    )
+                } - $reason"
             )
-        )
+        } catch (e: IllegalArgumentException) {
+            terminal.writer().println("Error: ${e.message}")
+        } catch (e: Exception) {
+            terminal.writer().println("Failed to add filter entry: ${e.message}")
+        }
     }
 
     @Command(command = ["remove"], description = "Remove an existing filter entry by identifier")
@@ -129,24 +147,16 @@ class FilterTableCommand(private val filterTable: FilterTable) : AbstractShellCo
 
             val existingEntry = filterTable[requestIdentifier]
             if (existingEntry == null) {
-                terminal.writer().println(
-                    String.format(
-                        "No filter entry found for %s [%s]", identifier, identifierType.name
-                    )
-                )
+                terminal.writer().println("No filter entry found for $identifier [${identifierType.name}]")
                 return
             }
 
             filterTable.minusAssign(existingEntry)
-            terminal.writer().println(
-                String.format(
-                    "Successfully removed filter entry: %s [%s]", identifier, identifierType.name
-                )
-            )
+            terminal.writer().println("Successfully removed filter entry: $identifier [${identifierType.name}]")
         } catch (e: IllegalArgumentException) {
-            terminal.writer().println("Error: " + e.message)
+            terminal.writer().println("Error: ${e.message}")
         } catch (e: Exception) {
-            terminal.writer().println("Failed to remove filter entry: " + e.message)
+            terminal.writer().println("Failed to remove filter entry: ${e.message}")
         }
     }
 
@@ -154,25 +164,36 @@ class FilterTableCommand(private val filterTable: FilterTable) : AbstractShellCo
     fun listEntries() {
         val filterEntries = filterTable.toList()
         val tableModel = filterEntries.collectToTableModel()
-        terminal.writer().apply {
-            println("Filter Table total ${filterEntries.size} blocks")
-            val tableBuilder = TableBuilder(tableModel)
-                .apply {
-                    on(CellMatchers.column(0)).addSizer(AbsoluteWidthSizeConstraints(8))
-                        .addAligner(SimpleHorizontalAligner.center)
-                    on(CellMatchers.column(1)).addSizer(AbsoluteWidthSizeConstraints(14))
-                        .addAligner(SimpleHorizontalAligner.center)
-                    on(CellMatchers.column(2)).addSizer(AbsoluteWidthSizeConstraints(10))
-                        .addAligner(SimpleHorizontalAligner.center)
-                    on(CellMatchers.column(3)).addSizer(AbsoluteWidthSizeConstraints(36))
-                        .addAligner(SimpleHorizontalAligner.center)
-                    on(CellMatchers.column(4)).addSizer(AbsoluteWidthSizeConstraints(18))
-                        .addAligner(SimpleHorizontalAligner.center)
-                }.addFullBorder(BorderStyle.oldschool)
-            println(tableBuilder.build().render(140))
-        }
 
-        terminal.writer().println(String.format("Total: %d filter entries", filterEntries.size))
+        val tableBuilder = TableBuilder(tableModel).apply {
+            on(CellMatchers.column(0)).addSizer(AbsoluteWidthSizeConstraints(14))
+                .addAligner(SimpleHorizontalAligner.center)
+            on(CellMatchers.column(1)).addSizer(AbsoluteWidthSizeConstraints(8))
+                .addAligner(SimpleHorizontalAligner.center)
+            on(CellMatchers.column(2)).addSizer(AbsoluteWidthSizeConstraints(10))
+                .addAligner(SimpleHorizontalAligner.center)
+            on(CellMatchers.column(3)).addSizer(AbsoluteWidthSizeConstraints(36))
+                .addAligner(SimpleHorizontalAligner.center)
+            on(CellMatchers.column(4)).addSizer(AbsoluteWidthSizeConstraints(30))
+                .addAligner(SimpleHorizontalAligner.center)
+        }.addFullBorder(BorderStyle.oldschool)
+
+        terminal.writer().println(tableBuilder.build().render(110))
+        terminal.writer().println("Total: ${filterEntries.size} filter entries")
+    }
+
+    private fun List<FilterEntry>.collectToTableModel(): TableModel {
+        val headers = arrayOf("Identifier", "Type", "Mode", "Expiration", "Reason")
+        val data = map { entry ->
+            arrayOf(
+                entry.identifier,
+                entry.type.name,
+                entry.mode.name,
+                formatDateTime(entry.expiration),
+                entry.reason
+            )
+        }
+        return ArrayTableModel(arrayOf(headers) + data)
     }
 
     @Command(command = ["show"], description = "Show detailed information of a specific filter entry")
@@ -196,38 +217,31 @@ class FilterTableCommand(private val filterTable: FilterTable) : AbstractShellCo
 
             val entry = filterTable[requestIdentifier]
             if (entry == null) {
-                terminal.writer().println(
-                    String.format(
-                        "No filter entry found for %s [%s]", identifier, identifierType.name
-                    )
-                )
+                terminal.writer().println("No filter entry found for $identifier [${identifierType.name}]")
                 return
             }
 
-            terminal.writer().println("Filter Entry Details:")
-
-            val array = arrayOf(
-                arrayOf("Identifier", entry.identifier),
-                arrayOf("Type", entry.type.name),
-                arrayOf("Mode", entry.mode.name),
-                arrayOf("Expiration", formatDateTime(entry.expiration)),
-                arrayOf("Reason", entry.reason)
+            val tableData = arrayOf(
+                arrayOf("Identifier:", entry.identifier),
+                arrayOf("Type:", entry.type.name),
+                arrayOf("Mode:", entry.mode.name),
+                arrayOf("Expiration:", formatDateTime(entry.expiration)),
+                arrayOf("Reason:", entry.reason)
             )
-            val tableModel = ArrayTableModel(array)
-            val tableBuilder = TableBuilder(tableModel)
-                .apply {
-                    on(CellMatchers.column(0)).addSizer(AbsoluteWidthSizeConstraints(12))
-                        .addAligner(SimpleHorizontalAligner.center)
-                    on(CellMatchers.column(1)).addSizer(AbsoluteWidthSizeConstraints(54))
-                        .addAligner(SimpleHorizontalAligner.left)
-                }.addFullBorder(BorderStyle.air)
-            terminal.writer().println("Filter Entry Details:")
-            terminal.writer().println(tableBuilder.build().render(70))
 
+            val tableBuilder = TableBuilder(ArrayTableModel(tableData)).apply {
+                on(CellMatchers.column(0)).addSizer(AbsoluteWidthSizeConstraints(13))
+                    .addAligner(SimpleHorizontalAligner.right)
+                on(CellMatchers.column(1)).addSizer(AbsoluteWidthSizeConstraints(95))
+                    .addAligner(SimpleHorizontalAligner.left)
+            }
+
+            terminal.writer().println("Filter Entry Details:")
+            terminal.writer().print(tableBuilder.build().render(110))
         } catch (e: IllegalArgumentException) {
-            terminal.writer().println("Error: " + e.message)
+            terminal.writer().println("Error: ${e.message}")
         } catch (e: Exception) {
-            terminal.writer().println("Failed to show filter entry: " + e.message)
+            terminal.writer().println("Failed to show filter entry: ${e.message}")
         }
     }
 
@@ -244,14 +258,27 @@ class FilterTableCommand(private val filterTable: FilterTable) : AbstractShellCo
                 return
             }
 
+            terminal.writer()
+                .println("You are about to clear ALL (${entries.size}) filter entries from the filter table.")
+            val stringInput =
+                StringInput(terminal, "Are you sure you want to clear all filter entries? (yes/no): ", "no") {
+                    if (it.input == null) {
+                        return@StringInput listOf(AttributedString(""))
+                    }
+                    return@StringInput listOf(AttributedString(it.input))
+                }
+            val context = stringInput.run(StringInput.StringInputContext.empty())
+
+            val confirmation = context.resultValue
+            if (confirmation.isNullOrBlank() || !confirmation.equals("yes", ignoreCase = true)) {
+                terminal.writer().println("Clear operation cancelled.")
+                return
+            }
+
             filterTable.clear()
-            terminal.writer().println(
-                String.format(
-                    "Successfully cleared %d filter entries from the filter table.", entries.size
-                )
-            )
+            terminal.writer().println("Successfully cleared ${entries.size} filter entries from the filter table.")
         } catch (e: Exception) {
-            terminal.writer().println("Failed to clear filter table: " + e.message)
+            terminal.writer().println("Failed to clear filter table: ${e.message}")
         }
     }
 
@@ -262,12 +289,12 @@ class FilterTableCommand(private val filterTable: FilterTable) : AbstractShellCo
         val now = OffsetDateTime.now()
 
         // Duration takes precedence over expires
-        if (duration != null && !duration.trim { it <= ' ' }.isEmpty()) {
-            return parseDuration(duration, now)
+        duration?.takeIf { it.isNotBlank() }?.let {
+            return parseDuration(it, now)
         }
 
-        if (expires != null && !expires.trim { it <= ' ' }.isEmpty()) {
-            return parseDateTime(expires)
+        expires?.takeIf { it.isNotBlank() }?.let {
+            return parseDateTime(it)
         }
 
         // Default to permanent (max value)
@@ -275,40 +302,28 @@ class FilterTableCommand(private val filterTable: FilterTable) : AbstractShellCo
     }
 
     /**
-     * Parse duration string like '1h', '30m', '1d', 'inf'
+     * Parse duration string supporting combinations like '2d3h', '2h10m10s', '1d', 'inf'
      */
     private fun parseDuration(duration: String, from: OffsetDateTime): OffsetDateTime {
-        var duration = duration
-        duration = duration.trim { it <= ' ' }.lowercase(Locale.getDefault())
+        val normalizedDuration = duration.trim().lowercase(Locale.getDefault())
 
-        if ("inf" == duration || "infinite" == duration) {
+        if (normalizedDuration in setOf("inf", "infinite", "never")) {
             return FilterEntry.INF
         }
 
-        require(
-            DURATION_PATTERN.matcher(duration).matches()
-        ) { "Invalid duration format. Use format like '1h', '30m', '1d', or 'inf'" }
-
-        val value = duration.dropLast(1).toInt()
-        return when (val unit = duration[duration.length - 1]) {
-            's' -> from.plusSeconds(value.toLong())
-            'm' -> from.plusMinutes(value.toLong())
-            'h' -> from.plusHours(value.toLong())
-            'd' -> from.plusDays(value.toLong())
-            else -> throw IllegalArgumentException("Invalid duration unit: $unit")
-        }
+        return DurationParser.parse(normalizedDuration, from)
     }
 
     /**
      * Parse datetime string in format yyyy-MM-dd HH:mm:ss
      */
-    private fun parseDateTime(dateTimeStr: String?): OffsetDateTime {
-        try {
-            return OffsetDateTime.parse(
-                dateTimeStr + "Z",
+    private fun parseDateTime(dateTimeStr: String): OffsetDateTime {
+        return try {
+            OffsetDateTime.parse(
+                "${dateTimeStr}Z",
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssX")
             )
-        } catch (e: DateTimeParseException) {
+        } catch (_: DateTimeParseException) {
             throw IllegalArgumentException("Invalid date format. Use format: yyyy-MM-dd HH:mm:ss")
         }
     }
@@ -317,35 +332,69 @@ class FilterTableCommand(private val filterTable: FilterTable) : AbstractShellCo
      * Format OffsetDateTime for display
      */
     private fun formatDateTime(dateTime: OffsetDateTime): String {
-        if (dateTime == FilterEntry.INF) {
-            return "Never"
-        }
-        return dateTime.format(DATE_FORMATTER)
+        return if (dateTime.isEqual(FilterEntry.INF)) "Never"
+        else dateTime.format(DATE_FORMATTER)
     }
 
-    private fun List<FilterEntry>.collectToTableModel(): TableModel {
-        val array = Array<Array<Any>>(size + 1) {
-            if (it == 0) {
-                arrayOf("Type", "Identifier", "Mode", "Expiration", "Reason")
-            } else {
-                val expiration = get(it - 1).expiration
-                arrayOf(
-                    get(it - 1).type.name,
-                    get(it - 1).identifier,
-                    get(it - 1).mode.name,
-                    when (expiration) {
-                        FilterEntry.INF -> "Never"
-                        else -> expiration
-                    },
-                    get(it - 1).reason
-                )
+    /**
+     * Duration parser that supports composite duration expressions
+     */
+    private object DurationParser {
+        private val UNIT_MULTIPLIERS = mapOf(
+            's' to 1L,
+            'm' to 60L,
+            'h' to 3600L,
+            'd' to 86400L
+        )
+
+        fun parse(duration: String, from: OffsetDateTime): OffsetDateTime {
+            if (duration.isBlank()) {
+                throw IllegalArgumentException("Duration cannot be empty")
             }
+
+            var totalSeconds = 0L
+            val currentNumber = StringBuilder()
+
+            for (char in duration) {
+                when {
+                    char.isDigit() -> currentNumber.append(char)
+                    char in UNIT_MULTIPLIERS -> {
+                        if (currentNumber.isEmpty()) {
+                            throw IllegalArgumentException("Invalid duration format: missing number before unit '$char'")
+                        }
+
+                        val value = currentNumber.toString().toLongOrNull()
+                            ?: throw IllegalArgumentException("Invalid number: $currentNumber")
+
+                        val multiplier = UNIT_MULTIPLIERS[char]!!
+                        totalSeconds += value * multiplier
+                        currentNumber.clear()
+                    }
+
+                    char.isWhitespace() -> continue // Skip whitespace
+                    else -> throw IllegalArgumentException(
+                        "Invalid character in duration: '$char'. Supported units: ${
+                            UNIT_MULTIPLIERS.keys.joinToString(
+                                ", "
+                            )
+                        }"
+                    )
+                }
+            }
+
+            if (currentNumber.isNotEmpty()) {
+                throw IllegalArgumentException("Duration ends with incomplete unit. Found number: $currentNumber")
+            }
+
+            if (totalSeconds <= 0) {
+                throw IllegalArgumentException("Duration must be positive")
+            }
+
+            return from.plusSeconds(totalSeconds)
         }
-        return ArrayTableModel(array)
     }
 
     companion object {
         private val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        private val DURATION_PATTERN: Pattern = Pattern.compile("^(\\d+)([hmsd])$|^inf$")
     }
 }
