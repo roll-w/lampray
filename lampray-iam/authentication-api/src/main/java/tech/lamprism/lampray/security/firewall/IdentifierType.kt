@@ -27,7 +27,7 @@ enum class IdentifierType {
     companion object {
         @JvmStatic
         fun fromString(value: String): IdentifierType {
-            values().forEach {
+            entries.forEach {
                 if (it.name.equals(value, ignoreCase = true)) {
                     return it
                 }
