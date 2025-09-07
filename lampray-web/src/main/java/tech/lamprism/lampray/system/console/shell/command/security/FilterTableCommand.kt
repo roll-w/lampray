@@ -36,6 +36,7 @@ import tech.lamprism.lampray.security.firewall.filtertable.FilterTable
 import tech.lamprism.lampray.system.console.CommandGroups
 import tech.lamprism.lampray.system.console.shell.command.HelpCommandProvider
 import tech.lamprism.lampray.system.console.shell.command.HelpCommandProviderAware
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -319,10 +320,11 @@ class FilterTableCommand(
      */
     private fun parseDateTime(dateTimeStr: String): OffsetDateTime {
         return try {
-            OffsetDateTime.parse(
-                "${dateTimeStr}Z",
-                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssX")
+            val localDateTime = LocalDateTime.parse(
+                dateTimeStr,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             )
+            localDateTime.atOffset(OffsetDateTime.now().offset)
         } catch (_: DateTimeParseException) {
             throw IllegalArgumentException("Invalid date format. Use format: yyyy-MM-dd HH:mm:ss")
         }
