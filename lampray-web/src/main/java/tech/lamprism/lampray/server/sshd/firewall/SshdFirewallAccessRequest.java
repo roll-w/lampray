@@ -21,6 +21,7 @@ import space.lingu.Nullable;
 import tech.lamprism.lampray.security.firewall.FirewallAccessRequest;
 import tech.lamprism.lampray.user.UserIdentity;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 /**
@@ -47,10 +48,10 @@ public class SshdFirewallAccessRequest implements FirewallAccessRequest {
     @Nullable
     public String getRequestIpAddress() {
         SocketAddress remoteAddress = session.getRemoteAddress();
-        if (remoteAddress == null) {
-            return null;
+        if (remoteAddress instanceof InetSocketAddress inetSocketAddress) {
+            return inetSocketAddress.getAddress().getHostAddress();
         }
-        return remoteAddress.toString();
+        return null;
     }
 
     @Override
