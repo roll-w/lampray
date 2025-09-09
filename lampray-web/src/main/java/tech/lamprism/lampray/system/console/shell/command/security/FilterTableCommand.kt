@@ -15,7 +15,7 @@
  */
 package tech.lamprism.lampray.system.console.shell.command.security
 
-import org.jline.utils.AttributedString
+import org.jline.utils.AttributedStringBuilder
 import org.springframework.shell.command.annotation.Command
 import org.springframework.shell.command.annotation.Option
 import org.springframework.shell.component.StringInput
@@ -263,15 +263,20 @@ class FilterTableCommand(
                 .println("You are about to clear ALL (${entries.size}) filter entries from the filter table.")
             val stringInput =
                 StringInput(terminal, "Are you sure you want to clear all filter entries? (yes/no): ", "no") {
-                    if (it.input == null) {
-                        return@StringInput listOf(AttributedString(""))
+                    val builder = AttributedStringBuilder()
+                    builder.append(it.name)
+                    if (it.resultValue != null) {
+                        builder.append(it.resultValue)
+                    } else {
+                        it.input.let { input -> builder.append(input) }
+                            ?: builder.append(it.defaultValue )
                     }
-                    return@StringInput listOf(AttributedString(it.input))
+                    return@StringInput listOf(builder.toAttributedString())
                 }
             val context = stringInput.run(StringInput.StringInputContext.empty())
 
             val confirmation = context.resultValue
-            if (confirmation.isNullOrBlank() || !confirmation.equals("yes", ignoreCase = true)) {
+            if (confirmation.isNullOrBlank() || !confirmation.equals("yes", ignoreCase = true) && confirmation != "Y") {
                 terminal.writer().println("Clear operation cancelled.")
                 return
             }
