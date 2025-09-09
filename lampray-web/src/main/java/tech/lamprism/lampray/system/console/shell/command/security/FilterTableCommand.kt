@@ -16,6 +16,7 @@
 package tech.lamprism.lampray.system.console.shell.command.security
 
 import org.jline.utils.AttributedStringBuilder
+import org.jline.utils.AttributedStyle
 import org.springframework.shell.command.annotation.Command
 import org.springframework.shell.command.annotation.Option
 import org.springframework.shell.component.StringInput
@@ -268,8 +269,8 @@ class FilterTableCommand(
                     if (it.resultValue != null) {
                         builder.append(it.resultValue)
                     } else {
-                        it.input.let { input -> builder.append(input) }
-                            ?: builder.append(it.defaultValue )
+                        it.input?.let { input -> builder.append(input) }
+                            ?: builder.append(it.defaultValue, AttributedStyle.HIDDEN)
                     }
                     return@StringInput listOf(builder.toAttributedString())
                 }
