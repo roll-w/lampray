@@ -55,7 +55,8 @@ export const reviewerReviews = "admin-reviewer-review-list"
 export const systemLog = "admin-system-log"
 export const systemMessageResource = "admin-system-message-resource"
 export const systemSettings = "admin-system-settings"
-export const page404 = "404"
+export const page404 = "notfound"
+export const pageBlocked = "blocked"
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -180,6 +181,14 @@ const router = createRouter({
                     path: '/:path(.*)*',
                     redirect: '/404'
                 },
+                {
+                    path: '/blocked',
+                    name: pageBlocked,
+                    component: () => import('@/views/Blocked.vue'),
+                    meta: {
+                        title: "Blocked"
+                    }
+                }
 
             ]
         },
@@ -310,6 +319,11 @@ router.beforeEach((to, from, next) => {
         })
     }
 
+    if (userStore.isBlocked && to.name !== pageBlocked) {
+        return next({
+            name: pageBlocked,
+        })
+    }
     if (!to.name.startsWith("admin")) {
         return next()
     }

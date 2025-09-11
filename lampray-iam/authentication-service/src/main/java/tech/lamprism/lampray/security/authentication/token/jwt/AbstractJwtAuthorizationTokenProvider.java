@@ -33,7 +33,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import space.lingu.NonNull;
-import tech.lamprism.lampray.authentication.SecurityConfigKeys;
 import tech.lamprism.lampray.security.authorization.AuthorizationScope;
 import tech.lamprism.lampray.security.authorization.AuthorizationScopeProvider;
 import tech.lamprism.lampray.security.crypto.KeyUtils;
@@ -155,7 +154,7 @@ public abstract class AbstractJwtAuthorizationTokenProvider implements Authoriza
                                                         @NonNull TokenType tokenType,
                                                         @NonNull Duration expiryDuration,
                                                         @NonNull Collection<? extends AuthorizationScope> authorizedScopes) {
-        String issuer = configReader.get(SecurityConfigKeys.TOKEN_ISSUER);
+        String issuer = configReader.get(AuthorizationTokenConfigKeys.TOKEN_ISSUER);
         String jwtSubject = toSubject(subject);
 
         Key tokenSignKey = tokenSubjectSignKeyProvider.getSignKey(subject);

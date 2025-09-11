@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023 RollW
+  - Copyright (C) 2023-2025 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -112,16 +112,28 @@ const onLoginClick = (e) => {
              * @type {{ user: {
              * username: string, id: number,
              * role: string, email: string },
-             * token: string
+             * accessToken: string, refreshToken: string,
+             * accessTokenExpiry: string, refreshTokenExpiry: string
              * }}
              */
-            const recvData = res.data
-            let user = {
-                id: recvData.user.id,
-                username: recvData.user.username,
-                role: recvData.user.role,
+            const data = res.data
+            const user = {
+                id: data.user.id,
+                username: data.user.username,
+                role: data.user.role,
             }
-            userStore.loginUser(user, recvData.token, formValue.value.rememberMe)
+            /**
+             * @type {{refreshToken: string, accessToken: string, prefix: string, accessTokenExpiry: Date, refreshTokenExpiry: Date}}
+             */
+            const token = {
+                refreshToken: data.refreshToken,
+                accessToken: data.accessToken,
+                prefix: "Bearer ",
+                accessTokenExpiry: new Date(data.accessTokenExpiry),
+                refreshTokenExpiry: new Date(data.refreshTokenExpiry),
+            }
+
+            userStore.loginUser(user, token, formValue.value.rememberMe, false)
 
             // check url
             if (!source) {

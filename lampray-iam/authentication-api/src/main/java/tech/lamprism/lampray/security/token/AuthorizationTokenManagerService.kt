@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.security.token
 
 import tech.lamprism.lampray.security.authorization.AuthorizationScope
+import tech.lamprism.lampray.security.authorization.hierarchy.AuthorizationScopeHierarchy
 import tech.rollw.common.web.AuthErrorCode
 import tech.rollw.common.web.system.AuthenticationException
 import java.time.Duration
@@ -27,7 +28,8 @@ import java.util.UUID
  */
 class AuthorizationTokenManagerService(
     private val authorizationTokenProviders: List<AuthorizationTokenProvider>,
-    private val revokeTokenStorage: RevokeTokenStorage
+    private val revokeTokenStorage: RevokeTokenStorage,
+    private val authorizationScopeHierarchy: AuthorizationScopeHierarchy
 ) : AuthorizationTokenManager {
 
     private fun findAuthorizationTokenProvider(
@@ -45,7 +47,7 @@ class AuthorizationTokenManagerService(
         tokenType: TokenType,
         expiryDuration: Duration,
         authorizedScopes: Collection<AuthorizationScope>
-    ): AuthorizationToken {
+    ): MetadataAuthorizationToken {
         val tokenId = UUID.randomUUID().toString()
         val authorizationToken = findAuthorizationTokenProvider(tokenType).createToken(
             subject, tokenSubjectSignKeyProvider, tokenId,
@@ -109,6 +111,13 @@ class AuthorizationTokenManagerService(
     }
 
 
+    /**
+     * Checks if the token scopes include all required scopes, considering the scope hierarchy.
+     *
+     * @param tokenScopes The scopes associated with the token.
+     * @param requiredScopes The scopes required for a specific operation.
+     * @return True if all required scopes are covered by the token scopes, false otherwise.
+     */
     private fun checkScopes(
         tokenScopes: Collection<AuthorizationScope>,
         requiredScopes: Collection<AuthorizationScope>
@@ -116,9 +125,27 @@ class AuthorizationTokenManagerService(
         if (requiredScopes.isEmpty()) {
             return true
         }
-        // TODO: support scope hierarchy
-        val tokenScopeSet = tokenScopes.map { it.scope }.toSet()
-        return requiredScopes.all { it.scope in tokenScopeSet }
+        if (tokenScopes.isEmpty()) {
+            return false
+        }
+
+        // We first check the raw scopes for a quick match, as this is the most common case.
+        val rawTokenScopeSet = tokenScopes.map { it.scope }.toSet()
+        if (requiredScopes.all { it.scope in rawTokenScopeSet }) {
+            return true
+        }
+
+        // If not all required scopes are directly present, we expand both sets using the hierarchy.
+        val expandedTokenScopes = authorizationScopeHierarchy
+            .getReachableAuthorizationScopes(tokenScopes)
+        if (expandedTokenScopes.isEmpty()) {
+            return false
+        }
+        val expandedRequiredScopes = authorizationScopeHierarchy
+            .getReachableAuthorizationScopes(requiredScopes)
+
+        val expandedTokenScopeSet = expandedTokenScopes.map { it.scope }.toSet()
+        return expandedRequiredScopes.all { it.scope in expandedTokenScopeSet }
     }
 
     override fun revokeToken(token: MetadataAuthorizationToken) {

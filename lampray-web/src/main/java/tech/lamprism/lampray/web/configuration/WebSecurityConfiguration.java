@@ -46,6 +46,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationProvider;
 import tech.lamprism.lampray.security.authentication.adapter.TokenBasedAuthenticationProvider;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
+import tech.lamprism.lampray.security.authorization.hierarchy.AuthorizationScopeHierarchy;
 import tech.lamprism.lampray.security.firewall.FirewallFilter;
 import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
@@ -98,7 +99,7 @@ public class WebSecurityConfiguration {
                 configurer.securityContextRepository(securityContextRepository));
         security.authorizeHttpRequests(configurer -> configurer
                 .requestMatchers(HttpMethod.OPTIONS).permitAll()
-                .requestMatchers("/api/{version}/auth/token/**").permitAll()
+                .requestMatchers("/api/{version}/auth/token:refresh").permitAll()
                 .requestMatchers("/api/{version}/admin/**").hasAnyAuthority("role:ADMIN")
                 .requestMatchers("/api/{version}/message/**").hasAnyAuthority("role:USER")
                 .requestMatchers("/api/{version}/{userId}/review/**").hasAnyAuthority("role:ADMIN", "role:REVIEWER")
@@ -155,11 +156,13 @@ public class WebSecurityConfiguration {
     public TokenBasedAuthenticationProvider tokenBasedAuthenticationProvider(
             AuthorizationTokenManager authorizationTokenManager,
             PrivilegedUserProvider privilegedUserProvider,
-            TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider) {
+            TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider,
+            AuthorizationScopeHierarchy authorizationScopeHierarchy) {
         return new TokenBasedAuthenticationProvider(
                 authorizationTokenManager,
                 privilegedUserProvider,
-                tokenSubjectSignKeyProvider
+                tokenSubjectSignKeyProvider,
+                authorizationScopeHierarchy
         );
     }
 

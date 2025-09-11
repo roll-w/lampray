@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package tech.lamprism.lampray.security.authentication.registration;
 
-import tech.lamprism.lampray.authentication.VerifiableToken;
+import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.rollw.common.web.CommonRuntimeException;
 

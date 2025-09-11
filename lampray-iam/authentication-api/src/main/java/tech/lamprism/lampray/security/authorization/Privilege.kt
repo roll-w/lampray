@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ interface Privilege {
         if (this == other) {
             return EmptyPrivilege
         }
-        return SimplePrivilege((scopes - other.scopes).distinctByScope())
+        return SimplePrivilege((scopes - other.scopes.toSet()).distinctByScope())
     }
 
 }
