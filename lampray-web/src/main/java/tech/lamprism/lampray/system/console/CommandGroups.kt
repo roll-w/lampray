@@ -25,4 +25,6 @@ object CommandGroups {
     const val APPLICATION = "Application Commands"
 
     const val RESOURCE = "Resource Commands"
+
+    const val SECURITY = "Security Commands"
 }
