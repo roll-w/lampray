@@ -74,7 +74,7 @@ class FilterTableCommand(
         @Option(
             longNames = ["identifier"],
             shortNames = ['i'],
-            description = "Identifier value (IP address like '192.168.1.100', user ID like '12345', etc.)",
+            description = "Identifier value (IP address like '192.168.1.100', '192.168.100/24' or '2001:db8::/32', or user ID like '12345')",
             required = true
         ) identifier: String,
         @Option(
@@ -116,9 +116,7 @@ class FilterTableCommand(
 
             terminal.writer().println(
                 "Successfully added filter entry: ${filterMode.name.lowercase()} $identifier [${identifierType.name}] expires at ${
-                    formatDateTime(
-                        expirationTime
-                    )
+                    formatDateTime(expirationTime)
                 } - $reason"
             )
         } catch (e: IllegalArgumentException) {
