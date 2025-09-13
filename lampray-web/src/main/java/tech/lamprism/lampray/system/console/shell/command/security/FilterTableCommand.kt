@@ -92,7 +92,7 @@ class FilterTableCommand(
         @Option(
             longNames = ["reason"],
             shortNames = ['r'],
-            description = "Reason for this filter rule (for administrative reference)",
+            description = "Reason for this filter entry (for administrative reference)",
             defaultValue = "Manual added filter entry"
         ) reason: String,
         @Option(
@@ -100,7 +100,7 @@ class FilterTableCommand(
             shortNames = ['u'],
             description = "Expiration time or duration. Supports either a specific date-time in format 'yyyy-MM-dd HH:mm:ss' " +
                     "or a duration like '1h', '30m', '1d', '2d3h', '2h10m10s', 'inf' for permanent. Examples: '2024-12-31 23:59:59' or '2d3h'. " +
-                    "If not provided, the rule will be permanent.",
+                    "If not provided, the entry will be permanent.",
         ) until: String = ""
     ) {
         try {
@@ -244,7 +244,7 @@ class FilterTableCommand(
 
     @Command(
         command = ["clear"],
-        description = "Clear all filter rules (use with caution - this will remove ALL filtering rules)"
+        description = "Clear all filter entries (use with caution - this will remove ALL filtering entries)"
     )
     fun clearAll() {
         try {
