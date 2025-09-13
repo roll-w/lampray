@@ -96,20 +96,17 @@ class FilterTableCommand(
             defaultValue = "Manual added filter entry"
         ) reason: String,
         @Option(
-            longNames = ["expires"],
-            shortNames = ['e'],
-            description = "Expiration time in format: yyyy-MM-dd HH:mm:ss (optional, e.g., '2024-12-31 23:59:59')"
-        ) expires: String?,
-        @Option(
-            longNames = ["duration"],
-            shortNames = ['d'],
-            description = "Duration for which the rule is valid (e.g., '1h', '30m', '1d', '2d3h', '2h10m10s', 'inf' for permanent). Overrides --expires if both are provided."
-        ) duration: String?
+            longNames = ["until"],
+            shortNames = ['u'],
+            description = "Expiration time or duration. Supports either a specific date-time in format 'yyyy-MM-dd HH:mm:ss' " +
+                    "or a duration like '1h', '30m', '1d', '2d3h', '2h10m10s', 'inf' for permanent. Examples: '2024-12-31 23:59:59' or '2d3h'. " +
+                    "If not provided, the rule will be permanent.",
+        ) until: String = ""
     ) {
         try {
             val identifierType = IdentifierType.fromString(type)
             val filterMode = FilterMode.fromString(mode)
-            val expirationTime = calculateExpirationTime(expires, duration)
+            val expirationTime = calculateExpirationTime(until)
 
             val entry = FilterEntry(identifier, identifierType, filterMode, expirationTime, reason)
             filterTable.plusAssign(entry)
@@ -290,20 +287,17 @@ class FilterTableCommand(
     /**
      * Calculate expiration time based on expires string or duration string
      */
-    private fun calculateExpirationTime(expires: String?, duration: String?): OffsetDateTime {
-        val now = OffsetDateTime.now()
-
-        // Duration takes precedence over expires
-        duration?.takeIf { it.isNotBlank() }?.let {
-            return parseDuration(it, now)
+    private fun calculateExpirationTime(time: String): OffsetDateTime {
+        if (time.isBlank()) {
+            // Default to permanent (max value)
+            return FilterEntry.INF
         }
-
-        expires?.takeIf { it.isNotBlank() }?.let {
-            return parseDateTime(it)
+        return if (time.contains("-") || time.contains(":") || time.contains(" ")) {
+            parseDateTime(time)
+        } else {
+            val now = OffsetDateTime.now()
+            parseDuration(time, now)
         }
-
-        // Default to permanent (max value)
-        return FilterEntry.INF
     }
 
     /**
