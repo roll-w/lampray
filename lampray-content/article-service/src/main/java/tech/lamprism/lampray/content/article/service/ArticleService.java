@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,13 +61,14 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
         String title = Validate.notEmpty(uncreatedContent.getTitle());
         String content = Validate.notEmpty(uncreatedContent.getContent());
 
-        if (articleRepository.findByTitle(
-                title, uncreatedContent.getUserId()).isPresent()) {
+        long userId = uncreatedContent.getOperator().getUserId();
+
+        if (articleRepository.findByTitle(title, userId).isPresent()) {
             throw new ContentException(ContentErrorCode.ERROR_CONTENT_EXISTED);
         }
 
         ArticleDo article = ArticleDo.builder()
-                .setUserId(uncreatedContent.getUserId())
+                .setUserId(userId)
                 .setTitle(title)
                 .setContent(content)
                 .setCover("user-cover")
