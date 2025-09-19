@@ -26,7 +26,7 @@
                     </div>
                 </template>
                 <template #footer>
-                    <n-button secondary type="primary" @click="">对您的封禁有疑问？</n-button>
+                    <n-button secondary type="primary" @click="">对被阻止有疑问？</n-button>
                 </template>
             </n-result>
         </div>

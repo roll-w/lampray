@@ -16,7 +16,6 @@
 
 package tech.lamprism.lampray.server.sshd.firewall;
 
-import org.apache.sshd.common.SshConstants;
 import org.apache.sshd.common.session.Session;
 import org.apache.sshd.common.session.SessionListener;
 import org.slf4j.Logger;
@@ -25,12 +24,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.security.authorization.PrivilegedUser;
 import tech.lamprism.lampray.security.authorization.adapter.PrivilegedUserAuthenticationToken;
-import tech.lamprism.lampray.security.firewall.Firewall;
-import tech.lamprism.lampray.security.firewall.FirewallAccessResult;
+import tech.lamprism.lampray.security.firewall.FirewallException;
 import tech.lamprism.lampray.security.firewall.FirewallRegistry;
 import tech.lamprism.lampray.server.sshd.SshdPasswordAuthenticator;
-
-import java.io.IOException;
 
 /**
  * @author RollW
@@ -80,31 +76,21 @@ public class SshdFirewallSessionListener implements SessionListener {
     }
 
     private void firewallFilter(Session session, SshdFirewallAccessRequest request) {
-        for (Firewall firewall : firewallRegistry.getFirewalls()) {
-            FirewallAccessResult accessResult = firewall.verifyRequest(request);
-            switch (accessResult.getCase()) {
-                case ALLOW -> {
-                    logger.debug("Connection from IP {} (user: {}) allowed by firewall {}",
-                            request.getRequestIpAddress(), request.getRequestUser() != null ? request.getRequestUser().getUsername() : null,
-                            firewall);
-                    return;
-                }
-                case DENY -> {
-                    logger.info("Connection from IP {} (user: {}) denied by firewall {}: {}",
-                            request.getRequestIpAddress(), request.getRequestUser() != null ? request.getRequestUser().getUsername() : null,
-                            firewall, accessResult.getMessage());
-                    try {
-                        session.disconnect(SshConstants.SSH2_DISCONNECT_BY_APPLICATION, "Access denied");
-                    } catch (IOException e) {
-                        logger.warn("Failed to disconnect session from IP {}: {}",
-                                request.getRequestIpAddress(), e.getMessage());
-                    }
-                    return;
-                }
-                case NEUTRAL -> {
-                    // Continue to next firewall
-                }
+        try {
+            firewallRegistry.filter(request);
+        } catch (FirewallException e) {
+            logger.info("Connection from IP {} (user: {}) denied by firewall: {}",
+                    request.getRequestIpAddress(), request.getRequestUser() != null ? request.getRequestUser().getUsername() : null,
+                    e.getMessage());
+            try {
+                session.disconnect(org.apache.sshd.common.SshConstants.SSH2_DISCONNECT_BY_APPLICATION, "Access denied");
+            } catch (Exception ex) {
+                logger.warn("Failed to disconnect session from IP {}: {}",
+                        request.getRequestIpAddress(), ex.getMessage());
             }
+            return;
         }
+        logger.debug("Connection from IP {} (user: {}) allowed by firewall",
+                request.getRequestIpAddress(), request.getRequestUser() != null ? request.getRequestUser().getUsername() : null);
     }
 }

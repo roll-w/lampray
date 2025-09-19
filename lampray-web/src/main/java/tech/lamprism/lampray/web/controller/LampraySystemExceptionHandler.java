@@ -264,7 +264,7 @@ public class LampraySystemExceptionHandler {
     public HttpResponseEntity<Void> handleFirewallException(FirewallException e) {
         return HttpResponseEntity.of(
                 AuthErrorCode.ERROR_IN_BLOCKLIST,
-                e.getMessage()
+                "Access denied"
         );
     }
 

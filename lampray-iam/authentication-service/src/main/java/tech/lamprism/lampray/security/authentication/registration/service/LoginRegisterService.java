@@ -44,6 +44,8 @@ import tech.lamprism.lampray.security.authentication.registration.Registration;
 import tech.lamprism.lampray.security.authentication.registration.RegistrationInterceptor;
 import tech.lamprism.lampray.security.authentication.registration.repository.RegisterTokenDo;
 import tech.lamprism.lampray.security.authentication.registration.repository.RegisterTokenRepository;
+import tech.lamprism.lampray.security.firewall.FirewallAccessRequest;
+import tech.lamprism.lampray.security.firewall.FirewallRegistry;
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.AttributedUserDetails;
 import tech.lamprism.lampray.user.UserIdentity;
@@ -75,6 +77,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
     private static final Logger logger = LoggerFactory.getLogger(LoginRegisterService.class);
 
     private final RegisterTokenRepository registerTokenRepository;
+    private final FirewallRegistry firewallRegistry;
     private final SystemResourceOperatorProvider<Long> systemResourceOperatorProvider;
     private final UserProvider userProvider;
     private final UserManageService userManageService;
@@ -87,6 +90,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
 
     public LoginRegisterService(List<LoginStrategy> strategies,
                                 RegisterTokenRepository registerTokenRepository,
+                                FirewallRegistry firewallRegistry,
                                 SystemResourceOperatorProvider<Long> systemResourceOperatorProvider,
                                 UserProvider userProvider,
                                 UserManageService userManageService,
@@ -95,6 +99,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                                 UserSignatureProvider userSignatureProvider,
                                 List<RegistrationInterceptor> registrationInterceptors) {
         this.registerTokenRepository = registerTokenRepository;
+        this.firewallRegistry = firewallRegistry;
         this.systemResourceOperatorProvider = systemResourceOperatorProvider;
         this.userProvider = userProvider;
         this.userManageService = userManageService;
@@ -177,6 +182,8 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
             throw new UserViewException(code);
         }
 
+        firewallFilter(user);
+
         PreUserAuthenticationToken authenticationToken = new PreUserAuthenticationToken(user);
         Authentication authenticatedToken = authenticationManager.authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authenticatedToken);
@@ -214,6 +221,13 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                 user.getUserId()
         );
         return user;
+    }
+
+    private void firewallFilter(AttributedUser user) {
+        // Filter by ip or path has been executed before in FirewallFilter,
+        // here we just check if the user can access the system.
+        FirewallAccessRequest request = new UserLoginFirewallAccessRequest(user);
+        firewallRegistry.filter(request);
     }
 
     @Override

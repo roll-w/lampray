@@ -21,7 +21,23 @@ package tech.lamprism.lampray.security.firewall
  * @author RollW
  */
 enum class IdentifierType {
+    /**
+     * For IP address, it needs to be a valid IPv4 or IPv6 address
+     * or a valid CIDR notation.
+     *
+     * For example:
+     * - `12.1.1.1`
+     * - `12.1.1.0/24`
+     * - `2001:db8::/32`
+     */
     IP,
+
+    /**
+     * For user identifier, it needs to be a valid user ID.
+     *
+     * Do not use the username or email as the identifier,
+     * since they can be changed by the user.
+     */
     USER;
 
     companion object {
