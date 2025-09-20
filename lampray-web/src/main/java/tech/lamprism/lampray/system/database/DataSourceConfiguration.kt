@@ -147,8 +147,8 @@ class DataSourceConfiguration(
             maxActive = configProvider[DatabaseConfigKeys.DATABASE_POOL_MAX_SIZE] ?: 20,
             minIdle = configProvider[DatabaseConfigKeys.DATABASE_POOL_MIN_IDLE] ?: 2,
             connectionTimeout = configProvider[DatabaseConfigKeys.DATABASE_POOL_CONNECTION_TIMEOUT] ?: 30000L,
-            timeBetweenEvictionRuns = configProvider[DatabaseConfigKeys.DATABASE_POOL_IDLE_TIMEOUT] ?: 600000L,
-            minEvictableIdleTime = configProvider[DatabaseConfigKeys.DATABASE_POOL_MAX_LIFETIME] ?: 1800000L,
+            idleTimeout = configProvider[DatabaseConfigKeys.DATABASE_POOL_IDLE_TIMEOUT] ?: 600000L,
+            maxLifetime = configProvider[DatabaseConfigKeys.DATABASE_POOL_MAX_LIFETIME] ?: 1800000L,
             logAbandoned = (configProvider[DatabaseConfigKeys.DATABASE_POOL_LEAK_DETECTION_THRESHOLD] ?: 0L) > 0
         )
     }
@@ -168,8 +168,8 @@ class DataSourceConfiguration(
 
             // Timeouts (HikariCP uses milliseconds)
             connectionTimeout = poolConfig.connectionTimeout
-            maxLifetime = poolConfig.minEvictableIdleTime
-            idleTimeout = poolConfig.timeBetweenEvictionRuns
+            maxLifetime = poolConfig.maxLifetime
+            idleTimeout = poolConfig.idleTimeout
 
             // Validation
             val validationQuery = DatabaseUrlBuilderFactory.getBuilder(databaseType).getDefaultValidationQuery()

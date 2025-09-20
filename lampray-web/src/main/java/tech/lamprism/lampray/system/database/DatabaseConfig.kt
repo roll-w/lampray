@@ -61,8 +61,8 @@ enum class DatabaseType(
  * @param maxActive Maximum number of active connections in the pool
  * @param minIdle Minimum number of idle connections in the pool
  * @param connectionTimeout Connection timeout (in milliseconds)
- * @param timeBetweenEvictionRuns Time between eviction runs (in milliseconds)
- * @param minEvictableIdleTime Minimum time a connection may sit idle before being evicted (in milliseconds)
+ * @param idleTimeout Idle timeout (in milliseconds), default is 10 minutes
+ * @param maxLifetime Maximum lifetime of a connection (in milliseconds), default is 30 minutes
  * @param logAbandoned Whether to log abandoned connections
  * @author RollW
  */
@@ -70,7 +70,7 @@ data class ConnectionPoolConfig(
     val maxActive: Int = 20,
     val minIdle: Int = 2,
     val connectionTimeout: Long = 30000,
-    val timeBetweenEvictionRuns: Long = 60000,
-    val minEvictableIdleTime: Long = 300000,
+    val idleTimeout: Long = 600000L,
+    val maxLifetime: Long = 1800000L,
     val logAbandoned: Boolean = false
 )
