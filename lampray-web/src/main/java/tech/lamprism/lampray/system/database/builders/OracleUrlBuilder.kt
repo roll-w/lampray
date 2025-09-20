@@ -16,10 +16,8 @@
 
 package tech.lamprism.lampray.system.database.builders
 
-import tech.lamprism.lampray.system.database.CertificateValue
 import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
-import tech.lamprism.lampray.system.database.SslConfig
 
 /**
  * URL builder for Oracle databases.
@@ -59,30 +57,6 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
 
             else -> {
                 params["oracle.jdbc.defaultNChar"] = "false"
-            }
-        }
-    }
-
-    override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
-        when (config.sslConfig.mode) {
-            SslConfig.Mode.DISABLE -> {
-                // Oracle uses non-SSL connection by default
-            }
-
-            SslConfig.Mode.PREFER, SslConfig.Mode.REQUIRE -> {
-                params["oracle.jdbc.useSSL"] = "true"
-            }
-
-            SslConfig.Mode.VERIFY_CA, SslConfig.Mode.VERIFY_IDENTITY -> {
-                params["oracle.jdbc.useSSL"] = "true"
-                params["oracle.net.ssl_server_dn_match"] = "true"
-            }
-        }
-
-        // Handle certificate configuration
-        config.sslConfig.caCertificate?.let {
-            if (!it.isEmpty() && it.type == CertificateValue.CertificateType.PATH) {
-                params["oracle.net.ssl_server_cert_path"] = it.value
             }
         }
     }

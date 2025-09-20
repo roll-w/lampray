@@ -18,7 +18,6 @@ package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
-import tech.lamprism.lampray.system.database.SslConfig
 
 /**
  * URL builder for SQL Server databases.
@@ -48,35 +47,6 @@ class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
         when (charset.lowercase()) {
             "utf8", "utf-8", "utf8mb4" -> params["characterEncoding"] = "UTF-8"
             else -> params["characterEncoding"] = charset
-        }
-    }
-
-    override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
-        when (config.sslConfig.mode) {
-            SslConfig.Mode.DISABLE -> {
-                params["encrypt"] = "false"
-            }
-
-            SslConfig.Mode.PREFER -> {
-                params["encrypt"] = "true"
-                params["trustServerCertificate"] = "true"
-            }
-
-            SslConfig.Mode.REQUIRE -> {
-                params["encrypt"] = "true"
-                params["trustServerCertificate"] = "false"
-            }
-
-            SslConfig.Mode.VERIFY_CA, SslConfig.Mode.VERIFY_IDENTITY -> {
-                params["encrypt"] = "true"
-                params["trustServerCertificate"] = "false"
-                params["hostNameInCertificate"] = "*.database.windows.net"
-            }
-        }
-
-        // Handle self-signed certificates
-        if (config.sslConfig.allowAllCertificates) {
-            params["trustServerCertificate"] = "true"
         }
     }
 

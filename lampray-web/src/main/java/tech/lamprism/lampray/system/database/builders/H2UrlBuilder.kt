@@ -16,10 +16,9 @@
 
 package tech.lamprism.lampray.system.database.builders
 
-import java.io.File
 import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
-import tech.lamprism.lampray.system.database.SslConfig
+import java.io.File
 
 /**
  * URL builder for H2 databases.
@@ -70,25 +69,6 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
         // and does not support custom charset settings in the URL.
     }
 
-    override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
-        // SSL is only supported in TCP mode
-        val target = config.target
-        if (!target.isNetwork()) {
-            return // SSL parameters are not applicable for file or memory modes
-        }
-        when (config.sslConfig.mode) {
-            SslConfig.Mode.DISABLE -> {
-                params["ssl"] = "false"
-            }
-
-            SslConfig.Mode.PREFER, SslConfig.Mode.REQUIRE,
-            SslConfig.Mode.VERIFY_CA, SslConfig.Mode.VERIFY_IDENTITY -> {
-                params["ssl"] = "true"
-                // H2 has limited SSL certificate verification options
-            }
-        }
-    }
-
     override fun getDefaultValidationQuery(): String = "SELECT 1"
 
     override fun validateConfig(config: DatabaseConfig) {
@@ -108,11 +88,6 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
             } catch (e: Exception) {
                 throw IllegalArgumentException("Cannot create directory for H2 database: ${config.target}", e)
             }
-        }
-
-        // Validate SSL configuration for non-TCP modes
-        if (config.sslConfig.isEnabled() && !target.isNetwork()) {
-            throw IllegalArgumentException("SSL is only supported in H2 TCP server mode, not for file or memory databases")
         }
     }
 }

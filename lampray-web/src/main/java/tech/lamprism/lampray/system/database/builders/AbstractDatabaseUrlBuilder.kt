@@ -75,11 +75,6 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
             addCharsetParameter(params, charset)
         }
 
-        // Add SSL parameters if enabled
-        if (config.sslConfig.isEnabled()) {
-            addSslParameters(params, config)
-        }
-
         // Add custom options
         if (config.customOptions.isNotEmpty()) {
             parseCustomOptions(config.customOptions).forEach { (key, value) ->
@@ -98,15 +93,6 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
      * @param charset Character set value
      */
     protected abstract fun addCharsetParameter(params: MutableMap<String, String>, charset: String)
-
-    /**
-     * Adds SSL-related parameters to the parameters map.
-     * Different databases have different SSL parameter formats.
-     *
-     * @param params Parameters map to add to
-     * @param config Database configuration containing SSL settings
-     */
-    protected abstract fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig)
 
     /**
      * Gets the default validation query for this database type.

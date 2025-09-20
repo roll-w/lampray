@@ -16,10 +16,8 @@
 
 package tech.lamprism.lampray.system.database.builders
 
-import tech.lamprism.lampray.system.database.CertificateValue
 import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
-import tech.lamprism.lampray.system.database.SslConfig
 
 /**
  * URL builder for PostgreSQL databases.
@@ -50,71 +48,6 @@ class PostgreSQLUrlBuilder : AbstractDatabaseUrlBuilder() {
             "utf8", "utf-8" -> params["characterEncoding"] = "UTF8"
             "utf8mb4" -> params["characterEncoding"] = "UTF8"
             else -> params["characterEncoding"] = charset.uppercase()
-        }
-    }
-
-    override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
-        when (config.sslConfig.mode) {
-            SslConfig.Mode.DISABLE -> {
-                params["ssl"] = "false"
-            }
-            SslConfig.Mode.PREFER -> {
-                // PostgreSQL default behavior - try SSL first, fallback to non-SSL
-                // No explicit parameter needed
-            }
-            SslConfig.Mode.REQUIRE -> {
-                params["ssl"] = "true"
-                params["sslmode"] = "require"
-            }
-            SslConfig.Mode.VERIFY_CA -> {
-                params["ssl"] = "true"
-                params["sslmode"] = "verify-ca"
-            }
-            SslConfig.Mode.VERIFY_IDENTITY -> {
-                params["ssl"] = "true"
-                params["sslmode"] = "verify-full"
-            }
-        }
-
-        // Handle certificate configuration
-        config.sslConfig.clientCertificate?.let {
-            if (!it.isEmpty()) {
-                when (it.type) {
-                    CertificateValue.CertificateType.PATH -> {
-                        params["sslcert"] = it.value
-                    }
-                    else -> {
-                        // For content-based certificates, we'll need to write to temp files
-                        // This is handled at the connection pool level
-                    }
-                }
-            }
-        }
-
-        config.sslConfig.clientPrivateKey?.let {
-            if (!it.isEmpty()) {
-                when (it.type) {
-                    CertificateValue.CertificateType.PATH -> {
-                        params["sslkey"] = it.value
-                    }
-                    else -> {
-                        // For content-based keys, handled at connection pool level
-                    }
-                }
-            }
-        }
-
-        config.sslConfig.caCertificate?.let {
-            if (!it.isEmpty()) {
-                when (it.type) {
-                    CertificateValue.CertificateType.PATH -> {
-                        params["sslrootcert"] = it.value
-                    }
-                    else -> {
-                        // For content-based CA certs, handled at connection pool level
-                    }
-                }
-            }
         }
     }
 

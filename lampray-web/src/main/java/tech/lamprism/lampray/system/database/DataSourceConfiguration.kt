@@ -36,8 +36,6 @@ private val logger = logger<DataSourceConfiguration>()
 
 /**
  * Data source configuration with HikariCP connection pool support for multiple database types.
- * Uses strategy pattern for clean and maintainable JDBC URL construction.
- * Integrates SSL/TLS certificate management and optimized connection pool configuration.
  *
  * @author RollW
  */

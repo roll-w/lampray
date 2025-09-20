@@ -18,7 +18,6 @@ package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
-import tech.lamprism.lampray.system.database.SslConfig
 
 /**
  * URL builder for MySQL and MariaDB databases.
@@ -47,43 +46,6 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         params["characterEncoding"] = charset
         // Also set useUnicode for proper Unicode support
         params["useUnicode"] = "true"
-    }
-
-    override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
-        when (config.sslConfig.mode) {
-            SslConfig.Mode.DISABLE -> {
-                params["useSSL"] = "false"
-            }
-
-            SslConfig.Mode.PREFER -> {
-                params["useSSL"] = "true"
-                params["requireSSL"] = "false"
-            }
-
-            SslConfig.Mode.REQUIRE -> {
-                params["useSSL"] = "true"
-                params["requireSSL"] = "true"
-            }
-
-            SslConfig.Mode.VERIFY_CA -> {
-                params["useSSL"] = "true"
-                params["requireSSL"] = "true"
-                params["verifyServerCertificate"] = "true"
-            }
-
-            SslConfig.Mode.VERIFY_IDENTITY -> {
-                params["useSSL"] = "true"
-                params["requireSSL"] = "true"
-                params["verifyServerCertificate"] = "true"
-                params["enabledSSLCipherSuites"] = "TLS_RSA_WITH_AES_256_CBC_SHA,TLS_DHE_RSA_WITH_AES_256_CBC_SHA"
-            }
-        }
-
-        // Handle self-signed certificates
-        if (config.sslConfig.allowAllCertificates) {
-            params["allowPublicKeyRetrieval"] = "true"
-            params["trustCertificateKeyStoreUrl"] = ""
-        }
     }
 
     override fun getDefaultValidationQuery(): String = "SELECT 1"

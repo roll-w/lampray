@@ -16,7 +16,12 @@
 
 package tech.lamprism.lampray.system.database
 
-import tech.lamprism.lampray.system.database.builders.DatabaseUrlBuilders
+import tech.lamprism.lampray.system.database.builders.H2UrlBuilder
+import tech.lamprism.lampray.system.database.builders.MySQLUrlBuilder
+import tech.lamprism.lampray.system.database.builders.OracleUrlBuilder
+import tech.lamprism.lampray.system.database.builders.PostgreSQLUrlBuilder
+import tech.lamprism.lampray.system.database.builders.SQLServerUrlBuilder
+import tech.lamprism.lampray.system.database.builders.SQLiteUrlBuilder
 
 /**
  * Factory for creating and managing database URL builders.
@@ -26,7 +31,14 @@ import tech.lamprism.lampray.system.database.builders.DatabaseUrlBuilders
  */
 object DatabaseUrlBuilderFactory {
 
-    private val builders = DatabaseUrlBuilders.getAllBuilders()
+    private val builders: List<DatabaseUrlBuilder> = listOf(
+        MySQLUrlBuilder(),
+        PostgreSQLUrlBuilder(),
+        SQLiteUrlBuilder(),
+        H2UrlBuilder(),
+        SQLServerUrlBuilder(),
+        OracleUrlBuilder()
+    )
 
     /**
      * Builds a JDBC URL for the given database configuration.

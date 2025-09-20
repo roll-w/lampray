@@ -16,9 +16,9 @@
 
 package tech.lamprism.lampray.system.database.builders
 
-import java.io.File
 import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
+import java.io.File
 
 /**
  * URL builder for SQLite databases.
@@ -58,11 +58,6 @@ class SQLiteUrlBuilder : AbstractDatabaseUrlBuilder() {
             "utf8", "utf-8", "utf8mb4" -> params["encoding"] = "UTF-8"
             else -> params["encoding"] = charset
         }
-    }
-
-    override fun addSslParameters(params: MutableMap<String, String>, config: DatabaseConfig) {
-        // SQLite doesn't support SSL as it's a file-based database
-        // This method is intentionally empty
     }
 
     override fun getDefaultValidationQuery(): String = "SELECT 1"
