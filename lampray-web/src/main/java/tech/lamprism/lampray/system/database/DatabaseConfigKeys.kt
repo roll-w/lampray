@@ -9,10 +9,7 @@ import tech.lamprism.lampray.setting.SettingSpecificationBuilder
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier
 
 /**
- * Database configuration keys with streamlined options and clear descriptions.
- *
- * Configuration is simplified with a unified connection target that supports
- * file paths, database addresses, and memory configurations.
+ * Configuration keys for database connection and pool settings.
  *
  * @author RollW
  */

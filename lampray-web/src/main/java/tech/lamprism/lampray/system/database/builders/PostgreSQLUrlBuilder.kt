@@ -20,8 +20,7 @@ import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
 
 /**
- * URL builder for PostgreSQL databases.
- * Handles PostgreSQL-specific connection parameters and SSL configuration.
+ * URL builder for PostgreSQL database.
  *
  * @author RollW
  */
