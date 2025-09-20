@@ -30,4 +30,12 @@ public interface FirewallRegistry {
     void addFirewall(@NonNull Firewall firewall);
 
     void removeFirewall(@NonNull Firewall firewall);
+
+    /**
+     * Filter the request through all registered firewalls.
+     *
+     * @param request the firewall access request
+     * @throws FirewallException if any firewall blocks the request
+     */
+    void filter(@NonNull FirewallAccessRequest request) throws FirewallException;
 }

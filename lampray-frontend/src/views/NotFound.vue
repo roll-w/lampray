@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023 RollW
+  - Copyright (C) 2023-2025 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -15,23 +15,22 @@
   -->
 
 <template>
-  <div class="p-5">
-    <n-result
-              status="404"
-              title="404 资源不存在。"
-    >
-      <template #default>
-        <div class="text-center text-xl">
-          <div>{{ result }}</div>
-          <div>{{ tip }}</div>
-          <div>{{ message }}</div>
+    <div class="h-[75vh] flex flex-col justify-center items-center">
+        <div class="p-5 ">
+            <n-result status="404" title="您尝试访问的页面不存在">
+                <template #default>
+                    <div class="text-center text-xl">
+                        <div>{{ result }}</div>
+                        <div>{{ tip }}</div>
+                        <div>{{ message }}</div>
+                    </div>
+                </template>
+                <template #footer>
+                    <n-button type="primary" @click="() => $router.push('/')">回到首页</n-button>
+                </template>
+            </n-result>
         </div>
-      </template>
-      <template #footer>
-        <n-button type="primary" @click="() => $router.push('/')">回到首页</n-button>
-      </template>
-    </n-result>
-  </div>
+    </div>
 </template>
 
 <script setup>
@@ -43,8 +42,6 @@ const result = router.currentRoute.value.query.result
 const tip = router.currentRoute.value.query.tip
 const message = router.currentRoute.value.query.message
 const source = router.currentRoute.value.query.source
-
-const desc = `${result}<br/>${tip}<br/>${message}`
 
 </script>
 

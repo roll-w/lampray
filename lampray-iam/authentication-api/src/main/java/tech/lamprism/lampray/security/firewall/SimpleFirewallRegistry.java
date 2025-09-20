@@ -50,4 +50,19 @@ public class SimpleFirewallRegistry implements FirewallRegistry {
     public void removeFirewall(@NonNull Firewall firewall) {
         firewalls.remove(firewall);
     }
+
+    @Override
+    public void filter(@NonNull FirewallAccessRequest request) throws FirewallException {
+        for (Firewall firewall : firewalls) {
+            FirewallAccessResult accessResult = firewall.verifyRequest(request);
+            switch (accessResult.getCase()) {
+                case ALLOW -> {
+                    return;
+                }
+                case DENY -> throw new FirewallException("Access denied: " + accessResult.getMessage());
+                case NEUTRAL -> {
+                }
+            }
+        }
+    }
 }

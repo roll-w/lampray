@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import tech.lamprism.lampray.authentication.token.AuthenticationTokenService;
-import tech.lamprism.lampray.authentication.token.TokenAuthResult;
+import tech.lamprism.lampray.security.authorization.AuthorizationScope;
 import tech.lamprism.lampray.security.authorization.PrivilegedUser;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
 import tech.lamprism.lampray.security.authorization.adapter.PrivilegedUserAuthenticationToken;
-import tech.lamprism.lampray.user.UserSignatureProvider;
+import tech.lamprism.lampray.security.authorization.hierarchy.AuthorizationScopeHierarchy;
+import tech.lamprism.lampray.security.token.AuthorizationToken;
+import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
+import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
+import tech.lamprism.lampray.security.token.SimpleAuthorizationToken;
+import tech.lamprism.lampray.security.token.TokenFormat;
+import tech.lamprism.lampray.security.token.TokenSubject;
+import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
+import tech.lamprism.lampray.security.token.TokenType;
 import tech.rollw.common.web.CommonRuntimeException;
+
+import java.util.Collection;
 
 /**
  * @author RollW
@@ -35,18 +44,21 @@ import tech.rollw.common.web.CommonRuntimeException;
 public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthenticationProvider {
     private static final Logger logger = LoggerFactory.getLogger(TokenBasedAuthenticationProvider.class);
 
-    private final AuthenticationTokenService authenticationTokenService;
+    private final AuthorizationTokenManager authorizationTokenManager;
     private final PrivilegedUserProvider privilegedUserProvider;
-    private final UserSignatureProvider userSignatureProvider;
+    private final TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider;
+    private final AuthorizationScopeHierarchy authorizationScopeHierarchy;
 
     public TokenBasedAuthenticationProvider(
-            AuthenticationTokenService authenticationTokenService,
+            AuthorizationTokenManager authorizationTokenManager,
             PrivilegedUserProvider privilegedUserProvider,
-            UserSignatureProvider userSignatureProvider
+            TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider,
+            AuthorizationScopeHierarchy authorizationScopeHierarchy
     ) {
-        this.authenticationTokenService = authenticationTokenService;
+        this.authorizationTokenManager = authorizationTokenManager;
         this.privilegedUserProvider = privilegedUserProvider;
-        this.userSignatureProvider = userSignatureProvider;
+        this.tokenSubjectSignKeyProvider = tokenSubjectSignKeyProvider;
+        this.authorizationScopeHierarchy = authorizationScopeHierarchy;
     }
 
     @Override
@@ -57,21 +69,42 @@ public class TokenBasedAuthenticationProvider extends PrivilegedUserBasedAuthent
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         TokenBasedAuthenticationToken tokenBasedAuthenticationToken = (TokenBasedAuthenticationToken) authentication;
-        String token = tokenBasedAuthenticationToken.getCredentials();
-        Long id = authenticationTokenService.getUserId(token);
-        if (id == null) {
-            throw new BadCredentialsException("Invalid token");
-        }
+        AuthorizationToken token = parseCredentials(tokenBasedAuthenticationToken.getCredentials());
         try {
-            String signature = userSignatureProvider.getSignature(id);
-            TokenAuthResult tokenAuthResult = authenticationTokenService.verifyToken(token, signature);
-            long userId = tokenAuthResult.userId();
-            PrivilegedUser privilegedUser = privilegedUserProvider.loadPrivilegedUserById(userId);
-            check(privilegedUser);
-            return new PrivilegedUserAuthenticationToken(privilegedUser);
+            MetadataAuthorizationToken authorizationToken = authorizationTokenManager.parseToken(
+                    token, tokenSubjectSignKeyProvider);
+            TokenSubject subject = authorizationToken.getSubject();
+            Collection<AuthorizationScope> reachableAuthorizationScopes = authorizationScopeHierarchy
+                    .getReachableAuthorizationScopes(authorizationToken.getScopes());
+            return switch (subject.getType()) {
+                case USER -> {
+                    PrivilegedUser privilegedUser = privilegedUserProvider.loadPrivilegedUserById(
+                            Long.parseLong(subject.getId())
+                    );
+                    check(privilegedUser);
+                    yield new PrivilegedUserAuthenticationToken(privilegedUser, reachableAuthorizationScopes);
+                }
+                // TODO: other subject type was not yet supported
+                default -> throw new BadCredentialsException("Not support subject type.");
+            };
         } catch (CommonRuntimeException e) {
             throw new TokenAuthenticationException(e);
         }
+    }
+
+    private AuthorizationToken parseCredentials(String credentials) {
+        // Parse header, format like: "<Type> <Token>"
+        int index = credentials.indexOf(' ');
+        if (index < 0) {
+            throw new BadCredentialsException("Invalid token format");
+        }
+        String type = credentials.substring(0, index);
+        String token = credentials.substring(index + 1);
+        TokenFormat tokenFormat = TokenFormat.fromValue(type);
+        if (tokenFormat == null) {
+            throw new BadCredentialsException("Invalid token format");
+        }
+        return new SimpleAuthorizationToken(token, TokenType.ACCESS);
     }
 
     @Override

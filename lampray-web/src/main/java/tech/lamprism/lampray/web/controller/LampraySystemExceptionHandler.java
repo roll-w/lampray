@@ -42,8 +42,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
-import tech.lamprism.lampray.authentication.login.LoginTokenException;
 import tech.lamprism.lampray.security.authentication.adapter.TokenAuthenticationException;
+import tech.lamprism.lampray.security.authentication.login.LoginTokenException;
 import tech.lamprism.lampray.security.authentication.registration.RegistrationException;
 import tech.lamprism.lampray.security.firewall.FirewallException;
 import tech.lamprism.lampray.web.common.ApiContext;
@@ -264,7 +264,7 @@ public class LampraySystemExceptionHandler {
     public HttpResponseEntity<Void> handleFirewallException(FirewallException e) {
         return HttpResponseEntity.of(
                 AuthErrorCode.ERROR_IN_BLOCKLIST,
-                e.getMessage()
+                "Access denied"
         );
     }
 

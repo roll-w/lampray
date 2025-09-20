@@ -1,6 +1,7 @@
 # Lampray
 
 [![License](https://img.shields.io/github/license/roll-w/lampray?color=569cd6&style=flat-square)](https://github.com/roll-w/lampray/blob/master/LICENSE)
+[![Build Image](https://github.com/roll-w/lampray/actions/workflows/build_image.yaml/badge.svg?branch=master)](https://github.com/roll-w/lampray/actions/workflows/build_image.yaml)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/roll-w/lampray)
 
 Lampray is a blog system built with Spring Boot 3 and Vue3.
@@ -113,18 +114,21 @@ After building the project, then you can run the application
 using the following command:
 
 ```shell
-java -jar lampray.jar  # Replace lampray.jar with the actual jar file name
+java -jar lampray.jar start # Replace lampray.jar with the actual jar file name
 ```
 
 Or if you are using the distribution pack:
 
 ```shell
-bin/lampray # Replace with the actual path to `lampray`
+bin/lampray start # Replace with the actual path to `lampray`
 ```
 
 > Current support command line arguments:
 > - `--config`, `-c`: Specify the configuration file to use. Default will try find
     `lampray.toml` in the current directory and the `conf` directory under the working directory.
+
+You can use the command `bin/lampray help` to see the available commands
+and options.
 
 By default, the application will start on port `5100`. And database
 related configurations must be provided in the configuration file,

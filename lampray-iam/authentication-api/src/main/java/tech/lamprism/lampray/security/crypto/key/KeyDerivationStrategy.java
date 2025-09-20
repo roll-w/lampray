@@ -1,0 +1,48 @@
+/*
+ * Copyright (C) 2023-2025 RollW
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package tech.lamprism.lampray.security.crypto.key;
+
+import space.lingu.NonNull;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
+
+/**
+ * Strategy interface for deriving public keys from private keys.
+ *
+ * @author RollW
+ */
+public interface KeyDerivationStrategy {
+
+    /**
+     * Derives a public key from the given private key.
+     *
+     * @param privateKey the private key to derive from
+     * @return the derived public key
+     * @throws KeyDerivationException if derivation fails
+     */
+    @NonNull
+    PublicKey derivePublicKey(@NonNull PrivateKey privateKey);
+
+    /**
+     * Checks if this strategy supports the given algorithm.
+     *
+     * @param algorithm the algorithm name
+     * @return true if supported, false otherwise
+     */
+    boolean supportsAlgorithm(String algorithm);
+}

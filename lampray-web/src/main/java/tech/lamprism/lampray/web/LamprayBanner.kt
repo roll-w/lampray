@@ -66,7 +66,7 @@ class LamprayBanner : Banner {
             )
             println(LICENSE)
             println()
-            println(Version.formatVersion())
+            print(Version.formatVersion())
         }
     }
 

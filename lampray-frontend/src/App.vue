@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023 RollW
+  - Copyright (C) 2023-2025 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -91,16 +91,16 @@ const encodeToken = (token) => {
         return null
     }
 
-    return prefix + window.btoa(token)
+    return prefix + window.btoa(JSON.stringify(token))
 }
 
 const restoreToken = (token) => {
-    if (!token) {
+    if (!token || !token.startsWith(prefix)) {
         return null
     }
 
     const removePrefix = token.substring(prefix.length)
-    return window.atob(removePrefix)
+    return JSON.parse(window.atob(removePrefix))
 }
 
 const loadFromLocal = () => {

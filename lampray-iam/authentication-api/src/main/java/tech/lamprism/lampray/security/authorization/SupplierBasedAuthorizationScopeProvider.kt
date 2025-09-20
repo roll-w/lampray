@@ -36,6 +36,12 @@ class SupplierBasedAuthorizationScopeProvider(
             scopes.contains(it.scope)
         }
 
-    override val scopes: List<AuthorizationScope>
+    override fun supports(scope: String): Boolean {
+        return _scopes.any {
+            it.scope == scope
+        }
+    }
+
+    val scopes: List<AuthorizationScope>
         get() = _scopes
 }

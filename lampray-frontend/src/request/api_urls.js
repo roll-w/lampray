@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ export const passwordLogin = `${prefix()}/user/login/password`;
 export const emailLogin = `${prefix()}/user/login/email`;
 export const logout = `${prefix()}/user/logout`;
 export const register = `${prefix()}/user/register`;
+export const refreshToken = `${prefix()}/auth/token:refresh`;
 export const registerActivate = (token) =>
     `${prefix()}/user/register/token/${token}`;
 

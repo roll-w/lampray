@@ -7,7 +7,7 @@ on:
     paths-ignore:
       - docs/**
       - .github/**
-      - README.md
+      - "**.md"
       - LICENSE
       - .*ignore
       - .gitattributes
@@ -29,5 +29,12 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
+      - name: Install Dependencies
+        run: |
+          git clone https://github.com/roll-w/web-common-starter 
+          cd web-common-starter
+          git checkout v0.2.1
+          mvn -f web-common-parent/ clean install
+          cd ..
       - name: Submit Dependency Graph
         uses: gradle/actions/dependency-submission@v4
