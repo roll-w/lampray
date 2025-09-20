@@ -25,7 +25,6 @@ import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import tech.lamprism.lampray.setting.SettingSpecificationProvider
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier
 import tech.lamprism.lampray.setting.SuppliedSettingSpecificationProvider
-import tech.lamprism.lampray.web.common.keys.DatabaseConfigKeys
 import tech.lamprism.lampray.web.common.keys.ServerConfigKeys
 import tech.lamprism.lampray.web.common.keys.SystemConfigKeys
 import java.lang.management.ManagementFactory
@@ -47,7 +46,6 @@ class SettingKeysRegistryConfiguration {
             listOf(
                 SystemConfigKeys,
                 ServerConfigKeys,
-                DatabaseConfigKeys,
                 SecurityConfigKeys.INSTANCE,
                 MailConfigKeys.INSTANCE
             ) + settingSpecificationSuppliers
