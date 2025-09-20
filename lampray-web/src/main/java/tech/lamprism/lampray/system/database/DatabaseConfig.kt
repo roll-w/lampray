@@ -27,7 +27,6 @@ data class DatabaseConfig(
     val type: DatabaseType,
     val charset: String?,
     val customOptions: Collection<String>,
-    val sslConfig: SslConfig,
     val connectionPoolConfig: ConnectionPoolConfig
 )
 
@@ -55,51 +54,6 @@ enum class DatabaseType(
     }
 }
 
-/**
- * SSL/TLS configuration for database connections.
- * SSL certificates are configured separately from the JDBC URL and applied to the connection pool.
- *
- * @author RollW
- */
-data class SslConfig(
-    val mode: Mode = Mode.DISABLE,
-    val clientCertificate: CertificateValue? = null,
-    val clientPrivateKey: CertificateValue? = null,
-    val caCertificate: CertificateValue? = null,
-    val verifyServerCertificate: Boolean = true,
-    val allowAllCertificates: Boolean = false
-) {
-    enum class Mode {
-        /**
-         * SSL connection is disabled
-         */
-        DISABLE,
-
-        /**
-         * SSL connection is preferred but not required
-         */
-        PREFER,
-
-        /**
-         * SSL connection is required
-         */
-        REQUIRE,
-
-        /**
-         * SSL connection is required with certificate verification
-         */
-        VERIFY_CA,
-
-        /**
-         * SSL connection is required with full certificate and hostname verification
-         */
-        VERIFY_IDENTITY
-    }
-
-    fun isEnabled(): Boolean {
-        return mode != Mode.DISABLE
-    }
-}
 
 /**
  * Connection pool configuration for database connections.

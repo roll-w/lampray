@@ -29,9 +29,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.web.ServerInitializeException
-import javax.sql.DataSource
-import tech.lamprism.lampray.system.database.ssl.SslCertificateUtils
 import tech.lamprism.lampray.web.configuration.LocalConfigConfiguration
+import javax.sql.DataSource
 
 private val logger = logger<DataSourceConfiguration>()
 
@@ -138,46 +137,7 @@ class DataSourceConfiguration(
                 ?: DatabaseConfigKeys.DATABASE_NAME.defaultValue!!,
             charset = configProvider[DatabaseConfigKeys.DATABASE_CHARSET],
             customOptions = configProvider[DatabaseConfigKeys.DATABASE_OPTIONS] ?: emptySet(),
-            sslConfig = buildSslConfig(),
             connectionPoolConfig = buildConnectionPoolConfig()
-        )
-    }
-
-    /**
-     * Builds SSL configuration from configuration provider settings.
-     */
-    private fun buildSslConfig(): SslConfig {
-        val mode = when (configProvider[DatabaseConfigKeys.DATABASE_SSL_MODE]?.lowercase()) {
-            "disable" -> SslConfig.Mode.DISABLE
-            "prefer" -> SslConfig.Mode.PREFER
-            "require" -> SslConfig.Mode.REQUIRE
-            "verify-ca" -> SslConfig.Mode.VERIFY_CA
-            "verify-identity" -> SslConfig.Mode.VERIFY_IDENTITY
-            else -> SslConfig.Mode.PREFER
-        }
-        if (mode == SslConfig.Mode.DISABLE) {
-            return SslConfig(mode = mode)
-        }
-
-        val clientCert = createCertificateValue(
-            configProvider[DatabaseConfigKeys.DATABASE_SSL_CLIENT_CERT]
-        )
-
-        val clientKey = createCertificateValue(
-            configProvider[DatabaseConfigKeys.DATABASE_SSL_CLIENT_KEY]
-        )
-
-        val caCert = createCertificateValue(
-            configProvider[DatabaseConfigKeys.DATABASE_SSL_CA_CERT]
-        )
-
-        return SslConfig(
-            mode = mode,
-            clientCertificate = clientCert,
-            clientPrivateKey = clientKey,
-            caCertificate = caCert,
-            verifyServerCertificate = configProvider[DatabaseConfigKeys.DATABASE_SSL_VERIFY_SERVER] ?: true,
-            allowAllCertificates = configProvider[DatabaseConfigKeys.DATABASE_SSL_ALLOW_ALL] ?: false
         )
     }
 
@@ -193,27 +153,6 @@ class DataSourceConfiguration(
             minEvictableIdleTime = configProvider[DatabaseConfigKeys.DATABASE_POOL_MAX_LIFETIME] ?: 1800000L,
             logAbandoned = (configProvider[DatabaseConfigKeys.DATABASE_POOL_LEAK_DETECTION_THRESHOLD] ?: 0L) > 0
         )
-    }
-
-    /**
-     * Creates CertificateValue with automatic PEM format detection.
-     *
-     * Automatically detects whether the input is PEM content or a file path:
-     * - If PEM headers are detected (-----BEGIN), treats as certificate content
-     * - Otherwise, treats as file path
-     */
-    private fun createCertificateValue(input: String?): CertificateValue? {
-        if (input.isNullOrBlank()) {
-            return null
-        }
-
-        val trimmedInput = input.trim()
-
-        return if (trimmedInput.startsWith("-----BEGIN")) {
-            CertificateValue.fromValue(trimmedInput)
-        } else {
-            CertificateValue.fromPath(trimmedInput)
-        }
     }
 
     /**
@@ -263,45 +202,5 @@ class DataSourceConfiguration(
                         " Ensure that the values are valid and accessible."
             ), e
         )
-    }
-
-    /**
-     * Configures SSL settings for HikariCP DataSource.
-     * Note: SSL certificates are applied through HikariCP data source properties.
-     */
-    private fun configureHikariSsl(hikariConfig: HikariConfig, sslConfig: SslConfig) {
-        if (!sslConfig.isEnabled()) {
-            return
-        }
-
-        try {
-            // Create SSL context if certificates are provided
-            if (sslConfig.clientCertificate != null || sslConfig.caCertificate != null) {
-                val sslContext = SslCertificateUtils.createSslContext(
-                    clientCert = sslConfig.clientCertificate,
-                    clientKey = sslConfig.clientPrivateKey,
-                    caCert = sslConfig.caCertificate,
-                    allowAll = sslConfig.allowAllCertificates
-                )
-
-                // Apply SSL context to HikariCP data source properties
-                // This approach works with most JDBC drivers
-                hikariConfig.addDataSourceProperty("sslContext", sslContext)
-                hikariConfig.addDataSourceProperty("useSSL", "true")
-
-                if (!sslConfig.verifyServerCertificate) {
-                    hikariConfig.addDataSourceProperty("trustServerCertificate", "true")
-                    hikariConfig.addDataSourceProperty("verifyServerCertificate", "false")
-                }
-            }
-        } catch (e: Exception) {
-            throw ServerInitializeException(
-                ServerInitializeException.Detail(
-                    "Failed to configure SSL for data source. ${e.message}",
-                    "Please check the SSL configuration settings in the configuration file or environment variables." +
-                            " Ensure that the certificates are valid and accessible."
-                ), e
-            )
-        }
     }
 }
