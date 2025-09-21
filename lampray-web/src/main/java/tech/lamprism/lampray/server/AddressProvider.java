@@ -75,7 +75,7 @@ public class AddressProvider implements ExternalEndpointProvider {
             return getExternalApiEndpoint();
         }
         String configured = configReader.get(ServerConfigKeys.HTTP_EXTERNAL_WEB_ADDRESS);
-        if (StringUtils.isEmpty(configured)) {
+        if (StringUtils.isBlank(configured)) {
             return getExternalApiEndpoint();
         }
         return resolveAddress(ServerConfigKeys.HTTP_EXTERNAL_WEB_ADDRESS, configured);
@@ -189,7 +189,7 @@ public class AddressProvider implements ExternalEndpointProvider {
      * Normalize address by removing trailing slash.
      */
     private String normalizeAddress(String address) {
-        if (address == null || address.isEmpty()) {
+        if (StringUtils.isBlank(address)) {
             return "";
         }
         return address.endsWith("/") ? address.substring(0, address.length() - 1) : address;
