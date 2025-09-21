@@ -150,7 +150,7 @@ public class AddressProvider implements ExternalEndpointProvider {
         Integer port = configReader.get(ServerConfigKeys.HTTP_PORT);
 
         String scheme = "http";
-        String hostname = StringUtils.isNoneEmpty(host) ? host : "localhost";
+        String hostname = StringUtils.isNotEmpty(host) ? host : "localhost";
         int actualPort = (port != null && port > 0) ? port : 5100;
 
         return buildAddress(scheme, hostname, actualPort);

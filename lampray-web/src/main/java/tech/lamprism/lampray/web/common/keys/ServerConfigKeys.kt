@@ -124,7 +124,9 @@ object ServerConfigKeys : SettingSpecificationSupplier {
             .build()
 
     private val keys = listOf(
-        HTTP_PORT, HTTP_HOST, PROCESS_PROXY_HEADERS, SSH_PORT, SSH_HOST, SSH_HOST_KEY
+        HTTP_PORT, HTTP_HOST, PROCESS_PROXY_HEADERS,
+        HTTP_EXTERNAL_API_ADDRESS, HTTP_EXTERNAL_WEB_ADDRESS,
+        SSH_PORT, SSH_HOST, SSH_HOST_KEY
     )
 
     override val specifications: List<AttributedSettingSpecification<*, *>>

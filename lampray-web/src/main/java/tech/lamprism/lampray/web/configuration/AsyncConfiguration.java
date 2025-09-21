@@ -56,8 +56,8 @@ public class AsyncConfiguration implements AsyncConfigurer {
     public ThreadPoolTaskExecutor mainScheduledExecutorService() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         int cpuCount = Runtime.getRuntime().availableProcessors();
-        executor.setCorePoolSize(Math.max(2, cpuCount * 2));
-        executor.setMaxPoolSize(Math.max(4, cpuCount * 4));
+        executor.setCorePoolSize(Math.max(2, Math.min(16, cpuCount * 2)));
+        executor.setMaxPoolSize(Math.max(4, Math.min(32, cpuCount * 4)));
         executor.setQueueCapacity(200);
         executor.setKeepAliveSeconds(120);
         executor.setThreadNamePrefix("async-main-");

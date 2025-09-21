@@ -23,7 +23,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -33,14 +32,17 @@ import org.springframework.http.MediaTypeFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import space.lingu.NonNull;
 import tech.lamprism.lampray.LampException;
 import tech.lamprism.lampray.setting.ConfigReader;
+import tech.lamprism.lampray.web.ExternalEndpointProvider;
 import tech.lamprism.lampray.web.common.keys.ResourceConfigKeys;
-import tech.lamprism.lampray.web.configuration.LocalConfigConfiguration;
 import tech.rollw.common.web.CommonErrorCode;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Date;
@@ -64,10 +66,12 @@ public class FrontendResourceController {
 
     private final ClassPathResource index = new ClassPathResource(ASSETS_PATH + "index.html");
     private final ConfigReader configReader;
+    private final ExternalEndpointProvider externalEndpointProvider;
 
-    public FrontendResourceController(
-            @Qualifier(LocalConfigConfiguration.LOCAL_CONFIG_PROVIDER) ConfigReader configReader) {
+    public FrontendResourceController(ConfigReader configReader,
+                                      ExternalEndpointProvider externalEndpointProvider) {
         this.configReader = configReader;
+        this.externalEndpointProvider = externalEndpointProvider;
     }
 
     @GetMapping(value = "/{*path}")
@@ -110,30 +114,51 @@ public class FrontendResourceController {
         if (!path.equals("config.js")) {
             return false;
         }
-        // TODO: make this configurable
-        String host = toAddress(request);
-        String httpProtocol = request.getScheme();
-        String wsProtocol = httpProtocol.equals("https") ? "wss" : "ws";
+
+        String baseUrl = externalEndpointProvider.getExternalApiEndpoint();
+        HostAndPath hostAndPath = getHostAndPath(request, baseUrl);
+        String wsProtocol = "https".equals(hostAndPath.httpProtocol()) ? "wss" : "ws";
+
         String configJs = CONFIG_JS_TEMPLATE
-                .replace("{host}", host)
-                .replace("{httpProtocol}", httpProtocol)
+                .replace("{host}", hostAndPath.host())
+                .replace("{httpProtocol}", hostAndPath.httpProtocol())
                 .replace("{wsProtocol}", wsProtocol);
+
         response.setContentType("text/javascript");
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.getOutputStream().write(configJs.getBytes(StandardCharsets.UTF_8));
         return true;
     }
 
-    private String toAddress(HttpServletRequest request) {
-        String scheme = request.getScheme();
-        String serverName = request.getServerName();
-        int serverPort = request.getServerPort();
-        if (serverPort == 80 && "http".equals(scheme) ||
-                serverPort == 443 && "https".equals(scheme)) {
-            return serverName;
+    @NonNull
+    private HostAndPath getHostAndPath(HttpServletRequest request, String baseUrl) {
+        String host;
+        String httpProtocol;
+        try {
+            URL url = new URL(baseUrl);
+            host = url.getHost();
+            if (url.getPort() != -1 &&
+                    !((url.getPort() == 80 && "http".equals(url.getProtocol())) ||
+                            (url.getPort() == 443 && "https".equals(url.getProtocol())))) {
+                host = host + ":" + url.getPort();
+            }
+            httpProtocol = url.getProtocol();
+        } catch (MalformedURLException e) {
+            // Simple fallback
+            logger.warn("Failed to parse address '{}', using request fallback", baseUrl, e);
+            host = request.getServerName();
+            int port = request.getServerPort();
+            if (port != 80 && port != 443) {
+                host = host + ":" + port;
+            }
+            httpProtocol = request.getScheme();
         }
-        return serverName + ":" + serverPort;
+        return new HostAndPath(host, httpProtocol);
     }
+
+    private record HostAndPath(String host, String httpProtocol) {
+    }
+
 
     private Resource loadResource(String path) {
         String resourceSource = configReader.get(ResourceConfigKeys.RESOURCE_SOURCE);

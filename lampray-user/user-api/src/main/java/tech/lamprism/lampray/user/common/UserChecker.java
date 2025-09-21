@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  * @author RollW
  */
 public class UserChecker {
-    public static final String USERNAME_REGEX = "^[a-zA-Z_\\-][\\w.\\-]{3,20}$";
+    public static final String USERNAME_REGEX = "^[a-zA-Z_\\-][\\w.\\-]{2,19}$";
     public static final String PASSWORD_REGEX = "^[A-Za-z\\d._\\-~!@#$^&*+=<>%;'\"\\\\/|()\\[\\]{}]{4,20}$";
     public static final String EMAIL_REGEX = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$";
 
