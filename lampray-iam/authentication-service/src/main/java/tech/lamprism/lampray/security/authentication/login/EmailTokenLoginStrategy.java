@@ -17,7 +17,6 @@
 package tech.lamprism.lampray.security.authentication.login;
 
 import com.google.common.io.ByteStreams;
-import jakarta.mail.internet.MimeMessage;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +24,15 @@ import org.springframework.boot.autoconfigure.mail.MailProperties;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMailMessage;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import space.lingu.NonNull;
 import space.lingu.Nullable;
-import tech.lamprism.lampray.mail.util.MimeMailMessageBuilder;
+import tech.lamprism.lampray.push.MessageMimeType;
+import tech.lamprism.lampray.push.PushMessageStrategy;
+import tech.lamprism.lampray.push.PushMessageStrategyProvider;
+import tech.lamprism.lampray.push.PushType;
+import tech.lamprism.lampray.push.SimplePushMessageBody;
+import tech.lamprism.lampray.push.mail.MailPushUser;
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.AttributedUserDetails;
 import tech.rollw.common.web.AuthErrorCode;
@@ -56,14 +57,14 @@ public class EmailTokenLoginStrategy implements LoginStrategy {
 
     private final Cache cache;
     private final MailProperties mailProperties;
-    private final JavaMailSender mailSender;
+    private final PushMessageStrategyProvider pushMessageStrategyProvider;
 
     public EmailTokenLoginStrategy(CacheManager cacheManager,
                                    MailProperties mailProperties,
-                                   JavaMailSender mailSender) {
+                                   PushMessageStrategyProvider pushMessageStrategyProvider) {
         this.cache = cacheManager.getCache(CACHE);
         this.mailProperties = mailProperties;
-        this.mailSender = mailSender;
+        this.pushMessageStrategyProvider = pushMessageStrategyProvider;
     }
 
     private static final String FULL_SEQUENCE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
@@ -108,13 +109,15 @@ public class EmailTokenLoginStrategy implements LoginStrategy {
         if (!(token instanceof LoginConfirmToken confirmToken)) {
             throw new LoginTokenException(AuthErrorCode.ERROR_INVALID_TOKEN);
         }
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage);
-        MimeMailMessageBuilder builder = new MimeMailMessageBuilder(helper);
         try {
             String text = getMailText(confirmToken.token(), user,
                     requestInfo != null ? requestInfo.getLocale() : null);
-            builder.setText(text, true);
+            PushMessageStrategy pushMessageStrategy = pushMessageStrategyProvider.getPushMessageStrategy(PushType.EMAIL);
+            pushMessageStrategy.push(
+                    new MailPushUser(mailProperties.getUsername(), null),
+                    user,
+                    new SimplePushMessageBody("[Lampray] Login token confirmation", text, MessageMimeType.HTML)
+            );
         } catch (FileNotFoundException e) {
             logger.error("Mail template not found", e);
             throw e;
@@ -122,12 +125,6 @@ public class EmailTokenLoginStrategy implements LoginStrategy {
             logger.error("Failed to read mail template", e);
             throw e;
         }
-        MimeMailMessage message = builder
-                .setTo(user.getEmail())
-                .setSubject("[Lampray] Login token confirmation")
-                .setFrom(mailProperties.getUsername())
-                .build();
-        mailSender.send(message.getMimeMessage());
     }
 
     @Override

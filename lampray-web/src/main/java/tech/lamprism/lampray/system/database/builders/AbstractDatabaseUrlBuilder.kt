@@ -72,7 +72,9 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
 
         // Add charset if specified
         config.charset?.let { charset ->
-            addCharsetParameter(params, charset)
+            if (charset.isNotBlank()) {
+                addCharsetParameter(params, charset)
+            }
         }
 
         // Add custom options

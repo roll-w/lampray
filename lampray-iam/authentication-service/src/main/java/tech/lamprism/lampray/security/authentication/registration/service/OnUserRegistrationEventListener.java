@@ -35,6 +35,10 @@ import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.lamprism.lampray.security.authentication.registration.OnUserRegistrationEvent;
 import tech.lamprism.lampray.security.authentication.registration.RegisterTokenProvider;
 import tech.lamprism.lampray.user.AttributedUser;
+import tech.lamprism.lampray.web.ExternalEndpointProvider;
+
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * @author RollW
@@ -46,13 +50,34 @@ public class OnUserRegistrationEventListener implements ApplicationListener<OnUs
     private final RegisterTokenProvider registerTokenProvider;
     private final PushMessageStrategyProvider pushMessageStrategyProvider;
     private final MailProperties mailProperties;
+    private final ExternalEndpointProvider externalEndpointProvider;
+
+    private final String activationUrl;
 
     public OnUserRegistrationEventListener(RegisterTokenProvider registerTokenProvider,
                                            MailProperties mailProperties,
-                                           PushMessageStrategyProvider pushMessageStrategyProvider) {
+                                           PushMessageStrategyProvider pushMessageStrategyProvider,
+                                           ExternalEndpointProvider externalEndpointProvider) {
         this.pushMessageStrategyProvider = pushMessageStrategyProvider;
         this.registerTokenProvider = registerTokenProvider;
         this.mailProperties = mailProperties;
+        this.externalEndpointProvider = externalEndpointProvider;
+        try {
+            this.activationUrl = loadActivationUrl();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load activation URL", e);
+        }
+    }
+
+    private String loadActivationUrl() throws IOException {
+        Properties urlProps = new Properties();
+        urlProps.load(OnUserRegistrationEventListener.class.getResourceAsStream("url.properties"));
+        String property = urlProps.getProperty("activation.url");
+        if (Strings.isNullOrEmpty(property)) {
+            throw new IOException("Activation URL is not configured in url.properties");
+        }
+
+        return property;
     }
 
     @Override
@@ -76,8 +101,9 @@ public class OnUserRegistrationEventListener implements ApplicationListener<OnUs
             return;
         }
         VerifiableToken registerToken = registerTokenProvider.createRegisterToken(user);
-        // TODO
-        String confirmUrl = "" + registerToken.token();
+        String activationUrl = this.activationUrl.replace("{token}", registerToken.token());
+
+        String confirmUrl = externalEndpointProvider.getExternalWebEndpoint() + activationUrl;
         // TODO: read email template
         PushMessageBody messageBody = new HtmlMessageBuilder()
                 .setTitle("[Lampray] Registration Confirmation")

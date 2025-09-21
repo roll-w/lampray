@@ -57,7 +57,10 @@ class FilterTableFirewall(
         }
     }
 
-    private fun checkIp(ip: String): FirewallAccessResult {
+    private fun checkIp(ip: String?): FirewallAccessResult {
+        if (ip.isNullOrBlank()) {
+            return FirewallAccessResult.NEUTRAL
+        }
         val ipIdentifier = RequestIdentifier(ip, IdentifierType.IP)
         val filterEntry = filterTable[ipIdentifier] ?: return FirewallAccessResult.NEUTRAL
         return when (filterEntry.mode) {

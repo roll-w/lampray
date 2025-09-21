@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import java.util.regex.Pattern;
  * @author RollW
  */
 public class UserChecker {
-    public static final String USERNAME_REGEX = "^[a-zA-Z_\\-][\\w\\-]{3,20}$";
-    public static final String PASSWORD_REGEX = "^[A-Za-z\\d._\\-~!@#$^&*+=<>%;'\"\\\\\\/|()\\[\\]{}]{4,20}$";
+    public static final String USERNAME_REGEX = "^[a-zA-Z_\\-][\\w.\\-]{3,20}$";
+    public static final String PASSWORD_REGEX = "^[A-Za-z\\d._\\-~!@#$^&*+=<>%;'\"\\\\/|()\\[\\]{}]{4,20}$";
     public static final String EMAIL_REGEX = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$";
 
     private static final Pattern sUsernamePattern = Pattern.compile(USERNAME_REGEX);
@@ -34,9 +34,10 @@ public class UserChecker {
     private static final Pattern sEmailPattern = Pattern.compile(EMAIL_REGEX);
 
     /**
-     * Allow only letters, numbers, underscores and dash,
+     * Allow only letters, numbers, underscores, dash and dot,
      * length between 3 and 20,
-     * no special characters except underscore and dash.
+     * no special characters except underscore, dash and dot.
+     * Must start with a letter or underscore.
      */
     public static boolean checkUsername(String username) {
         if (StringUtils.isEmpty(username)) {
