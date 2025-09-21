@@ -38,7 +38,7 @@ object ResourceConfigKeys : SettingSpecificationSupplier {
                 Enable frontend resource hosting.
                 """.trimIndent())
             .setDefaultValue(false)
-            .setSupportedSources(SettingSource.LOCAL_ONLY)
+            .setSupportedSources(SettingSource.VALUES)
             .setRequired(false)
             .build()
 
@@ -51,7 +51,7 @@ object ResourceConfigKeys : SettingSpecificationSupplier {
                 Note: If self-hosting is not enabled, this configuration will be ignored.
                 """.trimIndent())
             .setDefaultValue(EMBEDDED_RESOURCE)
-            .setSupportedSources(SettingSource.LOCAL_ONLY)
+            .setSupportedSources(SettingSource.VALUES)
             .setRequired(false)
             .build()
 

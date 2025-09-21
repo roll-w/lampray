@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2023-2025 RollW
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package tech.lamprism.lampray.system.database
 
 import org.springframework.stereotype.Component
@@ -139,7 +155,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * Database character encoding for proper internationalization support.
      *
      * Ensures correct handling of international characters and emojis.
-     * Common values: utf8mb4 (MySQL), UTF8 (PostgreSQL), utf8 (general).
+     * Common values: utf8 (general).
      * Leave empty to use database server defaults.
      */
     @JvmField
@@ -147,7 +163,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .setDescription(
             SettingDescription.text(
                 "Database character encoding setting. Ensures correct handling of international " +
-                        "characters and emojis. Common values include utf8mb4 (MySQL), UTF8 (PostgreSQL), or utf8 (general). " +
+                        "characters and emojis. " +
                         "Leave empty to use database defaults."
             )
         )
@@ -176,7 +192,6 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
             )
         )
         .setSupportedSources(LOCAL_SOURCE)
-        .setDefaultValue("")
         .setRequired(false)
         .setAllowAnyValue(true)
         .build()
