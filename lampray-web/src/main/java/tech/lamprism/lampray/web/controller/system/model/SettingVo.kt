@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.web.controller.system.model
 
 import tech.lamprism.lampray.setting.SettingSource
+import java.time.OffsetDateTime
 
 /**
  * @author RollW
@@ -26,6 +27,7 @@ data class SettingVo(
     val value: String?,
     val description: String,
     val type: String,
-    val activeSource: SettingSource
+    val source: SettingSource,
+    val updateTime: OffsetDateTime?
 ) {
 }

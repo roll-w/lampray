@@ -24,7 +24,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import tech.lamprism.lampray.setting.AttributedSettingSpecification;
 import tech.lamprism.lampray.setting.ConfigProvider;
+import tech.lamprism.lampray.setting.ConfigValue;
+import tech.lamprism.lampray.setting.ConfigValueInfo;
 import tech.lamprism.lampray.setting.SecretLevel;
+import tech.lamprism.lampray.setting.SettingDescriptionProvider;
+import tech.lamprism.lampray.setting.SettingKey;
+import tech.lamprism.lampray.setting.SettingSpecificationHelper;
 import tech.lamprism.lampray.setting.SettingSpecificationProvider;
 import tech.lamprism.lampray.setting.SystemSetting;
 import tech.lamprism.lampray.web.controller.AdminApi;
@@ -40,12 +45,15 @@ import java.util.List;
 public class SystemSettingController {
     private final ConfigProvider configProvider;
     private final SettingSpecificationProvider settingSpecificationProvider;
+    private final SettingDescriptionProvider settingDescriptionProvider;
 
     public SystemSettingController(
             ConfigProvider configProvider,
-            SettingSpecificationProvider settingSpecificationProvider) {
+            SettingSpecificationProvider settingSpecificationProvider,
+            SettingDescriptionProvider settingDescriptionProvider) {
         this.configProvider = configProvider;
         this.settingSpecificationProvider = settingSpecificationProvider;
+        this.settingDescriptionProvider = settingDescriptionProvider;
     }
 
     private String maskSecret(String value,
@@ -66,28 +74,52 @@ public class SystemSettingController {
                             (AttributedSettingSpecification<?, ?>) value.getSpecification();
                     boolean secret = specification.getSecret();
                     SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
-                    return new SettingVo(
-                            value.getSpecification().getKey().getName(),
-                            maskSecret(String.valueOf(value.getValue()), secretLevel),
-                            specification.getDescription().getValue(),
-                            value.getSpecification().getKey().getType().toString(),
-                            value.getSource()
-                    );
+                    return toSettingVo(value, secretLevel, specification);
                 }).toList();
         return HttpResponseEntity.success(res);
+    }
+
+    private SettingVo toSettingVo(ConfigValue<?, ?> value, SecretLevel secretLevel,
+                                  AttributedSettingSpecification<?, ?> specification) {
+        SettingKey<?, ?> key = value.getSpecification().getKey();
+        String masked = maskSecret(String.valueOf(value.getValue()), secretLevel);
+        String description = settingDescriptionProvider.getSettingDescription(specification.getDescription());
+        if (value instanceof ConfigValueInfo<?, ?> info) {
+            return new SettingVo(
+                    key.getName(),
+                    masked,
+                    description,
+                    key.getType().toString(),
+                    value.getSource(),
+                    info.getLastModified()
+            );
+        }
+        return new SettingVo(
+                key.getName(),
+                masked,
+                description,
+                key.getType().toString(),
+                value.getSource(),
+                null
+        );
     }
 
     @PutMapping("/system/settings/{key}")
     public HttpResponseEntity<Void> setSetting(@PathVariable String key,
                                                @RequestBody Value value) {
         // TODO: check setting key is valid and value is valid
-        configProvider.set(key, value.value());
+        @SuppressWarnings("unchecked")
+        AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
+                settingSpecificationProvider.getSettingSpecification(key);
+        configProvider.set(specification, SettingSpecificationHelper.INSTANCE.deserialize(value.value(), specification));
         return HttpResponseEntity.success();
     }
 
     @DeleteMapping("/system/settings/{key}")
     public HttpResponseEntity<Void> deleteSetting(@PathVariable String key) {
-        configProvider.set(key, null);
+        // TODO: may need a delete method in ConfigProvider
+        AttributedSettingSpecification<?, ?> specification = settingSpecificationProvider.getSettingSpecification(key);
+        configProvider.set(specification, null);
         return HttpResponseEntity.success();
     }
 
