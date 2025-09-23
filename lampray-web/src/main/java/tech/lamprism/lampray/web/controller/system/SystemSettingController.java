@@ -16,13 +16,19 @@
 
 package tech.lamprism.lampray.web.controller.system;
 
+import com.google.common.base.Strings;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import tech.lamprism.lampray.setting.AttributedSettingSpecification;
+import tech.lamprism.lampray.setting.ConfigProvider;
+import tech.lamprism.lampray.setting.SecretLevel;
+import tech.lamprism.lampray.setting.SettingSpecificationProvider;
 import tech.lamprism.lampray.setting.SystemSetting;
 import tech.lamprism.lampray.web.controller.AdminApi;
+import tech.lamprism.lampray.web.controller.system.model.SettingVo;
 import tech.rollw.common.web.HttpResponseEntity;
 
 import java.util.List;
@@ -32,25 +38,56 @@ import java.util.List;
  */
 @AdminApi
 public class SystemSettingController {
+    private final ConfigProvider configProvider;
+    private final SettingSpecificationProvider settingSpecificationProvider;
 
-    public SystemSettingController() {
+    public SystemSettingController(
+            ConfigProvider configProvider,
+            SettingSpecificationProvider settingSpecificationProvider) {
+        this.configProvider = configProvider;
+        this.settingSpecificationProvider = settingSpecificationProvider;
     }
 
-    // TODO: impl with ConfigProvider
+    private String maskSecret(String value,
+                              SecretLevel secretLevel) {
+        if (Strings.isNullOrEmpty(value) || secretLevel == SecretLevel.NONE) {
+            return value;
+        }
+        return secretLevel.maskValue(value);
+    }
+
     @GetMapping("/system/settings")
-    public HttpResponseEntity<List<SystemSetting>> getSettings() {
-        return HttpResponseEntity.success(
-        );
+    public HttpResponseEntity<List<SettingVo>> getSettings() {
+        List<AttributedSettingSpecification<?, ?>> settingSpecifications = settingSpecificationProvider.getSettingSpecifications();
+        List<SettingVo> res = configProvider.list(settingSpecifications)
+                .stream()
+                .map(value -> {
+                    AttributedSettingSpecification<?, ?> specification =
+                            (AttributedSettingSpecification<?, ?>) value.getSpecification();
+                    boolean secret = specification.getSecret();
+                    SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
+                    return new SettingVo(
+                            value.getSpecification().getKey().getName(),
+                            maskSecret(String.valueOf(value.getValue()), secretLevel),
+                            specification.getDescription().getValue(),
+                            value.getSpecification().getKey().getType().toString(),
+                            value.getSource()
+                    );
+                }).toList();
+        return HttpResponseEntity.success(res);
     }
 
     @PutMapping("/system/settings/{key}")
     public HttpResponseEntity<Void> setSetting(@PathVariable String key,
                                                @RequestBody Value value) {
+        // TODO: check setting key is valid and value is valid
+        configProvider.set(key, value.value());
         return HttpResponseEntity.success();
     }
 
     @DeleteMapping("/system/settings/{key}")
     public HttpResponseEntity<Void> deleteSetting(@PathVariable String key) {
+        configProvider.set(key, null);
         return HttpResponseEntity.success();
     }
 

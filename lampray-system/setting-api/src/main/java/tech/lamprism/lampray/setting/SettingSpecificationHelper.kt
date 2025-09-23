@@ -26,14 +26,14 @@ object SettingSpecificationHelper {
             return null
         }
         return when (specification.key.type) {
-            SettingType.STRING -> this as T
-            SettingType.INT -> this.toInt() as T
-            SettingType.LONG -> this.toLong() as T
-            SettingType.FLOAT -> this.toFloat() as T
-            SettingType.DOUBLE -> this.toDouble() as T
-            SettingType.BOOLEAN -> this.toBoolean() as T
+            SettingType.STRING -> this as T?
+            SettingType.INT -> this.toIntOrNull() as T?
+            SettingType.LONG -> this.toLongOrNull() as T?
+            SettingType.FLOAT -> this.toFloatOrNull() as T?
+            SettingType.DOUBLE -> this.toDoubleOrNull() as T?
+            SettingType.BOOLEAN -> this.toBoolean() as T?
             // TODO: implement a better way to deserialize set
-            SettingType.STRING_SET -> this.split(",").toSet() as T
+            SettingType.STRING_SET -> this.split(",").toSet() as T?
             else -> throw IllegalArgumentException("Unsupported type: $this")
         }
     }

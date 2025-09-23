@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.setting
+package tech.lamprism.lampray.web.controller.system.model
+
+import tech.lamprism.lampray.setting.SettingSource
 
 /**
  * @author RollW
  */
-class ReadonlyConfigProvider(
-    private val configReader: ConfigReader
-) : ConfigReader by configReader, ConfigProvider {
-    override fun set(key: String, value: String?) = SettingSource.NONE
-
-    override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?) = SettingSource.NONE
-
-    override fun supports(key: String): Boolean = false
-
-    override val metadata: ConfigReader.Metadata
-        get() = configReader.metadata
-
-    val underlying: ConfigReader
-        get() = configReader
+data class SettingVo(
+    val key: String,
+    val value: String?,
+    val description: String,
+    val type: String,
+    val activeSource: SettingSource
+) {
 }

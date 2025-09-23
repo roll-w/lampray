@@ -19,11 +19,13 @@ package tech.lamprism.lampray.setting
 /**
  * @author RollW
  */
-interface ConfigValue<T, V> : SettingSpecification<T, V> {
+interface ConfigValue<T, V> {
     val value: T?
 
     /**
      * The source of current value from.
      */
     val source: SettingSource
+
+    val specification: SettingSpecification<T, V>
 }

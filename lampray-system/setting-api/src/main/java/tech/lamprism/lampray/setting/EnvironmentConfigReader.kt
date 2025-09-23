@@ -69,8 +69,8 @@ class EnvironmentConfigReader(
         }
     }
 
-    override fun list(): List<RawSettingValue> {
-        return emptyList()
+    override fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>> {
+        return specifications.map { getValue(it) }
     }
 
     private fun String.asEnvKey(): String {

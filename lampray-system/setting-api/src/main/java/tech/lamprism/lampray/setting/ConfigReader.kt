@@ -38,7 +38,12 @@ interface ConfigReader {
 
     fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V>
 
-    fun list(): List<RawSettingValue>
+    /**
+     * Get multiple config values by specifications.
+     *
+     * Note: The order of the returned list is the same as the order of the input specifications.
+     */
+    fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>>
 
     /**
      * Metadata of the config reader.

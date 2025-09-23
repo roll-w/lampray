@@ -26,9 +26,9 @@ import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 data class SnapshotConfigValue<T, V>(
     override val value: T?,
     override val source: SettingSource,
-    private val settingSpecification: SettingSpecification<T, V>
-) : ConfigValue<T, V>, SettingSpecification<T, V> by settingSpecification {
+    override val specification: SettingSpecification<T, V>
+) : ConfigValue<T, V>, SettingSpecification<T, V> by specification {
     override fun toString(): String {
-        return "SnapshotConfigValue[${settingSpecification.keyName}](value=$value, source=$source)"
+        return "SnapshotConfigValue[${specification.keyName}](value=$value, source=$source)"
     }
 }

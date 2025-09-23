@@ -16,6 +16,8 @@
 
 package tech.lamprism.lampray.setting
 
+import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
+
 /**
  * @author RollW
  */
@@ -70,8 +72,20 @@ class CombinedConfigProvider(
         return SnapshotConfigValue(null, SettingSource.NONE, specification)
     }
 
-    override fun list(): List<RawSettingValue> {
-        return configProviders.flatMap { it.list() }
+    override fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>> {
+        val valuesByConfigProviders = configProviders.map { it.list(specifications) }
+        return specifications.map { spec ->
+            for (configValues in valuesByConfigProviders) {
+                // Only the first non-null value is activated currently,
+                // we assume that the list order of configProviders is the priority order.
+                // Values in the later providers are ignored.
+                val value = configValues.firstOrNull { it.specification.keyName == spec.keyName }
+                if (value != null && value.value != null) {
+                    return@map value
+                }
+            }
+            SnapshotConfigValue(null, SettingSource.NONE, spec)
+        }
     }
 
     override fun set(key: String, value: String?): SettingSource {
