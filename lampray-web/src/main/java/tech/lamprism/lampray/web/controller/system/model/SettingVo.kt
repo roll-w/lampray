@@ -24,7 +24,7 @@ import java.time.OffsetDateTime
  */
 data class SettingVo(
     val key: String,
-    val value: String?,
+    val value: Any?,
     val description: String,
     val type: String,
     val source: SettingSource,
