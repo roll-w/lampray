@@ -28,12 +28,14 @@ import tech.lamprism.lampray.setting.ConfigValueInfo;
 import tech.lamprism.lampray.setting.SecretLevel;
 import tech.lamprism.lampray.setting.SettingDescriptionProvider;
 import tech.lamprism.lampray.setting.SettingKey;
+import tech.lamprism.lampray.setting.SettingSource;
 import tech.lamprism.lampray.setting.SettingSpecificationHelper;
 import tech.lamprism.lampray.setting.SettingSpecificationProvider;
 import tech.lamprism.lampray.web.controller.AdminApi;
 import tech.lamprism.lampray.web.controller.system.model.ListSettingRequest;
 import tech.lamprism.lampray.web.controller.system.model.SettingVo;
 import tech.rollw.common.web.HttpResponseEntity;
+import tech.rollw.common.web.page.ImmutablePage;
 
 import java.util.List;
 
@@ -68,8 +70,9 @@ public class SystemSettingController {
     public HttpResponseEntity<List<SettingVo>> getSettings(
             ListSettingRequest listSettingRequest
     ) {
+        List<AttributedSettingSpecification<?, ?>> specifications = settingSpecificationProvider.getSettingSpecifications();
         List<AttributedSettingSpecification<?, ?>> settingSpecifications = filterSpecifications(
-                settingSpecificationProvider.getSettingSpecifications(),
+                specifications,
                 listSettingRequest
         );
         List<SettingVo> res = configProvider.list(settingSpecifications)
@@ -81,7 +84,12 @@ public class SystemSettingController {
                     SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
                     return toSettingVo(value, secretLevel, specification);
                 }).toList();
-        return HttpResponseEntity.success(res);
+        return HttpResponseEntity.success(ImmutablePage.of(
+                listSettingRequest.getPage(),
+                listSettingRequest.getSize(),
+                specifications.size(),
+                res
+        ));
     }
 
     private List<AttributedSettingSpecification<?, ?>> filterSpecifications(
@@ -100,6 +108,7 @@ public class SystemSettingController {
                     return name1.compareTo(name2);
                 })
                 .skip(fromIndex)
+                .limit(size)
                 .toList();
     }
 
@@ -129,22 +138,25 @@ public class SystemSettingController {
     }
 
     @PutMapping("/system/settings/{key}")
-    public HttpResponseEntity<Void> setSetting(@PathVariable String key,
-                                               @RequestBody Value value) {
+    public HttpResponseEntity<SettingSource> setSetting(@PathVariable String key,
+                                                        @RequestBody Value value) {
         // TODO: check setting key is valid and value is valid
         @SuppressWarnings("unchecked")
         AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
                 settingSpecificationProvider.getSettingSpecification(key);
-        configProvider.set(specification, SettingSpecificationHelper.INSTANCE.deserialize(value.value(), specification));
-        return HttpResponseEntity.success();
+        SettingSource source = configProvider.set(
+                specification,
+                SettingSpecificationHelper.INSTANCE.deserialize(value.value(), specification)
+        );
+        return HttpResponseEntity.success(source);
     }
 
     @DeleteMapping("/system/settings/{key}")
-    public HttpResponseEntity<Void> deleteSetting(@PathVariable String key) {
+    public HttpResponseEntity<SettingSource> deleteSetting(@PathVariable String key) {
         // TODO: may need a delete method in ConfigProvider
         AttributedSettingSpecification<?, ?> specification = settingSpecificationProvider.getSettingSpecification(key);
-        configProvider.set(specification, null);
-        return HttpResponseEntity.success();
+        SettingSource source = configProvider.set(specification, null);
+        return HttpResponseEntity.success(source);
     }
 
     @GetMapping("/system/settings/{key}")
