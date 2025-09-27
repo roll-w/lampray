@@ -24,6 +24,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.core.NestedRuntimeException;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
@@ -46,7 +47,15 @@ public class CorsConfigFilter implements Filter {
         try {
             chain.doFilter(request, response);
         } catch (Exception e) {
-            resolver.resolveException(request, response, null, e);
+            Exception exception = e;
+            if (exception instanceof ServletException se && se.getRootCause() != null) {
+                exception = (Exception) se.getRootCause();
+            }
+            if (exception instanceof NestedRuntimeException nre && nre.getRootCause() != null) {
+                exception = (Exception) nre.getRootCause();
+            }
+
+            resolver.resolveException(request, response, null, exception);
         }
     }
 

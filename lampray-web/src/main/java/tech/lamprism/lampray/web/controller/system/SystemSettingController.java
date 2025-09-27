@@ -16,15 +16,16 @@
 
 package tech.lamprism.lampray.web.controller.system;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import tech.lamprism.lampray.TimeAttributed;
 import tech.lamprism.lampray.setting.AttributedSettingSpecification;
 import tech.lamprism.lampray.setting.ConfigProvider;
 import tech.lamprism.lampray.setting.ConfigValue;
-import tech.lamprism.lampray.setting.ConfigValueInfo;
 import tech.lamprism.lampray.setting.SecretLevel;
 import tech.lamprism.lampray.setting.SettingDescriptionProvider;
 import tech.lamprism.lampray.setting.SettingKey;
@@ -68,7 +69,7 @@ public class SystemSettingController {
 
     @GetMapping("/system/settings")
     public HttpResponseEntity<List<SettingVo>> getSettings(
-            ListSettingRequest listSettingRequest
+           @Valid ListSettingRequest listSettingRequest
     ) {
         List<AttributedSettingSpecification<?, ?>> specifications = settingSpecificationProvider.getSettingSpecifications();
         List<AttributedSettingSpecification<?, ?>> settingSpecifications = filterSpecifications(
@@ -117,14 +118,14 @@ public class SystemSettingController {
         SettingKey<?, ?> key = value.getSpecification().getKey();
         Object masked = maskSecret(value.getValue(), secretLevel);
         String description = settingDescriptionProvider.getSettingDescription(specification.getDescription());
-        if (value instanceof ConfigValueInfo<?, ?> info) {
+        if (value instanceof TimeAttributed timeAttributed) {
             return new SettingVo(
                     key.getName(),
                     masked,
                     description,
                     key.getType().toString(),
                     value.getSource(),
-                    info.getLastModified()
+                    timeAttributed.getUpdateTime()
             );
         }
         return new SettingVo(

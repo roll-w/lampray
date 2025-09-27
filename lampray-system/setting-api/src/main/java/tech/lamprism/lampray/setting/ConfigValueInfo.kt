@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.setting
 
+import tech.lamprism.lampray.TimeAttributed
 import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import java.time.OffsetDateTime
 
@@ -54,7 +55,12 @@ data class ConfigValueInfo<T, V>(
      * The last modified time of this config if available.
      */
     val lastModified: OffsetDateTime?
-) : ConfigValue<T, V> {
+) : ConfigValue<T, V>, TimeAttributed {
+    override fun getCreateTime(): OffsetDateTime =
+        TimeAttributed.NONE_TIME
+
+    override fun getUpdateTime(): OffsetDateTime =
+        lastModified ?: TimeAttributed.NONE_TIME
 
     companion object {
         @JvmStatic
