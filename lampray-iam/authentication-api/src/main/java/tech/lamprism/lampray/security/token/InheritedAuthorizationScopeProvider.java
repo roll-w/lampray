@@ -16,7 +16,6 @@
 
 package tech.lamprism.lampray.security.token;
 
-import org.jetbrains.annotations.NotNull;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.security.authorization.AuthorizationScope;
 import tech.lamprism.lampray.security.authorization.AuthorizationScopeProvider;
@@ -46,7 +45,7 @@ public class InheritedAuthorizationScopeProvider implements AuthorizationScopePr
     }
 
     @Override
-    public boolean supports(@NotNull String scope) {
+    public boolean supports(@NonNull String scope) {
         return scope.startsWith(InheritedAuthorizationScope.PREFIX);
     }
 }

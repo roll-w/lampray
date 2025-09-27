@@ -16,7 +16,6 @@
 
 package tech.lamprism.lampray.security.authorization;
 
-import org.jetbrains.annotations.NotNull;
 import space.lingu.NonNull;
 
 import java.util.ArrayList;
@@ -35,7 +34,7 @@ public class CompositedAuthorizationScopeProvider implements AuthorizationScopeP
     }
 
     @Override
-    @NotNull
+    @NonNull
     public AuthorizationScope findScope(@NonNull String scope) {
         AuthorizationScopeProvider provider = providers.stream()
                 .filter(p -> p.supports(scope))
