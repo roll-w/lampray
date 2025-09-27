@@ -16,7 +16,6 @@
 
 package tech.lamprism.lampray.security.token;
 
-import org.jetbrains.annotations.NotNull;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.security.authorization.AuthorizationScope;
 import tech.lamprism.lampray.security.authorization.hierarchy.AuthorizationScopeHierarchyProvider;
@@ -57,7 +56,7 @@ public class InheritedAuthorizationScopeHierarchyProvider implements Authorizati
     }
 
     @Override
-    public boolean supports(@NotNull AuthorizationScope scope) {
+    public boolean supports(@NonNull AuthorizationScope scope) {
         return scope instanceof InheritedAuthorizationScope;
     }
 }

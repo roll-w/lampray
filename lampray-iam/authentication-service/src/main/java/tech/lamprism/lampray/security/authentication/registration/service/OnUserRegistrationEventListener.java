@@ -37,7 +37,9 @@ import tech.lamprism.lampray.security.authentication.registration.RegisterTokenP
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.web.ExternalEndpointProvider;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -71,7 +73,12 @@ public class OnUserRegistrationEventListener implements ApplicationListener<OnUs
 
     private String loadActivationUrl() throws IOException {
         Properties urlProps = new Properties();
-        urlProps.load(OnUserRegistrationEventListener.class.getResourceAsStream("url.properties"));
+        try (InputStream resourceAsStream = OnUserRegistrationEventListener.class.getResourceAsStream("url.properties")) {
+            if (resourceAsStream == null) {
+                throw new FileNotFoundException("url.properties not found");
+            }
+            urlProps.load(resourceAsStream);
+        }
         String property = urlProps.getProperty("activation.url");
         if (Strings.isNullOrEmpty(property)) {
             throw new IOException("Activation URL is not configured in url.properties");
