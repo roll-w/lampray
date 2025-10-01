@@ -126,7 +126,6 @@ public class LampraySystemExceptionHandler {
     @ExceptionHandler({
             BindException.class,
             ConstraintViolationException.class,
-            MethodArgumentNotValidException.class,
             ValidationException.class
     })
     public HttpResponseEntity<Void> handleParamException(Exception e) {
@@ -134,6 +133,20 @@ public class LampraySystemExceptionHandler {
                 WebCommonErrorCode.ERROR_PARAM_FAILED,
                 e.getMessage()
         );
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public HttpResponseEntity<Void> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .reduce((s1, s2) -> s1 + "; " + s2)
+                .orElse(e.getMessage());
+        return HttpResponseEntity.of(
+                WebCommonErrorCode.ERROR_PARAM_FAILED,
+                message
+        );
+
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

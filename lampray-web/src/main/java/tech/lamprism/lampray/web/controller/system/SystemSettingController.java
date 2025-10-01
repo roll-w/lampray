@@ -69,7 +69,7 @@ public class SystemSettingController {
 
     @GetMapping("/system/settings")
     public HttpResponseEntity<List<SettingVo>> getSettings(
-           @Valid ListSettingRequest listSettingRequest
+            @Valid ListSettingRequest listSettingRequest
     ) {
         List<AttributedSettingSpecification<?, ?>> specifications = settingSpecificationProvider.getSettingSpecifications();
         List<AttributedSettingSpecification<?, ?>> settingSpecifications = filterSpecifications(
@@ -155,8 +155,10 @@ public class SystemSettingController {
     @DeleteMapping("/system/settings/{key}")
     public HttpResponseEntity<SettingSource> deleteSetting(@PathVariable String key) {
         // TODO: may need a delete method in ConfigProvider
-        AttributedSettingSpecification<?, ?> specification = settingSpecificationProvider.getSettingSpecification(key);
-        SettingSource source = configProvider.set(specification, null);
+        @SuppressWarnings("unchecked")
+        AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
+                settingSpecificationProvider.getSettingSpecification(key);
+        SettingSource source = configProvider.set(specification, specification.getDefaultValue());
         return HttpResponseEntity.success(source);
     }
 
