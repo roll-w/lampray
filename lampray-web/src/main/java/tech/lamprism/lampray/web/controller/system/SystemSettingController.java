@@ -32,6 +32,7 @@ import tech.lamprism.lampray.setting.SettingKey;
 import tech.lamprism.lampray.setting.SettingSource;
 import tech.lamprism.lampray.setting.SettingSpecificationHelper;
 import tech.lamprism.lampray.setting.SettingSpecificationProvider;
+import tech.lamprism.lampray.web.StringValue;
 import tech.lamprism.lampray.web.controller.AdminApi;
 import tech.lamprism.lampray.web.controller.system.model.ListSettingRequest;
 import tech.lamprism.lampray.web.controller.system.model.SettingVo;
@@ -140,14 +141,14 @@ public class SystemSettingController {
 
     @PutMapping("/system/settings/{key}")
     public HttpResponseEntity<SettingSource> setSetting(@PathVariable String key,
-                                                        @RequestBody Value value) {
+                                                        @RequestBody StringValue value) {
         // TODO: check setting key is valid and value is valid
         @SuppressWarnings("unchecked")
         AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
                 settingSpecificationProvider.getSettingSpecification(key);
         SettingSource source = configProvider.set(
                 specification,
-                SettingSpecificationHelper.INSTANCE.deserialize(value.value(), specification)
+                SettingSpecificationHelper.INSTANCE.deserialize(value.getValue(), specification)
         );
         return HttpResponseEntity.success(source);
     }
@@ -170,8 +171,5 @@ public class SystemSettingController {
         SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
         SettingVo settingVo = toSettingVo(configValue, secretLevel, specification);
         return HttpResponseEntity.success(settingVo);
-    }
-
-    public record Value(String value) {
     }
 }
