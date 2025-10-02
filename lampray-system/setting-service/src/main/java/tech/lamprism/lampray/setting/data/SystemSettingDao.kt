@@ -16,7 +16,6 @@
 
 package tech.lamprism.lampray.setting.data
 
-import org.springframework.data.jpa.repository.Query
 import tech.lamprism.lampray.common.data.CommonDao
 import tech.lamprism.lampray.common.data.Dao
 
@@ -25,6 +24,4 @@ import tech.lamprism.lampray.common.data.Dao
  */
 @Dao
 interface SystemSettingDao: CommonDao<SystemSettingDo, Long> {
-    @Query("SELECT s FROM SystemSettingDo s WHERE s.key = :key")
-    fun findByKey(key: String): SystemSettingDo?
 }

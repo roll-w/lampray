@@ -18,6 +18,7 @@ package tech.lamprism.lampray.setting.data
 
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
+import java.util.Optional
 
 /**
  * @author RollW
@@ -26,7 +27,18 @@ import tech.lamprism.lampray.common.data.CommonRepository
 class SystemSettingRepository(
     private val systemSettingDao: SystemSettingDao
 ) : CommonRepository<SystemSettingDo, Long>(systemSettingDao) {
-    fun findByKey(key: String): SystemSettingDo? {
-        return systemSettingDao.findByKey(key)
+    fun findByKey(key: String): Optional<SystemSettingDo> {
+        return findOne { root, query, criteriaBuilder ->
+            criteriaBuilder.equal(root.get<String>("key"), key)
+        }
+    }
+
+    fun findByKeyIn(keys: Set<String>): List<SystemSettingDo> {
+        if (keys.isEmpty()) {
+            return emptyList()
+        }
+        return findAll { root, query, criteriaBuilder ->
+            root.get<String>("key").`in`(keys)
+        }
     }
 }

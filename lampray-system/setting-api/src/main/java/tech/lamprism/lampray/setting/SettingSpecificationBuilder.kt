@@ -53,48 +53,49 @@ class SettingSpecificationBuilder<T, V> {
 
     var valueEntries: List<V?> = emptyList()
         private set
-    
+
     var secret: Boolean = false
         private set
 
-    fun setKey(key: SettingKey<T, V>) = apply{
+    fun setKey(key: SettingKey<T, V>) = apply {
         this.key = key
     }
 
-    fun setDescription(description: SettingDescription) = apply{
+    fun setDescription(description: SettingDescription) = apply {
         this.description = description
     }
 
-    fun setTextDescription(description: String) = apply{
+    fun setTextDescription(description: String) = apply {
         this.description = SettingDescription.text(description)
     }
 
-    fun setResourceDescription(key: String) = apply{
+    fun setResourceDescription(key: String) = apply {
         this.description = SettingDescription.resource(key)
     }
 
-    fun setAllowAnyValue(allowAnyValue: Boolean) = apply{
+    fun setAllowAnyValue(allowAnyValue: Boolean) = apply {
         this.allowAnyValue = allowAnyValue
     }
 
-    fun setSupportedSources(supportedSources: List<SettingSource>) = apply{
+    fun setSupportedSources(supportedSources: List<SettingSource>) = apply {
         this.supportedSources = supportedSources
     }
 
-    fun setRequired(isRequired: Boolean) = apply{
+    fun setRequired(isRequired: Boolean) = apply {
         this.isRequired = isRequired
     }
 
-    fun setDefaults(defaults: List<Int>) = apply{
+    fun setDefaults(defaults: List<Int>) = apply {
         this.defaults = defaults
     }
 
-    fun setDefault(default: Int) = apply{
+    fun setDefault(default: Int) = apply {
         this.defaults = listOf(default)
     }
 
-    fun setDefaultValue(default: V?) = apply{
+    fun setDefaultValue(default: V?) = apply {
         if (valueEntries.isNotEmpty()) {
+            // TODO: fix default value setting
             if (default != null && !valueEntries.contains(default)) {
                 throw IllegalArgumentException("Default value $default is not in the value entries $valueEntries")
             }
@@ -107,10 +108,10 @@ class SettingSpecificationBuilder<T, V> {
         this.valueEntries = listOf(default)
     }
 
-    fun setValueEntries(valueEntries: List<V?>) = apply{
+    fun setValueEntries(valueEntries: List<V?>) = apply {
         this.valueEntries = valueEntries
     }
-    
+
     fun setSecret(secret: Boolean) = apply {
         this.secret = secret
     }

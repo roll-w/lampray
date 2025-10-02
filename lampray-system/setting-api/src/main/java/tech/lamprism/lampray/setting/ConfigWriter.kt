@@ -50,7 +50,7 @@ interface ConfigWriter {
      * or [SettingSource.NONE] if the value is not stored.
      */
     fun <T, V> set(configValue: ConfigValue<T, V>): SettingSource {
-        return set(configValue, configValue.value)
+        return set(configValue.specification, configValue.value)
     }
 
     fun supports(spec: SettingSpecification<*, *>): Boolean {

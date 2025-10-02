@@ -167,32 +167,8 @@ class TomlConfigReader(
         return SnapshotConfigValue(value, SettingSource.LOCAL, specification)
     }
 
-    override fun list(): List<RawSettingValue> {
-        return flattenMap(values)
-    }
-
-    private fun flattenMap(
-        map: Map<String, Any>,
-        prefix: String = ""
-    ): List<RawSettingValue> {
-        val result = mutableListOf<RawSettingValue>()
-        for ((key, value) in map) {
-            val fullKey = if (prefix.isEmpty()) key else "$prefix.$key"
-            when (value) {
-                is Map<*, *> -> {
-                    result.addAll(flattenMap(value as Map<String, Any>, fullKey))
-                }
-
-                is String -> {
-                    result.add(RawSettingValue(fullKey, value, SettingSource.LOCAL))
-                }
-
-                else -> {
-                    result.add(RawSettingValue(fullKey, value.toString(), SettingSource.LOCAL))
-                }
-            }
-        }
-        return result
+    override fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>> {
+        return specifications.map { getValue(it) }
     }
 
     companion object {

@@ -22,6 +22,8 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.Temporal
+import jakarta.persistence.TemporalType
 import jakarta.persistence.UniqueConstraint
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.TimeAttributed
@@ -46,7 +48,11 @@ class SystemSettingDo(
     var key: String = "",
 
     @Column(name = "value")
-    var value: String? = null
+    var value: String? = null,
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "update_time", nullable = false)
+    private var updateTime: OffsetDateTime = OffsetDateTime.now()
 ) : DataEntity<Long> {
     override fun getId(): Long? = id
 
@@ -54,9 +60,13 @@ class SystemSettingDo(
         this.id = id
     }
 
+    fun setUpdateTime(updateTime: OffsetDateTime) {
+        this.updateTime = updateTime
+    }
+
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
 
-    override fun getUpdateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
+    override fun getUpdateTime(): OffsetDateTime = updateTime
 
     override fun getSystemResourceKind(): SystemResourceKind =
         SystemSettingResourceKind

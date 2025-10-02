@@ -122,6 +122,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         )
         .setSupportedSources(LOCAL_SOURCE)
         .setDefaultValue("")
+        .setSecret(true)
         .setRequired(false)
         .setAllowAnyValue(true)
         .build()

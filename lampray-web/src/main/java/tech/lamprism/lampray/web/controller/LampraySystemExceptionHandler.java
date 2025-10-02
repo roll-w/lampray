@@ -18,10 +18,12 @@ package tech.lamprism.lampray.web.controller;
 
 import com.google.common.base.Strings;
 import com.google.common.base.VerifyException;
+import jakarta.servlet.ServletException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanInstantiationException;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -124,12 +126,33 @@ public class LampraySystemExceptionHandler {
     @ExceptionHandler({
             BindException.class,
             ConstraintViolationException.class,
-            MethodArgumentNotValidException.class,
             ValidationException.class
     })
     public HttpResponseEntity<Void> handleParamException(Exception e) {
         return HttpResponseEntity.of(
                 WebCommonErrorCode.ERROR_PARAM_FAILED,
+                e.getMessage()
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public HttpResponseEntity<Void> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .reduce((s1, s2) -> s1 + "; " + s2)
+                .orElse(e.getMessage());
+        return HttpResponseEntity.of(
+                WebCommonErrorCode.ERROR_PARAM_FAILED,
+                message
+        );
+
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public HttpResponseEntity<Void> handle(IllegalArgumentException e) {
+        return HttpResponseEntity.of(
+                WebCommonErrorCode.ERROR_HTTP_REQUEST,
                 e.getMessage()
         );
     }
@@ -197,7 +220,7 @@ public class LampraySystemExceptionHandler {
 
     @ExceptionHandler(NullPointerException.class)
     public HttpResponseEntity<Void> handle(NullPointerException e) {
-        logger.error("Null exception : %s".formatted(e.toString()), e);
+        logger.error("Null pointer exception: {}", e.getMessage(), e);
         recordErrorLog(CommonErrorCode.ERROR_NULL, e);
         return HttpResponseEntity.of(
                 CommonErrorCode.ERROR_NULL,
@@ -282,8 +305,14 @@ public class LampraySystemExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public HttpResponseEntity<Void> handle(Exception e) {
-        logger.error("Error: %s".formatted(e.toString()), e);
+    public HttpResponseEntity<Void> handle(Exception e) throws Exception {
+        if (e instanceof ServletException) {
+            throw e;
+        }
+        if (e instanceof BeanInstantiationException) {
+            throw e;
+        }
+        logger.error("Unhandled exception: {}", e.getMessage(), e);
         ErrorRecord errorRecord = recordErrorLog(e);
         return HttpResponseEntity.of(
                 errorRecord.errorCode(),
