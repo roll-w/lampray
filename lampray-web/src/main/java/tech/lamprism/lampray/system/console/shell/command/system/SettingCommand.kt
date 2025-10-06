@@ -40,6 +40,7 @@ import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import tech.lamprism.lampray.setting.SettingSpecificationHelper.deserialize
 import tech.lamprism.lampray.setting.SettingSpecificationProvider
 import tech.lamprism.lampray.system.console.CommandGroups
+import tech.lamprism.lampray.system.console.shell.command.ConfirmationHelper
 import tech.lamprism.lampray.system.console.shell.command.HelpCommandProvider
 import tech.lamprism.lampray.system.console.shell.command.HelpCommandProviderAware
 import java.time.format.DateTimeFormatter
@@ -95,7 +96,7 @@ class SettingCommand(
     ) {
         try {
             val allSpecifications = settingSpecificationProvider.settingSpecifications
-            val filteredSpecifications = if (filter?.isNotBlank() ?: false) {
+            val filteredSpecifications = if (!filter.isNullOrBlank()) {
                 allSpecifications.filter { spec ->
                     spec.keyName.contains(filter, ignoreCase = true)
                 }
@@ -112,8 +113,7 @@ class SettingCommand(
             val pageSpecifications = sortedSpecifications.subList(fromIndex, toIndex)
 
             if (pageSpecifications.isEmpty()) {
-                val filterMsg = if (filter.isNullOrBlank()) "" else " matching filter: '$filter'"
-                terminal.writer().println("No settings found$filterMsg.")
+                terminal.writer().println("No settings found${if (filter.isNullOrBlank()) "" else " matching filter: '$filter'"}.")
                 return
             }
 
@@ -136,7 +136,7 @@ class SettingCommand(
             terminal.writer().println(tableBuilder.build().render(110))
             terminal.writer().println(
                 "Showing ${pageSpecifications.size} of $totalCount settings " +
-                        "(Page $validPage/$totalPages)${if (filter?.isNotBlank() ?: false) " - Filter: '$filter'" else ""}"
+                        "(Page $validPage/$totalPages)${if (!filter.isNullOrBlank()) " - Filter: '$filter'" else ""}"
             )
         } catch (e: Exception) {
             terminal.writer().println("Failed to list settings: ${e.message}")
@@ -239,9 +239,7 @@ class SettingCommand(
                 val context = stringInput.run(StringInput.StringInputContext.empty())
 
                 val confirmation = context.resultValue
-                if (confirmation.isNullOrBlank() ||
-                    (!confirmation.equals("yes", ignoreCase = true) && confirmation != "Y")
-                ) {
+                if (!ConfirmationHelper.confirm(confirmation)) {
                     terminal.writer().println("Set operation cancelled.")
                     return
                 }
@@ -327,9 +325,7 @@ class SettingCommand(
                 val context = stringInput.run(StringInput.StringInputContext.empty())
 
                 val confirmation = context.resultValue
-                if (confirmation.isNullOrBlank() ||
-                    (!confirmation.equals("yes", ignoreCase = true) && confirmation != "Y")
-                ) {
+                if (!ConfirmationHelper.confirm(confirmation)) {
                     terminal.writer().println("Reset operation cancelled.")
                     return
                 }
