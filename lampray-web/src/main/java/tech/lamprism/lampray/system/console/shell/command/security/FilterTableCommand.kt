@@ -35,6 +35,7 @@ import tech.lamprism.lampray.security.firewall.filtertable.FilterEntry
 import tech.lamprism.lampray.security.firewall.filtertable.FilterMode
 import tech.lamprism.lampray.security.firewall.filtertable.FilterTable
 import tech.lamprism.lampray.system.console.CommandGroups
+import tech.lamprism.lampray.system.console.shell.command.ConfirmationHelper
 import tech.lamprism.lampray.system.console.shell.command.HelpCommandProvider
 import tech.lamprism.lampray.system.console.shell.command.HelpCommandProviderAware
 import java.time.LocalDateTime
@@ -258,7 +259,7 @@ class FilterTableCommand(
             terminal.writer()
                 .println("You are about to clear ALL (${entries.size}) filter entries from the filter table.")
             val stringInput =
-                StringInput(terminal, "Are you sure you want to clear all filter entries? (yes/no): ", "no") {
+                StringInput(terminal, "Are you sure you want to clear all filter entries? ([Y/yes]/no): ", "no") {
                     val builder = AttributedStringBuilder()
                     builder.append(it.name)
                     if (it.resultValue != null) {
@@ -272,7 +273,7 @@ class FilterTableCommand(
             val context = stringInput.run(StringInput.StringInputContext.empty())
 
             val confirmation = context.resultValue
-            if (confirmation.isNullOrBlank() || !confirmation.equals("yes", ignoreCase = true) && confirmation != "Y") {
+            if (!ConfirmationHelper.confirm(confirmation)) {
                 terminal.writer().println("Clear operation cancelled.")
                 return
             }
