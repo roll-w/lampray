@@ -17,14 +17,18 @@
 package tech.lamprism.lampray.web.controller.user;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import tech.lamprism.lampray.RequestMetadata;
 import tech.lamprism.lampray.security.authentication.UserInfoSignature;
+import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.lamprism.lampray.security.authentication.login.LoginProvider;
 import tech.lamprism.lampray.security.authentication.login.LoginStrategyType;
 import tech.lamprism.lampray.security.authentication.registration.RegisterProvider;
@@ -42,9 +46,12 @@ import tech.lamprism.lampray.user.UserProvider;
 import tech.lamprism.lampray.web.common.ParamValidate;
 import tech.lamprism.lampray.web.controller.user.model.LoginResponse;
 import tech.lamprism.lampray.web.controller.user.model.LoginTokenSendRequest;
+import tech.lamprism.lampray.web.controller.user.model.RegisterTokenInfoVo;
+import tech.lamprism.lampray.web.controller.user.model.ResendRegisterTokenRequest;
 import tech.lamprism.lampray.web.controller.user.model.UserLoginRequest;
 import tech.lamprism.lampray.web.controller.user.model.UserRegisterRequest;
 import tech.rollw.common.web.HttpResponseEntity;
+import tech.rollw.common.web.ParameterFailedException;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
@@ -169,14 +176,27 @@ public class LoginRegisterController {
 
     @PostMapping("/register/token")
     public HttpResponseEntity<Void> resendRegisterToken(
-            @RequestParam("username") String username) {
-        ParamValidate.notEmpty(username,
-                "Username cannot be null or empty.");
+            @Valid @RequestBody ResendRegisterTokenRequest request) {
+        AttributedUserDetails user = userProvider.getUser(request.getUsername());
+        if (!StringUtils.equalsIgnoreCase(user.getEmail(), request.getEmail())) {
+            throw new ParameterFailedException("Email does not match the user.");
+        }
 
-        AttributedUserDetails user = userProvider.getUser(username);
         registerProvider.resendRegisterToken(user);
-
         return HttpResponseEntity.success();
+    }
+
+    @GetMapping("/register/token/{token}")
+    public HttpResponseEntity<RegisterTokenInfoVo> getRegisterTokenInfo(
+            @PathVariable("token") String token) {
+        ParamValidate.notEmpty(token, "Token cannot be null or empty.");
+        VerifiableToken registerToken = registerProvider.getRegisterToken(token);
+        long userId = registerToken.getUserId();
+        AttributedUserDetails user = userProvider.getUser(userId);
+        if (user == null) {
+            throw new IllegalStateException("User not found for register token: " + token);
+        }
+        return HttpResponseEntity.success(RegisterTokenInfoVo.from(registerToken, user));
     }
 
     @PostMapping("/logout")

@@ -26,6 +26,8 @@ import tech.rollw.common.web.CommonRuntimeException;
 public interface RegisterTokenProvider {
     VerifiableToken createRegisterToken(UserIdentity userIdentity);
 
+    VerifiableToken getRegisterToken(String token);
+
     void resendRegisterToken(UserIdentity user);
 
     void verifyRegisterToken(String token) throws CommonRuntimeException;
