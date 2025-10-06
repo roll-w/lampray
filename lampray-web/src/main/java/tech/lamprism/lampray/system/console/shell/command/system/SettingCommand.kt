@@ -35,6 +35,7 @@ import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.setting.ConfigValue
 import tech.lamprism.lampray.setting.SecretLevel
 import tech.lamprism.lampray.setting.SettingDescriptionProvider
+import tech.lamprism.lampray.setting.SettingSource
 import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import tech.lamprism.lampray.setting.SettingSpecificationHelper.deserialize
 import tech.lamprism.lampray.setting.SettingSpecificationProvider
@@ -89,12 +90,12 @@ class SettingCommand(
         @Option(
             longNames = ["filter"],
             shortNames = ['f'],
-            description = "Filter settings by name (case-insensitive substring match)"
-        ) filter: String = ""
+            description = "Filter settings by name (case-insensitive substring match)",
+        ) filter: String? = null
     ) {
         try {
             val allSpecifications = settingSpecificationProvider.settingSpecifications
-            val filteredSpecifications = if (filter.isNotBlank()) {
+            val filteredSpecifications = if (filter?.isNotBlank() ?: false) {
                 allSpecifications.filter { spec ->
                     spec.keyName.contains(filter, ignoreCase = true)
                 }
@@ -111,7 +112,8 @@ class SettingCommand(
             val pageSpecifications = sortedSpecifications.subList(fromIndex, toIndex)
 
             if (pageSpecifications.isEmpty()) {
-                terminal.writer().println("No settings found${if (filter.isNotBlank()) " matching filter: '$filter'" else ""}.")
+                val filterMsg = if (filter.isNullOrBlank()) "" else " matching filter: '$filter'"
+                terminal.writer().println("No settings found$filterMsg.")
                 return
             }
 
@@ -134,7 +136,7 @@ class SettingCommand(
             terminal.writer().println(tableBuilder.build().render(110))
             terminal.writer().println(
                 "Showing ${pageSpecifications.size} of $totalCount settings " +
-                        "(Page $validPage/$totalPages)${if (filter.isNotBlank()) " - Filter: '$filter'" else ""}"
+                        "(Page $validPage/$totalPages)${if (filter?.isNotBlank() ?: false) " - Filter: '$filter'" else ""}"
             )
         } catch (e: Exception) {
             terminal.writer().println("Failed to list settings: ${e.message}")
@@ -163,14 +165,16 @@ class SettingCommand(
                 arrayOf("Value:", maskedValue?.toString() ?: "null"),
                 arrayOf("Type:", specification.key.type.toString()),
                 arrayOf("Source:", configValue.source.name),
-                arrayOf("Default:", maskSecret(specification.defaultValue, secretLevel)?.toString() ?: "null"),
+                arrayOf("Default:", specification.defaultValue?.toString() ?: "No default value"),
                 arrayOf("Secret:", if (specification.secret) "Yes" else "No"),
                 arrayOf("Description:", description),
-                arrayOf("Updated:", if (configValue is TimeAttributed) {
-                    configValue.getUpdateTime()?.format(DATE_FORMATTER) ?: "N/A"
-                } else {
-                    "N/A"
-                })
+                arrayOf(
+                    "Updated:", if (configValue is TimeAttributed) {
+                        configValue.getUpdateTime()?.format(DATE_FORMATTER) ?: "N/A"
+                    } else {
+                        "N/A"
+                    }
+                )
             )
 
             val tableBuilder = TableBuilder(ArrayTableModel(tableData)).apply {
@@ -206,22 +210,22 @@ class SettingCommand(
         @Option(
             longNames = ["force"],
             shortNames = ['f'],
-            description = "Skip confirmation prompt for sensitive settings"
+            description = "Skip confirmation prompt for set settings"
         ) force: Boolean = false
     ) {
         try {
             val specification = settingSpecificationProvider.getSettingSpecification(key)
 
-            // Show current value and ask for confirmation if it's a sensitive setting
-            if (specification.secret && !force) {
-                terminal.writer().println("You are about to update a sensitive setting:")
+            // Show current value and ask for confirmation
+            if (!force) {
+                terminal.writer().println("You are about to update setting:")
                 terminal.writer().println("Key: ${specification.key.name}")
                 terminal.writer().println("Current Value: [HIDDEN]")
                 terminal.writer().println("New Value: [HIDDEN]")
 
                 val stringInput = StringInput(
                     terminal,
-                    "Are you sure you want to update this sensitive setting? (yes/no): ",
+                    "Are you sure you want to update this setting? ([Y/yes]/no): ",
                     "no"
                 ) { context ->
                     val builder = AttributedStringBuilder()
@@ -238,7 +242,8 @@ class SettingCommand(
 
                 val confirmation = context.resultValue
                 if (confirmation.isNullOrBlank() ||
-                    (!confirmation.equals("yes", ignoreCase = true) && confirmation != "Y")) {
+                    (!confirmation.equals("yes", ignoreCase = true) && confirmation != "Y")
+                ) {
                     terminal.writer().println("Set operation cancelled.")
                     return
                 }
@@ -257,7 +262,7 @@ class SettingCommand(
             // Set the value
             val source = configProvider.set(typedSpecification, parsedValue)
 
-            if (source.name != "NONE") {
+            if (source != SettingSource.NONE) {
                 terminal.writer().println("Successfully updated setting '$key' (stored in: ${source.name})")
 
                 // Show the updated value (masked if secret)
@@ -267,7 +272,8 @@ class SettingCommand(
                     terminal.writer().println("New value: [HIDDEN]")
                 }
             } else {
-                terminal.writer().println("Failed to update setting '$key' - no writable configuration source available")
+                terminal.writer()
+                    .println("Failed to update setting '$key' - no writable configuration source available")
             }
 
         } catch (e: IllegalArgumentException) {
@@ -324,7 +330,8 @@ class SettingCommand(
 
                 val confirmation = context.resultValue
                 if (confirmation.isNullOrBlank() ||
-                    (!confirmation.equals("yes", ignoreCase = true) && confirmation != "Y")) {
+                    (!confirmation.equals("yes", ignoreCase = true) && confirmation != "Y")
+                ) {
                     terminal.writer().println("Reset operation cancelled.")
                     return
                 }
@@ -335,15 +342,11 @@ class SettingCommand(
             val typedSpecification = specification as AttributedSettingSpecification<Any, Any>
             val source = configProvider.set(typedSpecification, defaultValue)
 
-            if (source.name != "NONE") {
-                terminal.writer().println("Successfully reset setting '$key' to default value (stored in: ${source.name})")
-
-                // Show the reset value (masked if secret)
-                if (!specification.secret) {
-                    terminal.writer().println("Reset to: ${defaultValue ?: "null"}")
-                } else {
-                    terminal.writer().println("Reset to: [HIDDEN]")
-                }
+            if (source != SettingSource.NONE) {
+                terminal.writer()
+                    .println("Successfully reset setting '$key' to default value (stored in: ${source.name})")
+                // No need to mask default value for secret
+                terminal.writer().println("Reset to: ${defaultValue ?: "null"}")
             } else {
                 terminal.writer().println("Failed to reset setting '$key' - no writable configuration source available")
             }
