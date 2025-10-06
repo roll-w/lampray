@@ -220,8 +220,6 @@ class SettingCommand(
             if (!force) {
                 terminal.writer().println("You are about to update setting:")
                 terminal.writer().println("Key: ${specification.key.name}")
-                terminal.writer().println("Current Value: [HIDDEN]")
-                terminal.writer().println("New Value: [HIDDEN]")
 
                 val stringInput = StringInput(
                     terminal,
