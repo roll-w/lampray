@@ -34,6 +34,11 @@ public record LoginPasswordToken(
     }
 
     @Override
+    public long getUserId() {
+        return userId;
+    }
+
+    @Override
     public boolean isUsable() {
         return true;
     }
