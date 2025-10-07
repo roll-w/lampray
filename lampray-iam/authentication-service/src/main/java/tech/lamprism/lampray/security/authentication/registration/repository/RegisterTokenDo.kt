@@ -51,7 +51,7 @@ class RegisterTokenDo(
     var token: String = "",
 
     @Column(name = "user_id")
-    var userId: Long = 0,
+    private var userId: Long = 0,
 
     @Column(name = "expiry_time")
     var expiryTime: Long = 0,
@@ -61,6 +61,14 @@ class RegisterTokenDo(
 ) : VerifiableToken, DataEntity<Long> {
     override fun token(): String {
         return token
+    }
+
+    override fun getUserId(): Long {
+       return userId
+    }
+
+    fun setUserId(userId: Long) {
+        this.userId = userId
     }
 
     override fun isUsable(): Boolean {
