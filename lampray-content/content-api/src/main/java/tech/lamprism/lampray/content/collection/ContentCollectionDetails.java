@@ -24,6 +24,7 @@ import tech.lamprism.lampray.content.ContentDetailsMetadata;
 import tech.lamprism.lampray.content.ContentMetadata;
 import tech.lamprism.lampray.content.ContentStatus;
 import tech.lamprism.lampray.content.ContentType;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 
 import java.time.OffsetDateTime;
 
@@ -96,7 +97,7 @@ public class ContentCollectionDetails<T extends ContentDetails> implements Conte
 
     @Override
     @Nullable
-    public String getContent() {
+    public StructuralText getContent() {
         return contentDetails.getContent();
     }
 

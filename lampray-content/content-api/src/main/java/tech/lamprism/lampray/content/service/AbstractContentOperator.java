@@ -26,6 +26,7 @@ import tech.lamprism.lampray.content.ContentStatus;
 import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 import tech.rollw.common.web.CommonRuntimeException;
 
 import java.time.OffsetDateTime;
@@ -89,7 +90,7 @@ public abstract class AbstractContentOperator implements ContentOperator {
 
     @Override
     @Nullable
-    public final String getContent() {
+    public final StructuralText getContent() {
         return content.getContent();
     }
 

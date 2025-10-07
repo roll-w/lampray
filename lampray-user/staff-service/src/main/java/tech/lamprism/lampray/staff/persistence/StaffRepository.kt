@@ -34,7 +34,7 @@ class StaffRepository(
         }
     }
 
-    fun  findByTypes(types: Set<StaffType>): List<StaffDo> {
+    fun findByTypes(types: Set<StaffType>): List<StaffDo> {
         return findAll { root, _, criteriaBuilder ->
             criteriaBuilder.and(
                 *types.map {

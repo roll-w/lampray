@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content;
 import space.lingu.NonNull;
 import space.lingu.Nullable;
 import tech.lamprism.lampray.TimeAttributed;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 
 /**
  * Content details.
@@ -59,7 +60,7 @@ public interface ContentDetails extends Content, TimeAttributed {
      * @return content
      */
     @Nullable
-    String getContent();
+    StructuralText getContent();
 
     @Nullable
     default ContentDetailsMetadata getMetadata() {

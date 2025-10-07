@@ -40,12 +40,13 @@ class ArticlePreChecker : UncreatedContentPreChecker {
             }
         }
         uncreatedContent.content.let { it ->
-            if (Strings.isNullOrEmpty(it)) {
+            if (it.isEmpty()) {
                 throw ContentException(ArticleErrorCode.ERROR_CONTENT_EMPTY)
             }
-            if (it.length > 100000) {
-                throw ContentException(ArticleErrorCode.ERROR_CONTENT_TOO_LONG)
-            }
+//            if (it.length > 100000) {
+//                throw ContentException(ArticleErrorCode.ERROR_CONTENT_TOO_LONG)
+//            }
+            // TODO: more checks
         }
         val metadata = uncreatedContent.metadata
         if (metadata !is ArticleDetailsMetadata) {

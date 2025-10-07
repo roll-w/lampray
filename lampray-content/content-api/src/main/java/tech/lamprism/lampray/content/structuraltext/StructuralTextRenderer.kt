@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.java-conventions")
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.content.structuraltext
 
-dependencies {
-    api(project(":lampray-common"))
-    api("com.fasterxml.jackson.core:jackson-databind")
-    api("com.fasterxml.jackson.module:jackson-module-kotlin")
+interface StructuralTextRenderer {
+    fun render(text: StructuralText): String
 }
-
-description = "lampray-common-data"
