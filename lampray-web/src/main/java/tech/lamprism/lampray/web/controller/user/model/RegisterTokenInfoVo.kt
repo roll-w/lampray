@@ -45,7 +45,7 @@ data class RegisterTokenInfoVo(
 
         private fun maskEmail(email: String): String {
             val atIndex = email.indexOf('@')
-            if (atIndex <= 0 || atIndex == email.length - 1) {
+            if (atIndex < 0 || atIndex == email.length - 1) {
                 return SecretLevel.LOW.maskValue(email)
             }
             val name = email.take(atIndex)
@@ -53,8 +53,8 @@ data class RegisterTokenInfoVo(
             val dotIndex = domainFull.indexOf('.')
             val domain = if (dotIndex > 0) domainFull.take(dotIndex) else domainFull
             val tld = if (dotIndex > 0) domainFull.substring(dotIndex + 1) else ""
-            val maskedName = if (name.length > 1) "${name.first()}***" else "***"
-            val maskedDomain = if (domain.length > 1) "${domain.first()}***" else "***"
+            val maskedName = "${name.first()}***"
+            val maskedDomain = "${domain.first()}***"
             return buildString {
                 append(maskedName)
                 append("@")

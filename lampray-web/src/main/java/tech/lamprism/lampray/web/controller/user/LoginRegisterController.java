@@ -194,7 +194,7 @@ public class LoginRegisterController {
         long userId = registerToken.getUserId();
         AttributedUserDetails user = userProvider.getUser(userId);
         if (user == null) {
-            throw new IllegalStateException("User not found for register token: " + token);
+            throw new ParameterFailedException("Token not valid.");
         }
         return HttpResponseEntity.success(RegisterTokenInfoVo.from(registerToken, user));
     }
