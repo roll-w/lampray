@@ -20,7 +20,7 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
-data class Image(
+data class Image @JvmOverloads constructor(
     val src: String,
     val alt: String?,
     val title: String?,

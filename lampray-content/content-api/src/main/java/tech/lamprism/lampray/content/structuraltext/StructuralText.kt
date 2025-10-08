@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.content.structuraltext
 
+import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import tech.lamprism.lampray.content.structuraltext.element.Document
 
 /**
@@ -25,7 +28,10 @@ import tech.lamprism.lampray.content.structuraltext.element.Document
  *
  * @author RollW
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 interface StructuralText {
+    @get:JsonProperty("t")
+    @get:JsonAlias("type")
     val type: StructuralTextType
 
     /**
@@ -33,14 +39,21 @@ interface StructuralText {
      *
      * Semantic notes:
      * - For `TEXT`, `INLINE_CODE`, `CODE_BLOCK`, `MATH` etc.: represents the raw text
-     * - For container nodes like `DOCUMENT`, `PARAGRAPH` etc.: typically empty or null
+     * - For container nodes like `DOCUMENT`, `PARAGRAPH` etc.: typically empty
      * - For `LINK`, `IMAGE` etc.: not used to store primary data (primary data is in attributes),
      *   but may contain alt text or title if applicable
-     * - For `BOLD`, `ITALIC`, `UNDERLINE`, `STRIKETHROUGH`: usually empty, as formatting is implied by type
+     * - For `BOLD`, `ITALIC`, `UNDERLINE`, `STRIKETHROUGH`: if children are empty, may contain the text.
+     *   If children are present, typically empty and content here will be ignored
      * - For `MENTION`: may contain the display name or username
      */
+    @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @get:JsonProperty("c")
+    @get:JsonAlias("content")
     val content: String
 
+    @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @get:JsonProperty("ch")
+    @get:JsonAlias("children")
     val children: List<StructuralText>
 
     fun isLeaf(): Boolean = children.isEmpty()

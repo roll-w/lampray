@@ -20,7 +20,7 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
-data class Link(
+data class Link @JvmOverloads constructor(
     val href: String,
     val title: String?,
     override val children: List<StructuralText> = emptyList()

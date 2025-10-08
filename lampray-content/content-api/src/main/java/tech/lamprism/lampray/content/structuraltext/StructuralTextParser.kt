@@ -16,33 +16,6 @@
 
 package tech.lamprism.lampray.content.structuraltext
 
-enum class StructuralTextType {
-    DOCUMENT,
-    PARAGRAPH,
-    HEADING,
-    LIST,
-    LIST_ITEM,
-    BLOCKQUOTE,
-    CODE_BLOCK,
-    INLINE_CODE,
-    BOLD,
-    ITALIC,
-    STRIKETHROUGH,
-    UNDERLINE,
-    HIGHLIGHT,
-    TEXT,
-    LINK,
-    IMAGE,
-    TABLE,
-    TABLE_ROW,
-    TABLE_CELL,
-    HORIZONTAL_DIVIDER,
-    MATH,
-    MENTION;
-
-    companion object {
-        fun fromType(type: String): StructuralTextType? {
-            return entries.firstOrNull { it.name.equals(type, ignoreCase = true) }
-        }
-    }
+interface StructuralTextParser {
+    fun parse(input: String): StructuralText
 }

@@ -20,9 +20,9 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
-data class Heading(
+data class Heading @JvmOverloads constructor(
     val level: Int,
-    override val content: String,
+    override val content: String = "",
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
     override val type: StructuralTextType

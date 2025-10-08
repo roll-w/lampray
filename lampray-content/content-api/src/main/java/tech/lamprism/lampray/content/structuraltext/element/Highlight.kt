@@ -23,7 +23,7 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 /**
  * @author RollW
  */
-data class Highlight(
+data class Highlight @JvmOverloads constructor(
     val color: String?,
     override val content: String,
     override val children: List<StructuralText> = emptyList()

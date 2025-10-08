@@ -20,11 +20,12 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
-data class HorizontalDivider(
-    override val content: String = "",
-) : StructuralText {
+object HorizontalDivider : StructuralText {
     override val type: StructuralTextType
         get() = StructuralTextType.HORIZONTAL_DIVIDER
+
+    override val content: String
+        get() = ""
 
     override val children: List<StructuralText>
         get() = emptyList()

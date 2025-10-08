@@ -20,7 +20,7 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
-data class TableRow(
+data class TableRow @JvmOverloads constructor(
     override val content: String = "",
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {

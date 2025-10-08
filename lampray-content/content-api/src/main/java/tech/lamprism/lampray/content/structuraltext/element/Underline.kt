@@ -23,8 +23,8 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 /**
  * @author RollW
  */
-data class Underline(
-    override val content: String,
+data class Underline @JvmOverloads constructor(
+    override val content: String = "",
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
     override val type: StructuralTextType

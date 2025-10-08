@@ -42,7 +42,7 @@ import tech.lamprism.lampray.content.structuraltext.element.TableRow
 import tech.lamprism.lampray.content.structuraltext.element.Text
 import tech.lamprism.lampray.content.structuraltext.element.Underline
 
-class MarkdownRenderer : StructuralTextRenderer {
+class StructuralTextMarkdownRenderer : StructuralTextRenderer {
     override fun render(text: StructuralText): String {
         val visitor = Visitor()
         text.accept(visitor)

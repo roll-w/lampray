@@ -21,6 +21,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import tech.lamprism.lampray.content.structuraltext.StructuralText;
+import tech.lamprism.lampray.content.structuraltext.element.Document;
+import tech.lamprism.lampray.content.structuraltext.element.Text;
+
+import java.util.List;
 
 /**
  * @author RollW
@@ -53,7 +57,8 @@ public class StructuralTextAttributeConverter implements AttributeConverter<Stru
         try {
             return objectMapper.readValue(dbData, StructuralText.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error converting JSON string to StructuralText", e);
+            StructuralText text = new Text(dbData);
+            return new Document(List.of(text));
         }
     }
 }

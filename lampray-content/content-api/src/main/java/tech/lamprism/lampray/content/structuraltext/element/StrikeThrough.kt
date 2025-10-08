@@ -23,8 +23,8 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 /**
  * @author RollW
  */
-data class StrikeThrough(
-    override val content: String,
+data class StrikeThrough @JvmOverloads constructor(
+    override val content: String = "",
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
     override val type: StructuralTextType

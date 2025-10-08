@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.content;
 
 import space.lingu.NonNull;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.system.SystemResourceKind;
 import tech.rollw.common.web.system.SystemResourceOperator;
@@ -39,7 +40,7 @@ public interface ContentOperator extends SystemResourceOperator<Long>, ContentDe
     @Override
     ContentOperator rename(String newName) throws CommonRuntimeException;
 
-    ContentOperator setContent(String content) throws CommonRuntimeException;
+    ContentOperator setContent(StructuralText content) throws CommonRuntimeException;
 
     ContentOperator setPassword(String password) throws CommonRuntimeException;
 

@@ -20,13 +20,14 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
-data class Math(
-    val display: Boolean,
+data class Math @JvmOverloads constructor(
     override val content: String,
-    override val children: List<StructuralText> = emptyList()
+    val display: Boolean = false,
 ) : StructuralText {
     override val type: StructuralTextType
         get() = StructuralTextType.MATH
+    override val children: List<StructuralText>
+        get() = emptyList()
 
     override fun accept(visitor: StructuralTextVisitor) {
         visitor.visit(this)

@@ -20,10 +20,16 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
-data class Bold(
-    override val content: String,
+data class Bold @JvmOverloads constructor(
+    override val content: String = "",
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        require(!children.isEmpty() && content.isEmpty()) {
+            "Bold element must have either content or children."
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.BOLD
 

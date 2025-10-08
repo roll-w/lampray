@@ -114,8 +114,9 @@ public abstract class AbstractContentOperator implements ContentOperator {
     }
 
     @Override
-    public final ContentOperator setContent(String content)
+    public final ContentOperator setContent(StructuralText content)
             throws CommonRuntimeException {
+        // TODO: compare structural text
         if (Objects.equals(content, this.content.getContent())) {
             return this;
         }
@@ -146,7 +147,7 @@ public abstract class AbstractContentOperator implements ContentOperator {
 
     protected abstract boolean setNameInternal(@Nullable String name) throws CommonRuntimeException;
 
-    protected abstract boolean setContentInternal(@Nullable String content) throws CommonRuntimeException;
+    protected abstract boolean setContentInternal(@Nullable StructuralText content) throws CommonRuntimeException;
 
     protected abstract boolean setMetadataInternal(@Nullable ContentDetailsMetadata metadata) throws CommonRuntimeException;
 

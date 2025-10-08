@@ -20,7 +20,12 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
-data class Document(
+/**
+ * Represents the root document element in a structural text hierarchy.
+ *
+ * @author RollW
+ */
+data class Document @JvmOverloads constructor(
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
     override val type: StructuralTextType
