@@ -16,7 +16,6 @@
 
 package tech.lamprism.lampray.security.authentication.registration.repository
 
-import org.springframework.data.jpa.repository.Query
 import tech.lamprism.lampray.common.data.CommonDao
 import tech.lamprism.lampray.common.data.Dao
 
@@ -25,6 +24,4 @@ import tech.lamprism.lampray.common.data.Dao
  */
 @Dao
 interface RegisterTokenDao : CommonDao<RegisterTokenDo, Long> {
-    @Query("SELECT t FROM RegisterTokenDo t WHERE t.token = :token")
-    fun findByToken(token: String): RegisterTokenDo?
 }

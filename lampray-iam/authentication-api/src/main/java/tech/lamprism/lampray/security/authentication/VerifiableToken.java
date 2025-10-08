@@ -26,6 +26,11 @@ public interface VerifiableToken {
     String token();
 
     /**
+     * @return the user id associated with the token.
+     */
+    long getUserId();
+
+    /**
      * @return true if the token is usable.
      */
     boolean isUsable();

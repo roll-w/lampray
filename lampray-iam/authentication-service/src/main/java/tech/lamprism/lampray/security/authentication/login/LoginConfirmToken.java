@@ -32,6 +32,11 @@ public record LoginConfirmToken(
     }
 
     @Override
+    public long getUserId() {
+        return userId;
+    }
+
+    @Override
     public boolean isUsable() {
         return expireTime == null || System.currentTimeMillis() < expireTime;
     }

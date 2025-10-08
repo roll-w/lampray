@@ -35,7 +35,8 @@ public record RegisterVerificationToken(
         String token,
         long userId,
         long expiryTime,// timestamp
-        boolean used) implements VerifiableToken, DataEntity<Long> {
+        boolean used
+) implements VerifiableToken, DataEntity<Long> {
 
     public boolean isExpired() {
         return System.currentTimeMillis() > expiryTime;
@@ -90,6 +91,11 @@ public record RegisterVerificationToken(
 
     public RegisterVerificationToken markVerified() {
         return toBuilder().setUsed(true).build();
+    }
+
+    @Override
+    public long getUserId() {
+        return userId;
     }
 
     @Override

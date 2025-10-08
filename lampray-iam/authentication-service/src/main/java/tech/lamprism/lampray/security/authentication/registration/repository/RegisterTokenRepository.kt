@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package tech.lamprism.lampray.security.authentication.registration.repository
 
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
+import java.util.Optional
 
 /**
  * @author RollW
@@ -25,8 +26,10 @@ import tech.lamprism.lampray.common.data.CommonRepository
 @Repository
 class RegisterTokenRepository(
     private val registerTokenDao: RegisterTokenDao
-): CommonRepository<RegisterTokenDo, Long>(registerTokenDao) {
-    fun findByToken(token: String): RegisterTokenDo? {
-        return registerTokenDao.findByToken(token)
+) : CommonRepository<RegisterTokenDo, Long>(registerTokenDao) {
+    fun findByToken(token: String): Optional<RegisterTokenDo> {
+        return findOne { root, _, cb ->
+            cb.equal(root.get(RegisterTokenDo_.token), token)
+        }
     }
 }

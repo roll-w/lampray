@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.security.authentication.registration;
+package tech.lamprism.lampray.web.controller.user.model
 
-import tech.lamprism.lampray.security.authentication.VerifiableToken;
-import tech.lamprism.lampray.user.UserIdentity;
-import tech.rollw.common.web.CommonRuntimeException;
+import jakarta.validation.constraints.NotEmpty
 
 /**
  * @author RollW
  */
-public interface RegisterTokenProvider {
-    VerifiableToken createRegisterToken(UserIdentity userIdentity);
-
-    VerifiableToken getRegisterToken(String token);
-
-    void resendRegisterToken(UserIdentity user);
-
-    void verifyRegisterToken(String token) throws CommonRuntimeException;
+data class ResendRegisterTokenRequest(
+    @field:NotEmpty
+    val username: String,
+    @field:NotEmpty
+    val email: String,
+) {
 }
