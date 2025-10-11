@@ -248,6 +248,16 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
     }
 
     @Override
+    public RegisterVerificationToken getRegisterToken(String token) {
+        RegisterTokenDo registerTokenDo = registerTokenRepository.findByToken(token)
+                .orElseThrow(() -> new AuthenticationException(AuthErrorCode.ERROR_TOKEN_NOT_EXIST));
+        if (registerTokenDo.isExpired() || registerTokenDo.getUsed()) {
+            throw new AuthenticationException(AuthErrorCode.ERROR_TOKEN_NOT_EXIST);
+        }
+        return registerTokenDo.lock();
+    }
+
+    @Override
     public void resendRegisterToken(UserIdentity user) {
         AttributedUser attributedUser = retrieveUser(user);
         OnUserRegistrationEvent event = new OnUserRegistrationEvent(
@@ -265,11 +275,8 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
 
     @Override
     public void verifyRegisterToken(String token) {
-        RegisterTokenDo registerTokenDo =
-                registerTokenRepository.findByToken(token);
-        if (registerTokenDo == null) {
-            throw new AuthenticationException(AuthErrorCode.ERROR_TOKEN_NOT_EXIST);
-        }
+        RegisterTokenDo registerTokenDo = registerTokenRepository.findByToken(token)
+                .orElseThrow(() -> new AuthenticationException(AuthErrorCode.ERROR_TOKEN_NOT_EXIST));
         if (registerTokenDo.getUsed()) {
             throw new AuthenticationException(AuthErrorCode.ERROR_TOKEN_USED);
         }

@@ -28,7 +28,8 @@ public interface LoginVerifiableToken extends VerifiableToken {
     @Override
     String token();
 
-    long userId();
+    @Override
+    long getUserId();
 
     @Nullable
     Long expireTime();
