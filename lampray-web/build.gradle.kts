@@ -17,6 +17,7 @@
 plugins {
     id("buildlogic.spring-boot-conventions")
     id("buildlogic.jpa-conventions")
+    id("test-report-aggregation")
 }
 
 dependencies {
@@ -119,4 +120,8 @@ sourceSets {
             srcDir(layout.buildDirectory.dir("generated/resources"))
         }
     }
+}
+
+tasks.check {
+    dependsOn(tasks.named<TestReport>("testAggregateTestReport"))
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web;
+package tech.lamprism.lampray;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
+@SpringBootTest(
+        classes = LampraySystemApplication.class,
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        useMainMethod = SpringBootTest.UseMainMethod.ALWAYS,
+        args = "start"
+)
 class LampraySystemApplicationTests {
 
     @Test
