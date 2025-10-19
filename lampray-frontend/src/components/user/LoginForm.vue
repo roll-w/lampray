@@ -14,160 +14,130 @@
   - limitations under the License.
   -->
 
-<template>
-    <div class="flex flex-grow-1 flex-fill">
-        <n-h2>
-            <n-text type="primary">登录</n-text>
-        </n-h2>
-        <div class="flex flex-fill justify-end">
-            <n-h3>
-                <n-text type="info">尚未拥有账号？
-                    <n-a @click="handleToRegister">点此注册</n-a>
-                </n-text>
-            </n-h3>
-        </div>
-    </div>
-    <n-form ref="loginForm" :model="formValue" :rules="formRules">
-        <n-form-item label="用户名/电子邮箱" path="identity">
-            <n-input v-model:value="formValue.identity" placeholder="请输入用户名或电子邮箱"
-                     @keydown.enter.prevent/>
-        </n-form-item>
-        <n-form-item label="密码" path="token">
-            <n-input v-model:value="formValue.token" placeholder="请输入密码" show-password-on="click"
-                     type="password"
-                     @keydown.enter.prevent/>
-        </n-form-item>
-        <n-form-item path="rememberMe">
-            <n-checkbox v-model:checked="formValue.rememberMe">
-                记住我
-            </n-checkbox>
-        </n-form-item>
-        <n-button-group class="w-full">
-            <n-button class="w-full flex-grow-0" type="primary" @click="onLoginClick">
-                登录
-            </n-button>
-            <n-button class="w-full" type="tertiary" @click="onResetClick">
-                重置
-            </n-button>
-        </n-button-group>
-        <n-a>忘记密码</n-a>
-    </n-form>
+<script setup lang="ts">
+import {reactive, ref} from "vue";
+import * as z from "zod";
+import {loginRegisterService} from "@/services/user/user.service.ts";
+import {useAxios} from "@/composables/useAxios.ts";
+import {RouteName} from "@/router/routeName.ts";
+import {useRouter} from "vue-router";
+import {useUserStore} from "@/stores/user.ts";
 
+const router = useRouter();
+const userStore = useUserStore();
+const axios = useAxios();
+const toast = useToast();
+
+const loginSchema = z.object({
+    identity: z.string().min(1, "Username or email required").refine(val => val !== null && val.trim() !== "", {
+        message: "Username or email required"
+    }),
+    token: z.string().min(1, "Password required").refine(val => val !== null && val.trim() !== "", {
+        message: "Password required"
+    }),
+    rememberMe: z.boolean().default(false)
+});
+type LoginSchema = z.output<typeof loginSchema>;
+const loginForm = reactive<Partial<LoginSchema>>({
+    identity: '',
+    token: '',
+    rememberMe: false
+});
+
+const showPassword = ref(false);
+
+const jumpTo = () => {
+    const source = router.currentRoute.value.query.source;
+    if (source) {
+        const url = decodeURIComponent(source.toString());
+        window.location.replace(url);
+    } else {
+        router.push({name: RouteName.USER_HOME});
+    }
+};
+
+const onLoginClick = async () => {
+    const result = loginSchema.safeParse(loginForm);
+    if (!result.success) {
+        const firstError = result.error.message;
+        toast.add({
+            title: 'Request Error',
+            orientation: 'horizontal',
+            color: 'error',
+            description: firstError,
+            progress: false
+        });
+        return;
+    }
+    try {
+        const response = await loginRegisterService(axios).loginByPassword({
+            identity: loginForm.identity!,
+            token: loginForm.token!,
+        });
+        const body = response.data;
+        const data = body.data!;
+        userStore.loginUser(data.user, {
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            prefix: "Bearer ",
+            accessTokenExpiry: new Date(data.accessTokenExpiry),
+            refreshTokenExpiry: new Date(data.refreshTokenExpiry),
+        }, loginForm.rememberMe!, false);
+        toast.add({
+            title: 'Login Success',
+            orientation: 'vertical',
+            color: 'success',
+            progress: false
+        });
+        jumpTo();
+    } catch (error: any) {
+        // TODO: toast template
+        toast.add({
+            title: 'Request Error',
+            orientation: 'horizontal',
+            color: 'error',
+            description: error.message || 'Login failed',
+            progress: false
+        });
+    }
+};
+
+const onLoginReset = () => {
+    loginForm.identity = '';
+    loginForm.token = '';
+    loginForm.rememberMe = false;
+};
+</script>
+<template>
+    <UForm :schema="loginSchema" :state="loginForm" class="space-y-4 w-full" @submit="onLoginClick">
+        <UFormField label="用户名/邮箱" name="identity" required>
+            <UInput v-model="loginForm.identity" placeholder="输入用户名或邮箱" type="text"
+                    autocomplete="username" name="identity" class="w-full"/>
+        </UFormField>
+        <UFormField label="密码" name="token" required>
+            <UInput v-model="loginForm.token" placeholder="输入密码" :type="showPassword ? 'text' : 'password'"
+                    :ui="{ trailing: 'pe-1' }"
+                    autocomplete="current-password" name="token" class="w-full">
+                <template #trailing>
+                    <UButton
+                            color="neutral"
+                            variant="link"
+                            size="sm"
+                            :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                            :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                            :aria-pressed="showPassword"
+                            aria-controls="password"
+                            @click="showPassword = !showPassword"
+                    />
+                </template>
+            </UInput>
+        </UFormField>
+        <UCheckbox v-model="loginForm.rememberMe" label="记住我" name="rememberMe"/>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <UButton type="submit" class="flex-1" color="primary">登录</UButton>
+            <UButton variant="outline" class="flex-1" @click="onLoginReset">重置</UButton>
+        </div>
+    </UForm>
+    <UButton variant="link" class="self-start p-0 h-auto text-sm" @click="() => {}">忘记密码？</UButton>
 </template>
 
-<script setup>
-import {getCurrentInstance, ref} from "vue";
-import api from "@/request/api";
-import {NA, NButton, NButtonGroup, NCheckbox, NForm, NFormItem, NInput, NText, useNotification} from "naive-ui";
-import {useRouter} from "vue-router";
-import {useUserStore} from "@/stores/user";
-import {index, register} from "@/router";
-
-const userStore = useUserStore()
-const loginForm = ref(null)
-const router = useRouter()
-const notification = useNotification()
-const {proxy} = getCurrentInstance()
-
-const formValue = ref({
-    identity: null,
-    token: null,
-    rememberMe: false
-})
-
-const formRules = {
-    identity: [{
-        required: true,
-        validator(rule, value) {
-            if (!value) {
-                return new Error("需要填写用户名或电子邮箱地址")
-            }
-            return true
-        },
-        trigger: ['input']
-    }],
-    token: [{
-        required: true,
-        message: "请输入密码",
-        trigger: ['input']
-    }],
-}
-
-const validateFormValue = (callback) => {
-    loginForm.value?.validate((errors) => {
-        if (errors) {
-            return
-        }
-        callback()
-    });
-}
-
-const source = router.currentRoute.value.query.source
-
-const onLoginClick = (e) => {
-    e.preventDefault()
-    validateFormValue(() => {
-        proxy.$axios.post(api.passwordLogin, formValue.value).then(res => {
-            /**
-             * @type {{ user: {
-             * username: string, id: number,
-             * role: string, email: string },
-             * accessToken: string, refreshToken: string,
-             * accessTokenExpiry: string, refreshTokenExpiry: string
-             * }}
-             */
-            const data = res.data
-            const user = {
-                id: data.user.id,
-                username: data.user.username,
-                role: data.user.role,
-            }
-            /**
-             * @type {{refreshToken: string, accessToken: string, prefix: string, accessTokenExpiry: Date, refreshTokenExpiry: Date}}
-             */
-            const token = {
-                refreshToken: data.refreshToken,
-                accessToken: data.accessToken,
-                prefix: "Bearer ",
-                accessTokenExpiry: new Date(data.accessTokenExpiry),
-                refreshTokenExpiry: new Date(data.refreshTokenExpiry),
-            }
-
-            userStore.loginUser(user, token, formValue.value.rememberMe, false)
-
-            // check url
-            if (!source) {
-                router.push({
-                    name: index
-                })
-                return
-            }
-            router.push(source.toString())
-        }).catch(err => {
-            const msg = err.tip
-            notification.error({
-                title: "请求错误",
-                content: msg,
-                meta: "登录错误",
-                duration: 3000,
-                keepAliveOnHover: true
-            })
-        })
-    })
-}
-
-const onResetClick = () => {
-    formValue.value = {
-        identity: null,
-        token: null,
-        rememberMe: false
-    }
-    loginForm.value?.restoreValidation()
-}
-
-const handleToRegister = () => {
-    router.push({
-        name: register
-    })
-}
-</script>
