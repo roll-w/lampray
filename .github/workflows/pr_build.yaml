@@ -63,7 +63,7 @@ jobs:
       - name: Install Frontend Dependencies
         run: |
           cd lampray-frontend
-          npm install
+          pnpm install
       - name: Build
         run: |
           chmod +x gradlew
