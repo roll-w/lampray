@@ -35,9 +35,6 @@ export default defineConfig({
                     }
                 }
             },
-            autoImport:{
-                dts: true,
-            }
         }),
         tailwindcss()
     ],
