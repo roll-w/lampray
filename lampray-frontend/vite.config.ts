@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import {fileURLToPath, URL} from 'node:url'
+import {fileURLToPath, URL} from "node:url";
 
-import {defineConfig} from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
+import {defineConfig} from "vite";
+import vue from "@vitejs/plugin-vue";
+import vueDevTools from 'vite-plugin-vue-devtools';
 import tailwindcss from "@tailwindcss/vite";
+import AutoImport from "unplugin-auto-import/vite";
 import ui from "@nuxt/ui/vite";
 
 // https://vite.dev/config/
@@ -27,6 +28,9 @@ export default defineConfig({
     plugins: [
         vue(),
         vueDevTools(),
+        AutoImport({
+            dts: true
+        }),
         ui({
             ui: {
                 toast: {
