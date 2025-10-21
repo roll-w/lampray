@@ -22,6 +22,7 @@ import {useAxios} from "@/composables/useAxios.ts";
 import {RouteName} from "@/router/routeName.ts";
 import {useRouter} from "vue-router";
 import {useUserStore} from "@/stores/user.ts";
+import {newErrorToastFromError} from "@/utils/toasts.ts";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -91,14 +92,7 @@ const onLoginClick = async () => {
         });
         jumpTo();
     } catch (error: any) {
-        // TODO: toast template
-        toast.add({
-            title: 'Request Error',
-            orientation: 'horizontal',
-            color: 'error',
-            description: error.message || 'Login failed',
-            progress: false
-        });
+        toast.add(newErrorToastFromError(error, "Request Error"));
     }
 };
 

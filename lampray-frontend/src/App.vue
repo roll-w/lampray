@@ -46,6 +46,7 @@ userStore.load()
 
                     <template #right>
                         <UColorModeButton size="xl"/>
+                        <LocaleSelector/>
                         <LoginOrUser/>
                     </template>
                 </UHeader>

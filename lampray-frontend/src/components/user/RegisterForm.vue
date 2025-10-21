@@ -21,10 +21,13 @@ import {loginRegisterService} from "@/services/user/user.service.ts";
 import {useAxios} from "@/composables/useAxios.ts";
 import {useRouter} from "vue-router";
 import {RouteName} from "@/router/routeName.ts";
+import {newErrorToast, newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
+import {useI18n} from "vue-i18n";
 
 const axios = useAxios();
 const toast = useToast();
 const router = useRouter();
+const {t} = useI18n();
 
 const registerSchema = z.object({
     username: z.string().min(1, "Username required").refine(val => val !== null && val.trim() !== "", {
@@ -60,23 +63,12 @@ const onRegisterClick = async () => {
     const result = registerSchema.safeParse(registerForm);
     if (!result.success) {
         const firstError = result.error.message;
-        toast.add({
-            title: "Request Error",
-            orientation: "horizontal",
-            color: "error",
-            description: firstError,
-            progress: false
-        });
+        toast.add(newErrorToastFromError(new Error(firstError), t("request.error.title")));
         return;
     }
     if (registerForm.password !== registerForm.confirmPassword) {
-        toast.add({
-            title: "Request Error",
-            orientation: "horizontal",
-            color: "error",
-            description: "密码和确认密码不匹配",
-            progress: false
-        });
+        toast.add(newErrorToast(t("request.error.title"),
+                t("views.userfaced.user.register.passwordMismatch")));
         return;
     }
     try {
@@ -85,23 +77,11 @@ const onRegisterClick = async () => {
             password: registerForm.password!,
             email: registerForm.email!
         });
-        toast.add({
-            title: "Register Success",
-            orientation: "vertical",
-            color: "success",
-            progress: false
-        });
+        toast.add(newSuccessToast(t("views.userfaced.user.register.success")));
         onRegisterReset();
         jumpToSuccess();
     } catch (error: any) {
-        // TODO: toast template
-        toast.add({
-            title: "Request Error",
-            orientation: "horizontal",
-            color: "error",
-            description: error.message || "Registration failed",
-            progress: false
-        });
+        toast.add(newErrorToastFromError(error, t("request.error.title")));
     }
 };
 

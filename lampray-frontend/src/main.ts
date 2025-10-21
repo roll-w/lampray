@@ -25,6 +25,10 @@ import {createAxios} from "@/services/request.ts";
 import {useUserStore} from "@/stores/user.ts";
 import {RouteName} from "@/router/routeName.ts";
 import {i18n} from "@/i18n/i18n.ts";
+import {addCollection} from "@iconify/vue"
+
+const lucide = await import("@iconify-json/lucide/icons.json");
+addCollection(lucide);
 
 const app = createApp(App);
 
