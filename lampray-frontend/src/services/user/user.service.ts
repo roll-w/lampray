@@ -25,14 +25,14 @@ import type {
     UserVo
 } from "@/services/user/user.type.ts";
 import type {HttpResponseBody, PageableRequest} from "@/services/common.type.ts";
-import type {AxiosInstance, AxiosResponse, RawAxiosRequestConfig} from 'axios';
+import type {AxiosInstance, AxiosResponse, RawAxiosRequestConfig} from "axios";
 
 export const userService = (axios: AxiosInstance) => {
     return {
         async getCurrentUser(options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<UserVo>>> {
             const mergedOptions = {...options};
             return await axios.get<HttpResponseBody<UserVo>>(
-                '/api/v1/user', mergedOptions
+                "/api/v1/user", mergedOptions
             );
         },
         async getUserInfo(userId: string | number, options: RawAxiosRequestConfig = {}):
@@ -62,7 +62,7 @@ export const userManageService = (axios: AxiosInstance) => {
             mergedOptions.params.page = pageableRequest.page;
             mergedOptions.params.size = pageableRequest.size;
             return await axios.get<HttpResponseBody<UserDetailsVo[]>>(
-                '/api/v1/admin/users', mergedOptions
+                "/api/v1/admin/users", mergedOptions
             );
         },
 
@@ -82,14 +82,14 @@ export const userManageService = (axios: AxiosInstance) => {
         async createUser(request: CreateUserRequest, options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<number>>> {
             const mergedOptions = {...options};
             if (mergedOptions.headers) {
-                mergedOptions.headers['Content-Type'] = 'application/json';
+                mergedOptions.headers["Content-Type"] = "application/json";
             } else {
                 mergedOptions.headers = {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json"
                 };
             }
             return await axios.post<HttpResponseBody<number>>(
-                '/api/v1/admin/users', request, mergedOptions
+                "/api/v1/admin/users", request, mergedOptions
             );
         },
     }
@@ -101,38 +101,38 @@ export const loginRegisterService = (axios: AxiosInstance) => {
         async registerUser(userRegisterRequest: UserRegisterRequest, options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<void>>> {
             const mergedOptions = {...options};
             if (mergedOptions.headers) {
-                mergedOptions.headers['Content-Type'] = 'application/json';
+                mergedOptions.headers["Content-Type"] = "application/json";
             } else {
                 mergedOptions.headers = {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json"
                 };
             }
             return await axios.post<HttpResponseBody<void>>(
-                '/api/v1/user/register', userRegisterRequest, mergedOptions
+                "/api/v1/user/register", userRegisterRequest, mergedOptions
             );
         },
 
         async loginByPassword(userLoginRequest: UserLoginRequest, options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<LoginResponse>>> {
             const mergedOptions = {...options};
             if (mergedOptions.headers) {
-                mergedOptions.headers['Content-Type'] = 'application/json';
+                mergedOptions.headers["Content-Type"] = "application/json";
             } else {
                 mergedOptions.headers = {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json"
                 };
             }
             return await axios.post<HttpResponseBody<LoginResponse>>(
-                '/api/v1/user/login/password', userLoginRequest, mergedOptions
+                "/api/v1/user/login/password", userLoginRequest, mergedOptions
             );
         },
 
         async activateUser(token: string, options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<void>>> {
             const mergedOptions = {...options};
             if (mergedOptions.headers) {
-                mergedOptions.headers['Content-Type'] = 'application/json';
+                mergedOptions.headers["Content-Type"] = "application/json";
             } else {
                 mergedOptions.headers = {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json"
                 };
             }
             const path = `/api/v1/user/register/token/{token}`
@@ -146,14 +146,14 @@ export const loginRegisterService = (axios: AxiosInstance) => {
                                     options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<void>>> {
             const mergedOptions = {...options};
             if (mergedOptions.headers) {
-                mergedOptions.headers['Content-Type'] = 'multipart/form-data';
+                mergedOptions.headers["Content-Type"] = "application/json";
             } else {
                 mergedOptions.headers = {
-                    'Content-Type': 'multipart/form-data'
+                    "Content-Type": "application/json"
                 };
             }
             return await axios.post<HttpResponseBody<void>>(
-                '/api/v1/user/register/token', request, mergedOptions
+                "/api/v1/user/register/token", request, mergedOptions
             );
         }
     }

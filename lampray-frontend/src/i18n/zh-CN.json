@@ -60,6 +60,25 @@
           "hidePassword": "隐藏密码",
           "forgotPassword": "忘记密码？"
         },
+        "registerActivate": {
+          "title": "账户激活",
+          "subtitle": "请确认账户激活信息并完成激活。",
+          "infoIntro": "您的激活信息如下：",
+          "invalidCode": "无效激活码",
+          "codeNote": "(激活码通常为注册时发送到您邮箱的链接中的一部分)",
+          "confirmButton": "确认激活",
+          "successTitle": "激活成功",
+          "successDescription": "您的账户已成功激活，现在可以登录并使用所有功能。",
+          "failedTitle": "激活失败",
+          "failedDescription": "激活码无效或已过期，请重试或重新发送激活邮件。",
+          "resendModalTitle": "重新发送激活邮件",
+          "resendButton": "重新发送激活邮件",
+          "invalidTitle": "无效的激活码",
+          "invalidDescription": "未检测到有效激活码，请检查链接或重新注册。",
+          "footerHelpPrefix": "如遇问题请",
+          "contactSupport": "联系客服电话",
+          "footerHelpSuffix": "获取帮助。"
+        },
         "register": {
           "title": "注册",
           "hasAccount": "已有账号？",

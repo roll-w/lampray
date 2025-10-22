@@ -17,33 +17,49 @@
 <script setup lang="ts">
 import {watch} from "vue";
 import {useI18n} from "vue-i18n";
-import {useStorage} from "@vueuse/core";
+import {useNavigatorLanguage, useStorage} from "@vueuse/core";
 
-type LocaleOption = { code: string; label: string }
+type LocaleOption = {
+    code: string;
+    label: string;
+    isoCode?: string;
+}
 
 const i18n = useI18n();
 
 const availableLocales: LocaleOption[] = [
-    {code: 'en', label: 'English'},
-    {code: 'zh-CN', label: '简体中文'},
+    {code: "en", label: "English", isoCode: "en"},
+    {code: "zh-CN", label: "简体中文", isoCode: "zh-Hans"},
 ]
 
-const localeStored = useStorage<string>('app-locale', 'en', undefined, {
+const { language } = useNavigatorLanguage()
+
+const mappingToAvailableLocale = (lang: string | undefined): LocaleOption => {
+    if (!lang) {
+        return availableLocales[0]!;
+    }
+    // TODO: find related locale
+    const found = availableLocales.find(locale => locale.code === lang);
+    return found ? found : availableLocales[0]!;
+}
+
+const localeStored = useStorage<string>("app-locale", mappingToAvailableLocale(language.value).code, undefined, {
     listenToStorageChanges: true
 });
 
-const refreshLocale = async (localeCode: string) => {
-    const messages = await import(`@/i18n/${localeCode}.json`);
-    i18n.setLocaleMessage(localeCode, messages.default);
-    i18n.locale.value = localeCode;
+const refreshLocale = async (localeCode: LocaleOption) => {
+    const messages = await import(`@/i18n/${localeCode.code}.json`);
+    i18n.setLocaleMessage(localeCode.code, messages.default);
+    i18n.locale.value = localeCode.code;
+    document.documentElement.lang = localeCode.isoCode || localeCode.code;
 };
 
 watch(localeStored, async (newLocale) => {
-    await refreshLocale(newLocale);
+    await refreshLocale(mappingToAvailableLocale(newLocale));
 });
 
 // Initial load
-refreshLocale(localeStored.value).catch((err) => {
+refreshLocale(mappingToAvailableLocale(localeStored.value)).catch(err => {
     console.error("Failed to load locale", err);
 })
 </script>

@@ -59,6 +59,25 @@
           "hidePassword": "Hide password",
           "forgotPassword": "Forgot password?"
         },
+        "registerActivate": {
+          "title": "Account Activation",
+          "subtitle": "Please confirm your activation information and complete the activation.",
+          "infoIntro": "Your activation information:",
+          "invalidCode": "Invalid activation code",
+          "codeNote": "(The activation code is usually part of the link sent to your email during registration)",
+          "confirmButton": "Confirm Activation",
+          "successTitle": "Activation successful",
+          "successDescription": "Your account has been activated. You can now sign in and use all features.",
+          "failedTitle": "Activation failed",
+          "failedDescription": "The activation code is invalid or has expired. Please retry or resend the activation email.",
+          "resendModalTitle": "Resend activation email",
+          "resendButton": "Resend activation email",
+          "invalidTitle": "Invalid activation code",
+          "invalidDescription": "No valid activation code detected, please check the link or register again.",
+          "footerHelpPrefix": "If you encounter any issues,",
+          "contactSupport": "contact support",
+          "footerHelpSuffix": "for assistance."
+        },
         "register": {
           "title": "Register",
           "hasAccount": "Already have an account?",

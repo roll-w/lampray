@@ -20,10 +20,12 @@ import {useRouter} from "vue-router";
 import {loginRegisterService} from "@/services/user/user.service.ts";
 import {useAxios} from "@/composables/useAxios.ts";
 import * as z from "zod";
+import {useI18n} from "vue-i18n";
 
 const router = useRouter();
 const route = router.currentRoute;
 const axios = useAxios();
+const {t} = useI18n()
 
 const activateCode = ref<string | null>(null);
 const activateStatus = ref<"pending" | "loading" | "success" | "failed" | "invalid">("pending");
@@ -37,7 +39,7 @@ watch(() => route.value.params.code, (newCode) => {
 const requestActivate = async () => {
     activateStatus.value = "loading";
     try {
-        const response = await loginRegisterService(axios).activateUser(activateCode.value!);
+        await loginRegisterService(axios).activateUser(activateCode.value!);
         activateStatus.value = "success";
     } catch (error: any) {
         activateStatus.value = "failed";
@@ -46,12 +48,18 @@ const requestActivate = async () => {
 
 const showResendModal = ref(false);
 
+// handler to resend and close modal
+const handleResendConfirm = async () => {
+    await requestResendActivateEmail();
+    showResendModal.value = false;
+};
+
 const resendActivateEmailSchema = z.object({
-    email: z.email("Valid email required").refine(val => val !== null && val.trim() !== "", {
-        message: "Email required"
+    email: z.email(t("views.common.user.emailPlaceholder")).refine(val => val !== null && val.trim() !== "", {
+        message: t("views.common.user.emailPlaceholder")
     }),
-    username: z.string().min(1, "Username required").refine(val => val !== null && val.trim() !== "", {
-        message: "Username required"
+    username: z.string().min(1, t("views.common.user.usernamePlaceholder")).refine(val => val !== null && val.trim() !== "", {
+        message: t("views.common.user.usernamePlaceholder")
     }),
 });
 
@@ -83,42 +91,45 @@ const requestResendActivateEmail = async () => {
                         <div class="w-14 h-14 rounded-full bg-gradient-to-br flex items-center justify-center">
                             <UIcon name="i-lucide-shield-check" class="w-7 h-7 text-primary"/>
                         </div>
-                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">账户激活</h1>
-                        <p class="text-normal text-gray-600 dark:text-gray-400">请确认账户激活信息并完成激活。</p>
+                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">
+                            {{ t('views.userfaced.user.registerActivate.title') }}</h1>
+                        <p class="text-normal text-gray-600 dark:text-gray-400">
+                            {{ t('views.userfaced.user.registerActivate.subtitle') }}</p>
                     </div>
                 </template>
 
                 <div class="space-y-6">
                     <div class="flex flex-col gap-4">
                         <div class="text-md text-gray-700 dark:text-gray-300">
-                            您的激活信息如下：
+                            {{ t('views.userfaced.user.registerActivate.infoIntro') }}
                         </div>
                         <div class="p-4 bg-neutral-200/50 dark:bg-neutral-800/50 rounded-md
-                                    text-sm text-neutral-800 dark:text-neutral-200 ">
-                            <p class="font-mono">{{ activateCode || "无效激活码" }}</p>
+                                     text-sm text-neutral-800 dark:text-neutral-200 ">
+                            <p class="font-mono">
+                                {{ activateCode || t('views.userfaced.user.registerActivate.invalidCode') }}</p>
                             <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-                                （激活码通常为注册时发送到您邮箱的链接中的一部分）
+                                {{ t('views.userfaced.user.registerActivate.codeNote') }}
                             </p>
                         </div>
                         <UButton color="primary" block size="lg"
                                  :loading="activateStatus === 'loading'"
                                  :disabled="!activateCode || activateStatus !== 'pending'"
                                  @click="requestActivate()">
-                            确认激活
+                            {{ t('views.userfaced.user.registerActivate.confirmButton') }}
                         </UButton>
                     </div>
 
                     <UAlert v-if="activateStatus === 'success'"
-                            title="激活成功"
-                            description="您的账户已成功激活，现在可以登录并使用所有功能。"
+                            :title="t('views.userfaced.user.registerActivate.successTitle')"
+                            :description="t('views.userfaced.user.registerActivate.successDescription')"
                             color="success"
                             variant="soft"
                             icon="i-lucide-check-circle"
                             class="mt-2"
                     />
                     <UAlert v-else-if="activateStatus === 'failed'"
-                            title="激活失败"
-                            description="激活码无效或已过期，请重试或重新发送激活邮件。"
+                            :title="t('views.userfaced.user.registerActivate.failedTitle')"
+                            :description="t('views.userfaced.user.registerActivate.failedDescription')"
                             color="error"
                             variant="soft"
                             icon="i-lucide-x-circle"
@@ -126,22 +137,26 @@ const requestResendActivateEmail = async () => {
                     >
                         <template #actions>
                             <div class="flex flex-col sm:flex-row gap-2">
-                                <UModal v-model:open="showResendModal" :close-on-escape="true" :close-on-click-away="true"
-                                        title="重新发送激活邮件"
+                                <UModal v-model:open="showResendModal" :close-on-escape="true"
+                                        :close-on-click-away="true"
+                                        :title="t('views.userfaced.user.registerActivate.resendModalTitle')"
                                         size="md">
                                     <template #body>
                                         <div class="space-y-4">
                                             <UForm :schema="resendActivateEmailSchema" :state="resendActivateEmailForm"
                                                    class="space-y-4 w-full">
-                                                <UFormField label="用户名" name="username" required>
+                                                <UFormField :label="t('views.common.user.username')" name="username"
+                                                            required>
                                                     <UInput v-model="resendActivateEmailForm.username"
-                                                            placeholder="输入用户名" type="text"
+                                                            :placeholder="t('views.common.user.usernamePlaceholder')"
+                                                            type="text"
                                                             autocomplete="username"
                                                             name="username" class="w-full"/>
                                                 </UFormField>
-                                                <UFormField label="电子邮件" name="email" required>
+                                                <UFormField :label="t('views.common.user.email')" name="email" required>
                                                     <UInput v-model="resendActivateEmailForm.email"
-                                                            placeholder="输入电子邮件" type="email"
+                                                            :placeholder="t('views.common.user.emailPlaceholder')"
+                                                            type="email"
                                                             autocomplete="email"
                                                             name="email" class="w-full"/>
                                                 </UFormField>
@@ -151,24 +166,26 @@ const requestResendActivateEmail = async () => {
 
                                     <template #footer>
                                         <div class="flex justify-end w-full gap-2">
-                                            <UButton variant="outline" color="secondary" @click="showResendModal = false">取消</UButton>
-                                            <UButton color="primary" @click="() => {
-                                                    requestResendActivateEmail();
-                                                showResendModal = false;
-                                            }">发送</UButton>
+                                            <UButton variant="outline" color="secondary"
+                                                     @click="showResendModal = false">{{ t('common.cancel') }}
+                                            </UButton>
+                                            <UButton color="primary" @click="handleResendConfirm">{{
+                                                    t('common.submit')
+                                                }}
+                                            </UButton>
                                         </div>
                                     </template>
                                     <UButton color="error" variant="solid" size="md" block
                                              @click="showResendModal = true">
-                                        重新发送激活邮件
+                                        {{ t('views.userfaced.user.registerActivate.resendButton') }}
                                     </UButton>
                                 </UModal>
                             </div>
                         </template>
                     </UAlert>
                     <UAlert v-else-if="activateStatus === 'invalid'"
-                            title="无效的激活码"
-                            description="未检测到有效激活码，请检查链接或重新注册。"
+                            :title="t('views.userfaced.user.registerActivate.invalidTitle')"
+                            :description="t('views.userfaced.user.registerActivate.invalidDescription')"
                             color="warning"
                             variant="soft"
                             icon="i-lucide-alert-triangle"
@@ -179,20 +196,15 @@ const requestResendActivateEmail = async () => {
                 <template #footer>
                     <div class="text-center py-2">
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            如遇问题请
+                            {{ t('views.userfaced.user.registerActivate.footerHelpPrefix') }}
                             <UButton variant="link" size="xs" color="primary" class="p-0 h-auto">
-                                联系客服
+                                {{ t('views.userfaced.user.registerActivate.contactSupport') }}
                             </UButton>
-                            获取帮助。
+                            {{ t('views.userfaced.user.registerActivate.footerHelpSuffix') }}
                         </p>
                     </div>
                 </template>
             </UCard>
         </div>
     </div>
-
-
 </template>
-
-<style scoped>
-</style>
