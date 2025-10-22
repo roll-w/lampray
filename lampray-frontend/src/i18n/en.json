@@ -1,0 +1,85 @@
+{
+  "common": {
+    "actions": "Actions",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "create": "Create",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "noData": "No data",
+    "reset": "Reset",
+    "search": "Search",
+    "submit": "Submit"
+  },
+  "navbar": {
+    "home": "Home",
+    "logout": "Logout",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "request": {
+    "error": {
+      "title": "Request Error"
+    },
+    "success": {
+      "title": "Request Successful"
+    }
+  },
+  "views": {
+    "common": {
+      "user": {
+        "password": "Password",
+        "username": "Username",
+        "email": "Email",
+        "confirmPassword": "Confirm Password",
+        "usernamePlaceholder": "Enter username",
+        "emailPlaceholder": "Enter email",
+        "passwordPlaceholder": "Enter password",
+        "confirmPasswordPlaceholder": "Enter confirm password"
+      }
+    },
+    "userfaced": {
+      "user": {
+        "login": {
+          "title": "Login",
+          "noAccount": "Don't have an account?",
+          "identity": "Username/Email",
+          "identityPlaceholder": "Enter username or email",
+          "identityRequired": "Username or email required",
+          "invalidIdentity": "Invalid username or email",
+          "passwordRequired": "Password required",
+          "invalidPassword": "Invalid password",
+          "invalidPasswordDetail": "Password must be 4-20 characters and may include letters, numbers and special symbols",
+          "rememberMe": "Remember me",
+          "loginButton": "Login",
+          "success": "Login successful",
+          "showPassword": "Show password",
+          "hidePassword": "Hide password",
+          "forgotPassword": "Forgot password?"
+        },
+        "register": {
+          "title": "Register",
+          "hasAccount": "Already have an account?",
+          "success": "Registration successful",
+          "passwordMismatch": "Passwords do not match",
+          "invalidUsername": "Invalid username",
+          "invalidUsernameDetail": "Username must start with a letter or underscore, 3-20 characters; allowed characters: letters, numbers, underscore (_), dash (-) and dot (.)",
+          "invalidPassword": "Invalid password",
+          "invalidPasswordDetail": "Password must be 4-20 characters and may include letters, numbers and special symbols",
+          "invalidEmail": "Invalid email address",
+          "username": "Username",
+          "usernamePlaceholder": "Enter username",
+          "email": "Email",
+          "emailPlaceholder": "Enter email",
+          "password": "Password",
+          "passwordPlaceholder": "Enter password",
+          "confirmPassword": "Confirm Password",
+          "confirmPasswordPlaceholder": "Confirm password",
+          "agree": "I have read and agree to the terms"
+        }
+      }
+    }
+  }
+}

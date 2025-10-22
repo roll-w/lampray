@@ -15,7 +15,7 @@
   -->
 
 <script setup lang="ts">
-import {reactive} from "vue";
+import {reactive, ref, useTemplateRef, watch} from "vue";
 import * as z from "zod";
 import {loginRegisterService} from "@/services/user/user.service.ts";
 import {useAxios} from "@/composables/useAxios.ts";
@@ -27,26 +27,45 @@ import {useI18n} from "vue-i18n";
 const axios = useAxios();
 const toast = useToast();
 const router = useRouter();
-const {t} = useI18n();
+const {t, locale} = useI18n();
 
-const registerSchema = z.object({
-    username: z.string().min(1, "Username required").refine(val => val !== null && val.trim() !== "", {
-        message: "Username required"
+// username and password regex adapted from backend UserChecker.java
+const USERNAME_REGEX = /^[a-zA-Z_\-][\w.\-]{2,19}$/; // 3-20 chars, start with letter/_/-
+const PASSWORD_REGEX = /^[A-Za-z\d._\-~!@#$^&*+=<>%;'"\\/|()\[\]{}]{4,20}$/; // 4-20 allowed characters (align with backend)
+
+const createRegisterSchema = () => z.object({
+    username: z.string()
+        .min(3, t("views.userfaced.user.register.invalidUsernameDetail"))
+        .max(20, t("views.userfaced.user.register.invalidUsernameDetail"))
+        .regex(USERNAME_REGEX, {message: t("views.userfaced.user.register.invalidUsernameDetail")}),
+    password: z.string()
+        .min(4, t("views.userfaced.user.register.invalidPasswordDetail"))
+        .max(20, t("views.userfaced.user.register.invalidPasswordDetail"))
+        .regex(PASSWORD_REGEX, {message: t("views.userfaced.user.register.invalidPasswordDetail")}),
+    email: z.email(t("views.userfaced.user.register.invalidEmail")).refine(val => val !== null && val.trim() !== "", {
+        message: t("views.userfaced.user.register.invalidEmail")
     }),
-    password: z.string().min(1, "Password required").refine(val => val !== null && val.trim() !== "", {
-        message: "Password required"
+    confirmPassword: z.string().min(1, t("views.common.user.confirmPasswordPlaceholder")).refine(val => val !== null && val.trim() !== "", {
+        message: t("views.common.user.confirmPasswordPlaceholder")
     }),
-    email: z.email("Valid email required").refine(val => val !== null && val.trim() !== "", {
-        message: "Email required"
-    }),
-    confirmPassword: z.string().refine(val => val !== null && val.trim() !== "", {
-        message: "Please confirm password"
-    }).min(1, "Please confirm password"),
     agree: z.boolean().refine(val => val === true, {
-        message: "You must agree to the terms"
+        message: t("views.userfaced.user.register.agree")
     }).default(false)
+}).refine(data => data.password === data.confirmPassword, {
+    message: t("views.userfaced.user.register.passwordMismatch"),
+    path: ["confirmPassword"]
 });
-type RegisterSchema = z.output<typeof registerSchema>;
+
+const registerSchema = ref(createRegisterSchema());
+const form = useTemplateRef("form")
+
+watch(locale, async () => {
+    registerSchema.value = createRegisterSchema();
+    // TODO: fix form error message update
+    form.value?.clear()
+}, {immediate: true});
+
+type RegisterSchema = z.output<ReturnType<typeof createRegisterSchema>>;
 const registerForm = reactive<Partial<RegisterSchema>>({
     username: "",
     password: "",
@@ -60,9 +79,9 @@ const jumpToSuccess = () => {
 };
 
 const onRegisterClick = async () => {
-    const result = registerSchema.safeParse(registerForm);
+    const result = registerSchema.value.safeParse(registerForm);
     if (!result.success) {
-        const firstError = result.error.message;
+        const firstError = result.error.issues[0]?.message || t("request.error.title");
         toast.add(newErrorToastFromError(new Error(firstError), t("request.error.title")));
         return;
     }
@@ -94,28 +113,33 @@ const onRegisterReset = () => {
 };
 </script>
 <template>
-    <UForm :schema="registerSchema" :state="registerForm" class="space-y-4 w-full" @submit="onRegisterClick">
-        <UFormField label="用户名" name="username" required>
-            <UInput v-model="registerForm.username" placeholder="输入用户名" type="text" autocomplete="username"
+    <UForm :schema="registerSchema" ref="form" :state="registerForm" class="space-y-4 w-full" @submit="onRegisterClick">
+        <UFormField :label="t('views.common.user.username')" name="username" required>
+            <UInput v-model="registerForm.username"
+                    :placeholder="t('views.common.user.usernamePlaceholder')" type="text"
+                    autocomplete="username"
                     name="username" class="w-full"/>
         </UFormField>
-        <UFormField label="电子邮件" name="email" required>
-            <UInput v-model="registerForm.email" placeholder="输入电子邮件" type="email" autocomplete="email"
+        <UFormField :label="t('views.common.user.email')" name="email" required>
+            <UInput v-model="registerForm.email" :placeholder="t('views.common.user.emailPlaceholder')"
+                    type="email" autocomplete="email"
                     name="email" class="w-full"/>
         </UFormField>
-        <UFormField label="密码" name="password" required>
-            <UInput v-model="registerForm.password" placeholder="输入密码" type="password"
+        <UFormField :label="t('views.common.user.password')" name="password" required>
+            <UInput v-model="registerForm.password"
+                    :placeholder="t('views.common.user.passwordPlaceholder')" type="password"
                     autocomplete="new-password" name="password" class="w-full"/>
         </UFormField>
-        <UFormField label="确认密码" name="confirmPassword" required>
-            <UInput v-model="registerForm.confirmPassword" placeholder="确认密码" type="password"
+        <UFormField :label="t('views.common.user.confirmPassword')" name="confirmPassword" required>
+            <UInput v-model="registerForm.confirmPassword"
+                    :placeholder="t('views.common.user.confirmPasswordPlaceholder')" type="password"
                     autocomplete="new-password" name="confirmPassword" class="w-full"/>
         </UFormField>
-        <UCheckbox v-model="registerForm.agree" label="我已阅读并同意相关条款" name="agree" required/>
+        <UCheckbox v-model="registerForm.agree" :label="t('views.userfaced.user.register.agree')" name="agree"
+                   required/>
         <div class="flex flex-col sm:flex-row gap-2">
-            <UButton type="submit" class="flex-1" color="primary">注册</UButton>
-            <UButton variant="outline" class="flex-1" @click="onRegisterReset">重置</UButton>
+            <UButton type="submit" class="flex-1" color="primary">{{ t('common.submit') }}</UButton>
+            <UButton variant="outline" class="flex-1" @click="onRegisterReset">{{ t('common.reset') }}</UButton>
         </div>
     </UForm>
 </template>
-

@@ -21,7 +21,6 @@ import * as locales from '@nuxt/ui/locale'
 import {useI18n} from "vue-i18n";
 import type {ToasterProps} from "@nuxt/ui";
 
-
 const toaster: ToasterProps = {position: 'top-right', progress: false};
 const {locale} = useI18n()
 const userStore = useUserStore();
@@ -33,27 +32,25 @@ userStore.load()
 </script>
 
 <template>
-    <Suspense>
-        <UApp :toaster="toaster" :locale="uLocale">
-            <div class="relative">
-                <UHeader :toggle="false" :ui="{container: 'max-w-full'}">
-                    <template #title>
-                        <div class="flex items-center">
-                            <UIcon class="size-8 fill-primary-500" :name="LamprayLogo"/>
-                            <span class="ms-1 text-xl font-medium text-primary-500">Lampray</span>
-                        </div>
-                    </template>
+    <UApp :toaster="toaster" :locale="uLocale">
+        <div class="relative">
+            <UHeader :toggle="false" :ui="{container: 'max-w-full'}">
+                <template #title>
+                    <div class="flex items-center">
+                        <UIcon class="size-8 fill-primary-500" :name="LamprayLogo"/>
+                        <span class="ms-1 text-xl font-medium text-primary-500">Lampray</span>
+                    </div>
+                </template>
 
-                    <template #right>
-                        <UColorModeButton size="xl"/>
-                        <LocaleSelector/>
-                        <LoginOrUser/>
-                    </template>
-                </UHeader>
-            </div>
-            <UMain>
-                <RouterView/>
-            </UMain>
-        </UApp>
-    </Suspense>
+                <template #right>
+                    <UColorModeButton size="xl"/>
+                    <LocaleSelector/>
+                    <LoginOrUser/>
+                </template>
+            </UHeader>
+        </div>
+        <UMain>
+            <RouterView/>
+        </UMain>
+    </UApp>
 </template>

@@ -15,8 +15,9 @@
   -->
 
 <script setup lang="ts">
-import {ref, watch} from "vue";
+import {watch} from "vue";
 import {useI18n} from "vue-i18n";
+import {useStorage} from "@vueuse/core";
 
 type LocaleOption = { code: string; label: string }
 
@@ -27,14 +28,24 @@ const availableLocales: LocaleOption[] = [
     {code: 'zh-CN', label: '简体中文'},
 ]
 
-const locale = ref<string>('en');
-
-watch(locale, async (newLocale) => {
-    const messages = await import(`@/i18n/${newLocale}.json`);
-    i18n.setLocaleMessage(newLocale, messages.default);
-    i18n.locale.value = newLocale;
+const localeStored = useStorage<string>('app-locale', 'en', undefined, {
+    listenToStorageChanges: true
 });
 
+const refreshLocale = async (localeCode: string) => {
+    const messages = await import(`@/i18n/${localeCode}.json`);
+    i18n.setLocaleMessage(localeCode, messages.default);
+    i18n.locale.value = localeCode;
+};
+
+watch(localeStored, async (newLocale) => {
+    await refreshLocale(newLocale);
+});
+
+// Initial load
+refreshLocale(localeStored.value).catch((err) => {
+    console.error("Failed to load locale", err);
+})
 </script>
 
 <template>
@@ -42,7 +53,7 @@ watch(locale, async (newLocale) => {
         <!-- TODO: replace with a icon select-->
         <USelect
                 :items="availableLocales.map(locale => ({label: locale.label, value: locale.code}))"
-                v-model="locale"
+                v-model="localeStored"
                 class="w-32"
         />
     </div>

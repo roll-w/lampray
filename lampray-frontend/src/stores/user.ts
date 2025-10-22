@@ -125,13 +125,16 @@ export const useUserStore = defineStore('user', {
             const localUserData = localStorage.getItem(userDataKey)
 
             if (localUser && localToken) {
-                this.user = JSON.parse(localUser) as User
-                const rawToken = JSON.parse(localToken)
+                this.user = tryParse<User>(localUser)
+                const rawToken = tryParse<Token>(localToken)
+                if (!rawToken) {
+                    return
+                }
                 rawToken.accessTokenExpiry = new Date(rawToken.accessTokenExpiry)
                 rawToken.refreshTokenExpiry = new Date(rawToken.refreshTokenExpiry)
-                this.token = rawToken as Token
+                this.token = rawToken
                 if (localUserData !== null) {
-                    this.userData = JSON.parse(localUserData) as UserData
+                    this.userData = tryParse<UserData>(localUserData)
                 }
                 this.remember = true
                 return
@@ -141,16 +144,30 @@ export const useUserStore = defineStore('user', {
             const sessionToken = sessionStorage.getItem(tokenKey)
             const sessionUserData = sessionStorage.getItem(userDataKey)
             if (sessionUser && sessionToken) {
-                this.user = JSON.parse(sessionUser) as User
-                const rawToken = JSON.parse(sessionToken)
+                this.user = tryParse<User>(sessionUser)
+                const rawToken = tryParse<Token>(sessionToken)
+                if (!rawToken) {
+                    return;
+                }
                 rawToken.accessTokenExpiry = new Date(rawToken.accessTokenExpiry)
                 rawToken.refreshTokenExpiry = new Date(rawToken.refreshTokenExpiry)
-                this.token = rawToken as Token
+                this.token = rawToken
                 if (sessionUserData) {
-                    this.userData = JSON.parse(sessionUserData) as UserData
+                    this.userData = tryParse<UserData>(sessionUserData)
                 }
                 this.remember = false
             }
         }
     },
 })
+
+const tryParse = <T>(value: string | null): T | null => {
+    if (!value) {
+        return null;
+    }
+    try {
+        return JSON.parse(value) as T;
+    } catch {
+        return null;
+    }
+}

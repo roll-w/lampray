@@ -19,9 +19,11 @@ import {useRoute, useRouter} from "vue-router";
 import LoginForm from "@/components/user/LoginForm.vue";
 import RegisterForm from "@/components/user/RegisterForm.vue";
 import {RouteName} from "@/router/routeName.ts";
+import {useI18n} from "vue-i18n";
 
 const route = useRoute();
 const router = useRouter();
+const {t} = useI18n();
 
 const isLogin = ref(route.name === RouteName.LOGIN);
 
@@ -56,11 +58,10 @@ const handleSwitch = () => {
                  rounded-xl border border-gray-200 dark:border-gray-700
                  bg-linear-to-br from-blue-50 via-default to-amber-50 dark:from-blue-950/50 dark:via-default dark:to-amber-950/50">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-semibold text-primary">登录</h2>
+                    <h2 class="text-xl font-semibold text-primary">{{ t('views.userfaced.user.login.title') }}</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                        尚未拥有账号？
-                        <UButton variant="link" color="primary" class="p-0 h-auto" @click="handleSwitch">
-                            点此注册
+                        <UButton variant="link" color="secondary" class="p-0 h-auto" @click="handleSwitch">
+                            {{ t('views.userfaced.user.login.noAccount') }}
                         </UButton>
                     </p>
                 </div>
@@ -71,11 +72,10 @@ const handleSwitch = () => {
                  rounded-xl border border-gray-200 dark:border-gray-700
                  bg-linear-to-br from-blue-50 via-default to-amber-50 dark:from-blue-950/50 dark:via-default dark:to-amber-950/50">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-semibold text-primary">注册</h2>
+                    <h2 class="text-xl font-semibold text-primary">{{ t('views.userfaced.user.register.title') }}</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                        已有账号？
-                        <UButton variant="link" color="primary" class="p-0 h-auto" @click="handleSwitch">
-                            点此登录
+                        <UButton variant="link" color="secondary" class="p-0 h-auto" @click="handleSwitch">
+                            {{ t('views.userfaced.user.register.hasAccount') }}
                         </UButton>
                     </p>
                 </div>
