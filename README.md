@@ -9,7 +9,22 @@ Lampray is a blog system built with Spring Boot 3 and Vue3.
 ## Requirements
 
 - Java 17+
-- MySQL 8.0+
+- Supported databases: sqlite (default, in-memory or file), h2 (in-memory or file), mysql, postgresql, mariadb, oracle,
+  sqlserver
+
+Recommended minimum database versions (suggested):
+
+- MySQL: 8.0+
+- PostgreSQL: 12+
+- MariaDB: 10.5+
+- Oracle: 19c+
+- SQL Server: 2017+
+
+Notes:
+
+- The application defaults to using SQLite (in-memory) if no database configuration is provided.
+- For network databases (MySQL/PostgreSQL/MariaDB/Oracle/SQL Server) you must have the database server running and
+  create or configure the target database (default name: `lampray`).
 
 ## Build
 
@@ -77,36 +92,67 @@ After the build process is complete, you can find the image with the name
 
 To start up the application, you need to provide a configuration file.
 
-The configuration file uses the `toml` format, like the following:
+The configuration file uses the `toml` format.
+The application supports multiple database types and flexible target formats (see the examples below):
+
+Supported target formats:
+
+- Network address: `host:port` (e.g. `localhost:3306`)
+- File-based: `file:./data/app.db` or `file:/absolute/path/to/db`
+- In-memory: `memory`
+
+Examples:
+
+Default (SQLite in-memory):
+
+> Not recommended for production use.
 
 ```toml
-# Database Configuration
 [database]
-url = "jdbc:mysql://localhost:3306/lampray"
-username = "root"
-password = "root"
-
-# HTTP Server Configuration
-[server.http]
-port = 5100
+type = "sqlite"
+target = "memory"          # use "file:./data/lampray.db" for a file-based SQLite DB
+name = "lampray"           # ignored for in-memory/file SQLite but kept for consistency
+username = ""
+password = ""
 ```
+
+MySQL example (network database):
+
+```toml
+[database]
+type = "mysql"
+target = "localhost:3306"
+name = "lampray"
+username = "root"
+password = "password"
+options = [] # optional extra JDBC parameters, e.g. ["useSSL=false", "serverTimezone=UTC"]
+```
+
+Additional notes:
+
+- `type` accepts: `sqlite`, `mysql`, `postgresql`, `h2`, `oracle`, `sqlserver`, `mariadb`.
+- `target` is parsed to determine the JDBC URL. Use `file:` prefix for file-based DBs and `memory` for in-memory DBs.
+- `options` can provide extra JDBC parameters (as an array of `key=value` strings).
 
 ## Running
 
 ### Before Running
 
-Before running the application, you need to make sure that the MySQL
-database is running and the database is created.
+Before running the application, make sure your chosen database is available:
 
-If you haven't created the database, you can create it using the following
-SQL command:
+- For the default SQLite in-memory mode (`type = "sqlite"` and `target = "memory"`), no database setup is required.
+- For a file-based SQLite database (e.g. `target = "file:./data/lampray.db"`), ensure the application has write
+  permission to the directory.
+- For network databases (MySQL/PostgreSQL/MariaDB/Oracle/SQL Server), ensure the server is running and the target
+  database exists.
+  By default the application expects a database named `lampray`;
+  create it if necessary, for example (MySQL/PostgreSQL):
+  ```sql
+  CREATE DATABASE lampray;
+  ```
 
-```sql
-CREATE DATABASE lampray;
-```
-
-After the application starts, it will automatically create the tables
-and indexes required by the application.
+After the application starts, it will create the tables and indexes required by the application
+(for supported engines where the user account has sufficient privileges).
 
 ### Running the Application
 
