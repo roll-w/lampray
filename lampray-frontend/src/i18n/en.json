@@ -14,6 +14,7 @@
     "submit": "Submit"
   },
   "navbar": {
+    "admin": "Admin Panel",
     "home": "Home",
     "logout": "Logout",
     "profile": "Profile",
@@ -30,6 +31,7 @@
   "views": {
     "common": {
       "user": {
+        "login": "Login",
         "password": "Password",
         "username": "Username",
         "email": "Email",

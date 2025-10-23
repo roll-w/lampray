@@ -15,53 +15,15 @@
   -->
 
 <script setup lang="ts">
-import {watch} from "vue";
-import {useI18n} from "vue-i18n";
 import {useNavigatorLanguage, useStorage} from "@vueuse/core";
+import {availableLocales, mappingToAvailableLocale} from "@/i18n/i18n.ts";
 
-type LocaleOption = {
-    code: string;
-    label: string;
-    isoCode?: string;
-}
-
-const i18n = useI18n();
-
-const availableLocales: LocaleOption[] = [
-    {code: "en", label: "English", isoCode: "en"},
-    {code: "zh-CN", label: "简体中文", isoCode: "zh-Hans"},
-]
-
-const { language } = useNavigatorLanguage()
-
-const mappingToAvailableLocale = (lang: string | undefined): LocaleOption => {
-    if (!lang) {
-        return availableLocales[0]!;
-    }
-    // TODO: find related locale
-    const found = availableLocales.find(locale => locale.code === lang);
-    return found ? found : availableLocales[0]!;
-}
+const {language} = useNavigatorLanguage()
 
 const localeStored = useStorage<string>("app-locale", mappingToAvailableLocale(language.value).code, undefined, {
     listenToStorageChanges: true
 });
 
-const refreshLocale = async (localeCode: LocaleOption) => {
-    const messages = await import(`@/i18n/${localeCode.code}.json`);
-    i18n.setLocaleMessage(localeCode.code, messages.default);
-    i18n.locale.value = localeCode.code;
-    document.documentElement.lang = localeCode.isoCode || localeCode.code;
-};
-
-watch(localeStored, async (newLocale) => {
-    await refreshLocale(mappingToAvailableLocale(newLocale));
-});
-
-// Initial load
-refreshLocale(mappingToAvailableLocale(localeStored.value)).catch(err => {
-    console.error("Failed to load locale", err);
-})
 </script>
 
 <template>
@@ -70,7 +32,8 @@ refreshLocale(mappingToAvailableLocale(localeStored.value)).catch(err => {
         <USelect
                 :items="availableLocales.map(locale => ({label: locale.label, value: locale.code}))"
                 v-model="localeStored"
-                class="w-32"
+                size="lg"
+                class="w-28"
         />
     </div>
 </template>

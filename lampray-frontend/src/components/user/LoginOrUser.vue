@@ -23,10 +23,12 @@ import {userService} from "@/services/user/user.service.ts";
 import type {DropdownMenuItem} from "@nuxt/ui";
 import {useAxios} from "@/composables/useAxios.ts";
 import type {AxiosResponse} from "axios";
+import {useI18n} from "vue-i18n";
 
 const router = useRouter();
 const userStore = useUserStore();
 const axios = useAxios();
+const {t, locale} = useI18n()
 
 const handleLoginClick = () => {
     router.push({name: RouteName.LOGIN});
@@ -51,12 +53,13 @@ watch(() => userStore.isLogin, (newVal) => {
     }
 }, {immediate: true});
 
+const menuItems = ref<DropdownMenuItem[]>([]);
 
-const userMenuItems = ref<DropdownMenuItem[]>([
+const buildUserMenu = (): DropdownMenuItem[] => [
     [
         {
-            label: '个人主页',
-            icon: 'i-lucide-user',
+            label: t("navbar.profile"),
+            icon: "i-lucide-user",
             to: {
                 name: RouteName.USER_SPACE,
                 params: {
@@ -65,34 +68,36 @@ const userMenuItems = ref<DropdownMenuItem[]>([
             },
         },
         {
-            label: '设置',
-            icon: 'i-lucide-settings',
+            label: t("navbar.settings"),
+            icon: "i-lucide-settings",
         },
     ],
     [
         {
-            label: '退出登录',
-            icon: 'i-lucide-log-out',
+            label: t("navbar.logout"),
+            icon: "i-lucide-log-out",
             onSelect: (e: Event) => {
                 userStore.logout();
                 router.push({name: RouteName.USER_HOME});
             }
         }
     ]
-])
+];
 
-const adminMenuItems = ref<DropdownMenuItem[]>([
-    [{
-        label: '管理后台',
-        icon: 'i-lucide-shield-check',
-        onSelect: (e: Event) => {
-            router.push({name: RouteName.ADMIN_HOME});
-        }
-    }],
+const buildAdminMenu = (): DropdownMenuItem[] => [
     [
         {
-            label: '个人主页',
-            icon: 'i-lucide-user',
+            label: t("navbar.admin"),
+            icon: "i-lucide-shield-check",
+            onSelect: (e: Event) => {
+                router.push({name: RouteName.ADMIN_HOME});
+            }
+        }
+    ],
+    [
+        {
+            label: t("navbar.profile"),
+            icon: "i-lucide-user",
             to: {
                 name: RouteName.USER_SPACE,
                 params: {
@@ -101,23 +106,37 @@ const adminMenuItems = ref<DropdownMenuItem[]>([
             },
         },
         {
-            label: '设置',
-            icon: 'i-lucide-settings',
+            label: t("navbar.settings"),
+            icon: "i-lucide-settings",
         },
     ],
-
     [
         {
-            label: '退出登录',
-            icon: 'i-lucide-log-out',
+            label: t("navbar.logout"),
+            icon: "i-lucide-log-out",
             onSelect: (e: Event) => {
                 userStore.logout();
                 router.push({name: RouteName.USER_HOME});
             }
         }
     ]
-])
+];
 
+const buildMenus = (): DropdownMenuItem[] => {
+    if (!userStore.isLogin) {
+        return [];
+    }
+    if (userStore.hasAdminRole) {
+        return buildAdminMenu();
+    }
+    return buildUserMenu();
+};
+
+menuItems.value = buildMenus();
+
+watch([locale, () => userStore.user], () => {
+    menuItems.value = buildMenus();
+});
 
 </script>
 <template>
@@ -125,11 +144,11 @@ const adminMenuItems = ref<DropdownMenuItem[]>([
         <UButton @click="handleLoginClick" v-if="!userStore.isLogin" size="xl"
                  color="primary"
                  variant="soft">
-            登录
+            {{ t("views.common.user.login") }}
         </UButton>
         <!--TODO: hover to open-->
         <UDropdownMenu v-else class="cursor-pointer"
-                       :items="userStore.hasAdminRole ? adminMenuItems : userMenuItems"
+                       :items="menuItems"
                        size="md">
             <UButton
                     :avatar="{

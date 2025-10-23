@@ -22,3 +22,23 @@ export const i18n = createI18n({
     messages: {
     }
 })
+
+export type LocaleOption = {
+    code: string;
+    label: string;
+    isoCode?: string;
+}
+
+export const availableLocales: LocaleOption[] = [
+    {code: "en", label: "English", isoCode: "en"},
+    {code: "zh-CN", label: "简体中文", isoCode: "zh-Hans"},
+]
+
+export const mappingToAvailableLocale = (lang: string | undefined): LocaleOption => {
+    if (!lang) {
+        return availableLocales[0]!;
+    }
+    // TODO: find related locale
+    const found = availableLocales.find(locale => locale.code === lang);
+    return found ? found : availableLocales[0]!;
+}

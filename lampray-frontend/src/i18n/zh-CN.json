@@ -23,6 +23,7 @@
     "noData": "暂无数据"
   },
   "navbar": {
+    "admin": "管理后台",
     "home": "首页",
     "settings": "设置",
     "profile": "个人资料",
@@ -31,6 +32,7 @@
   "views": {
     "common": {
       "user": {
+        "login": "登录",
         "password": "密码",
         "username": "用户名",
         "email": "电子邮件",

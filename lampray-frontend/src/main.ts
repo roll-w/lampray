@@ -16,7 +16,7 @@
 
 import "./assets/main.css";
 
-import {createApp} from "vue";
+import {createApp, watch} from "vue";
 import {createPinia} from "pinia";
 import ui from "@nuxt/ui/vue-plugin";
 import App from "./App.vue";
@@ -24,75 +24,105 @@ import router from "./router";
 import {createAxios} from "@/services/request.ts";
 import {useUserStore} from "@/stores/user.ts";
 import {RouteName} from "@/router/routeName.ts";
-import {i18n} from "@/i18n/i18n.ts";
+import {i18n, type LocaleOption, mappingToAvailableLocale} from "@/i18n/i18n.ts";
 import {addCollection} from "@iconify/vue"
+import {useNavigatorLanguage, useStorage} from "@vueuse/core";
 
-const lucide = await import("@iconify-json/lucide/icons.json");
-addCollection(lucide);
-
-const app = createApp(App);
-
-app.use(createPinia());
-app.use(router);
-app.use(i18n);
-app.use(ui);
-
-const userStore = useUserStore();
-
-const onLoginExpired = () => {
-    const userStore = useUserStore()
-    userStore.logout()
-
-    router.push({
-        name: RouteName.LOGIN,
-        query: {
-            source: router.currentRoute.value.fullPath
-        }
-    }).then((failure) => {
-        console.log(failure)
-    })
-}
-
-const onUserBlocked = () => {
-    const userStore = useUserStore()
-    userStore.block = true
-    router.push({
-        name: RouteName.BLOCKED,
-        query: {
-            source: router.currentRoute.value.fullPath
-        }
-    }).then((failure) => {
-        console.log(failure)
-    })
-}
-
-const axios = createAxios(userStore, onLoginExpired, onUserBlocked);
-
-
-interface WindowConfig {
-    server: {
-        httpProtocol: string
-        host: string
-        wsProtocol: string
+async function bootstrap() {
+    // Load icon collection (with fallback and error handling)
+    try {
+        const lucideModule = await import("@iconify-json/lucide/icons.json");
+        // some bundlers put the json on `default`
+        const lucide = (lucideModule as any).default || lucideModule;
+        addCollection(lucide);
+    } catch (e) {
+        // Non-fatal: app can still run without the icon collection
+        // Log for debugging purposes
+        console.error("Failed to load icon collection:", e);
     }
-}
 
-declare global {
-    interface Window {
-        config?: WindowConfig
+    const {language} = useNavigatorLanguage();
+
+    const localeStored = useStorage<string>("app-locale", mappingToAvailableLocale(language.value).code, undefined, {
+        listenToStorageChanges: true
+    });
+
+    const app = createApp(App);
+    const pinia = createPinia();
+    app.use(pinia);
+    app.use(router);
+    app.use(ui);
+
+    const refreshLocale = async (localeCode: LocaleOption) => {
+        const existingMessage = i18n.global.getLocaleMessage(localeCode.code);
+        if (existingMessage && Object.keys(existingMessage).length > 0) {
+            i18n.global.locale = localeCode.code;
+            document.documentElement.lang = localeCode.isoCode || localeCode.code;
+            return;
+        }
+
+        try {
+            const messages = await import(`@/i18n/${localeCode.code}.json`);
+            i18n.global.setLocaleMessage(localeCode.code, (messages as any).default || messages);
+            i18n.global.locale = localeCode.code;
+            document.documentElement.lang = localeCode.isoCode || localeCode.code;
+        } catch (e) {
+            console.error(`Failed to load locale ${localeCode.code}:`, e);
+        }
+    };
+
+    // create the store after pinia has been installed
+    const userStore = useUserStore();
+
+    // Handlers reuse userStore and router
+    const onLoginExpired = () => {
+        userStore.logout();
+        router.push({
+            name: RouteName.LOGIN,
+            query: {source: router.currentRoute.value.fullPath}
+        })
     }
+
+    const onUserBlocked = () => {
+        userStore.block = true;
+        router.push({
+            name: RouteName.BLOCKED,
+            query: {source: router.currentRoute.value.fullPath}
+        })
+    }
+
+    // create axios client before mounting so components can inject/use it during setup
+    const axios = createAxios(userStore, onLoginExpired, onUserBlocked);
+    const server = ((window as any).config?.server) || {
+        httpProtocol: "http",
+        host: "localhost:5100",
+        wsProtocol: "ws",
+    };
+
+    if (server) {
+        axios.defaults.baseURL = `${server.httpProtocol}://${server.host}`;
+    }
+
+    app.provide("axios", axios);
+
+    // initialize locale and then mount
+    const initialLocale = mappingToAvailableLocale(localeStored.value);
+    await refreshLocale(initialLocale);
+    app.use(i18n);
+    app.mount("#app");
+
+    // watch for external changes to stored locale and refresh messages
+    watch(localeStored, (newVal, oldVal) => {
+        if (newVal && newVal !== oldVal) {
+            const lc = mappingToAvailableLocale(newVal);
+            refreshLocale(lc).catch((e) => console.error(e));
+        }
+    });
 }
 
-const server = (window.config || {}).server || {
-    httpProtocol: "http",
-    host: "localhost:5100",
-    wsProtocol: "ws",
-};
+// Start the app and surface any unexpected errors
+bootstrap().catch((e) => {
+    console.error("Failed to bootstrap the application:", e);
+});
 
-if (server) {
-    axios.defaults.baseURL = `${server.httpProtocol}://${server.host}`;
-}
-
-app.provide("axios", axios);
-
-app.mount("#app");
+export {};

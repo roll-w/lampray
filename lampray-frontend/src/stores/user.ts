@@ -73,7 +73,7 @@ export const useUserStore = defineStore('user', {
         getUserData: (state) => state.userData,
         isBlocked: (state) => state.block,
 
-        hasAdminRole: (state) => state.user?.role && state.user.role !== UserRole.USER,
+        hasAdminRole: (state) => (state.user?.role && state.user.role !== UserRole.USER) || false,
     },
     actions: {
         loginUser(
