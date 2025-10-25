@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023 RollW
+  - Copyright (C) 2023-2025 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -14,163 +14,129 @@
   - limitations under the License.
   -->
 
-<template>
-    <div class="flex flex-grow-1 flex-fill">
-        <n-h2>
-            <n-text type="primary">注册</n-text>
-        </n-h2>
-        <div class="flex flex-fill justify-end">
-            <n-h3>
-                <n-a type="info" @click="handleToLogin">回到登录</n-a>
-            </n-h3>
-        </div>
-    </div>
-    <n-form ref="registerForm" :model="formValue" :rules="formRules">
-        <n-form-item label="用户名" path="username">
-            <n-input v-model:value="formValue.username" placeholder="请输入用户名"
-                     @keydown.enter.prevent/>
-        </n-form-item>
-        <n-form-item label="邮箱" path="email">
-            <n-input v-model:value="formValue.email" :input-props="{ type: 'email' }" placeholder="请输入邮箱"
-                     type="text"
-                     @keydown.enter.prevent/>
-        </n-form-item>
-        <n-form-item label="密码" path="password">
-            <n-input v-model:value="formValue.password" placeholder="请输入密码" show-password-on="click"
-                     type="password"
-                     @keydown.enter.prevent/>
-        </n-form-item>
-        <n-form-item label="确认密码" path="confirmPassword">
-            <n-input v-model:value="formValue.confirmPassword" placeholder="请再次输入密码" show-password-on="click"
-                     type="password"
-                     @keydown.enter.prevent/>
-        </n-form-item>
-        <n-form-item path="agree">
-            <n-checkbox v-model:checked="formValue.agree">
-                已阅读并同意
-            </n-checkbox>
-            <n-a href="#">《用户协议》</n-a>
-        </n-form-item>
-        <n-button-group class="w-full">
-            <n-button class="w-full flex-grow-0" type="primary" @click="onRegisterClick">
-                注册
-            </n-button>
-            <n-button class="w-full" type="tertiary" @click="onResetClick">
-                重置
-            </n-button>
-        </n-button-group>
-    </n-form>
-</template>
-
-<script setup>
-import {getCurrentInstance, ref} from "vue";
+<script setup lang="ts">
+import {reactive, ref, useTemplateRef, watch} from "vue";
+import * as z from "zod";
+import {loginRegisterService} from "@/services/user/user.service.ts";
+import {useAxios} from "@/composables/useAxios.ts";
 import {useRouter} from "vue-router";
-import api from "@/request/api";
-import {NA, NButton, NButtonGroup, NCheckbox, NForm, NFormItem, NInput, NText, useMessage} from "naive-ui";
-import {login, registerTip} from "@/router";
+import {RouteName} from "@/router/routeName.ts";
+import {newErrorToast, newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
+import {useI18n} from "vue-i18n";
+import {PASSWORD_REGEX, USERNAME_REGEX} from "@/components/user/constants.ts";
 
+const axios = useAxios();
+const toast = useToast();
 const router = useRouter();
-const message = useMessage()
-const {proxy} = getCurrentInstance()
+const {t, locale} = useI18n();
 
-const formValue = ref({
-    username: null,
-    email: null,
-    password: null,
-    confirmPassword: null,
+const createRegisterSchema = () => z.object({
+    username: z.string()
+        .min(3, t("views.userfaced.user.register.invalidUsernameDetail"))
+        .max(20, t("views.userfaced.user.register.invalidUsernameDetail"))
+        .regex(USERNAME_REGEX, {message: t("views.userfaced.user.register.invalidUsernameDetail")}),
+    password: z.string()
+        .min(4, t("views.userfaced.user.register.invalidPasswordDetail"))
+        .max(20, t("views.userfaced.user.register.invalidPasswordDetail"))
+        .regex(PASSWORD_REGEX, {message: t("views.userfaced.user.register.invalidPasswordDetail")}),
+    email: z.email(t("views.userfaced.user.register.invalidEmail")).refine(val => val !== null && val.trim() !== "", {
+        message: t("views.userfaced.user.register.invalidEmail")
+    }),
+    confirmPassword: z.string().min(1, t("views.common.user.confirmPasswordPlaceholder")).refine(val => val !== null && val.trim() !== "", {
+        message: t("views.common.user.confirmPasswordPlaceholder")
+    }),
+    agree: z.boolean().refine(val => val === true, {
+        message: t("views.userfaced.user.register.agree")
+    }).default(false)
+}).refine(data => data.password === data.confirmPassword, {
+    message: t("views.userfaced.user.register.passwordMismatch"),
+    path: ["confirmPassword"]
+});
+
+const registerSchema = ref(createRegisterSchema());
+const form = useTemplateRef("form")
+
+watch(locale, async () => {
+    registerSchema.value = createRegisterSchema();
+    // TODO: fix form error message update
+    form.value?.clear()
+}, {immediate: true});
+
+type RegisterSchema = z.output<ReturnType<typeof createRegisterSchema>>;
+const registerForm = reactive<Partial<RegisterSchema>>({
+    username: "",
+    password: "",
+    email: "",
+    confirmPassword: "",
     agree: false
 });
 
-const registerForm = ref(null);
-
-const formRules = ref({
-    username: [
-        {
-            required: true,
-            message: "请输入用户名",
-            trigger: ["input"]
-        }
-    ],
-    email: [
-        {
-            required: true,
-            message: "请输入邮箱",
-            trigger: ["input"]
-        }
-    ],
-    password: [
-        {
-            required: true,
-            message: "请输入密码",
-            trigger: ["input"]
-        }
-    ],
-    confirmPassword: [
-        {
-            required: true,
-            message: "请再次输入密码",
-            trigger: ["input"]
-        },
-        {
-            validator(rule, value) {
-                return value === formValue.value.password;
-            },
-            message: "两次输入密码不一致",
-            trigger: ["input"]
-        }
-    ],
-    agree: [
-        {
-            validator(rule, value) {
-                return value === true;
-            },
-            message: "请阅读并同意用户协议",
-            trigger: ["input"]
-        }
-    ]
-});
-
-const validateFormValue = (callback) => {
-    registerForm.value?.validate((errors) => {
-        if (errors) {
-            return
-        }
-        callback()
-    });
-}
-
-const onRegisterClick = () => {
-    validateFormValue(() => {
-        proxy.$axios.post(api.register, formValue.value)
-                .then((response) => {
-                    message.success('注册成功')
-                    router.push({name: registerTip})
-                })
-                .catch((error) => {
-                    message.error(error.tip)
-                })
-    })
+const jumpToSuccess = () => {
+    router.push({name: RouteName.REGISTER_TIPS});
 };
 
-const handleToLogin = () => {
-    router.push({
-        name: login
-    })
+const onRegisterClick = async () => {
+    const result = registerSchema.value.safeParse(registerForm);
+    if (!result.success) {
+        const firstError = result.error.issues[0]?.message || t("request.error.title");
+        toast.add(newErrorToastFromError(new Error(firstError), t("request.error.title")));
+        return;
+    }
+    if (registerForm.password !== registerForm.confirmPassword) {
+        toast.add(newErrorToast(t("request.error.title"),
+                t("views.userfaced.user.register.passwordMismatch")));
+        return;
+    }
+    try {
+        await loginRegisterService(axios).registerUser({
+            username: registerForm.username!,
+            password: registerForm.password!,
+            email: registerForm.email!
+        });
+        toast.add(newSuccessToast(t("views.userfaced.user.register.success")));
+        onRegisterReset();
+        jumpToSuccess();
+    } catch (error: any) {
+        toast.add(newErrorToastFromError(error, t("request.error.title")));
+    }
 };
 
-const onResetClick = () => {
-    formValue.value = {
-        username: null,
-        email: null,
-        password: null,
-        confirmPassword: null,
-        agree: false
-    };
-    registerForm.value?.restoreValidation()
+const onRegisterReset = () => {
+    registerForm.username = "";
+    registerForm.password = "";
+    registerForm.email = "";
+    registerForm.confirmPassword = "";
+    registerForm.agree = false;
 };
-
 </script>
-
-<style scoped>
-
-</style>
+<template>
+    <UForm :schema="registerSchema" ref="form" :state="registerForm" class="space-y-4 w-full" @submit="onRegisterClick">
+        <UFormField :label="t('views.common.user.username')" name="username" required>
+            <UInput v-model="registerForm.username"
+                    :placeholder="t('views.common.user.usernamePlaceholder')" type="text"
+                    autocomplete="username"
+                    name="username" class="w-full"/>
+        </UFormField>
+        <UFormField :label="t('views.common.user.email')" name="email" required>
+            <UInput v-model="registerForm.email" :placeholder="t('views.common.user.emailPlaceholder')"
+                    type="email" autocomplete="email"
+                    name="email" class="w-full"/>
+        </UFormField>
+        <UFormField :label="t('views.common.user.password')" name="password" required>
+            <UInput v-model="registerForm.password"
+                    :placeholder="t('views.common.user.passwordPlaceholder')" type="password"
+                    autocomplete="new-password" name="password" class="w-full"/>
+        </UFormField>
+        <UFormField :label="t('views.common.user.confirmPassword')" name="confirmPassword" required>
+            <UInput v-model="registerForm.confirmPassword"
+                    :placeholder="t('views.common.user.confirmPasswordPlaceholder')" type="password"
+                    autocomplete="new-password" name="confirmPassword" class="w-full"/>
+        </UFormField>
+        <UCheckbox v-model="registerForm.agree" :label="t('views.userfaced.user.register.agree')" name="agree"
+                   required/>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <UButton type="submit" class="flex-1" color="primary">{{ t('common.submit') }}</UButton>
+            <UButton variant="outline" class="flex-1" @click="onRegisterReset">{{ t('common.reset') }}</UButton>
+        </div>
+    </UForm>
+</template>

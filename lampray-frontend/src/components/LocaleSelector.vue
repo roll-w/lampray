@@ -15,27 +15,25 @@
   -->
 
 <script setup lang="ts">
-import {useRouter} from "vue-router";
+import {useNavigatorLanguage, useStorage} from "@vueuse/core";
+import {availableLocales, mappingToAvailableLocale} from "@/i18n/i18n.ts";
 
-const router = useRouter();
+const {language} = useNavigatorLanguage()
+
+const localeStored = useStorage<string>("app-locale", mappingToAvailableLocale(language.value).code, undefined, {
+    listenToStorageChanges: true
+});
 
 </script>
 
 <template>
-    <div class="h-[75vh] flex flex-col justify-center items-center">
-        <div class="p-5">
-            <UError :error="{
-                statusCode: 404,
-                statusMessage: '页面不存在',
-                message: '您访问的页面不存在，可能是因为地址错误或页面已被删除。',}">
-                <template #links>
-                    <UButton color="primary" @click="router.push('/')">回到首页</UButton>
-                </template>
-            </UError>
-        </div>
+    <div>
+        <!-- TODO: replace with a icon select-->
+        <USelect
+                :items="availableLocales.map(locale => ({label: locale.label, value: locale.code}))"
+                v-model="localeStored"
+                size="lg"
+                class="w-28"
+        />
     </div>
 </template>
-
-<style scoped>
-
-</style>

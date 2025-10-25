@@ -27,3 +27,7 @@ coverage
 *.sln
 *.sw?
 !/src/components/icon/
+
+*.tsbuildinfo
+auto-imports.d.ts
+components.d.ts
