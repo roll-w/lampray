@@ -23,15 +23,12 @@ import {useRouter} from "vue-router";
 import {RouteName} from "@/router/routeName.ts";
 import {newErrorToast, newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
 import {useI18n} from "vue-i18n";
+import {PASSWORD_REGEX, USERNAME_REGEX} from "@/components/user/constants.ts";
 
 const axios = useAxios();
 const toast = useToast();
 const router = useRouter();
 const {t, locale} = useI18n();
-
-// username and password regex adapted from backend UserChecker.java
-const USERNAME_REGEX = /^[a-zA-Z_\-][\w.\-]{2,19}$/; // 3-20 chars, start with letter/_/-
-const PASSWORD_REGEX = /^[A-Za-z\d._\-~!@#$^&*+=<>%;'"\\/|()\[\]{}]{4,20}$/; // 4-20 allowed characters (align with backend)
 
 const createRegisterSchema = () => z.object({
     username: z.string()

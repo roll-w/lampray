@@ -196,11 +196,11 @@ const requestResendActivateEmail = async () => {
                 <template #footer>
                     <div class="text-center py-2">
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ t('views.userfaced.user.registerActivate.footerHelpPrefix') }}
+                            {{ t('views.common.support.contactSupportPrefix') }}
                             <UButton variant="link" size="xs" color="primary" class="p-0 h-auto">
-                                {{ t('views.userfaced.user.registerActivate.contactSupport') }}
+                                {{ t('views.common.support.contactSupport') }}
                             </UButton>
-                            {{ t('views.userfaced.user.registerActivate.footerHelpSuffix') }}
+                            {{ t('views.common.support.contactSupportSuffix') }}
                         </p>
                     </div>
                 </template>

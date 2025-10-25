@@ -22,6 +22,22 @@
     "loading": "加载中...",
     "noData": "暂无数据"
   },
+  "route": {
+    "user-home": "首页",
+    "login": "登录",
+    "register": "注册",
+    "register-tips": "注册成功",
+    "register-activate": "账户激活",
+    "user-profile": "用户资料",
+    "user-settings": "用户设置",
+    "user-space": "用户空间",
+    "admin-home": "管理首页",
+    "admin-user-list": "用户列表",
+    "admin-user-detail": "用户详情",
+    "admin-system-settings": "系统设置",
+    "not-found": "未找到",
+    "blocked": "已封禁"
+  },
   "navbar": {
     "admin": "管理后台",
     "home": "首页",
@@ -41,9 +57,19 @@
         "emailPlaceholder": "输入电子邮件",
         "passwordPlaceholder": "输入密码",
         "confirmPasswordPlaceholder": "输入确认密码"
+      },
+      "support": {
+        "contactSupportPrefix": "如遇问题请",
+        "contactSupport": "提交支持请求",
+        "contactSupportSuffix": "获取帮助。"
       }
     },
     "userfaced": {
+      "home": {
+        "adminAlert": {
+          "title": "您当前以管理员用户身份登录，现可访问"
+        }
+      },
       "user": {
         "login": {
           "title": "登录",
@@ -76,10 +102,7 @@
           "resendModalTitle": "重新发送激活邮件",
           "resendButton": "重新发送激活邮件",
           "invalidTitle": "无效的激活码",
-          "invalidDescription": "未检测到有效激活码，请检查链接或重新注册。",
-          "footerHelpPrefix": "如遇问题请",
-          "contactSupport": "联系客服电话",
-          "footerHelpSuffix": "获取帮助。"
+          "invalidDescription": "未检测到有效激活码，请检查链接或重新注册。"
         },
         "register": {
           "title": "注册",
@@ -92,6 +115,10 @@
           "invalidPasswordDetail": "密码必须为 4-20 个字符，允许字母、数字和特殊符号",
           "invalidEmail": "无效的电子邮件地址",
           "agree": "我已阅读并同意相关条款"
+        },
+        "registerTips": {
+          "title": "注册成功",
+          "subtitle": "请检查你的邮箱，点击激活链接激活你的账户。"
         }
       }
     }

@@ -15,6 +15,9 @@
   -->
 
 <script setup lang="ts">
+import {useI18n} from "vue-i18n";
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -27,23 +30,24 @@
                         <div class="w-14 h-14 rounded-full bg-gradient-to-br flex items-center justify-center">
                             <UIcon name="i-lucide-check-circle" class="w-7 h-7 text-success"/>
                         </div>
-                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">注册成功</h1>
+                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('views.userfaced.user.registerTips.title') }}</h1>
                         <p class="text-normal text-gray-600 dark:text-gray-400">
-                            请检查你的邮箱，点击激活链接激活你的账户。
+                            {{ t('views.userfaced.user.registerTips.subtitle') }}
                         </p>
                     </div>
                 </template>
                 <template #footer>
                     <div class="text-center py-2">
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            如遇问题请
+                            {{ t('views.common.support.contactSupportPrefix') }}
                             <UButton variant="link" size="xs" color="primary" class="p-0 h-auto">
-                                联系客服
+                                {{ t('views.common.support.contactSupport') }}
                             </UButton>
-                            获取帮助。
+                            {{ t('views.common.support.contactSupportSuffix') }}
                         </p>
                     </div>
                 </template>
+
             </UCard>
         </div>
     </div>

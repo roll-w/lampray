@@ -42,8 +42,7 @@ const handleSwitch = () => {
 };
 </script>
 <template>
-    <div class="relative min-h-[80vh] flex items-center justify-center overflow-hidden animate-gradient">
-        <div class="absolute inset-0 z-0 pointer-events-none"></div>
+    <div class="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         <Transition
                 enter-active-class="transition-all duration-500 ease-in-out"
                 leave-active-class="transition-all duration-500 ease-in-out"
@@ -54,7 +53,7 @@ const handleSwitch = () => {
                 mode="out-in"
         >
             <div v-if="isLogin" key="login"
-                 class="relative z-10 flex flex-col gap-6 w-full max-w-md p-8
+                 class="relative z-10 my-8 flex flex-col gap-6 w-full max-w-md p-8
                  rounded-xl border border-gray-200 dark:border-gray-700
                  bg-linear-to-br from-blue-50 via-default to-amber-50 dark:from-blue-950/50 dark:via-default dark:to-amber-950/50">
                 <div class="flex justify-between items-center">
@@ -68,7 +67,7 @@ const handleSwitch = () => {
                 <LoginForm/>
             </div>
             <div v-else key="register"
-                 class="relative z-10 flex flex-col gap-6 w-full max-w-md p-8
+                 class="relative z-10 my-8 flex flex-col gap-6 w-full max-w-md p-8
                  rounded-xl border border-gray-200 dark:border-gray-700
                  bg-linear-to-br from-blue-50 via-default to-amber-50 dark:from-blue-950/50 dark:via-default dark:to-amber-950/50">
                 <div class="flex justify-between items-center">

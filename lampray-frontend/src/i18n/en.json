@@ -13,6 +13,22 @@
     "search": "Search",
     "submit": "Submit"
   },
+ "route": {
+   "user-home": "Home",
+   "login": "Login",
+   "register": "Register",
+   "register-tips": "Registration Successful",
+   "register-activate": "Account Activation",
+   "user-profile": "User Profile",
+   "user-settings": "User Settings",
+   "user-space": "User Space",
+   "admin-home": "Admin Home",
+   "admin-user-list": "User List",
+   "admin-user-detail": "User Details",
+   "admin-system-settings": "System Settings",
+   "not-found": "Not Found",
+   "blocked": "Blocked"
+ },
   "navbar": {
     "admin": "Admin Panel",
     "home": "Home",
@@ -40,9 +56,19 @@
         "emailPlaceholder": "Enter email",
         "passwordPlaceholder": "Enter password",
         "confirmPasswordPlaceholder": "Enter confirm password"
+      },
+      "support": {
+        "contactSupportPrefix": "If you encounter any issues, please ",
+        "contactSupport": "submit a support request",
+        "contactSupportSuffix": " for assistance."
       }
     },
     "userfaced": {
+      "home": {
+        "adminAlert": {
+          "title": "You are currently logged in as an admin user and can now access"
+        }
+      },
       "user": {
         "login": {
           "title": "Login",
@@ -75,10 +101,7 @@
           "resendModalTitle": "Resend activation email",
           "resendButton": "Resend activation email",
           "invalidTitle": "Invalid activation code",
-          "invalidDescription": "No valid activation code detected, please check the link or register again.",
-          "footerHelpPrefix": "If you encounter any issues,",
-          "contactSupport": "contact support",
-          "footerHelpSuffix": "for assistance."
+          "invalidDescription": "No valid activation code detected, please check the link or register again."
         },
         "register": {
           "title": "Register",
@@ -99,6 +122,10 @@
           "confirmPassword": "Confirm Password",
           "confirmPasswordPlaceholder": "Confirm password",
           "agree": "I have read and agree to the terms"
+        },
+        "registerTips": {
+          "title": "Registration Successful",
+          "subtitle": "Please check your email and click the activation link to activate your account."
         }
       }
     }

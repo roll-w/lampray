@@ -18,6 +18,7 @@ import {createRouter, createWebHistory} from "vue-router"
 import {RouteName} from "@/router/routeName.ts";
 import {useUserStore} from "@/stores/user.ts";
 import {UserRole} from "@/services/user/user.type.ts";
+import {i18n} from "@/i18n/i18n.ts";
 
 const router = createRouter({
     // history: createWebHistory(import.meta.env.BASE_URL),
@@ -75,6 +76,15 @@ const router = createRouter({
                     component: () => import("@/views/userfaced/user/UserSpacePage.vue"),
                     meta: {
                         title: "用户空间"
+                    }
+                },
+                {
+                    path: "/user/settings",
+                    name: RouteName.USER_SETTINGS,
+                    component: () => import("@/views/userfaced/user/UserSettingsPage.vue"),
+                    meta: {
+                        title: "用户设置",
+                        requireLogin: true
                     }
                 },
                 {
@@ -148,20 +158,20 @@ const router = createRouter({
     ],
 })
 
-const defaultTitle = "Lampray";
-
 export const getTitleSuffix = () => {
     return " | 灯辉 - Lampray"
 }
 
 router.afterEach((to, from) => {
-    document.title = to.meta.title ? to.meta.title + getTitleSuffix() : defaultTitle
+    document.title = i18n.global.t(`route.${to.name as string}`) + getTitleSuffix()
 })
 
 
 router.beforeEach((to, from, next) => {
     const userStore = useUserStore()
 
+    // TODO: improve performance
+    userStore.load()
     if (to.meta.requireLogin && !userStore.isLogin) {
         return next({
             name: RouteName.LOGIN,

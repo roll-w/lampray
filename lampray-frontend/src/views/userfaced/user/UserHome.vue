@@ -33,19 +33,22 @@ const showAlert = ref(true);
                     :close="{color: 'neutral', class: 'rounded-md'}"
                     @update:open="(show: boolean) => showAlert = show">
                 <template #title>
-                            <span class="font-medium text-lg">当前为管理员账户，现在可以访问
+                            <span class="font-medium text-lg">
+                                ️{{ $t("views.userfaced.home.adminAlert.title") }}
                                 <router-link
                                         class="text-amber-500 hover:underline underline-offset-4 decoration-2
                                         decoration-amber-500/50 hover:decoration-amber-500 transition-all
                                         transition-duration-500 ease-in-out"
-                                        :to="{name: RouteName.ADMIN_HOME}">管理后台</router-link>
+                                        :to="{name: RouteName.ADMIN_HOME}">
+                                    {{ $t("navbar.admin") }}
+                                </router-link>
                             </span>
                 </template>
             </UAlert>
         </div>
     </Transition>
 
-    <UPageHero title="Placeholder" description="Placeholder"/>
+    <UPageHero title="Lampray"/>
 </template>
 
 <style scoped>

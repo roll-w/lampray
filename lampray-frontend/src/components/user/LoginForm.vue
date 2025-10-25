@@ -15,7 +15,7 @@
   -->
 
 <script setup lang="ts">
-import {reactive, ref} from "vue";
+import {reactive, ref, useTemplateRef, watch} from "vue";
 import * as z from "zod";
 import {loginRegisterService} from "@/services/user/user.service.ts";
 import {RouteName} from "@/router/routeName.ts";
@@ -24,27 +24,23 @@ import {useI18n} from "vue-i18n";
 import {newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
 import {useAxios} from "@/composables/useAxios.ts";
 import {useUserStore} from "@/stores/user.ts";
+import {PASSWORD_REGEX, USERNAME_REGEX} from "@/components/user/constants.ts";
 
-const {t} = useI18n();
+const {t, locale} = useI18n();
 
 const axios = useAxios();
 const toast = useToast();
 const router = useRouter();
 const userStore = useUserStore();
 
-// username / email / password regex adapted from backend UserChecker.java
-const USERNAME_REGEX = /^[a-zA-Z_\-][\w.\-]{2,19}$/; // 3-20 chars, start with letter/_/-
-const PASSWORD_REGEX = /^[A-Za-z\d._\-~!@#$^&*+=<>%;'"\\/|()\[\]{}]{4,20}$/; // 4-20 allowed characters
-const EMAIL_REGEX = /^\w+([-+. ]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/; // simplified email regex
-
-const loginSchema = z.object({
+const createLoginSchema = () => z.object({
     identity: z.string()
         .min(1, t("views.userfaced.user.login.identityRequired"))
         .refine(val => {
             if (!val) return false;
             const v = val.trim();
             if (v.includes("@")) {
-                return EMAIL_REGEX.test(v);
+                return z.email().safeParse(v).success;
             }
             return USERNAME_REGEX.test(v);
         }, {
@@ -56,7 +52,17 @@ const loginSchema = z.object({
         .regex(PASSWORD_REGEX, {message: t("views.userfaced.user.login.invalidPasswordDetail")}),
     rememberMe: z.boolean().default(false)
 });
-type LoginSchema = z.output<typeof loginSchema>;
+
+const loginSchema = ref(createLoginSchema());
+const form = useTemplateRef("form")
+
+watch(locale, async () => {
+    loginSchema.value = createLoginSchema();
+    // TODO: fix form error message update
+    form.value?.clear()
+}, {immediate: true});
+
+type LoginSchema = z.output<ReturnType<typeof createLoginSchema>>;
 const loginForm = reactive<Partial<LoginSchema>>({
     identity: "",
     token: "",
@@ -76,7 +82,7 @@ const jumpTo = () => {
  };
 
  const onLoginClick = async () => {
-     const result = loginSchema.safeParse(loginForm);
+     const result = loginSchema.value.safeParse(loginForm);
      if (!result.success) {
          const firstError = result.error.issues[0]?.message || t("request.error.title");
          toast.add(newErrorToastFromError(new Error(firstError), t("request.error.title")));
@@ -110,7 +116,7 @@ const onLoginReset = () => {
 };
 </script>
 <template>
-    <UForm :schema="loginSchema" :state="loginForm" class="space-y-4 w-full" @submit="onLoginClick">
+    <UForm :schema="loginSchema" :state="loginForm" class="space-y-4 w-full" @submit="onLoginClick" ref="form">
         <UFormField :label="t('views.userfaced.user.login.identity')" name="identity" required>
             <UInput v-model="loginForm.identity" :placeholder="t('views.userfaced.user.login.identityPlaceholder')" type="text"
                     autocomplete="username" name="identity" class="w-full"/>

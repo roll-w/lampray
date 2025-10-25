@@ -108,6 +108,9 @@ const buildAdminMenu = (): DropdownMenuItem[] => [
         {
             label: t("navbar.settings"),
             icon: "i-lucide-settings",
+            to: {
+                name: RouteName.USER_SETTINGS
+            }
         },
     ],
     [
