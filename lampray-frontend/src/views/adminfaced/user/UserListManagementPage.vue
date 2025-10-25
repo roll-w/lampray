@@ -16,22 +16,23 @@
 
 <script setup lang="ts">
 import {h, onMounted, ref, resolveComponent} from "vue"
-import {useRouter} from "vue-router"
 import {useAxios} from "@/composables/useAxios"
 import {userManageService} from "@/services/user/user.service"
 import type {UserDetailsVo} from "@/services/user/user.type"
 import type {TableColumn} from "@nuxt/ui";
 import {RouteName} from "@/router/routeName.ts";
 import DashboardPanel from "@/views/adminfaced/DashboardPanel.vue";
+import {useI18n} from "vue-i18n";
+import {newErrorToastFromError} from "@/utils/toasts.ts";
 
 const UButton = resolveComponent("UButton")
-const UCheckbox = resolveComponent("UCheckbox")
 const RouterLink = resolveComponent("RouterLink")
 const UBadge = resolveComponent("UBadge")
 
-const router = useRouter()
 const axios = useAxios()
 const userManage = userManageService(axios)
+const toast = useToast()
+const {t} = useI18n()
 
 
 const users = ref<UserDetailsVo[]>([])
@@ -113,7 +114,7 @@ const loadUsers = async () => {
         const body = response.data
         users.value = body.data || []
     } catch (error) {
-        // TODO: Show error toast
+        toast.add(newErrorToastFromError(error, t("request.error.title")))
     } finally {
         loading.value = false
     }

@@ -44,10 +44,6 @@ export const userService = (axios: AxiosInstance) => {
                 path, mergedOptions
             );
         },
-        async updateUser(userId: string | number, data: Partial<UserVo>, options: RawAxiosRequestConfig = {}): Promise<void> {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            // TODO
-        },
     }
 }
 

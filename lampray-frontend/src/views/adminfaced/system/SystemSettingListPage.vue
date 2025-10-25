@@ -20,8 +20,12 @@ import {useAxios} from "@/composables/useAxios"
 import DashboardPanel from "@/views/adminfaced/DashboardPanel.vue";
 import {systemSettingService} from "@/services/system/system.service.ts";
 import type {SettingVo} from "@/services/system/system.type.ts";
+import {newErrorToastFromError} from "@/utils/toasts.ts";
+import {useI18n} from "vue-i18n";
 
 const axios = useAxios()
+const {t} = useI18n()
+const toast = useToast()
 
 const settings = ref<SettingVo[]>([])
 const loading = ref(false)
@@ -36,7 +40,7 @@ const loadSettings = async () => {
             settings.value = response.data!
         })
     } catch (error) {
-        // TODO: Show error toast
+        toast.add(newErrorToastFromError(error, t("request.error.title")))
     } finally {
         loading.value = false
     }

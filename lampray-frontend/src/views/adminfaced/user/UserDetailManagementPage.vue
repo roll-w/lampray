@@ -24,10 +24,14 @@ import type {FieldConfig} from "@/components/DynamicFieldInput.vue";
 import {findFieldConfig} from "@/components/DynamicFieldInput.vue";
 import {RouteName} from "@/router/routeName.ts";
 import {useAxios} from "@/composables/useAxios.ts";
+import {newErrorToastFromError} from "@/utils/toasts.ts";
+import {useI18n} from "vue-i18n";
 
 const router = useRouter();
 const route = router.currentRoute;
 const axios = useAxios();
+const toast = useToast();
+const {t} = useI18n();
 
 const user = ref<UserDetailsVo | null>(null);
 const rawUser = ref<UserDetailsVo | null>(null);
@@ -42,7 +46,7 @@ const fetchUser = async (id: string) => {
         user.value = body.data!;
         rawUser.value = {...body.data!}; // Make a copy for reset
     } catch (error) {
-        // TODO: Show error toast
+        toast.add(newErrorToastFromError(error, t("request.error.title")))
     } finally {
         loading.value = false;
     }

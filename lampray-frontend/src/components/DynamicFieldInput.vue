@@ -205,16 +205,6 @@ const handleUpdate = (newValue: any) => {
 
             <div v-else-if="mergedConfig.type === 'image'" class="rounded-xl overflow-hidden">
                 <!--TODO: image viewer and uploader-->
-
-                <!--                <img-->
-                <!--                        v-if="inputValue"-->
-                <!--                        :src="inputValue"-->
-                <!--                        :alt="mergedConfig.name"-->
-                <!--                        class="w-full h-[30vh] object-contain"-->
-                <!--                />-->
-                <!--                <div v-else class="h-[30vh] flex items-center justify-center text-gray-400">-->
-                <!--                    No image-->
-                <!--                </div>-->
             </div>
 
             <UInput
