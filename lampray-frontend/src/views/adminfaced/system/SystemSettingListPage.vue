@@ -33,12 +33,11 @@ const loading = ref(false)
 const loadSettings = async () => {
     try {
         loading.value = true
-        systemSettingService(axios).listSettings({
+        const response = await systemSettingService(axios).listSettings({
             page: 1,
             size: 100,
-        }).then(response => {
-            settings.value = response.data!
         })
+        settings.value = response.data!
     } catch (error) {
         toast.add(newErrorToastFromError(error, t("request.error.title")))
     } finally {
@@ -50,6 +49,52 @@ const loadSettings = async () => {
 onMounted(() => {
     loadSettings()
 })
+
+const changedSettings = ref<SettingVo[]>([])
+
+const onSettingChanged = (setting: SettingVo) => {
+    const index = changedSettings.value.findIndex(s => s.key === setting.key)
+    if (index !== -1) {
+        changedSettings.value[index] = setting
+    } else {
+        changedSettings.value.push(setting)
+    }
+}
+
+const onSettingReset = (setting: SettingVo) => {
+    const index = changedSettings.value.findIndex(s => s.key === setting.key)
+    if (index !== -1) {
+        changedSettings.value.splice(index, 1)
+    }
+}
+
+// New: save and reset handlers for floating toolbar
+const saving = ref(false)
+
+const saveChanges = async () => {
+    if (changedSettings.value.length === 0) return
+    saving.value = true
+    try {
+        await Promise.all(changedSettings.value.map(s => {
+            const value = s.value === undefined ? null : String(s.value)
+            return systemSettingService(axios).setSetting(s.key, value)
+        }))
+
+        // reload settings and clear tracked changes
+        await loadSettings()
+        changedSettings.value = []
+    } catch (error) {
+        toast.add(newErrorToastFromError(error, t("request.error.title")))
+    } finally {
+        saving.value = false
+    }
+}
+
+const resetChanges = async () => {
+    // simply discard local changes and reload from server
+    changedSettings.value = []
+    await loadSettings()
+}
 
 </script>
 
@@ -85,8 +130,36 @@ onMounted(() => {
             </div>
 
             <div class="mt-4 w-full lg:w-3/5 xl:w-1/2">
-                <SettingEntry v-for="item in settings" :key="item.key" :setting="item"/>
+                <SettingEntry v-for="item in settings" :key="item.key" :setting="item"
+                              :on-change="onSettingChanged"
+                              :on-reset="onSettingReset"/>
             </div>
+
+            <!-- Floating toolbar -->
+            <Transition name="slide-fade">
+                <div v-if="changedSettings.length > 0" class="fixed right-6 bottom-6 z-50">
+                    <div class="flex space-x-3 bg-white dark:bg-gray-800 rounded-md p-3 items-center border border-gray-300 dark:border-gray-700 shadow-lg">
+                        <UButton
+                                color="primary"
+                                variant="solid"
+                                :loading="saving || loading"
+                                :disabled="saving || loading"
+                                @click="saveChanges"
+                        >
+                            保存更改
+                        </UButton>
+                        <UButton
+                                color="neutral"
+                                variant="outline"
+                                :disabled="saving || loading"
+                                @click="resetChanges"
+                        >
+                            重置
+                        </UButton>
+                        <div class="text-sm text-gray-500 ml-2">{{ changedSettings.length }} 更改</div>
+                    </div>
+                </div>
+            </Transition>
         </template>
     </DashboardPanel>
 </template>

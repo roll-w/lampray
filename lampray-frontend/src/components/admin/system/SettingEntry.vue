@@ -15,8 +15,8 @@
   -->
 
 <script setup lang="ts">
-import type {PropType} from 'vue'
-import {ref, watch} from 'vue'
+import type {PropType} from "vue";
+import {ref, watch} from "vue";
 import {SettingSource, type SettingVo} from "@/services/system/system.type.ts";
 
 const props = defineProps({
@@ -39,9 +39,12 @@ const props = defineProps({
 })
 
 const inputValue = ref<any>(props.setting.value)
-const editable = props.setting.source === SettingSource.DATABASE
+const editable = props.setting.supportedSources.includes(SettingSource.DATABASE)
 
 watch(inputValue, (newVal) => {
+    if (newVal === props.setting.value) {
+        return
+    }
     if (props.onChange) {
         props.onChange({
             ...props.setting,
@@ -49,6 +52,17 @@ watch(inputValue, (newVal) => {
         })
     }
 })
+
+const reset = () => {
+    inputValue.value = props.setting.value
+    if (props.onReset) {
+        props.onReset({
+            ...props.setting,
+            value: inputValue.value
+        })
+    }
+}
+
 </script>
 
 <template>
@@ -63,13 +77,12 @@ watch(inputValue, (newVal) => {
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 whitespace-pre-line">
             {{ setting.description }}
         </p>
-
-        <div class="w-full mt-2">
+        <div class="w-full mt-2 flex flex-row items-center gap-2">
             <template v-if="setting.type === 'BOOLEAN'">
                 <USwitch
                         v-model="inputValue"
                         :disabled="!editable"
-                        class="w-full"
+                        class="flex-1"
                 />
             </template>
 
@@ -78,7 +91,7 @@ watch(inputValue, (newVal) => {
                         v-model="inputValue"
                         size="md"
                         :disabled="!editable"
-                        class="w-full"
+                        class="flex-1"
                 />
             </template>
 
@@ -89,7 +102,7 @@ watch(inputValue, (newVal) => {
                         size="md"
                         :disabled="!editable"
                         inputmode="numeric"
-                        class="w-full"
+                        class="flex-1"
                 />
             </template>
 
@@ -101,7 +114,7 @@ watch(inputValue, (newVal) => {
                         :disabled="!editable"
                         inputmode="decimal"
                         step="0.01"
-                        class="w-full"
+                        class="flex-1"
                 />
             </template>
 
@@ -113,7 +126,7 @@ watch(inputValue, (newVal) => {
                         :creatable="true"
                         :options="[]"
                         placeholder="输入或选择选项"
-                        class="w-full"
+                        class="flex-1"
                 />
             </template>
 
@@ -122,9 +135,28 @@ watch(inputValue, (newVal) => {
                         v-model="inputValue"
                         size="md"
                         :disabled="!editable"
-                        class="w-full"
+                        class="flex-1"
                 />
             </template>
+            <div v-if="editable" class="flex flex-row gap-2">
+                <UButton
+                        color="primary"
+                        variant="outline"
+                        size="md"
+                        icon="i-lucide-rotate-ccw"
+                        @click="reset"
+                >
+                </UButton>
+                <UButton
+                        color="error"
+                        variant="outline"
+                        size="md"
+                        icon="i-lucide-trash-2"
+                        @click="onDelete && onDelete(setting)"
+                />
+            </div>
         </div>
+
+
     </div>
 </template>

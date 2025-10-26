@@ -16,7 +16,7 @@
 
 import type {AxiosInstance, RawAxiosRequestConfig} from "axios";
 import type {HttpResponseBody, PageableRequest} from "@/services/common.type.ts";
-import type {SettingVo} from "@/services/system/system.type.ts";
+import type {SettingDetailsVo, SettingVo} from "@/services/system/system.type.ts";
 
 export const systemSettingService = (axios: AxiosInstance) => {
     return {
@@ -34,7 +34,7 @@ export const systemSettingService = (axios: AxiosInstance) => {
         },
         async setSetting(key: string, value: string | null, options: RawAxiosRequestConfig = {}): Promise<void> {
             const mergedOptions = {...options};
-            const path = `/api/v1/system/settings/{key}`
+            const path = `/api/v1/admin/system/settings/{key}`
                 .replace(`{key}`, encodeURIComponent(String(key)));
             await axios.put(
                 path,
@@ -44,11 +44,11 @@ export const systemSettingService = (axios: AxiosInstance) => {
                 mergedOptions
             );
         },
-        async getSetting(key: string, options: RawAxiosRequestConfig = {}): Promise<HttpResponseBody<SettingVo>> {
+        async getSetting(key: string, options: RawAxiosRequestConfig = {}): Promise<HttpResponseBody<SettingDetailsVo>> {
             const mergedOptions = {...options};
             const path = `/api/v1/system/settings/{key}`
                 .replace(`{key}`, encodeURIComponent(String(key)));
-            const response = await axios.get<HttpResponseBody<SettingVo>>(
+            const response = await axios.get<HttpResponseBody<SettingDetailsVo>>(
                 path, mergedOptions
             );
             return response.data;

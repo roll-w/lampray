@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import tech.lamprism.lampray.TimeAttributed;
 import tech.lamprism.lampray.setting.AttributedSettingSpecification;
 import tech.lamprism.lampray.setting.ConfigProvider;
 import tech.lamprism.lampray.setting.ConfigValue;
+import tech.lamprism.lampray.setting.LayeredConfigValue;
 import tech.lamprism.lampray.setting.SecretLevel;
 import tech.lamprism.lampray.setting.SettingDescriptionProvider;
 import tech.lamprism.lampray.setting.SettingKey;
@@ -35,10 +36,12 @@ import tech.lamprism.lampray.setting.SettingSpecificationProvider;
 import tech.lamprism.lampray.web.StringValue;
 import tech.lamprism.lampray.web.controller.AdminApi;
 import tech.lamprism.lampray.web.controller.system.model.ListSettingRequest;
+import tech.lamprism.lampray.web.controller.system.model.SettingDetailsVo;
 import tech.lamprism.lampray.web.controller.system.model.SettingVo;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.page.ImmutablePage;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -126,7 +129,8 @@ public class SystemSettingController {
                     description,
                     key.getType().toString(),
                     value.getSource(),
-                    timeAttributed.getUpdateTime()
+                    timeAttributed.getUpdateTime(),
+                    specification.getSupportedSources()
             );
         }
         return new SettingVo(
@@ -135,7 +139,8 @@ public class SystemSettingController {
                 description,
                 key.getType().toString(),
                 value.getSource(),
-                null
+                null,
+                specification.getSupportedSources()
         );
     }
 
@@ -164,12 +169,56 @@ public class SystemSettingController {
     }
 
     @GetMapping("/system/settings/{key}")
-    public HttpResponseEntity<SettingVo> getSetting(@PathVariable String key) {
+    public HttpResponseEntity<SettingDetailsVo> getSetting(@PathVariable String key) {
         AttributedSettingSpecification<?, ?> specification = settingSpecificationProvider.getSettingSpecification(key);
         ConfigValue<?, ?> configValue = configProvider.getValue(specification);
         boolean secret = specification.getSecret();
         SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
-        SettingVo settingVo = toSettingVo(configValue, secretLevel, specification);
+        SettingDetailsVo settingVo = toSettingDetailsVo(configValue, secretLevel, specification);
         return HttpResponseEntity.success(settingVo);
+    }
+
+    private SettingDetailsVo toSettingDetailsVo(ConfigValue<?, ?> value, SecretLevel secretLevel,
+                                                AttributedSettingSpecification<?, ?> specification) {
+        SettingKey<?, ?> key = value.getSpecification().getKey();
+        Object masked = maskSecret(value.getValue(), secretLevel);
+        String description = settingDescriptionProvider.getSettingDescription(specification.getDescription());
+        List<ConfigValue<?, ?>> layers = getValueLayers(value);
+        List<SettingDetailsVo.ValueLayer> valueLayers = layers.stream()
+                .map(layerValue -> new SettingDetailsVo.ValueLayer(layerValue.getSource(), layerValue.getValue()))
+                .toList();
+        if (value instanceof TimeAttributed timeAttributed) {
+            return new SettingDetailsVo(
+                    key.getName(),
+                    masked,
+                    description,
+                    key.getType().toString(),
+                    value.getSource(),
+                    timeAttributed.getUpdateTime(),
+                    specification.getSupportedSources(),
+                    specification.getDefaults(),
+                    specification.getValueEntries(),
+                    valueLayers
+            );
+        }
+        return new SettingDetailsVo(
+                key.getName(),
+                masked,
+                description,
+                key.getType().toString(),
+                value.getSource(),
+                null,
+                specification.getSupportedSources(),
+                specification.getDefaults(),
+                specification.getValueEntries(),
+                valueLayers
+        );
+    }
+
+    private List<ConfigValue<?, ?>> getValueLayers(ConfigValue<?, ?> value) {
+        if (value instanceof LayeredConfigValue<?, ?> layeredConfigValue) {
+            return new ArrayList<>(layeredConfigValue.getLayers());
+        }
+        return List.of();
     }
 }

@@ -63,13 +63,21 @@ class CombinedConfigProvider(
     }
 
     override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
-        for (reader in configProviders) {
-            val value = reader.getValue(specification)
-            if (value.value != null) {
-                return value
-            }
+        if (configProviders.isEmpty()) {
+            return SnapshotConfigValue(
+                null,
+                SettingSource.NONE,
+                specification
+            )
         }
-        return SnapshotConfigValue(null, SettingSource.NONE, specification)
+
+        val layers = mutableListOf<ConfigValue<T, V>>()
+        for (reader in configProviders) {
+            // Query cost is low, so we get all layers' values.
+            val value = reader.getValue(specification)
+            layers.add(value)
+        }
+        return LayeredConfigValueImpl(specification, layers)
     }
 
     override fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>> {

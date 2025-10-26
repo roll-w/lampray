@@ -126,7 +126,7 @@ object SettingSpecificationUtils {
                 val typeHint = buildString {
                     append("Type: ${it.key.type.toReadableName()}")
                     append(
-                        if (it.isRequired) "  [Required]" else
+                        if (it.isRequired) " [Required]" else
                             " [Optional]"
                     )
                     append(
