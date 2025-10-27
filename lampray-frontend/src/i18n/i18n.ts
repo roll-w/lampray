@@ -30,7 +30,7 @@ export type LocaleOption = {
 }
 
 export const availableLocales: LocaleOption[] = [
-    {code: "en", label: "English", isoCode: "en"},
+    {code: "en", label: "English", isoCode: "en-US"},
     {code: "zh-CN", label: "简体中文", isoCode: "zh-Hans"},
 ]
 

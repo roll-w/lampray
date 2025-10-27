@@ -44,6 +44,15 @@ export const systemSettingService = (axios: AxiosInstance) => {
                 mergedOptions
             );
         },
+        async deleteSetting(key: string, options: RawAxiosRequestConfig = {}): Promise<void> {
+            const mergedOptions = {...options};
+            const path = `/api/v1/admin/system/settings/{key}`
+                .replace(`{key}`, encodeURIComponent(String(key)));
+            await axios.delete(
+                path,
+                mergedOptions
+            );
+        },
         async getSetting(key: string, options: RawAxiosRequestConfig = {}): Promise<HttpResponseBody<SettingDetailsVo>> {
             const mergedOptions = {...options};
             const path = `/api/v1/system/settings/{key}`

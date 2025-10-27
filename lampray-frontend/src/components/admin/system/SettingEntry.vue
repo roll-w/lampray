@@ -18,6 +18,7 @@
 import type {PropType} from "vue";
 import {ref, watch} from "vue";
 import {SettingSource, type SettingVo} from "@/services/system/system.type.ts";
+import {useI18n} from "vue-i18n";
 
 const props = defineProps({
     setting: {
@@ -38,6 +39,7 @@ const props = defineProps({
     }
 })
 
+const {t} = useI18n()
 const inputValue = ref<any>(props.setting.value)
 const editable = props.setting.supportedSources.includes(SettingSource.DATABASE)
 
@@ -53,7 +55,7 @@ watch(inputValue, (newVal) => {
     }
 })
 
-const reset = () => {
+const resetSetting = () => {
     inputValue.value = props.setting.value
     if (props.onReset) {
         props.onReset({
@@ -61,6 +63,15 @@ const reset = () => {
             value: inputValue.value
         })
     }
+}
+
+const showDeleteConfirmModalState = ref(false)
+
+const deleteSetting = () => {
+    if (props.onDelete) {
+        props.onDelete(props.setting)
+    }
+    showDeleteConfirmModalState.value = false
 }
 
 </script>
@@ -82,7 +93,7 @@ const reset = () => {
                 <USwitch
                         v-model="inputValue"
                         :disabled="!editable"
-                        class="flex-1"
+                        class="max-w-full flex-1"
                 />
             </template>
 
@@ -91,7 +102,7 @@ const reset = () => {
                         v-model="inputValue"
                         size="md"
                         :disabled="!editable"
-                        class="flex-1"
+                        class="max-w-full flex-1"
                 />
             </template>
 
@@ -102,7 +113,7 @@ const reset = () => {
                         size="md"
                         :disabled="!editable"
                         inputmode="numeric"
-                        class="flex-1"
+                        class="max-w-full flex-1"
                 />
             </template>
 
@@ -114,7 +125,7 @@ const reset = () => {
                         :disabled="!editable"
                         inputmode="decimal"
                         step="0.01"
-                        class="flex-1"
+                        class="max-w-full flex-1"
                 />
             </template>
 
@@ -124,9 +135,8 @@ const reset = () => {
                         multiple
                         :disabled="!editable"
                         :creatable="true"
-                        :options="[]"
                         placeholder="输入或选择选项"
-                        class="flex-1"
+                        class="max-w-full flex-1"
                 />
             </template>
 
@@ -135,7 +145,7 @@ const reset = () => {
                         v-model="inputValue"
                         size="md"
                         :disabled="!editable"
-                        class="flex-1"
+                        class="max-w-full flex-1"
                 />
             </template>
             <div v-if="editable" class="flex flex-row gap-2">
@@ -144,7 +154,7 @@ const reset = () => {
                         variant="outline"
                         size="md"
                         icon="i-lucide-rotate-ccw"
-                        @click="reset"
+                        @click="resetSetting"
                 >
                 </UButton>
                 <UButton
@@ -152,9 +162,35 @@ const reset = () => {
                         variant="outline"
                         size="md"
                         icon="i-lucide-trash-2"
-                        @click="onDelete && onDelete(setting)"
+                        @click="showDeleteConfirmModalState = true"
                 />
+                <UModal v-model:open="showDeleteConfirmModalState">
+                    <template #content>
+                        <div class="p-4">
+                            <div class="text-lg font-medium mb-4">{{ t("views.adminfaced.system.settings.deleteTitle")}} </div>
+                            <p class="mb-4">{{ t("views.adminfaced.system.settings.deleteDescription", {key: setting.key}) }}</p>
+                            <div class="flex justify-end space-x-2">
+                                <UButton
+                                        color="neutral"
+                                        variant="outline"
+                                        @click="showDeleteConfirmModalState = false"
+                                >
+                                    {{ t("common.cancel") }}
+                                </UButton>
+                                <UButton
+                                        color="error"
+                                        variant="solid"
+                                        @click="deleteSetting"
+                                >
+                                    {{ t("common.delete") }}
+                                </UButton>
+                            </div>
+                        </div>
+                    </template>
+                </UModal>
             </div>
+
+
         </div>
 
 

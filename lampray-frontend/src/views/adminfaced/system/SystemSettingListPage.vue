@@ -20,7 +20,7 @@ import {useAxios} from "@/composables/useAxios"
 import DashboardPanel from "@/views/adminfaced/DashboardPanel.vue";
 import {systemSettingService} from "@/services/system/system.service.ts";
 import type {SettingVo} from "@/services/system/system.type.ts";
-import {newErrorToastFromError} from "@/utils/toasts.ts";
+import {newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
 import {useI18n} from "vue-i18n";
 
 const axios = useAxios()
@@ -29,6 +29,7 @@ const toast = useToast()
 
 const settings = ref<SettingVo[]>([])
 const loading = ref(false)
+const deleting = ref(false)
 
 const loadSettings = async () => {
     try {
@@ -37,8 +38,10 @@ const loadSettings = async () => {
             page: 1,
             size: 100,
         })
+        // TODO: fix, the input value not reflect the updated value after reload
         settings.value = response.data!
     } catch (error) {
+        console.log(error)
         toast.add(newErrorToastFromError(error, t("request.error.title")))
     } finally {
         loading.value = false
@@ -68,7 +71,25 @@ const onSettingReset = (setting: SettingVo) => {
     }
 }
 
-// New: save and reset handlers for floating toolbar
+const onSettingDelete = async (setting: SettingVo) => {
+    const index = changedSettings.value.findIndex(s => s.key === setting.key)
+    if (index !== -1) {
+        changedSettings.value.splice(index, 1)
+    }
+
+    if (!setting || !setting.key) return
+    deleting.value = true
+    try {
+        await systemSettingService(axios).deleteSetting(setting.key)
+        toast.add(newSuccessToast(t("request.success.title"), t("views.adminfaced.system.settings.deleteSuccess", {key: setting.key})))
+        await loadSettings()
+    } catch (error) {
+        toast.add(newErrorToastFromError(error, t("request.error.title")))
+    } finally {
+        deleting.value = false
+    }
+}
+
 const saving = ref(false)
 
 const saveChanges = async () => {
@@ -80,7 +101,7 @@ const saveChanges = async () => {
             return systemSettingService(axios).setSetting(s.key, value)
         }))
 
-        // reload settings and clear tracked changes
+        // Reload settings and clear tracked changes
         await loadSettings()
         changedSettings.value = []
     } catch (error) {
@@ -91,7 +112,7 @@ const saveChanges = async () => {
 }
 
 const resetChanges = async () => {
-    // simply discard local changes and reload from server
+    // Simply discard local changes and reload from server
     changedSettings.value = []
     await loadSettings()
 }
@@ -103,60 +124,58 @@ const resetChanges = async () => {
         <template #header>
             <UDashboardNavbar>
                 <template #title>
-                   <span class="text-lg font-medium mr-2">
-                      设置管理
-                    </span>
+                   <span class="text-lg font-medium mr-2">{{ t('route.admin-system-settings') }}</span>
                 </template>
             </UDashboardNavbar>
         </template>
         <template #body>
             <div class="w-full lg:w-3/5 xl:w-1/2">
                 <div class="w-full flex flex-col">
-                    <h3 class="text-base font-medium">当前生效配置源</h3>
-                    <!--TODO: allow switch the source -->
-                    <UStepper
-                            disabled
+                    <h3 class="text-base font-medium">{{ t('views.adminfaced.system.settings.currentSource') }}</h3>
+                     <!--TODO: allow switch the source -->
+                     <UStepper
+                             disabled
                             :items="[
-                              { title: '数据库' },
-                              { title: '命令行' },
-                              { title: '环境变量' },
-                              { title: '配置文件' }
+                              { title: t('views.adminfaced.system.settings.source.DATABASE') },
+                              { title: t('views.adminfaced.system.settings.source.COMMAND') },
+                              { title: t('views.adminfaced.system.settings.source.ENVIRONMENT') },
+                              { title: t('views.adminfaced.system.settings.source.FILE') }
                             ]"
-                            :model-value="4"
-                            orientation="horizontal"
-                            class="mt-4"
-                    />
-                </div>
-            </div>
+                             :model-value="4"
+                             orientation="horizontal"
+                             class="mt-4"
+                     />
+                 </div>
+             </div>
 
             <div class="mt-4 w-full lg:w-3/5 xl:w-1/2">
                 <SettingEntry v-for="item in settings" :key="item.key" :setting="item"
                               :on-change="onSettingChanged"
-                              :on-reset="onSettingReset"/>
+                              :on-reset="onSettingReset"
+                              :on-delete="onSettingDelete"/>
             </div>
 
-            <!-- Floating toolbar -->
             <Transition name="slide-fade">
                 <div v-if="changedSettings.length > 0" class="fixed right-6 bottom-6 z-50">
                     <div class="flex space-x-3 bg-white dark:bg-gray-800 rounded-md p-3 items-center border border-gray-300 dark:border-gray-700 shadow-lg">
                         <UButton
-                                color="primary"
-                                variant="solid"
-                                :loading="saving || loading"
-                                :disabled="saving || loading"
-                                @click="saveChanges"
-                        >
-                            保存更改
-                        </UButton>
-                        <UButton
-                                color="neutral"
-                                variant="outline"
-                                :disabled="saving || loading"
-                                @click="resetChanges"
-                        >
-                            重置
-                        </UButton>
-                        <div class="text-sm text-gray-500 ml-2">{{ changedSettings.length }} 更改</div>
+                                 color="primary"
+                                 variant="solid"
+                                 :loading="saving || loading"
+                                 :disabled="saving || loading"
+                                 @click="saveChanges"
+                         >
+                            {{ t('views.adminfaced.system.settings.saveChanges') }}
+                         </UButton>
+                         <UButton
+                                 color="neutral"
+                                 variant="outline"
+                                 :disabled="saving || loading"
+                                 @click="resetChanges"
+                         >
+                            {{ t('common.reset') }}
+                         </UButton>
+                        <div class="text-sm text-gray-500 ml-2">{{ t('views.adminfaced.system.settings.changes', {count: changedSettings.length}) }}</div>
                     </div>
                 </div>
             </Transition>

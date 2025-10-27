@@ -63,6 +63,24 @@
         "contactSupportSuffix": " for assistance."
       }
     },
+    "adminfaced": {
+      "system": {
+        "settings": {
+          "currentSource": "Current effective configuration source",
+          "source": {
+            "DATABASE": "Database",
+            "COMMAND": "Command line",
+            "ENVIRONMENT": "Environment variables",
+            "FILE": "Configuration file"
+          },
+          "saveChanges": "Save changes",
+          "changes": "{count} changes",
+          "deleteSuccess": "Deleted setting {key}",
+          "deleteTitle": "Confirm Delete Setting?",
+          "deleteDescription": "Are you sure you want to delete the setting \"{key}\"? This action cannot be undone."
+        }
+      }
+    },
     "userfaced": {
       "home": {
         "adminAlert": {

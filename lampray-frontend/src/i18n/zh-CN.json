@@ -64,6 +64,24 @@
         "contactSupportSuffix": "获取帮助。"
       }
     },
+    "adminfaced": {
+      "system": {
+        "settings": {
+          "currentSource": "当前生效配置源",
+          "source": {
+            "DATABASE": "数据库",
+            "COMMAND": "命令行",
+            "ENVIRONMENT": "环境变量",
+            "FILE": "配置文件"
+          },
+          "saveChanges": "保存更改",
+          "changes": "{count} 更改",
+          "deleteSuccess": "已删除设置 {key}",
+          "deleteTitle": "确认删除该设置？",
+          "deleteDescription": "您确定要删除设置项 \"{key}\" 吗？此操作无法撤销。"
+        }
+      }
+    },
     "userfaced": {
       "home": {
         "adminAlert": {
