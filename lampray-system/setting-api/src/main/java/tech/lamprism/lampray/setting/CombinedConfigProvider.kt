@@ -75,7 +75,12 @@ class CombinedConfigProvider(
         for (reader in configProviders) {
             // Query cost is low, so we get all layers' values.
             val value = reader.getValue(specification)
-            layers.add(value)
+            if (value is LayeredConfigValue) {
+                // Flatten layered values
+                layers.addAll(value.layers)
+            } else {
+                layers.add(value)
+            }
         }
         return LayeredConfigValueImpl(specification, layers)
     }

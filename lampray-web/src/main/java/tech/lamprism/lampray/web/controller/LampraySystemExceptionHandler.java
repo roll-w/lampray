@@ -36,6 +36,7 @@ import org.springframework.security.authentication.InsufficientAuthenticationExc
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.validation.BindException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -304,10 +305,15 @@ public class LampraySystemExceptionHandler {
         return HttpResponseEntity.of(WebCommonErrorCode.ERROR_BODY_MISSING);
     }
 
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public HttpResponseEntity<Void> handleHttpRequestMethodNotSupportedException() {
+        return HttpResponseEntity.of(WebCommonErrorCode.ERROR_METHOD_NOT_ALLOWED);
+    }
+
     @ExceptionHandler(Exception.class)
-    public HttpResponseEntity<Void> handle(Exception e) throws Exception {
-        if (e instanceof ServletException) {
-            throw e;
+    public HttpResponseEntity<Void> handle(Exception e) throws Throwable {
+        if (e instanceof ServletException se && se.getRootCause() != null) {
+            throw se.getRootCause();
         }
         if (e instanceof BeanInstantiationException) {
             throw e;
