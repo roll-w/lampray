@@ -160,11 +160,10 @@ public class SystemSettingController {
 
     @DeleteMapping("/system/settings/{key}")
     public HttpResponseEntity<SettingSource> deleteSetting(@PathVariable String key) {
-        // TODO: may need a delete method in ConfigProvider
         @SuppressWarnings("unchecked")
         AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
                 settingSpecificationProvider.getSettingSpecification(key);
-        SettingSource source = configProvider.set(specification, specification.getDefaultValue());
+        SettingSource source = configProvider.reset(specification);
         return HttpResponseEntity.success(source);
     }
 

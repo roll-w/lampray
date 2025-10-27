@@ -119,6 +119,18 @@ class CombinedConfigProvider(
         return SettingSource.NONE
     }
 
+    override fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource {
+        var resetSource = SettingSource.NONE
+        for (provider in configProviders) {
+            // Different from set, we try to reset in all providers that support the spec.
+            // And we return the last reset source for information.
+            if (provider.supports(spec)) {
+                resetSource = provider.reset(spec)
+            }
+        }
+        return resetSource
+    }
+
     override fun supports(key: String): Boolean {
         return configProviders.any { it.supports(key) }
     }

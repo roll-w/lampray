@@ -50,11 +50,17 @@ public enum SettingSource {
     ENVIRONMENT,
 
     /**
+     * Setting from command line arguments.
+     */
+    COMMAND_LINE,
+
+
+    /**
      * Setting from the database.
      */
     DATABASE;
 
-    public static final List<SettingSource> VALUES = List.of(SettingSource.values());
+    public static final List<SettingSource> VALUES = List.of(LOCAL, PROPERTIES, ENVIRONMENT, COMMAND_LINE, DATABASE);
 
-    public static final List<SettingSource> LOCAL_ONLY = List.of(LOCAL, PROPERTIES, ENVIRONMENT);
+    public static final List<SettingSource> LOCAL_ONLY = List.of(LOCAL, PROPERTIES, ENVIRONMENT, COMMAND_LINE);
 }

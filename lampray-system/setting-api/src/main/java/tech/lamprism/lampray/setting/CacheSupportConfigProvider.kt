@@ -120,4 +120,13 @@ class CacheSupportConfigProvider(
             cache.evictIfPresent(specKeyOf(configValue.specification))
         }
     }
+
+    override fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource {
+        return delegate.reset(spec).also { source ->
+            if (source == SettingSource.NONE) {
+                return@also
+            }
+            cache.evictIfPresent(specKeyOf(spec))
+        }
+    }
 }

@@ -136,6 +136,13 @@ class SystemSettingConfigProvider(
         return SettingSource.DATABASE
     }
 
+    override fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource {
+        val setting = systemSettingRepository.findByKey(spec.keyName)
+            .orElse(null) ?: return SettingSource.NONE
+        systemSettingRepository.delete(setting)
+        return SettingSource.DATABASE
+    }
+
     override fun supports(key: String): Boolean {
         return try {
             settingSpecificationProvider.getSettingSpecification(key)

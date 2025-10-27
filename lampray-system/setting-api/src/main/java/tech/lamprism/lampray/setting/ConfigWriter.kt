@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,14 @@ interface ConfigWriter {
     fun <T, V> set(configValue: ConfigValue<T, V>): SettingSource {
         return set(configValue.specification, configValue.value)
     }
+
+    /**
+     * Reset the setting to its default value. (Remove the stored value if any)
+     *
+     * @return appropriate [SettingSource] if the value is reset successfully,
+     * or [SettingSource.NONE] if the value cannot be reset (or not supported).
+     */
+    fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource
 
     fun supports(spec: SettingSpecification<*, *>): Boolean {
         return supports(spec.key.name)
