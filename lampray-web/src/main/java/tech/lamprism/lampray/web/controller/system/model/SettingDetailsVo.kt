@@ -28,6 +28,8 @@ data class SettingDetailsVo(
     val value: Any?,
     val description: String,
     val type: String,
+    val secret: Boolean,
+    val required: Boolean,
     val source: SettingSource,
     val updateTime: OffsetDateTime?,
     val supportedSources: List<SettingSource>,

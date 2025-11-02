@@ -11,7 +11,8 @@
     "noData": "No data",
     "reset": "Reset",
     "search": "Search",
-    "submit": "Submit"
+    "submit": "Submit",
+    "back": "Back"
   },
  "route": {
    "user-home": "Home",
@@ -26,6 +27,7 @@
    "admin-user-list": "User List",
    "admin-user-detail": "User Details",
    "admin-system-settings": "System Settings",
+   "admin-system-setting-detail": "Setting Details",
    "not-found": "Not Found",
    "blocked": "Blocked"
  },
@@ -77,8 +79,29 @@
           "changes": "{count} changes",
           "deleteSuccess": "Deleted setting {key}",
           "deleteTitle": "Confirm Delete Setting?",
-          "deleteDescription": "Are you sure you want to delete the setting \"{key}\"? This action cannot be undone."
-        }
+          "deleteDescription": "Are you sure you want to delete the setting \"{key}\"? This action cannot be undone.",
+           "detail": {
+             "title": "Setting Details",
+             "loadingTitle": "Setting Details - Loading",
+             "notFound": "Setting not found",
+             "missingKey": "Missing setting key, cannot open details page",
+             "type": "Type",
+             "updateTime": "Update Time",
+             "updateTimeAbsent": "No update time",
+             "layersTitle": "Setting Layers",
+             "layerIndex": "Layer {index}",
+             "editTitle": "Edit Setting Value",
+             "editHint": "Edit the effective value. For complex types provide valid JSON.",
+             "defaultsTitle": "Defaults",
+             "valueEntriesTitle": "Value Entries",
+             "valueEntryIndex": "Entry {index}",
+             "defaultBadgeText": "Default",
+             "noLayers": "No layers information",
+             "noDefaults": "No defaults",
+             "noValueEntries": "No value entries",
+             "noValue": "No value"
+           }
+         }
       }
     },
     "userfaced": {

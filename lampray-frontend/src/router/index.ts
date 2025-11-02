@@ -34,56 +34,37 @@ const router = createRouter({
                     path: "/",
                     name: RouteName.USER_HOME,
                     component: () => import("@/views/userfaced/user/UserHome.vue"),
-                    meta: {
-                        title: "首页"
-                    }
                 },
                 {
                     path: "/user/login",
                     name: RouteName.LOGIN,
                     component: () => import("@/views/userfaced/user/LoginRegisterPage.vue"),
-                    meta: {
-                        title: "登录"
-                    }
                 },
                 {
                     path: "/user/register",
                     name: RouteName.REGISTER,
                     component: () => import("@/views/userfaced/user/LoginRegisterPage.vue"),
-                    meta: {
-                        title: "注册"
-                    }
                 },
                  {
                     path: "/user/register/complete",
                     name: RouteName.REGISTER_TIPS,
                     component: () => import("@/views/userfaced/user/RegisterTipsPage.vue"),
-                    meta: {
-                        title: "注册完成"
-                    }
                 },
                 {
                     path: "/user/register/activate/:code",
                     name: RouteName.REGISTER_ACTIVATE,
                     component: () => import("@/views/userfaced/user/RegisterActivatePage.vue"),
-                    meta: {
-                        title: "注册激活"
-                    }
                 },
                 {
                     path: "/users/:id",
                     name: RouteName.USER_SPACE,
                     component: () => import("@/views/userfaced/user/UserSpacePage.vue"),
-                    meta: {
-                        title: "用户空间"
-                    }
                 },
                 {
                     path: "/user/settings",
                     name: RouteName.USER_SETTINGS,
                     component: () => import("@/views/userfaced/user/UserSettingsPage.vue"),
                     meta: {
-                        title: "用户设置",
                         requireLogin: true
                     }
                 },
@@ -91,9 +72,6 @@ const router = createRouter({
                     path: "/notfound",
                     name: RouteName.NOT_FOUND,
                     component: () => import("@/views/NotFound.vue"),
-                    meta: {
-                        title: "Not Found"
-                    }
                 },
                 {
                     path: "/:path(.*)*",
@@ -103,9 +81,6 @@ const router = createRouter({
                     path: "/blocked",
                     name: RouteName.BLOCKED,
                     component: () => import("@/views/Blocked.vue"),
-                    meta: {
-                        title: "Blocked"
-                    }
                 }
             ]
         },
@@ -119,33 +94,26 @@ const router = createRouter({
                     path: "/admin",
                     name: RouteName.ADMIN_HOME,
                     component: () => import("@/views/adminfaced/AdminHome.vue"),
-                    meta: {
-                        title: "管理后台"
-                    }
                 },
                 {
                     path: "/admin/users",
                     name: RouteName.ADMIN_USER_LIST,
                     component: () => import("@/views/adminfaced/user/UserListManagementPage.vue"),
-                    meta: {
-                        title: "用户管理"
-                    }
                 },
                 {
                     path: "/admin/users/:id",
                     name: RouteName.ADMIN_USER_DETAIL,
                     component: () => import("@/views/adminfaced/user/UserDetailManagementPage.vue"),
-                    meta: {
-                        title: "用户详情"
-                    }
                 },
                 {
                     path: "/admin/settings",
                     name: RouteName.ADMIN_SYSTEM_SETTINGS,
                     component: () => import("@/views/adminfaced/system/SystemSettingListPage.vue"),
-                    meta: {
-                        title: "系统设置"
-                    }
+                },
+                {
+                    path: "/admin/settings/:key",
+                    name: RouteName.ADMIN_SYSTEM_SETTING_DETAIL,
+                    component: () => import("@/views/adminfaced/system/SettingDetailPage.vue"),
                 },
 
             ],

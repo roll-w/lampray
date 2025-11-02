@@ -55,7 +55,7 @@ export const systemSettingService = (axios: AxiosInstance) => {
         },
         async getSetting(key: string, options: RawAxiosRequestConfig = {}): Promise<HttpResponseBody<SettingDetailsVo>> {
             const mergedOptions = {...options};
-            const path = `/api/v1/system/settings/{key}`
+            const path = `/api/v1/admin/system/settings/{key}`
                 .replace(`{key}`, encodeURIComponent(String(key)));
             const response = await axios.get<HttpResponseBody<SettingDetailsVo>>(
                 path, mergedOptions

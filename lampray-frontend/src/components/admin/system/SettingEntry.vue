@@ -19,6 +19,8 @@ import type {PropType} from "vue";
 import {ref, watch} from "vue";
 import {SettingSource, type SettingVo} from "@/services/system/system.type.ts";
 import {useI18n} from "vue-i18n";
+import {useRouter} from "vue-router";
+import {RouteName} from "@/router/routeName.ts";
 
 const props = defineProps({
     setting: {
@@ -74,12 +76,19 @@ const deleteSetting = () => {
     showDeleteConfirmModalState.value = false
 }
 
+const router = useRouter()
+const openDetail = () => {
+    router.push({ name: RouteName.ADMIN_SYSTEM_SETTING_DETAIL as any, params: { key: props.setting.key } })
+}
+
 </script>
 
 <template>
     <div class="py-3">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
-            <div class="text-lg font-medium">{{ setting.key }}</div>
+            <div class="text-lg font-medium">
+                <a class="text-primary hover:underline cursor-pointer" @click.prevent="openDetail">{{ setting.key }}</a>
+            </div>
             <UBadge variant="subtle" color="success" size="md" class="font-medium">
                 {{ setting.source }}
             </UBadge>
@@ -189,10 +198,6 @@ const deleteSetting = () => {
                     </template>
                 </UModal>
             </div>
-
-
         </div>
-
-
     </div>
 </template>

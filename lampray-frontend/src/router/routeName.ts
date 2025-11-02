@@ -32,6 +32,7 @@ export const RouteName = {
     ADMIN_USER_DETAIL: "admin-user-detail",
 
     ADMIN_SYSTEM_SETTINGS: "admin-system-settings",
+    ADMIN_SYSTEM_SETTING_DETAIL: "admin-system-setting-detail",
 
     NOT_FOUND: "not-found",
     BLOCKED: "blocked",

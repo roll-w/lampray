@@ -150,6 +150,8 @@ public class SystemSettingController {
                     masked,
                     description,
                     key.getType().toString(),
+                    secret,
+                    specification.isRequired(),
                     value.getSource(),
                     timeAttributed.getUpdateTime(),
                     specification.getSupportedSources()
@@ -160,6 +162,8 @@ public class SystemSettingController {
                 masked,
                 description,
                 key.getType().toString(),
+                secret,
+                specification.isRequired(),
                 value.getSource(),
                 null,
                 specification.getSupportedSources()
@@ -172,17 +176,22 @@ public class SystemSettingController {
         boolean secret = specification.getSecret();
         SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
         Object masked = maskSecret(value.getValue(), secretLevel);
-        String description = settingDescriptionProvider.getSettingDescription(specification.getDescription());
         List<ConfigValue<?, ?>> layers = getValueLayers(value);
         List<SettingDetailsVo.ValueLayer> valueLayers = layers.stream()
-                .map(layerValue -> new SettingDetailsVo.ValueLayer(layerValue.getSource(), layerValue.getValue()))
+                .map(layerValue -> {
+                    Object layerMasked = maskSecret(layerValue.getValue(), secretLevel);
+                    return new SettingDetailsVo.ValueLayer(layerValue.getSource(), layerMasked);
+                })
                 .toList();
+        String description = settingDescriptionProvider.getSettingDescription(specification.getDescription());
         if (value instanceof TimeAttributed timeAttributed) {
             return new SettingDetailsVo(
                     key.getName(),
                     masked,
                     description,
                     key.getType().toString(),
+                    secret,
+                    specification.isRequired(),
                     value.getSource(),
                     timeAttributed.getUpdateTime(),
                     specification.getSupportedSources(),
@@ -196,6 +205,8 @@ public class SystemSettingController {
                 masked,
                 description,
                 key.getType().toString(),
+                secret,
+                specification.isRequired(),
                 value.getSource(),
                 null,
                 specification.getSupportedSources(),
