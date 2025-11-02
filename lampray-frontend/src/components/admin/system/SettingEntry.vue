@@ -19,7 +19,6 @@ import type {PropType} from "vue";
 import {computed, ref, watch} from "vue";
 import {SettingSource, type SettingVo} from "@/services/system/system.type.ts";
 import {useI18n} from "vue-i18n";
-import {useRouter} from "vue-router";
 import {RouteName} from "@/router/routeName.ts";
 
 const props = defineProps({
@@ -94,11 +93,6 @@ const deleteSetting = () => {
     showDeleteConfirmModalState.value = false
 }
 
-const router = useRouter()
-const openDetail = () => {
-    router.push({ name: RouteName.ADMIN_SYSTEM_SETTING_DETAIL as any, params: { key: props.setting.key } })
-}
-
 const showSecret = ref(false)
 
 const isInvalid = computed(() => {
@@ -114,7 +108,12 @@ const isInvalid = computed(() => {
     <div class="py-3">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
             <div class="text-lg font-medium">
-                <a class="text-primary hover:underline cursor-pointer" @click.prevent="openDetail">{{ setting.key }}</a>
+                <RouterLink :to="{ name: RouteName.ADMIN_SYSTEM_SETTING_DETAIL as any, params: { key: setting.key } }">
+                    <span class="hover:underline underline-offset-4 decoration-2 decoration-amber-500/50 hover:decoration-amber-500 transition-all
+                      transition-duration-500 ease-in-out">
+                         {{ setting.key }}
+                    </span>
+                </RouterLink>
                 <span v-if="setting.required" class="text-red-500 ml-1" title="Required">*</span>
             </div>
             <div class="flex items-center gap-2">
