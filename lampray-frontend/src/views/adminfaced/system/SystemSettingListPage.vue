@@ -41,7 +41,6 @@ const loadSettings = async () => {
         // TODO: fix, the input value not reflect the updated value after reload
         settings.value = response.data!
     } catch (error) {
-        console.log(error)
         toast.add(newErrorToastFromError(error, t("request.error.title")))
     } finally {
         loading.value = false

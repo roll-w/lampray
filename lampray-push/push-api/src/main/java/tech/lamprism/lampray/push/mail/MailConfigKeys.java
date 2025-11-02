@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
     public static final AttributedSettingSpecification<Boolean, Boolean> SMTP_SSL_ENABLE =
             new SettingSpecificationBuilder<>(SettingKey.ofBoolean("mail.smtp.ssl.enable"))
                     .setTextDescription("Whether to enable SSL connection with SMTP server.")
+                    .setValueEntries(List.of(false, true))
                     .setDefaultValue(false)
                     .setRequired(false)
                     .setSupportedSources(SettingSource.VALUES)

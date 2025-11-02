@@ -311,7 +311,7 @@ public class LampraySystemExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public HttpResponseEntity<Void> handle(Exception e) throws Throwable {
+    public HttpResponseEntity<Void> handleException(Exception e) throws Throwable {
         if (e instanceof ServletException se && se.getRootCause() != null) {
             throw se.getRootCause();
         }

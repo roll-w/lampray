@@ -38,6 +38,8 @@ import tech.lamprism.lampray.web.controller.AdminApi;
 import tech.lamprism.lampray.web.controller.system.model.ListSettingRequest;
 import tech.lamprism.lampray.web.controller.system.model.SettingDetailsVo;
 import tech.lamprism.lampray.web.controller.system.model.SettingVo;
+import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.page.ImmutablePage;
 
@@ -92,7 +94,7 @@ public class SystemSettingController {
         // TODO: check setting key is valid and value is valid
         @SuppressWarnings("unchecked")
         AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
-                settingSpecificationProvider.getSettingSpecification(key);
+                getSpecification(key);
         SettingSource source = configProvider.set(
                 specification,
                 SettingSpecificationHelper.INSTANCE.deserialize(value.getValue(), specification)
@@ -104,14 +106,14 @@ public class SystemSettingController {
     public HttpResponseEntity<Void> deleteSetting(@PathVariable("key") String key) {
         @SuppressWarnings("unchecked")
         AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
-                settingSpecificationProvider.getSettingSpecification(key);
+                getSpecification(key);
         configProvider.reset(specification);
         return HttpResponseEntity.success();
     }
 
     @GetMapping("/system/settings/{key}")
     public HttpResponseEntity<SettingDetailsVo> getSetting(@PathVariable("key") String key) {
-        AttributedSettingSpecification<?, ?> specification = settingSpecificationProvider.getSettingSpecification(key);
+        AttributedSettingSpecification<?, ?> specification = getSpecification(key);
         ConfigValue<?, ?> configValue = configProvider.getValue(specification);
         SettingDetailsVo settingVo = toSettingDetailsVo(configValue, specification);
         return HttpResponseEntity.success(settingVo);
@@ -231,5 +233,13 @@ public class SystemSettingController {
         }
         String valueStr = String.valueOf(value);
         return secretLevel.maskValue(valueStr);
+    }
+
+    private AttributedSettingSpecification<?, ?> getSpecification(String key) {
+        try {
+            return settingSpecificationProvider.getSettingSpecification(key);
+        } catch (IllegalArgumentException e) {
+            throw new CommonRuntimeException(CommonErrorCode.ERROR_NOT_FOUND);
+        }
     }
 }

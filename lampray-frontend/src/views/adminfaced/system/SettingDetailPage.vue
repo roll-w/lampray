@@ -68,13 +68,13 @@ onMounted(() => {
 const defaultsIndexSet = computed(() => {
     const set = new Set<number>();
     if (!setting.value) return set;
-    const s: any = setting.value as any;
-    if (Array.isArray(s.defaults) && s.defaults.length > 0) {
-        for (const i of s.defaults) {
+    const settingValue: any = setting.value as any;
+    if (Array.isArray(settingValue.defaults) && settingValue.defaults.length > 0) {
+        for (const i of settingValue.defaults) {
             if (typeof i === 'number') set.add(i);
         }
-    } else if (typeof s.defaultValue === 'number') {
-        set.add(s.defaultValue);
+    } else if (typeof settingValue.defaultValue === 'number') {
+        set.add(settingValue.defaultValue);
     }
     return set;
 });
@@ -97,6 +97,7 @@ const submitEdit = async () => {
     if (!setting.value) return;
     savingEdit.value = true;
     try {
+        // TODO: validate editingValue based on setting.type
         // Convert editingValue to string (stringify objects/arrays)
         let payload: string | null;
         if (editingValue.value === null || editingValue.value === undefined) {
@@ -277,6 +278,7 @@ const back = () => {
                                 :aria-pressed="showSecret"
                                 @click="showSecret = !showSecret"
                         />
+                    <!--TODO: replace views.userfaced.user.login.hidePassword with hideSecret-->
                     </template>
                 </UInput>
                 <div class="flex justify-end gap-2 mt-4">
