@@ -22,20 +22,26 @@ import java.time.OffsetDateTime
 /**
  * @author RollW
  */
-data class LayeredConfigValueImpl<T, V>(
+class LayeredConfigValueImpl<T, V>(
     /**
      * The setting specification that defines the config key and type.
      */
     override val specification: SettingSpecification<T, V>,
 
-    override val layers: List<ConfigValue<T, V>>
+    layers: List<ConfigValue<T, V>>
 ) : LayeredConfigValue<T, V>, TimeAttributed {
+
+    private val _layers = layers.sortedBy { it.source.priority }
+
+    override val layers: List<ConfigValue<T, V>>
+        get() = _layers
+
     init {
         require(layers.isNotEmpty()) { "Layers must be specified." }
     }
 
     private val activeValue: ConfigValue<T, V> by lazy {
-        layers.firstOrNull { it.value != null } ?: layers.last()
+        _layers.lastOrNull { it.value != null } ?: _layers.first()
     }
 
     override fun getCreateTime(): OffsetDateTime =
@@ -53,4 +59,30 @@ data class LayeredConfigValueImpl<T, V>(
 
     override val source: SettingSource
         get() = activeValue.source
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is LayeredConfigValueImpl<*, *>) return false
+
+        if (specification != other.specification) return false
+        if (_layers != other._layers) return false
+        if (activeValue != other.activeValue) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = specification.hashCode()
+        result = 31 * result + _layers.hashCode()
+        result = 31 * result + activeValue.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "LayeredConfigValueImpl(" +
+                "specification=$specification, " +
+                "layers=$layers, " +
+                "activeValue=$activeValue" +
+                ")"
+    }
 }

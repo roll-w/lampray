@@ -75,6 +75,8 @@
             "ENVIRONMENT": "Environment variables",
             "FILE": "Configuration file"
           },
+          "secretHint": "This is a secret setting. The value is masked for security reasons.",
+          "requiredHint": "This is a required setting and cannot be empty.",
           "saveChanges": "Save changes",
           "changes": "{count} changes",
           "deleteSuccess": "Deleted setting {key}",
@@ -91,7 +93,7 @@
              "layersTitle": "Setting Layers",
              "layerIndex": "Layer {index}",
              "editTitle": "Edit Setting Value",
-             "editHint": "Edit the effective value. For complex types provide valid JSON.",
+             "editHint": "Edit the effective value.",
              "defaultsTitle": "Defaults",
              "valueEntriesTitle": "Value Entries",
              "valueEntryIndex": "Entry {index}",

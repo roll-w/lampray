@@ -20,6 +20,8 @@ export interface SettingVo {
     value?: any;
     description: string;
     type: string;
+    secret: boolean;
+    required: boolean;
     source: SettingSource;
     updateTime?: string;
     supportedSources: SettingSource[];
@@ -30,6 +32,8 @@ export interface SettingDetailsVo {
     value?: any;
     description: string;
     type: string;
+    secret: boolean;
+    required: boolean;
     source: SettingSource;
     updateTime?: string;
     supportedSources: SettingSource[];

@@ -63,12 +63,13 @@ class CombinedConfigProvider(
     }
 
     override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
+        val defaultValue = SnapshotConfigValue(
+            specification.defaultValue,
+            SettingSource.NONE,
+            specification
+        )
         if (configProviders.isEmpty()) {
-            return SnapshotConfigValue(
-                null,
-                SettingSource.NONE,
-                specification
-            )
+            return defaultValue
         }
 
         val layers = mutableListOf<ConfigValue<T, V>>()
@@ -82,6 +83,9 @@ class CombinedConfigProvider(
                 layers.add(value)
             }
         }
+        if (layers.all { it.source != SettingSource.NONE }) {
+            layers.add(defaultValue)
+        }
         return LayeredConfigValueImpl(specification, layers)
     }
 
@@ -92,12 +96,16 @@ class CombinedConfigProvider(
                 // Only the first non-null value is activated currently,
                 // we assume that the list order of configProviders is the priority order.
                 // Values in the later providers are ignored.
-                val value = configValues.firstOrNull { it.specification.keyName == spec.keyName }
-                if (value != null && value.value != null) {
+                val value = configValues
+                    .sortedBy { it.source.priority }
+                    .filter { it.specification.keyName == spec.keyName }
+                    .firstOrNull { it.value != null }
+                if (value != null) {
                     return@map value
                 }
             }
-            SnapshotConfigValue(null, SettingSource.NONE, spec)
+            @Suppress("UNCHECKED_CAST")
+            SnapshotConfigValue(spec.defaultValue, SettingSource.NONE, spec as SettingSpecification<Any?, Any?>)
         }
     }
 

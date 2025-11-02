@@ -124,7 +124,7 @@ const resetChanges = async () => {
         <template #header>
             <UDashboardNavbar>
                 <template #title>
-                   <span class="text-lg font-medium mr-2">{{ t('route.admin-system-settings') }}</span>
+                    <span class="text-lg font-medium mr-2">{{ t('route.admin-system-settings') }}</span>
                 </template>
             </UDashboardNavbar>
         </template>
@@ -132,21 +132,21 @@ const resetChanges = async () => {
             <div class="w-full lg:w-3/5 xl:w-1/2">
                 <div class="w-full flex flex-col">
                     <h3 class="text-base font-medium">{{ t('views.adminfaced.system.settings.currentSource') }}</h3>
-                     <!--TODO: allow switch the source -->
-                     <UStepper
-                             disabled
+                    <!--TODO: allow switch the source -->
+                    <UStepper
+                            disabled
                             :items="[
                               { title: t('views.adminfaced.system.settings.source.DATABASE') },
                               { title: t('views.adminfaced.system.settings.source.COMMAND') },
                               { title: t('views.adminfaced.system.settings.source.ENVIRONMENT') },
                               { title: t('views.adminfaced.system.settings.source.FILE') }
                             ]"
-                             :model-value="4"
-                             orientation="horizontal"
-                             class="mt-4"
-                     />
-                 </div>
-             </div>
+                            :model-value="4"
+                            orientation="horizontal"
+                            class="mt-4"
+                    />
+                </div>
+            </div>
 
             <div class="mt-4 w-full lg:w-3/5 xl:w-1/2">
                 <SettingEntry v-for="item in settings" :key="item.key" :setting="item"
@@ -159,23 +159,25 @@ const resetChanges = async () => {
                 <div v-if="changedSettings.length > 0" class="fixed right-6 bottom-6 z-50">
                     <div class="flex space-x-3 bg-white dark:bg-gray-800 rounded-md p-3 items-center border border-gray-300 dark:border-gray-700 shadow-lg">
                         <UButton
-                                 color="primary"
-                                 variant="solid"
-                                 :loading="saving || loading"
-                                 :disabled="saving || loading"
-                                 @click="saveChanges"
-                         >
+                                color="primary"
+                                variant="solid"
+                                :loading="saving || loading"
+                                :disabled="saving || loading"
+                                @click="saveChanges"
+                        >
                             {{ t('views.adminfaced.system.settings.saveChanges') }}
-                         </UButton>
-                         <UButton
-                                 color="neutral"
-                                 variant="outline"
-                                 :disabled="saving || loading"
-                                 @click="resetChanges"
-                         >
+                        </UButton>
+                        <UButton
+                                color="neutral"
+                                variant="outline"
+                                :disabled="saving || loading"
+                                @click="resetChanges"
+                        >
                             {{ t('common.reset') }}
-                         </UButton>
-                        <div class="text-sm text-gray-500 ml-2">{{ t('views.adminfaced.system.settings.changes', {count: changedSettings.length}) }}</div>
+                        </UButton>
+                        <div class="text-sm text-gray-500 ml-2">
+                            {{ t('views.adminfaced.system.settings.changes', {count: changedSettings.length}) }}
+                        </div>
                     </div>
                 </div>
             </Transition>

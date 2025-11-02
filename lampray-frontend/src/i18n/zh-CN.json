@@ -76,6 +76,8 @@
             "ENVIRONMENT": "环境变量",
             "FILE": "配置文件"
           },
+          "secretHint": "此设置为敏感信息，已屏蔽显示",
+          "requiredHint": "此设置为必填项，不能为空",
           "saveChanges": "保存更改",
           "changes": "{count} 更改",
           "deleteSuccess": "已删除设置 {key}",
@@ -92,7 +94,7 @@
             "layersTitle": "配置层级",
             "layerIndex": "层 {index}",
             "editTitle": "编辑设置值",
-            "editHint": "编辑当前生效的值，复杂类型请填写合法的 JSON。",
+            "editHint": "编辑当前生效的值",
             "defaultsTitle": "默认值",
             "valueEntriesTitle": "值条目",
             "valueEntryIndex": "条目 {index}",

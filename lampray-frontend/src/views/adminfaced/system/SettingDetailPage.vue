@@ -41,6 +41,8 @@ const editingValue = ref<any>(null);
 const savingEdit = ref(false);
 const deleting = ref(false);
 
+const showSecret = ref(false);
+
 const loadSetting = async (key: string) => {
     loading.value = true;
     try {
@@ -87,6 +89,7 @@ const showEditModal = () => {
     } else {
         editingValue.value = null
     }
+    showSecret.value = false;
     editModalState.value = true;
 }
 
@@ -123,6 +126,7 @@ const confirmDelete = async () => {
         await systemSettingService(axios).deleteSetting(setting.value.key);
         toast.add(newSuccessToast(t('request.success.title'), t('views.adminfaced.system.settings.deleteSuccess', {key: setting.value.key})))
         deleteModalState.value = false;
+        await loadSetting(setting.value.key);
     } catch (err) {
         toast.add(newErrorToastFromError(err, t('request.error.title')));
     } finally {
@@ -146,7 +150,10 @@ const back = () => {
                 </template>
                 <template #right>
                     <div class="gap-2 flex">
-                        <UButton color="primary" variant="outline" @click="showEditModal">{{ t('common.edit') }}</UButton>
+                        <UButton color="primary" variant="outline" @click="showEditModal">{{
+                                t('common.edit')
+                            }}
+                        </UButton>
                         <UButton color="error" variant="outline" size="lg" @click="deleteModalState = true">
                             {{ t('common.delete') }}
                         </UButton>
@@ -162,9 +169,12 @@ const back = () => {
                     <UPageCard>
                         <template #title>
                             <div class="flex gap-3 items-center">
-                                <span class="text-lg font-medium">{{
-                                        setting ? setting.key : t('views.adminfaced.system.settings.detail.loadingTitle')
-                                    }}</span>
+                                <div class="text-lg font-medium">
+                                    <span>{{
+                                            setting ? setting.key : t('views.adminfaced.system.settings.detail.loadingTitle')
+                                        }}</span>
+                                    <span v-if="setting?.required" class="text-red-500 ml-1" title="Required">*</span>
+                                </div>
                                 <UBadge v-if="setting" variant="subtle" color="success" size="lg">
                                     {{ setting.source }}
                                 </UBadge>
@@ -174,7 +184,10 @@ const back = () => {
                         <template #footer>
                             <div>
                                 <div class="w-full">
-                                    <div class="text-sm text-gray-500 whitespace-pre-line">{{ setting?.description }}</div>
+                                    <div class="text-sm text-gray-500 whitespace-pre-line">{{
+                                            setting?.description
+                                        }}
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -250,14 +263,22 @@ const back = () => {
         <template #content>
             <div class="p-4">
                 <div class="text-lg font-medium mb-2">{{ t('views.adminfaced.system.settings.detail.editTitle') }}</div>
-                <div class="mb-2 text-sm text-gray-500">{{
-                        t('views.adminfaced.system.settings.detail.editHint')
-                    }}
-                </div>
-                <div>
-                    <UInput v-model="editingValue"
-                            class="w-full bg-white dark:bg-gray-900 rounded p-2 text-sm"/>
-                </div>
+                <div class="mb-2 text-sm text-gray-500">{{ t('views.adminfaced.system.settings.detail.editHint') }}</div>
+                <UInput v-model="editingValue"
+                        :type="setting?.secret ? (showSecret ? 'text' : 'password') : 'text'"
+                        class="w-full p-2">
+                    <template #trailing v-if="setting?.secret">
+                        <UButton
+                                color="neutral"
+                                variant="link"
+                                size="sm"
+                                :icon="showSecret ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                                :aria-label="showSecret ? t('views.userfaced.user.login.hidePassword') : t('views.userfaced.user.login.showPassword')"
+                                :aria-pressed="showSecret"
+                                @click="showSecret = !showSecret"
+                        />
+                    </template>
+                </UInput>
                 <div class="flex justify-end gap-2 mt-4">
                     <UButton variant="outline" @click="editModalState = false">{{ t('common.cancel') }}</UButton>
                     <UButton color="primary" :loading="savingEdit" @click="submitEdit">{{

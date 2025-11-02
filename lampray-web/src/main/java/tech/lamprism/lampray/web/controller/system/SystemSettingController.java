@@ -172,6 +172,7 @@ public class SystemSettingController {
 
     private SettingDetailsVo toSettingDetailsVo(ConfigValue<?, ?> value,
                                                 AttributedSettingSpecification<?, ?> specification) {
+        // TODO: return value restrictions
         SettingKey<?, ?> key = value.getSpecification().getKey();
         boolean secret = specification.getSecret();
         SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;

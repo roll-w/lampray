@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ public enum SettingSource {
      */
     COMMAND_LINE,
 
-
     /**
      * Setting from the database.
      */
@@ -63,4 +62,8 @@ public enum SettingSource {
     public static final List<SettingSource> VALUES = List.of(LOCAL, PROPERTIES, ENVIRONMENT, COMMAND_LINE, DATABASE);
 
     public static final List<SettingSource> LOCAL_ONLY = List.of(LOCAL, PROPERTIES, ENVIRONMENT, COMMAND_LINE);
+
+    public int getPriority() {
+        return this.ordinal();
+    }
 }
