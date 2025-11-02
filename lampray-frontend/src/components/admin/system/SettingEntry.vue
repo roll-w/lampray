@@ -38,15 +38,29 @@ const props = defineProps({
     onReset: {
         type: Function as PropType<(setting: SettingVo) => void>,
         required: false
+    },
+    // TODO: is there a better way to implement reset signal?
+    // numeric signal; parent increments to notify this entry to reset its input
+    resetSignal: {
+        type: Number as PropType<number>,
+        required: false,
+        default: 0
     }
 })
 
 const {t} = useI18n()
 const inputValue = ref<any>(props.setting.value)
-const editable = props.setting.supportedSources.includes(SettingSource.DATABASE)
+const editable = computed(() => props.setting.supportedSources.includes(SettingSource.DATABASE))
 
+// When the parent updates the `setting` prop (for example after a reload), update local input state.
 watch(() => props.setting.value, (v) => {
     inputValue.value = v
+})
+
+// Watch external resetSignal: when it changes, reset the local input to the prop value
+watch(() => props.resetSignal, (sig) => {
+    // only react when signal increments
+    resetSetting()
 })
 
 watch(inputValue, (newVal) => {
@@ -89,7 +103,7 @@ const showSecret = ref(false)
 
 const isInvalid = computed(() => {
     if (!props.setting.required) return false
-    if (!editable) return false
+    if (!editable.value) return false
     const v = inputValue.value
     return v === undefined || v === null;
 })
@@ -138,7 +152,7 @@ const isInvalid = computed(() => {
                                     variant="link"
                                     size="sm"
                                     :icon="showSecret ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                    :aria-label="showSecret ? t('views.userfaced.user.login.hidePassword') : t('views.userfaced.user.login.showPassword')"
+                                    :aria-label="showSecret ? t('views.adminfaced.system.settings.hideSecret') : t('views.adminfaced.system.settings.showSecret')"
                                     :aria-pressed="showSecret"
                                     @click="showSecret = !showSecret"
                             />

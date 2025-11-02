@@ -69,6 +69,8 @@
     "adminfaced": {
       "system": {
         "settings": {
+          "hideSecret": "隐藏敏感信息",
+          "showSecret": "显示敏感信息",
           "currentSource": "当前生效配置源",
           "source": {
             "DATABASE": "数据库",

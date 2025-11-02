@@ -274,11 +274,10 @@ const back = () => {
                                 variant="link"
                                 size="sm"
                                 :icon="showSecret ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                                :aria-label="showSecret ? t('views.userfaced.user.login.hidePassword') : t('views.userfaced.user.login.showPassword')"
+                                :aria-label="showSecret ? t('views.adminfaced.system.settings.hideSecret') : t('views.adminfaced.system.settings.showSecret')"
                                 :aria-pressed="showSecret"
                                 @click="showSecret = !showSecret"
                         />
-                    <!--TODO: replace views.userfaced.user.login.hidePassword with hideSecret-->
                     </template>
                 </UInput>
                 <div class="flex justify-end gap-2 mt-4">

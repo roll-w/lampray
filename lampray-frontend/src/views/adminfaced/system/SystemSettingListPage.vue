@@ -31,6 +31,9 @@ const settings = ref<SettingVo[]>([])
 const loading = ref(false)
 const deleting = ref(false)
 
+// per-setting reset signals to notify SettingEntry to reset its local input
+const resetSignals = ref<Record<string, number>>({})
+
 const loadSettings = async () => {
     try {
         loading.value = true
@@ -38,7 +41,6 @@ const loadSettings = async () => {
             page: 1,
             size: 100,
         })
-        // TODO: fix, the input value not reflect the updated value after reload
         settings.value = response.data!
     } catch (error) {
         toast.add(newErrorToastFromError(error, t("request.error.title")))
@@ -111,9 +113,12 @@ const saveChanges = async () => {
 }
 
 const resetChanges = async () => {
-    // Simply discard local changes and reload from server
     changedSettings.value = []
-    await loadSettings()
+    settings.value.forEach(s => {
+        if (s && s.key) {
+            resetSignals.value[s.key] = (resetSignals.value[s.key] ?? 0) + 1
+        }
+    })
 }
 
 </script>
@@ -151,7 +156,8 @@ const resetChanges = async () => {
                 <SettingEntry v-for="item in settings" :key="item.key" :setting="item"
                               :on-change="onSettingChanged"
                               :on-reset="onSettingReset"
-                              :on-delete="onSettingDelete"/>
+                              :on-delete="onSettingDelete"
+                              :reset-signal="resetSignals[item.key]"/>
             </div>
 
             <Transition name="slide-fade">

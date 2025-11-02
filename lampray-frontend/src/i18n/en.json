@@ -68,6 +68,8 @@
     "adminfaced": {
       "system": {
         "settings": {
+          "hideSecret": "Hide secret information",
+          "showSecret": "Show secret information",
           "currentSource": "Current effective configuration source",
           "source": {
             "DATABASE": "Database",
