@@ -43,7 +43,7 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val LOGGING_FILE_MAX_SIZE =
-        SettingSpecificationBuilder(SettingKey.ofLong("logging.file.max-size"))
+        SettingSpecificationBuilder(SettingKey.ofLong("logging.file.max-size"))// TODO: use String to support size unit => e.g. "10MB", "100KB", "1GB"
             .setTextDescription("The maximum size of the log file.")
             .setDefaultValue(10 * 1024 * 1024) // = 10MB
             .setRequired(false)
@@ -103,9 +103,9 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
                 ```
                 """.trimIndent()
             )
-            .setDefaultValue("text")
             .setAllowAnyValue(false)
             .setValueEntries(listOf(LOGGING_FORMAT_TEXT, LOGGING_FORMAT_JSON))
+            .setDefaultValue("text")
             .setRequired(false)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .build()
@@ -113,9 +113,9 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
     /**
      * Logging level for loggers, for example:
      *
-     * ```
-     * logging.level=logger1:info, logger2:debug,\
-     *   logger3:warn, logger4:error
+     * ```toml
+     * logging.level = ["logger1:info", "logger2:debug",
+     *   "logger3:warn", "logger4:error"]
      * ```
      *
      * The value is a comma-separated list of logger name and level pairs.
@@ -127,9 +127,9 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
                 """
                 Logging level for loggers, for example:
                 
-                ```
-                logging.level=logger1:info, logger2:debug,\
-                  logger3:warn, logger4:error
+                ```toml
+                logging.level = ["logger1:info", "logger2:debug",
+                  "logger3:warn", "logger4:error", "logger5:trace,logger6:info"]
                 ```
                 
                 The value is a list of logger name and level pairs.
