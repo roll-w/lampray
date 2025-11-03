@@ -93,6 +93,12 @@ class SettingSpecificationBuilder<T, V> {
         this.defaults = listOf(default)
     }
 
+    /**
+     * Sets the default value, which must be in the value entries. If the value entries
+     * is empty, it will be initialized with the default value.
+     *
+     * Must call after [setValueEntries] if value entries is needed.
+     */
     fun setDefaultValue(default: V?) = apply {
         if (valueEntries.isNotEmpty()) {
             // TODO: fix default value setting

@@ -37,6 +37,7 @@ object ResourceConfigKeys : SettingSpecificationSupplier {
             .setTextDescription("""
                 Enable frontend resource hosting.
                 """.trimIndent())
+            .setValueEntries(listOf(false, true))
             .setDefaultValue(false)
             .setSupportedSources(SettingSource.VALUES)
             .setRequired(false)

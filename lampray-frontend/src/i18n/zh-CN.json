@@ -20,7 +20,8 @@
     "reset": "重置",
     "actions": "操作",
     "loading": "加载中...",
-    "noData": "暂无数据"
+    "noData": "暂无数据",
+    "back": "返回"
   },
   "route": {
     "user-home": "首页",
@@ -35,6 +36,7 @@
     "admin-user-list": "用户列表",
     "admin-user-detail": "用户详情",
     "admin-system-settings": "系统设置",
+    "admin-system-setting-detail": "设置详情",
     "not-found": "未找到",
     "blocked": "已封禁"
   },
@@ -62,6 +64,49 @@
         "contactSupportPrefix": "如遇问题请",
         "contactSupport": "提交支持请求",
         "contactSupportSuffix": "获取帮助。"
+      }
+    },
+    "adminfaced": {
+      "system": {
+        "settings": {
+          "hideSecret": "隐藏敏感信息",
+          "showSecret": "显示敏感信息",
+          "currentSource": "当前生效配置源",
+          "source": {
+            "DATABASE": "数据库",
+            "COMMAND": "命令行",
+            "ENVIRONMENT": "环境变量",
+            "FILE": "配置文件"
+          },
+          "secretHint": "此设置为敏感信息，已屏蔽显示",
+          "requiredHint": "此设置为必填项，不能为空",
+          "saveChanges": "保存更改",
+          "changes": "{count} 更改",
+          "deleteSuccess": "已删除设置 {key}",
+          "deleteTitle": "确认删除该设置？",
+          "deleteDescription": "您确定要删除设置项 \"{key}\" 吗？此操作无法撤销。",
+          "detail": {
+            "title": "设置详情",
+            "loadingTitle": "设置详情 - 加载中",
+            "notFound": "未找到该设置",
+            "missingKey": "未提供设置键，无法加载详情页面",
+            "type": "类型",
+            "updateTime": "更新时间",
+            "updateTimeAbsent": "无更新时间",
+            "layersTitle": "配置层级",
+            "layerIndex": "层 {index}",
+            "editTitle": "编辑设置值",
+            "editHint": "编辑当前生效的值",
+            "defaultsTitle": "默认值",
+            "valueEntriesTitle": "值条目",
+            "valueEntryIndex": "条目 {index}",
+            "defaultBadgeText": "默认",
+            "noLayers": "暂无层级信息",
+            "noDefaults": "暂无默认值",
+            "noValueEntries": "暂无值条目",
+            "noValue": "无值"
+          }
+        }
       }
     },
     "userfaced": {

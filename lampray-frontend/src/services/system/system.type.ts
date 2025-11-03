@@ -20,8 +20,31 @@ export interface SettingVo {
     value?: any;
     description: string;
     type: string;
+    secret: boolean;
+    required: boolean;
     source: SettingSource;
     updateTime?: string;
+    supportedSources: SettingSource[];
+}
+
+export interface SettingDetailsVo {
+    key: string;
+    value?: any;
+    description: string;
+    type: string;
+    secret: boolean;
+    required: boolean;
+    source: SettingSource;
+    updateTime?: string;
+    supportedSources: SettingSource[];
+    defaults: number[];
+    valueEntries: any[];
+    layers: SettingDetailsValueLayer[];
+}
+
+export interface SettingDetailsValueLayer {
+    source: SettingSource;
+    value?: any;
 }
 
 export const SettingSource = {

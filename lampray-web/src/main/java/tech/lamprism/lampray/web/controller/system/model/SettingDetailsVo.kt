@@ -20,9 +20,10 @@ import tech.lamprism.lampray.setting.SettingSource
 import java.time.OffsetDateTime
 
 /**
+ * @param layers The value layers from different sources, ordered by priority (highest first).
  * @author RollW
  */
-data class SettingVo(
+data class SettingDetailsVo(
     val key: String,
     val value: Any?,
     val description: String,
@@ -31,6 +32,13 @@ data class SettingVo(
     val required: Boolean,
     val source: SettingSource,
     val updateTime: OffsetDateTime?,
-    val supportedSources: List<SettingSource>
+    val supportedSources: List<SettingSource>,
+    val defaults: List<Int>,
+    val valueEntries: List<Any?>,
+    val layers: List<ValueLayer>,
 ) {
+    data class ValueLayer(
+        val source: SettingSource,
+        val value: Any?,
+    )
 }

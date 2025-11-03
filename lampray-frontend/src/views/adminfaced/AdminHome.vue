@@ -46,7 +46,9 @@ const shortcutMenus = [
         <template #header>
             <UDashboardNavbar>
                 <template #title>
-                    管理后台
+                   <span class="text-lg font-medium mr-2">{{
+                           $t('navbar.admin')
+                       }}</span>
                 </template>
             </UDashboardNavbar>
         </template>

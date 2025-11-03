@@ -63,13 +63,30 @@ class CombinedConfigProvider(
     }
 
     override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
+        val defaultValue = SnapshotConfigValue(
+            specification.defaultValue,
+            SettingSource.NONE,
+            specification
+        )
+        if (configProviders.isEmpty()) {
+            return defaultValue
+        }
+
+        val layers = mutableListOf<ConfigValue<T, V>>()
         for (reader in configProviders) {
+            // Query cost is low, so we get all layers' values.
             val value = reader.getValue(specification)
-            if (value.value != null) {
-                return value
+            if (value is LayeredConfigValue) {
+                // Flatten layered values
+                layers.addAll(value.layers)
+            } else {
+                layers.add(value)
             }
         }
-        return SnapshotConfigValue(null, SettingSource.NONE, specification)
+        if (layers.all { it.source != SettingSource.NONE }) {
+            layers.add(defaultValue)
+        }
+        return LayeredConfigValueImpl(specification, layers)
     }
 
     override fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>> {
@@ -79,12 +96,16 @@ class CombinedConfigProvider(
                 // Only the first non-null value is activated currently,
                 // we assume that the list order of configProviders is the priority order.
                 // Values in the later providers are ignored.
-                val value = configValues.firstOrNull { it.specification.keyName == spec.keyName }
-                if (value != null && value.value != null) {
+                val value = configValues
+                    .sortedBy { it.source.priority }
+                    .filter { it.specification.keyName == spec.keyName }
+                    .firstOrNull { it.value != null }
+                if (value != null) {
                     return@map value
                 }
             }
-            SnapshotConfigValue(null, SettingSource.NONE, spec)
+            @Suppress("UNCHECKED_CAST")
+            SnapshotConfigValue(spec.defaultValue, SettingSource.NONE, spec as SettingSpecification<Any?, Any?>)
         }
     }
 
@@ -104,6 +125,18 @@ class CombinedConfigProvider(
             }
         }
         return SettingSource.NONE
+    }
+
+    override fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource {
+        var resetSource = SettingSource.NONE
+        for (provider in configProviders) {
+            // Different from set, we try to reset in all providers that support the spec.
+            // And we return the last reset source for information.
+            if (provider.supports(spec)) {
+                resetSource = provider.reset(spec)
+            }
+        }
+        return resetSource
     }
 
     override fun supports(key: String): Boolean {

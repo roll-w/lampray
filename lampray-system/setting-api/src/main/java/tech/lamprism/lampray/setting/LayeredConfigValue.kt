@@ -14,23 +14,14 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.controller.system.model
-
-import tech.lamprism.lampray.setting.SettingSource
-import java.time.OffsetDateTime
+package tech.lamprism.lampray.setting
 
 /**
  * @author RollW
  */
-data class SettingVo(
-    val key: String,
-    val value: Any?,
-    val description: String,
-    val type: String,
-    val secret: Boolean,
-    val required: Boolean,
-    val source: SettingSource,
-    val updateTime: OffsetDateTime?,
-    val supportedSources: List<SettingSource>
-) {
+interface LayeredConfigValue<T, V> : ConfigValue<T, V> {
+    /**
+     * The layers of config value. Including all available sources.
+     */
+    val layers: List<ConfigValue<T, V>>
 }

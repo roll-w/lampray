@@ -125,6 +125,7 @@ export function createAxios(
     instance.interceptors.request.use(
         async (config) => {
             // Skip auth for refresh token request
+            config.headers["Accept-Language"] = document.documentElement.lang || "en,en-US;q=0.9,zh;q=0.8,zh-CN;q=0.7"
             if (config.url === refreshTokenUrl) {
                 return config
             }
@@ -163,23 +164,27 @@ export function createAxios(
     // Response interceptor
     instance.interceptors.response.use(
         (response: AxiosResponse) => {
+            console.log("Success response: ", response)
+            if (!response.data || !response.data.errorCode) {
+                return response
+            }
+
             if (response.data.errorCode !== '00000') {
                 return Promise.reject<AxiosResponse<HttpResponseBody<void>>>(response)
             }
-            console.log("Success response: ", response)
             return response
         },
         (error) => {
+            console.log("Error response: ", error)
+
             const errorData: HttpResponseBody<void> = error.response?.data || error
             const errorCode = errorData.errorCode || '00000'
-
-            console.log("Error response: ", errorData)
 
             // Handle user blocked error
             if (isErrorCodeMatch(errorCode, ERROR_CODES.BLOCK)) {
                 onUserBlocked()
                 return Promise.reject<AxiosResponse<HttpResponseBody<void>>>({
-                    ...error, response: { data: errorData }
+                    ...error, response: {data: errorData}
                 })
             }
 
@@ -187,12 +192,12 @@ export function createAxios(
             if (isErrorCodeMatch(errorCode, ERROR_CODES.TOKEN)) {
                 onLoginExpired()
                 return Promise.reject<AxiosResponse<HttpResponseBody<void>>>({
-                    ...error, response: { data: errorData }
+                    ...error, response: {data: errorData}
                 })
             }
 
             return Promise.reject<AxiosResponse<HttpResponseBody<void>>>({
-                ...error, response: { data: errorData }
+                ...error, response: {data: errorData}
             })
         }
     )

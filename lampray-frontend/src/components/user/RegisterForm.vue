@@ -71,6 +71,9 @@ const registerForm = reactive<Partial<RegisterSchema>>({
     agree: false
 });
 
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
+
 const jumpToSuccess = () => {
     router.push({name: RouteName.REGISTER_TIPS});
 };
@@ -109,6 +112,7 @@ const onRegisterReset = () => {
     registerForm.agree = false;
 };
 </script>
+
 <template>
     <UForm :schema="registerSchema" ref="form" :state="registerForm" class="space-y-4 w-full" @submit="onRegisterClick">
         <UFormField :label="t('views.common.user.username')" name="username" required>
@@ -124,13 +128,37 @@ const onRegisterReset = () => {
         </UFormField>
         <UFormField :label="t('views.common.user.password')" name="password" required>
             <UInput v-model="registerForm.password"
-                    :placeholder="t('views.common.user.passwordPlaceholder')" type="password"
-                    autocomplete="new-password" name="password" class="w-full"/>
+                    :placeholder="t('views.common.user.passwordPlaceholder')" :type="showPassword ? 'text' : 'password'"
+                    autocomplete="new-password" name="password" class="w-full">
+                <template #trailing>
+                    <UButton
+                            color="neutral"
+                            variant="link"
+                            size="sm"
+                            :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                            :aria-label="showPassword ? t('views.userfaced.user.login.hidePassword') : t('views.userfaced.user.login.showPassword')"
+                            :aria-pressed="showPassword"
+                            @click="showPassword = !showPassword"
+                    />
+                </template>
+            </UInput>
         </UFormField>
         <UFormField :label="t('views.common.user.confirmPassword')" name="confirmPassword" required>
             <UInput v-model="registerForm.confirmPassword"
-                    :placeholder="t('views.common.user.confirmPasswordPlaceholder')" type="password"
-                    autocomplete="new-password" name="confirmPassword" class="w-full"/>
+                    :placeholder="t('views.common.user.confirmPasswordPlaceholder')" :type="showConfirmPassword ? 'text' : 'password'"
+                    autocomplete="new-password" name="confirmPassword" class="w-full">
+                <template #trailing>
+                    <UButton
+                            color="neutral"
+                            variant="link"
+                            size="sm"
+                            :icon="showConfirmPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                            :aria-label="showConfirmPassword ? t('views.userfaced.user.login.hidePassword') : t('views.userfaced.user.login.showPassword')"
+                            :aria-pressed="showConfirmPassword"
+                            @click="showConfirmPassword = !showConfirmPassword"
+                    />
+                </template>
+            </UInput>
         </UFormField>
         <UCheckbox v-model="registerForm.agree" :label="t('views.userfaced.user.register.agree')" name="agree"
                    required/>

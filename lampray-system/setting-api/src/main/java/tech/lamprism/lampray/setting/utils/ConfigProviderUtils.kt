@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.controller.system.model
+package tech.lamprism.lampray.setting.utils
 
-import tech.lamprism.lampray.setting.SettingSource
-import java.time.OffsetDateTime
+import tech.lamprism.lampray.setting.ConfigProvider
 
 /**
  * @author RollW
  */
-data class SettingVo(
-    val key: String,
-    val value: Any?,
-    val description: String,
-    val type: String,
-    val secret: Boolean,
-    val required: Boolean,
-    val source: SettingSource,
-    val updateTime: OffsetDateTime?,
-    val supportedSources: List<SettingSource>
-) {
+object ConfigProviderUtils {
+    @JvmStatic
+    fun List<ConfigProvider>.sortByPriority(): List<ConfigProvider> {
+        return this.sortedByDescending { it ->
+            it.metadata.settingSources.minOfOrNull { it.ordinal }
+        }
+    }
 }
