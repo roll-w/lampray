@@ -19,7 +19,7 @@ import {computed, onMounted, ref} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useAxios} from "@/composables/useAxios";
 import {systemSettingService} from "@/services/system/system.service.ts";
-import type {SettingDetailsVo} from "@/services/system/system.type.ts";
+import {type SettingDetailsVo, SettingSource} from "@/services/system/system.type.ts";
 import {useI18n} from "vue-i18n";
 import {newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
 import DashboardPanel from "@/views/adminfaced/DashboardPanel.vue";
@@ -34,7 +34,7 @@ const {t} = useI18n();
 
 const loading = ref(false);
 const setting = ref<SettingDetailsVo | null>(null);
-
+const editable = computed(() => setting.value?.supportedSources?.includes(SettingSource.DATABASE) ?? false);
 const editModalState = ref(false);
 const deleteModalState = ref(false);
 const editingValue = ref<any>(null);
@@ -151,14 +151,18 @@ const back = () => {
                 </template>
                 <template #right>
                     <div class="gap-2 flex">
-                        <UButton color="primary" variant="outline" @click="showEditModal">{{
+                        <UButton color="primary" variant="outline" :disabled="!editable" size="lg" @click="showEditModal">{{
                                 t('common.edit')
                             }}
                         </UButton>
-                        <UButton color="error" variant="outline" size="lg" @click="deleteModalState = true">
+                        <UButton color="error" variant="outline" :disabled="!editable" size="lg" @click="deleteModalState = true">
                             {{ t('common.delete') }}
                         </UButton>
-                        <UButton variant="soft" size="lg" @click="back">{{ t('common.back') }}</UButton>
+                        <UButton variant="soft" size="lg" @click="back">
+                            <RouterLink :to="{ name: RouteName.ADMIN_SYSTEM_SETTINGS }">
+                                {{ t('common.back') }}
+                            </RouterLink>
+                        </UButton>
                     </div>
                 </template>
             </UDashboardNavbar>
@@ -264,7 +268,10 @@ const back = () => {
         <template #content>
             <div class="p-4">
                 <div class="text-lg font-medium mb-2">{{ t('views.adminfaced.system.settings.detail.editTitle') }}</div>
-                <div class="mb-2 text-sm text-gray-500">{{ t('views.adminfaced.system.settings.detail.editHint') }}</div>
+                <div class="mb-2 text-sm text-gray-500">{{
+                        t('views.adminfaced.system.settings.detail.editHint')
+                    }}
+                </div>
                 <UInput v-model="editingValue"
                         :type="setting?.secret ? (showSecret ? 'text' : 'password') : 'text'"
                         class="w-full p-2">
