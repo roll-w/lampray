@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.content.structuraltext
 
 import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import tech.lamprism.lampray.content.structuraltext.element.Document
@@ -31,7 +32,7 @@ import tech.lamprism.lampray.content.structuraltext.element.Document
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 interface StructuralText {
     @get:JsonProperty("t")
-    @get:JsonAlias("type")
+    @get:JsonAlias("t", "type")
     val type: StructuralTextType
 
     /**
@@ -48,18 +49,21 @@ interface StructuralText {
      */
     @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
     @get:JsonProperty("c")
-    @get:JsonAlias("content")
+    @get:JsonAlias("c", "content")
     val content: String
 
     @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
     @get:JsonProperty("ch")
-    @get:JsonAlias("children")
+    @get:JsonAlias("ch", "children")
     val children: List<StructuralText>
 
+    @JsonIgnore
     fun isLeaf(): Boolean = children.isEmpty()
 
+    @JsonIgnore
     fun isEmpty(): Boolean = children.isEmpty() && content.isEmpty()
 
+    @JsonIgnore
     fun hasChildren(): Boolean = children.isNotEmpty()
 
     fun accept(visitor: StructuralTextVisitor)

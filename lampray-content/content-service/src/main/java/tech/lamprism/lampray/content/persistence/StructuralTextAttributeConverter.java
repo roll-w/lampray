@@ -18,19 +18,28 @@ package tech.lamprism.lampray.content.persistence;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.luben.zstd.Zstd;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tech.lamprism.lampray.content.structuraltext.StructuralText;
 import tech.lamprism.lampray.content.structuraltext.element.Document;
 import tech.lamprism.lampray.content.structuraltext.element.Text;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author RollW
  */
 @Converter(autoApply = true)
-public class StructuralTextAttributeConverter implements AttributeConverter<StructuralText, String> {
+public class StructuralTextAttributeConverter implements AttributeConverter<StructuralText, byte[]> {
+    private static final Logger logger = LoggerFactory.getLogger(StructuralTextAttributeConverter.class);
     private final ObjectMapper objectMapper;
 
     public StructuralTextAttributeConverter(ObjectMapper objectMapper) {
@@ -38,27 +47,56 @@ public class StructuralTextAttributeConverter implements AttributeConverter<Stru
     }
 
     @Override
-    public String convertToDatabaseColumn(StructuralText attribute) {
+    public byte[] convertToDatabaseColumn(StructuralText attribute) {
         if (attribute == null) {
             return null;
         }
         try {
-            return objectMapper.writeValueAsString(attribute);
+            byte[] valueBytes = objectMapper.writeValueAsBytes(attribute);
+            byte[] compressed = Zstd.compress(valueBytes);
+            return ArrayUtils.addAll(Version.V1.header, compressed);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error converting StructuralText to JSON string", e);
         }
     }
 
     @Override
-    public StructuralText convertToEntityAttribute(String dbData) {
-        if (dbData == null || dbData.trim().isEmpty()) {
+    public StructuralText convertToEntityAttribute(byte[] dbData) {
+        if (dbData == null || dbData.length == 0) {
             return null;
         }
         try {
-            return objectMapper.readValue(dbData, StructuralText.class);
-        } catch (JsonProcessingException e) {
-            StructuralText text = new Text(dbData);
-            return new Document(List.of(text));
+            byte[] header = ArrayUtils.subarray(dbData, 0, HEADER_LENGTH);
+            if (header.length < HEADER_LENGTH) {
+                return new Text(new String(dbData, StandardCharsets.UTF_8));
+            }
+            Version version = null;
+            for (Version v : Version.values()) {
+                if (Objects.deepEquals(v.header, header)) {
+                    version = v;
+                    break;
+                }
+            }
+            if (version == null) {
+                return new Text(new String(dbData, StandardCharsets.UTF_8));
+            }
+            byte[] compressedData = ArrayUtils.subarray(dbData, HEADER_LENGTH, dbData.length);
+            byte[] decompressedData = Zstd.decompress(compressedData);
+            return objectMapper.readValue(decompressedData, StructuralText.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Error converting stored data to StructuralText", e);
+        }
+    }
+
+    private static final int HEADER_LENGTH = 4;
+
+    public enum Version {
+        V1(new byte[]{0x00, 0x00, 0x00, 0x01});
+
+        private final byte[] header;
+
+        Version(byte[] header) {
+            this.header = header;
         }
     }
 }

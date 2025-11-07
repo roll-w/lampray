@@ -22,6 +22,7 @@ dependencies {
     api(project(":lampray-common"))
     api(project(":lampray-common-data"))
     api(project(":lampray-content:content-api"))
+    implementation("com.github.luben:zstd-jni:1.5.7-6")
 }
 
 description = "lampray-content-service"

@@ -18,6 +18,7 @@ package tech.lamprism.lampray.web.controller.review.model
 
 import tech.lamprism.lampray.content.ContentType
 import tech.lamprism.lampray.content.review.ReviewJobContent
+import tech.lamprism.lampray.content.structuraltext.StructuralText
 import java.time.OffsetDateTime
 
 /**
@@ -27,7 +28,7 @@ data class ReviewJobContentView(
     val contentId: Long,
     val contentType: ContentType,
     val title: String?,
-    val content: String,
+    val content: StructuralText,
     val userId: Long,
     val createTime: OffsetDateTime,
     val updateTime: OffsetDateTime,

@@ -83,7 +83,7 @@ class StructuralTextDeserializer : JsonDeserializer<StructuralText>() {
         val mapper = p.codec as ObjectMapper
         val node = mapper.readTree<JsonNode>(p) as ObjectNode
 
-        val typeNode = node["type"]
+        val typeNode = node["t"] ?: node["type"]
         if (typeNode == null || !typeNode.isTextual) {
             throw JsonMappingException.from(p, "Missing or invalid 'type' field")
         }

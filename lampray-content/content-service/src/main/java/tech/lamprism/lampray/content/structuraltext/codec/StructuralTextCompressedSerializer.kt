@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.content.structuraltext.codec
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.github.luben.zstd.Zstd
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextParser
 import tech.lamprism.lampray.content.structuraltext.StructuralTextRenderer
@@ -24,12 +25,10 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 
 
 /**
- * Compressed (GZIP + Base64) JSON serializer for [tech.lamprism.lampray.content.structuraltext.StructuralText].
+ * Compressed (Zstd + Base85) JSON serializer for [tech.lamprism.lampray.content.structuraltext.StructuralText].
  *
  * @author RollW
  */
@@ -38,22 +37,13 @@ class StructuralTextCompressedSerializer(
 ) : StructuralTextRenderer, StructuralTextParser {
     override fun render(text: StructuralText): String {
         val bytes = objectMapper.writeValueAsBytes(text)
-        val compressed = ByteArrayOutputStream().use { byteArrayOutputStream ->
-            GZIPOutputStream(byteArrayOutputStream).use { gzipOutputStream ->
-                gzipOutputStream.write(bytes)
-            }
-            byteArrayOutputStream.toByteArray()
-        }
+        val compressed = Zstd.compress(bytes)
         return encodeToBase85(compressed)
     }
 
     override fun parse(input: String): StructuralText {
         val compressed = decodeBase85(input)
-        val bytes = compressed.inputStream().use { inputStream ->
-            GZIPInputStream(inputStream).use { gzipInputStream ->
-                gzipInputStream.readBytes()
-            }
-        }
+        val bytes = Zstd.decompress(compressed)
         return objectMapper.readValue(bytes, StructuralText::class.java)
     }
 
@@ -61,13 +51,7 @@ class StructuralTextCompressedSerializer(
         val byteIn = ByteArrayInputStream(ascii85.toByteArray(StandardCharsets.US_ASCII))
         try {
             ASCII85InputStream(byteIn).use { asciiIn ->
-                val out = ByteArrayOutputStream()
-                val buffer = ByteArray(1024)
-                var n: Int
-                while ((asciiIn.read(buffer).also { n = it }) != -1) {
-                    out.write(buffer, 0, n)
-                }
-                return out.toByteArray()
+                return asciiIn.readAllBytes()
             }
         } catch (e: IOException) {
             throw IllegalArgumentException("Failed to decode ASCII85 string", e)
@@ -80,7 +64,7 @@ class StructuralTextCompressedSerializer(
                 ASCII85OutputStream(byteOut).use { asciiOut ->
                     asciiOut.write(bytes)
                     asciiOut.flush()
-                    return byteOut.toString(StandardCharsets.US_ASCII.name())
+                    return byteOut.toString(StandardCharsets.US_ASCII)
                 }
             }
         } catch (e: IOException) {
