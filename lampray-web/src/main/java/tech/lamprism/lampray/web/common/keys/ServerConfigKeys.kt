@@ -88,6 +88,8 @@ object ServerConfigKeys : SettingSpecificationSupplier {
                         "process the Forwarded, X-Forwarded-For and X-Forwarded-Proto and other headers " +
                         "to determine the original request information, such as the original IP address and protocol."
             )
+            // TODO: add a method on SettingSpecificationBuilder to set boolean entries
+            .setValueEntries(listOf(false, true))
             .setDefaultValue(false)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .setRequired(true)

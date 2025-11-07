@@ -26,6 +26,8 @@ class ReadonlyConfigProvider(
 
     override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?) = SettingSource.NONE
 
+    override fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource = SettingSource.NONE
+
     override fun supports(key: String): Boolean = false
 
     override val metadata: ConfigReader.Metadata

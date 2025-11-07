@@ -7,10 +7,9 @@ on:
     paths-ignore:
       - docs/**
       - .github/**
-      - README.md
+      - "**.md"
       - LICENSE
       - .*ignore
-      - "**.md"
       - .gitattributes
       - .editorconfig
       - .gitmodules
@@ -26,7 +25,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up JDK 17
+      - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: 17
@@ -43,6 +42,10 @@ jobs:
             }
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -63,7 +66,7 @@ jobs:
       - name: Install Frontend Dependencies
         run: |
           cd lampray-frontend
-          npm install
+          pnpm install
       - name: Build
         run: |
           chmod +x gradlew

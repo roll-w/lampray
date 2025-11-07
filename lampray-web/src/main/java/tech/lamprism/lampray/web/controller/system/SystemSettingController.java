@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import tech.lamprism.lampray.TimeAttributed;
 import tech.lamprism.lampray.setting.AttributedSettingSpecification;
 import tech.lamprism.lampray.setting.ConfigProvider;
 import tech.lamprism.lampray.setting.ConfigValue;
+import tech.lamprism.lampray.setting.LayeredConfigValue;
 import tech.lamprism.lampray.setting.SecretLevel;
 import tech.lamprism.lampray.setting.SettingDescriptionProvider;
 import tech.lamprism.lampray.setting.SettingKey;
@@ -35,10 +36,14 @@ import tech.lamprism.lampray.setting.SettingSpecificationProvider;
 import tech.lamprism.lampray.web.StringValue;
 import tech.lamprism.lampray.web.controller.AdminApi;
 import tech.lamprism.lampray.web.controller.system.model.ListSettingRequest;
+import tech.lamprism.lampray.web.controller.system.model.SettingDetailsVo;
 import tech.lamprism.lampray.web.controller.system.model.SettingVo;
+import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.page.ImmutablePage;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -59,15 +64,6 @@ public class SystemSettingController {
         this.settingDescriptionProvider = settingDescriptionProvider;
     }
 
-    private Object maskSecret(Object value,
-                              SecretLevel secretLevel) {
-        if (value == null || secretLevel == SecretLevel.NONE) {
-            return value;
-        }
-        String valueStr = String.valueOf(value);
-        return secretLevel.maskValue(valueStr);
-    }
-
     @GetMapping("/system/settings")
     public HttpResponseEntity<List<SettingVo>> getSettings(
             @Valid ListSettingRequest listSettingRequest
@@ -82,9 +78,7 @@ public class SystemSettingController {
                 .map(value -> {
                     AttributedSettingSpecification<?, ?> specification =
                             (AttributedSettingSpecification<?, ?>) value.getSpecification();
-                    boolean secret = specification.getSecret();
-                    SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
-                    return toSettingVo(value, secretLevel, specification);
+                    return toSettingVo(value, specification);
                 }).toList();
         return HttpResponseEntity.success(ImmutablePage.of(
                 listSettingRequest.getPage(),
@@ -92,6 +86,37 @@ public class SystemSettingController {
                 specifications.size(),
                 res
         ));
+    }
+
+    @PutMapping("/system/settings/{key}")
+    public HttpResponseEntity<SettingSource> setSetting(@PathVariable("key") String key,
+                                                        @RequestBody StringValue value) {
+        // TODO: check setting key is valid and value is valid
+        @SuppressWarnings("unchecked")
+        AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
+                getSpecification(key);
+        SettingSource source = configProvider.set(
+                specification,
+                SettingSpecificationHelper.INSTANCE.deserialize(value.getValue(), specification)
+        );
+        return HttpResponseEntity.success(source);
+    }
+
+    @DeleteMapping("/system/settings/{key}")
+    public HttpResponseEntity<Void> deleteSetting(@PathVariable("key") String key) {
+        @SuppressWarnings("unchecked")
+        AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
+                getSpecification(key);
+        configProvider.reset(specification);
+        return HttpResponseEntity.success();
+    }
+
+    @GetMapping("/system/settings/{key}")
+    public HttpResponseEntity<SettingDetailsVo> getSetting(@PathVariable("key") String key) {
+        AttributedSettingSpecification<?, ?> specification = getSpecification(key);
+        ConfigValue<?, ?> configValue = configProvider.getValue(specification);
+        SettingDetailsVo settingVo = toSettingDetailsVo(configValue, specification);
+        return HttpResponseEntity.success(settingVo);
     }
 
     private List<AttributedSettingSpecification<?, ?>> filterSpecifications(
@@ -114,9 +139,11 @@ public class SystemSettingController {
                 .toList();
     }
 
-    private SettingVo toSettingVo(ConfigValue<?, ?> value, SecretLevel secretLevel,
+    private SettingVo toSettingVo(ConfigValue<?, ?> value,
                                   AttributedSettingSpecification<?, ?> specification) {
         SettingKey<?, ?> key = value.getSpecification().getKey();
+        boolean secret = specification.getSecret();
+        SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
         Object masked = maskSecret(value.getValue(), secretLevel);
         String description = settingDescriptionProvider.getSettingDescription(specification.getDescription());
         if (value instanceof TimeAttributed timeAttributed) {
@@ -125,8 +152,11 @@ public class SystemSettingController {
                     masked,
                     description,
                     key.getType().toString(),
+                    secret,
+                    specification.isRequired(),
                     value.getSource(),
-                    timeAttributed.getUpdateTime()
+                    timeAttributed.getUpdateTime(),
+                    specification.getSupportedSources()
             );
         }
         return new SettingVo(
@@ -134,42 +164,82 @@ public class SystemSettingController {
                 masked,
                 description,
                 key.getType().toString(),
+                secret,
+                specification.isRequired(),
                 value.getSource(),
-                null
+                null,
+                specification.getSupportedSources()
         );
     }
 
-    @PutMapping("/system/settings/{key}")
-    public HttpResponseEntity<SettingSource> setSetting(@PathVariable String key,
-                                                        @RequestBody StringValue value) {
-        // TODO: check setting key is valid and value is valid
-        @SuppressWarnings("unchecked")
-        AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
-                settingSpecificationProvider.getSettingSpecification(key);
-        SettingSource source = configProvider.set(
-                specification,
-                SettingSpecificationHelper.INSTANCE.deserialize(value.getValue(), specification)
-        );
-        return HttpResponseEntity.success(source);
-    }
-
-    @DeleteMapping("/system/settings/{key}")
-    public HttpResponseEntity<SettingSource> deleteSetting(@PathVariable String key) {
-        // TODO: may need a delete method in ConfigProvider
-        @SuppressWarnings("unchecked")
-        AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
-                settingSpecificationProvider.getSettingSpecification(key);
-        SettingSource source = configProvider.set(specification, specification.getDefaultValue());
-        return HttpResponseEntity.success(source);
-    }
-
-    @GetMapping("/system/settings/{key}")
-    public HttpResponseEntity<SettingVo> getSetting(@PathVariable String key) {
-        AttributedSettingSpecification<?, ?> specification = settingSpecificationProvider.getSettingSpecification(key);
-        ConfigValue<?, ?> configValue = configProvider.getValue(specification);
+    private SettingDetailsVo toSettingDetailsVo(ConfigValue<?, ?> value,
+                                                AttributedSettingSpecification<?, ?> specification) {
+        // TODO: return value restrictions
+        SettingKey<?, ?> key = value.getSpecification().getKey();
         boolean secret = specification.getSecret();
         SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
-        SettingVo settingVo = toSettingVo(configValue, secretLevel, specification);
-        return HttpResponseEntity.success(settingVo);
+        Object masked = maskSecret(value.getValue(), secretLevel);
+        List<ConfigValue<?, ?>> layers = getValueLayers(value);
+        List<SettingDetailsVo.ValueLayer> valueLayers = layers.stream()
+                .map(layerValue -> {
+                    Object layerMasked = maskSecret(layerValue.getValue(), secretLevel);
+                    return new SettingDetailsVo.ValueLayer(layerValue.getSource(), layerMasked);
+                })
+                .toList();
+        String description = settingDescriptionProvider.getSettingDescription(specification.getDescription());
+        if (value instanceof TimeAttributed timeAttributed) {
+            return new SettingDetailsVo(
+                    key.getName(),
+                    masked,
+                    description,
+                    key.getType().toString(),
+                    secret,
+                    specification.isRequired(),
+                    value.getSource(),
+                    timeAttributed.getUpdateTime(),
+                    specification.getSupportedSources(),
+                    specification.getDefaults(),
+                    specification.getValueEntries(),
+                    valueLayers
+            );
+        }
+        return new SettingDetailsVo(
+                key.getName(),
+                masked,
+                description,
+                key.getType().toString(),
+                secret,
+                specification.isRequired(),
+                value.getSource(),
+                null,
+                specification.getSupportedSources(),
+                specification.getDefaults(),
+                specification.getValueEntries(),
+                valueLayers
+        );
+    }
+
+    private List<ConfigValue<?, ?>> getValueLayers(ConfigValue<?, ?> value) {
+        if (value instanceof LayeredConfigValue<?, ?> layeredConfigValue) {
+            return new ArrayList<>(layeredConfigValue.getLayers());
+        }
+        return List.of();
+    }
+
+    private Object maskSecret(Object value,
+                              SecretLevel secretLevel) {
+        if (value == null || secretLevel == SecretLevel.NONE) {
+            return value;
+        }
+        String valueStr = String.valueOf(value);
+        return secretLevel.maskValue(valueStr);
+    }
+
+    private AttributedSettingSpecification<?, ?> getSpecification(String key) {
+        try {
+            return settingSpecificationProvider.getSettingSpecification(key);
+        } catch (IllegalArgumentException e) {
+            throw new CommonRuntimeException(CommonErrorCode.ERROR_NOT_FOUND);
+        }
     }
 }

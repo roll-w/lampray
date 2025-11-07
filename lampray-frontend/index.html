@@ -15,25 +15,17 @@
   -->
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="">
 <head>
     <meta charset="UTF-8">
-    <link href="/favicon.ico" rel="icon">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Lampray</title>
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/src/assets/main.css">
     <script src="/config.js" defer></script>
+    <title>Lampray</title>
 </head>
 <body>
-<div id="app" style="height: 100%"></div>
-<script src="/src/main.js" type="module"></script>
-<script>
-    window.config = {
-        server: {
-            host: "localhost:5100",
-            httpProtocol: "http",
-            wsProtocol: "ws"
-        }
-    }
-</script>
+<div id="app" class="isolate"></div>
+<script type="module" src="/src/main.ts"></script>
 </body>
 </html>

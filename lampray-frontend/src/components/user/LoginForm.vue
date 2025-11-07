@@ -14,160 +14,136 @@
   - limitations under the License.
   -->
 
-<template>
-    <div class="flex flex-grow-1 flex-fill">
-        <n-h2>
-            <n-text type="primary">登录</n-text>
-        </n-h2>
-        <div class="flex flex-fill justify-end">
-            <n-h3>
-                <n-text type="info">尚未拥有账号？
-                    <n-a @click="handleToRegister">点此注册</n-a>
-                </n-text>
-            </n-h3>
-        </div>
-    </div>
-    <n-form ref="loginForm" :model="formValue" :rules="formRules">
-        <n-form-item label="用户名/电子邮箱" path="identity">
-            <n-input v-model:value="formValue.identity" placeholder="请输入用户名或电子邮箱"
-                     @keydown.enter.prevent/>
-        </n-form-item>
-        <n-form-item label="密码" path="token">
-            <n-input v-model:value="formValue.token" placeholder="请输入密码" show-password-on="click"
-                     type="password"
-                     @keydown.enter.prevent/>
-        </n-form-item>
-        <n-form-item path="rememberMe">
-            <n-checkbox v-model:checked="formValue.rememberMe">
-                记住我
-            </n-checkbox>
-        </n-form-item>
-        <n-button-group class="w-full">
-            <n-button class="w-full flex-grow-0" type="primary" @click="onLoginClick">
-                登录
-            </n-button>
-            <n-button class="w-full" type="tertiary" @click="onResetClick">
-                重置
-            </n-button>
-        </n-button-group>
-        <n-a>忘记密码</n-a>
-    </n-form>
-
-</template>
-
-<script setup>
-import {getCurrentInstance, ref} from "vue";
-import api from "@/request/api";
-import {NA, NButton, NButtonGroup, NCheckbox, NForm, NFormItem, NInput, NText, useNotification} from "naive-ui";
+<script setup lang="ts">
+import {reactive, ref, useTemplateRef, watch} from "vue";
+import * as z from "zod";
+import {loginRegisterService} from "@/services/user/user.service.ts";
+import {RouteName} from "@/router/routeName.ts";
 import {useRouter} from "vue-router";
-import {useUserStore} from "@/stores/user";
-import {index, register} from "@/router";
+import {useI18n} from "vue-i18n";
+import {newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
+import {useAxios} from "@/composables/useAxios.ts";
+import {useUserStore} from "@/stores/user.ts";
+import {PASSWORD_REGEX, USERNAME_REGEX} from "@/components/user/constants.ts";
 
-const userStore = useUserStore()
-const loginForm = ref(null)
-const router = useRouter()
-const notification = useNotification()
-const {proxy} = getCurrentInstance()
+const {t, locale} = useI18n();
 
-const formValue = ref({
-    identity: null,
-    token: null,
+const axios = useAxios();
+const toast = useToast();
+const router = useRouter();
+const userStore = useUserStore();
+
+const createLoginSchema = () => z.object({
+    identity: z.string()
+        .min(1, t("views.userfaced.user.login.identityRequired"))
+        .refine(val => {
+            if (!val) return false;
+            const v = val.trim();
+            if (v.includes("@")) {
+                return z.email().safeParse(v).success;
+            }
+            return USERNAME_REGEX.test(v);
+        }, {
+            message: t("views.userfaced.user.login.invalidIdentity")
+        }),
+    token: z.string()
+        .min(4, t("views.userfaced.user.login.invalidPassword"))
+        .max(20, t("views.userfaced.user.login.invalidPassword"))
+        .regex(PASSWORD_REGEX, {message: t("views.userfaced.user.login.invalidPasswordDetail")}),
+    rememberMe: z.boolean().default(false)
+});
+
+const loginSchema = ref(createLoginSchema());
+const form = useTemplateRef("form")
+
+watch(locale, async () => {
+    loginSchema.value = createLoginSchema();
+    // TODO: fix form error message update
+    form.value?.clear()
+}, {immediate: true});
+
+type LoginSchema = z.output<ReturnType<typeof createLoginSchema>>;
+const loginForm = reactive<Partial<LoginSchema>>({
+    identity: "",
+    token: "",
     rememberMe: false
-})
+});
 
-const formRules = {
-    identity: [{
-        required: true,
-        validator(rule, value) {
-            if (!value) {
-                return new Error("需要填写用户名或电子邮箱地址")
-            }
-            return true
-        },
-        trigger: ['input']
-    }],
-    token: [{
-        required: true,
-        message: "请输入密码",
-        trigger: ['input']
-    }],
-}
+const showPassword = ref(false);
 
-const validateFormValue = (callback) => {
-    loginForm.value?.validate((errors) => {
-        if (errors) {
-            return
-        }
-        callback()
-    });
-}
+const jumpTo = () => {
+     const source = router.currentRoute.value.query.source;
+     if (source) {
+         const url = decodeURIComponent(source.toString());
+         window.location.replace(url);
+     } else {
+         router.push({name: RouteName.USER_HOME});
+     }
+ };
 
-const source = router.currentRoute.value.query.source
+ const onLoginClick = async () => {
+     const result = loginSchema.value.safeParse(loginForm);
+     if (!result.success) {
+         const firstError = result.error.issues[0]?.message || t("request.error.title");
+         toast.add(newErrorToastFromError(new Error(firstError), t("request.error.title")));
+         return;
+     }
+     try {
+         const response = await loginRegisterService(axios).loginByPassword({
+             identity: loginForm.identity!,
+             token: loginForm.token!,
+         });
+         const body = response.data;
+         const data = body.data!;
+         userStore.loginUser(data.user, {
+             accessToken: data.accessToken,
+             refreshToken: data.refreshToken,
+             prefix: "Bearer ",
+             accessTokenExpiry: new Date(data.accessTokenExpiry),
+             refreshTokenExpiry: new Date(data.refreshTokenExpiry),
+         }, loginForm.rememberMe!, false);
+         toast.add(newSuccessToast(t("views.userfaced.user.login.success")));
+         jumpTo();
+     } catch (error: any) {
+         toast.add(newErrorToastFromError(error, t("request.error.title")));
+     }
+ };
 
-const onLoginClick = (e) => {
-    e.preventDefault()
-    validateFormValue(() => {
-        proxy.$axios.post(api.passwordLogin, formValue.value).then(res => {
-            /**
-             * @type {{ user: {
-             * username: string, id: number,
-             * role: string, email: string },
-             * accessToken: string, refreshToken: string,
-             * accessTokenExpiry: string, refreshTokenExpiry: string
-             * }}
-             */
-            const data = res.data
-            const user = {
-                id: data.user.id,
-                username: data.user.username,
-                role: data.user.role,
-            }
-            /**
-             * @type {{refreshToken: string, accessToken: string, prefix: string, accessTokenExpiry: Date, refreshTokenExpiry: Date}}
-             */
-            const token = {
-                refreshToken: data.refreshToken,
-                accessToken: data.accessToken,
-                prefix: "Bearer ",
-                accessTokenExpiry: new Date(data.accessTokenExpiry),
-                refreshTokenExpiry: new Date(data.refreshTokenExpiry),
-            }
-
-            userStore.loginUser(user, token, formValue.value.rememberMe, false)
-
-            // check url
-            if (!source) {
-                router.push({
-                    name: index
-                })
-                return
-            }
-            router.push(source.toString())
-        }).catch(err => {
-            const msg = err.tip
-            notification.error({
-                title: "请求错误",
-                content: msg,
-                meta: "登录错误",
-                duration: 3000,
-                keepAliveOnHover: true
-            })
-        })
-    })
-}
-
-const onResetClick = () => {
-    formValue.value = {
-        identity: null,
-        token: null,
-        rememberMe: false
-    }
-    loginForm.value?.restoreValidation()
-}
-
-const handleToRegister = () => {
-    router.push({
-        name: register
-    })
-}
+const onLoginReset = () => {
+    loginForm.identity = "";
+    loginForm.token = "";
+    loginForm.rememberMe = false;
+};
 </script>
+<template>
+    <UForm :schema="loginSchema" :state="loginForm" class="space-y-4 w-full" @submit="onLoginClick" ref="form">
+        <UFormField :label="t('views.userfaced.user.login.identity')" name="identity" required>
+            <UInput v-model="loginForm.identity" :placeholder="t('views.userfaced.user.login.identityPlaceholder')" type="text"
+                    autocomplete="username" name="identity" class="w-full"/>
+        </UFormField>
+        <UFormField :label="t('views.common.user.password')" name="token" required>
+            <UInput v-model="loginForm.token" :placeholder="t('views.common.user.passwordPlaceholder')" :type="showPassword ? 'text' : 'password'"
+                    :ui="{ trailing: 'pe-1' }"
+                    autocomplete="current-password" name="token" class="w-full">
+                <template #trailing>
+                    <UButton
+                            color="neutral"
+                            variant="link"
+                            size="sm"
+                            :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                            :aria-label="showPassword ? t('views.userfaced.user.login.hidePassword') : t('views.userfaced.user.login.showPassword')"
+                            :aria-pressed="showPassword"
+                            aria-controls="password"
+                            @click="showPassword = !showPassword"
+                    />
+                </template>
+            </UInput>
+        </UFormField>
+        <UCheckbox v-model="loginForm.rememberMe" :label="t('views.userfaced.user.login.rememberMe')" name="rememberMe"/>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <UButton type="submit" class="flex-1" color="primary">{{ t('views.userfaced.user.login.loginButton') }}</UButton>
+            <UButton variant="outline" class="flex-1" @click="onLoginReset">{{ t('common.reset') }}</UButton>
+        </div>
+    </UForm>
+    <UButton variant="link" class="self-start p-0 h-auto text-sm" @click="() => {}">{{ t('views.userfaced.user.login.forgotPassword') }}</UButton>
+</template>

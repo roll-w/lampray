@@ -69,7 +69,7 @@ class SystemSettingConfigProvider(
 
     override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
         val setting = systemSettingRepository.findByKey(specification.keyName)
-            .orElse(null) ?: return SnapshotConfigValue(null, SettingSource.NONE, specification)
+            .orElse(null) ?: return SnapshotConfigValue(null, SettingSource.DATABASE, specification)
         return with(SettingSpecificationHelper) {
             SnapshotConfigValue(
                 setting.value.deserialize(specification),
@@ -88,7 +88,7 @@ class SystemSettingConfigProvider(
             .associateBy { it.key }
         @Suppress("UNCHECKED_CAST")
         return (specifications as List<SettingSpecification<Any, Any>>).map { spec ->
-            val setting = settings[spec.keyName] ?: return@map SnapshotConfigValue(null, SettingSource.NONE, spec)
+            val setting = settings[spec.keyName] ?: return@map SnapshotConfigValue(null, SettingSource.DATABASE, spec)
             with(SettingSpecificationHelper) {
                 ConfigValueInfo.from(
                     specification = spec,
@@ -133,6 +133,13 @@ class SystemSettingConfigProvider(
             value = value
         )
         systemSettingRepository.save(newSetting)
+        return SettingSource.DATABASE
+    }
+
+    override fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource {
+        val setting = systemSettingRepository.findByKey(spec.keyName)
+            .orElse(null) ?: return SettingSource.NONE
+        systemSettingRepository.delete(setting)
         return SettingSource.DATABASE
     }
 

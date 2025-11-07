@@ -14,35 +14,28 @@
   - limitations under the License.
   -->
 
+<script setup lang="ts">
+import {useRouter} from "vue-router";
+
+const router = useRouter();
+
+
+</script>
+
 <template>
     <div class="h-[75vh] flex flex-col justify-center items-center">
         <div class="p-5 ">
-            <n-result status="403" title="您的访问被阻止了">
-                <template #default>
-                    <div class="text-center text-xl">
-                        <div>{{ result }}</div>
-                        <div>{{ tip }}</div>
-                        <div>{{ message }}</div>
-                    </div>
+            <UError :error="{
+                statusCode: 403,
+                statusMessage: '访问被阻止',
+                message: '您没有权限访问此页面，可能是因为您的账号被封禁或权限不足。',}">
+                <template #links>
+                    <UButton color="primary" @click="router.push('/')">回到首页</UButton>
                 </template>
-                <template #footer>
-                    <n-button secondary type="primary" @click="">对被阻止有疑问？</n-button>
-                </template>
-            </n-result>
+            </UError>
         </div>
     </div>
 </template>
-
-<script setup>
-import {useRouter} from "vue-router";
-import {NButton, NResult} from "naive-ui";
-
-const router = useRouter()
-const result = router.currentRoute.value.query.result
-const tip = router.currentRoute.value.query.tip
-const message = router.currentRoute.value.query.message
-const source = router.currentRoute.value.query.source
-</script>
 
 <style scoped>
 

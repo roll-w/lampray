@@ -2,22 +2,20 @@
 
 The frontend of the Lampray project.
 
-Built with Vite, Vue.js, Naive UI and Tailwind CSS.
-
 ## Project Setup
 
 ```sh
-npm install
+pnpm install
 ```
 
 ### Compile and Hot-Reload for Development
 
 ```sh
-npm run dev
+pnpm dev
 ```
 
-### Compile and Minify for Production
+### Type-Check, Compile and Minify for Production
 
 ```sh
-npm run build
+pnpm build
 ```

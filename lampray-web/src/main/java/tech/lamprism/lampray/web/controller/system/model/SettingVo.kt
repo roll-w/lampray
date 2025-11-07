@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,10 @@ data class SettingVo(
     val value: Any?,
     val description: String,
     val type: String,
+    val secret: Boolean,
+    val required: Boolean,
     val source: SettingSource,
-    val updateTime: OffsetDateTime?
+    val updateTime: OffsetDateTime?,
+    val supportedSources: List<SettingSource>
 ) {
 }

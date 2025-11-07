@@ -14,36 +14,27 @@
   - limitations under the License.
   -->
 
+<script setup lang="ts">
+import {useRouter} from "vue-router";
+
+const router = useRouter();
+
+</script>
+
 <template>
     <div class="h-[75vh] flex flex-col justify-center items-center">
-        <div class="p-5 ">
-            <n-result status="404" title="您尝试访问的页面不存在">
-                <template #default>
-                    <div class="text-center text-xl">
-                        <div>{{ result }}</div>
-                        <div>{{ tip }}</div>
-                        <div>{{ message }}</div>
-                    </div>
+        <div class="p-5">
+            <UError :error="{
+                statusCode: 404,
+                statusMessage: '页面不存在',
+                message: '您访问的页面不存在，可能是因为地址错误或页面已被删除。',}">
+                <template #links>
+                    <UButton color="primary" @click="router.push('/')">回到首页</UButton>
                 </template>
-                <template #footer>
-                    <n-button type="primary" @click="() => $router.push('/')">回到首页</n-button>
-                </template>
-            </n-result>
+            </UError>
         </div>
     </div>
 </template>
-
-<script setup>
-import {useRouter} from "vue-router";
-import {NButton, NResult} from "naive-ui";
-
-const router = useRouter()
-const result = router.currentRoute.value.query.result
-const tip = router.currentRoute.value.query.tip
-const message = router.currentRoute.value.query.message
-const source = router.currentRoute.value.query.source
-
-</script>
 
 <style scoped>
 

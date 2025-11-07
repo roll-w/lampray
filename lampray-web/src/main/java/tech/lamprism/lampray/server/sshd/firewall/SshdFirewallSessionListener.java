@@ -42,12 +42,6 @@ public class SshdFirewallSessionListener implements SessionListener {
     }
 
     @Override
-    public void sessionEstablished(Session session) {
-        Authentication authentication = session.getAttribute(SshdPasswordAuthenticator.AUTHENTICATION_KEY);
-        logger.info("Firewall session established: {}", authentication);
-    }
-
-    @Override
     public void sessionCreated(Session session) {
         // First check without user info
         SshdFirewallAccessRequest request = new SshdFirewallAccessRequest(session.getIoSession(), null);
