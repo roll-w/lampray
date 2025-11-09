@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Code block element which may include language metadata.
+ *
+ * @author RollW
+ */
 data class CodeBlock @JvmOverloads constructor(
     val language: String?,
     override val content: String = "",

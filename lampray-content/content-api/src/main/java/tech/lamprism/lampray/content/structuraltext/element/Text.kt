@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Plain text node.
+ *
+ * @author RollW
+ */
 data class Text @JvmOverloads constructor(
     override val content: String = "",
     override val children: List<StructuralText> = emptyList()

@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Math element for inline or display equations.
+ *
+ * @author RollW
+ */
 data class Math @JvmOverloads constructor(
     override val content: String,
     val display: Boolean = false,

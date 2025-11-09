@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Horizontal divider marker.
+ *
+ * @author RollW
+ */
 object HorizontalDivider : StructuralText {
     override val type: StructuralTextType
         get() = StructuralTextType.HORIZONTAL_DIVIDER

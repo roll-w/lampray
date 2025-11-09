@@ -23,6 +23,7 @@ dependencies {
     api(project(":lampray-common-data"))
     api(project(":lampray-content:content-api"))
     implementation("com.github.luben:zstd-jni:1.5.7-6")
+    implementation("org.msgpack:jackson-dataformat-msgpack:0.9.10")
 }
 
 description = "lampray-content-service"

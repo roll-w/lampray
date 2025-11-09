@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Block that contains list items (ordered or unordered).
+ *
+ * @author RollW
+ */
 data class ListBlock @JvmOverloads constructor(
     val ordered: Boolean,
     override val content: String = "",

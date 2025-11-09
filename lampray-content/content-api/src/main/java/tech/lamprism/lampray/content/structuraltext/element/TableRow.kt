@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Row in a table containing cells.
+ *
+ * @author RollW
+ */
 data class TableRow @JvmOverloads constructor(
     override val content: String = "",
     override val children: List<StructuralText> = emptyList()

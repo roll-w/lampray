@@ -14,13 +14,28 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.structuraltext
+package tech.lamprism.lampray.content.structuraltext.validation;
 
 /**
- * Renderer for structural text to produce a String representation.
+ * Thrown when structural text is empty or no text node found.
  *
  * @author RollW
  */
-interface StructuralTextRenderer {
-    fun render(text: StructuralText): String
+public class StructuralTextEmptyException extends StructuralTextValidationException {
+    public StructuralTextEmptyException() {
+        super();
+    }
+
+    public StructuralTextEmptyException(String message) {
+        super(message);
+    }
+
+    public StructuralTextEmptyException(Throwable cause) {
+        super(cause);
+    }
+
+    public StructuralTextEmptyException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
+

@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Link element with href and optional title.
+ *
+ * @author RollW
+ */
 data class Link @JvmOverloads constructor(
     val href: String,
     val title: String?,

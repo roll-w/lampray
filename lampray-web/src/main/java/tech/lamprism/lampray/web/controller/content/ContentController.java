@@ -19,9 +19,7 @@ package tech.lamprism.lampray.web.controller.content;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import tech.lamprism.lampray.content.ContentAccessCredential;
 import tech.lamprism.lampray.content.ContentAccessCredentials;
 import tech.lamprism.lampray.content.ContentAccessService;
@@ -35,8 +33,6 @@ import tech.lamprism.lampray.content.collection.ContentCollectionProviderFactory
 import tech.lamprism.lampray.content.collection.ContentCollectionType;
 import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
-import tech.lamprism.lampray.content.structuraltext.StructuralText;
-import tech.lamprism.lampray.content.structuraltext.renderer.StructuralTextMarkdownRenderer;
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.Api;
@@ -173,14 +169,6 @@ public class ContentController {
             @PathVariable("contentType") UrlContentType contentType,
             @PathVariable("contentId") Long contentId) {
         return HttpResponseEntity.success();
-    }
-
-    @PostMapping("/structuraltext/markdown")
-    public HttpResponseEntity<String> structuralTextToMarkdown(
-           @RequestBody StructuralText structuralText) {
-        StructuralTextMarkdownRenderer structuralTextMarkdownRenderer = new StructuralTextMarkdownRenderer();
-        String render = structuralTextMarkdownRenderer.render(structuralText);
-        return HttpResponseEntity.success(render);
     }
 
     private SystemResource<Long> getSystemResource(Long contentId,

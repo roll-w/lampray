@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Italic inline element.
+ *
+ * @author RollW
+ */
 data class Italic @JvmOverloads constructor(
     override val content: String = "",
     override val children: List<StructuralText> = emptyList()

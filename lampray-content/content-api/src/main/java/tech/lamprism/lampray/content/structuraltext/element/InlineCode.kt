@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Inline code element.
+ *
+ * @author RollW
+ */
 data class InlineCode @JvmOverloads constructor(
     override val content: String = "",
     override val children: List<StructuralText> = emptyList()

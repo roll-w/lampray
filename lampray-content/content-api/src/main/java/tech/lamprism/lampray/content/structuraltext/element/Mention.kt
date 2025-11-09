@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Mention of a user within the structural text.
+ *
+ * @author RollW
+ */
 data class Mention @JvmOverloads constructor(
     val userId: String,
     override val content: String = "",

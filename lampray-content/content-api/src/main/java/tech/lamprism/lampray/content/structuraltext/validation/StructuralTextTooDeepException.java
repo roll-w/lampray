@@ -14,13 +14,28 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.structuraltext
+package tech.lamprism.lampray.content.structuraltext.validation;
 
 /**
- * Renderer for structural text to produce a String representation.
+ * Thrown when structural text exceeds max allowed depth.
  *
  * @author RollW
  */
-interface StructuralTextRenderer {
-    fun render(text: StructuralText): String
+public class StructuralTextTooDeepException extends StructuralTextValidationException {
+    public StructuralTextTooDeepException() {
+        super();
+    }
+
+    public StructuralTextTooDeepException(String message) {
+        super(message);
+    }
+
+    public StructuralTextTooDeepException(Throwable cause) {
+        super(cause);
+    }
+
+    public StructuralTextTooDeepException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
+

@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Paragraph element grouping inline children.
+ *
+ * @author RollW
+ */
 data class Paragraph @JvmOverloads constructor(
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {

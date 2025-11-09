@@ -43,9 +43,11 @@ import tech.lamprism.lampray.content.structuraltext.element.Text
 import tech.lamprism.lampray.content.structuraltext.element.Underline
 
 /**
+ * Simply renders structural text to plain text.
+ *
  * @author RollW
  */
-class StructuralTextMarkdownRenderer : StructuralTextRenderer {
+class SimpleStructuralTextRenderer: StructuralTextRenderer {
     override fun render(text: StructuralText): String {
         val visitor = Visitor()
         text.accept(visitor)
@@ -74,7 +76,6 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
                 }
 
                 is Heading -> {
-                    builder.append("#".repeat(node.level)).append(" ")
                     if (node.children.isEmpty()) {
                         builder.append(node.content)
                     } else {
@@ -85,11 +86,6 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
 
                 is ListBlock -> {
                     node.children.filterIsInstance<ListItem>().forEachIndexed { index, item ->
-                        if (node.ordered) {
-                            builder.append("${index + 1}. ")
-                        } else {
-                            builder.append("- ")
-                        }
                         if (item.children.isEmpty()) {
                             builder.append(item.content)
                         } else {
@@ -101,126 +97,92 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
                 }
 
                 is Blockquote -> {
-                    builder.append("> ")
                     if (node.children.isEmpty()) {
                         builder.append(node.content)
                     } else {
                         node.children.forEach { it.accept(this) }
                     }
-                    builder.append("\n\n")
+                    builder.append("\n")
                 }
 
                 is CodeBlock -> {
-                    builder.append("```")
-                    node.language?.let { builder.append(it) }
-                    builder.append("\n")
+                    // include raw code content
                     builder.append(node.content).append("\n")
-                    builder.append("```\n\n")
                 }
 
                 is InlineCode -> {
-                    builder.append("`").append(node.content).append("`")
+                    builder.append(node.content)
                 }
 
                 is Bold -> {
-                    builder.append("**")
                     if (node.children.isEmpty()) {
                         builder.append(node.content)
                     } else {
                         node.children.forEach { it.accept(this) }
                     }
-                    builder.append("**")
                 }
 
                 is Italic -> {
-                    builder.append("*")
                     if (node.children.isEmpty()) {
                         builder.append(node.content)
                     } else {
                         node.children.forEach { it.accept(this) }
                     }
-                    builder.append("*")
                 }
 
                 is StrikeThrough -> {
-                    builder.append("~~")
                     if (node.children.isEmpty()) {
                         builder.append(node.content)
                     } else {
                         node.children.forEach { it.accept(this) }
                     }
-                    builder.append("~~")
                 }
 
                 is Underline -> {
-                    builder.append("<u>")
                     if (node.children.isEmpty()) {
                         builder.append(node.content)
                     } else {
                         node.children.forEach { it.accept(this) }
                     }
-                    builder.append("</u>")
                 }
 
                 is Highlight -> {
-                    builder.append("==")
                     if (node.children.isEmpty()) {
                         builder.append(node.content)
                     } else {
                         node.children.forEach { it.accept(this) }
                     }
-                    builder.append("==")
                 }
 
                 is Link -> {
-                    builder.append("[")
                     if (node.children.isEmpty()) {
-                        builder.append(node.content)
+                        if (node.content.isNotEmpty()) builder.append(node.content)
                     } else {
                         node.children.forEach { it.accept(this) }
                     }
-                    builder.append("](${node.href}")
-                    node.title?.let { builder.append(" \"$it\"") }
-                    builder.append(")")
                 }
 
                 is Image -> {
-                    builder.append("![${node.alt ?: ""}](${node.src}")
-                    node.title?.let { builder.append(" \"$it\"") }
-                    builder.append(")")
+                    // skip image in plain text
                 }
 
                 is Table -> {
                     val rows = node.children.filterIsInstance<TableRow>()
-                    if (rows.isNotEmpty()) {
-                        val headerCells = rows.first().children.filterIsInstance<TableCell>()
-                        if (headerCells.isNotEmpty()) {
-                            builder.append("|")
-                            headerCells.forEach { cell ->
-                                builder.append(" ").append(cell.content).append(" |")
-                            }
-                            builder.append("\n|")
-                            headerCells.forEach { _ ->
-                                builder.append(" --- |")
+                    rows.forEach { row ->
+                        val cells = row.children.filterIsInstance<TableCell>()
+                        if (cells.isNotEmpty()) {
+                            cells.forEachIndexed { idx, cell ->
+                                if (idx > 0) builder.append(' ')
+                                builder.append(cell.content)
                             }
                             builder.append("\n")
                         }
-                        rows.forEach { row ->
-                            val cells = row.children.filterIsInstance<TableCell>()
-                            if (cells.isNotEmpty()) {
-                                builder.append("|")
-                                cells.forEach { cell ->
-                                    builder.append(" ").append(cell.content).append(" |")
-                                }
-                                builder.append("\n")
-                            }
-                        }
-                        builder.append("\n")
                     }
+                    builder.append("\n")
                 }
 
                 is HorizontalDivider -> {
-                    builder.append("---\n\n")
+                    // skip horizontal divider in plain text
                 }
 
                 is Text -> {
@@ -228,19 +190,15 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
                 }
 
                 is Math -> {
-                    if (node.display) {
-                        builder.append("$$\n").append(node.content).append("\n$$")
-                    } else {
-                        builder.append("$").append(node.content).append("$")
-                    }
+                    builder.append(node.content)
                 }
 
                 is Mention -> {
-                    builder.append(" @").append(node.content).append(" ")
+                    if (node.content.isNotEmpty()) builder.append("@").append(node.content)
                 }
 
                 else -> {
-                    builder.append(node.content)
+                    if (node.content.isNotEmpty()) builder.append(node.content)
                     node.children.forEach { it.accept(this) }
                 }
             }

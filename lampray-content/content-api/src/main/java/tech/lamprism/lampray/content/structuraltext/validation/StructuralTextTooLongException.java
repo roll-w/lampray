@@ -14,13 +14,25 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.structuraltext
+package tech.lamprism.lampray.content.structuraltext.validation;
 
 /**
- * Renderer for structural text to produce a String representation.
- *
  * @author RollW
  */
-interface StructuralTextRenderer {
-    fun render(text: StructuralText): String
+public class StructuralTextTooLongException extends StructuralTextValidationException {
+    public StructuralTextTooLongException() {
+        super();
+    }
+
+    public StructuralTextTooLongException(String message) {
+        super(message);
+    }
+
+    public StructuralTextTooLongException(Throwable cause) {
+        super(cause);
+    }
+
+    public StructuralTextTooLongException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

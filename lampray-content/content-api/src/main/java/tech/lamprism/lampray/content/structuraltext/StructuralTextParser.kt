@@ -16,6 +16,11 @@
 
 package tech.lamprism.lampray.content.structuraltext
 
+/**
+ * Parser that converts raw input into a StructuralText model.
+ *
+ * @author RollW
+ */
 interface StructuralTextParser {
     fun parse(input: String): StructuralText
 }

@@ -16,12 +16,16 @@
 
 package tech.lamprism.lampray.content.persistence;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.luben.zstd.Zstd;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import org.apache.commons.lang3.ArrayUtils;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tech.lamprism.lampray.content.structuraltext.StructuralText;
@@ -39,11 +43,12 @@ import java.util.Objects;
  */
 @Converter(autoApply = true)
 public class StructuralTextAttributeConverter implements AttributeConverter<StructuralText, byte[]> {
-    private static final Logger logger = LoggerFactory.getLogger(StructuralTextAttributeConverter.class);
     private final ObjectMapper objectMapper;
 
     public StructuralTextAttributeConverter(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper.copyWith(new MessagePackFactory());
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     @Override

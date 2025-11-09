@@ -16,6 +16,11 @@
 
 package tech.lamprism.lampray.content.structuraltext
 
+/**
+ * Types of structural text nodes.
+ *
+ * @author RollW
+ */
 enum class StructuralTextType {
     DOCUMENT,
     PARAGRAPH,

@@ -16,6 +16,11 @@
 
 package tech.lamprism.lampray.content.structuraltext
 
+/**
+ * Visitor for structural text nodes.
+ *
+ * @author RollW
+ */
 interface StructuralTextVisitor {
     fun visit(node: StructuralText)
 }

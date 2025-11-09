@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Heading element representing a heading with a specified level.
+ *
+ * @author RollW
+ */
 data class Heading @JvmOverloads constructor(
     val level: Int,
     override val content: String = "",

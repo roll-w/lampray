@@ -14,13 +14,28 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.structuraltext
+package tech.lamprism.lampray.content.structuraltext.validation;
 
 /**
- * Renderer for structural text to produce a String representation.
+ * Thrown when root is not a DOCUMENT node while it is required.
  *
  * @author RollW
  */
-interface StructuralTextRenderer {
-    fun render(text: StructuralText): String
+public class StructuralTextRootNotDocumentException extends StructuralTextValidationException {
+    public StructuralTextRootNotDocumentException() {
+        super();
+    }
+
+    public StructuralTextRootNotDocumentException(String message) {
+        super(message);
+    }
+
+    public StructuralTextRootNotDocumentException(Throwable cause) {
+        super(cause);
+    }
+
+    public StructuralTextRootNotDocumentException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
+

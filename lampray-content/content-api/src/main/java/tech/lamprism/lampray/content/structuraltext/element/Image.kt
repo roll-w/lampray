@@ -20,6 +20,11 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
+/**
+ * Image element represents an image with src, alt and title.
+ *
+ * @author RollW
+ */
 data class Image @JvmOverloads constructor(
     val src: String,
     val alt: String?,
