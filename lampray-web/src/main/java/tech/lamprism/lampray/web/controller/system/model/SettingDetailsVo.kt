@@ -1,0 +1,44 @@
+/*
+ * Copyright (C) 2023-2025 RollW
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package tech.lamprism.lampray.web.controller.system.model
+
+import tech.lamprism.lampray.setting.SettingSource
+import java.time.OffsetDateTime
+
+/**
+ * @param layers The value layers from different sources, ordered by priority (highest first).
+ * @author RollW
+ */
+data class SettingDetailsVo(
+    val key: String,
+    val value: Any?,
+    val description: String,
+    val type: String,
+    val secret: Boolean,
+    val required: Boolean,
+    val source: SettingSource,
+    val updateTime: OffsetDateTime?,
+    val supportedSources: List<SettingSource>,
+    val defaults: List<Int>,
+    val valueEntries: List<Any?>,
+    val layers: List<ValueLayer>,
+) {
+    data class ValueLayer(
+        val source: SettingSource,
+        val value: Any?,
+    )
+}

@@ -48,9 +48,7 @@ import tech.lamprism.lampray.content.persistence.ContentMetadataRepository;
 import tech.lamprism.lampray.content.publish.ContentPublishListener;
 import tech.rollw.common.web.CommonErrorCode;
 import tech.rollw.common.web.ErrorCode;
-import tech.rollw.common.web.system.ContextThreadAware;
 import tech.rollw.common.web.system.UnsupportedKindException;
-import tech.rollw.common.web.system.paged.PageableContext;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
@@ -72,7 +70,6 @@ public class ContentService implements ContentAccessService,
     private final ContentProviderFactory contentProviderFactory;
     private final ContentPermitChecker contentPermitChecker;
     private final ContentMetadataRepository contentMetadataRepository;
-    private final ContextThreadAware<PageableContext> pageableContextThreadAware;
 
     public ContentService(List<ContentPublisher> contentPublishers,
                           List<UncreatedContentPreChecker> uncreatedContentPreCheckers,
@@ -80,8 +77,7 @@ public class ContentService implements ContentAccessService,
                           List<ContentPublishListener> contentPublishListeners,
                           ContentProviderFactory contentProviderFactory,
                           ContentPermitChecker contentPermitChecker,
-                          ContentMetadataRepository contentMetadataRepository,
-                          ContextThreadAware<PageableContext> pageableContextThreadAware) {
+                          ContentMetadataRepository contentMetadataRepository) {
         this.contentPublishers = contentPublishers;
         this.uncreatedContentPreCheckers = uncreatedContentPreCheckers;
         this.contentCollectionProviders = contentCollectionProviders;
@@ -89,7 +85,6 @@ public class ContentService implements ContentAccessService,
         this.contentProviderFactory = contentProviderFactory;
         this.contentPermitChecker = contentPermitChecker;
         this.contentMetadataRepository = contentMetadataRepository;
-        this.pageableContextThreadAware = pageableContextThreadAware;
     }
 
     /**

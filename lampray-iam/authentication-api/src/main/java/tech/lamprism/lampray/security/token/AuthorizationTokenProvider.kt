@@ -17,44 +17,47 @@
 package tech.lamprism.lampray.security.token
 
 import tech.lamprism.lampray.security.authorization.AuthorizationScope
-import tech.lamprism.lampray.user.UserSignatureProvider
 import tech.rollw.common.web.system.AuthenticationException
 import java.time.Duration
 
 /**
+ * Represents a provider for creating and parsing authorization tokens.
+ *
  * @author RollW
  */
 interface AuthorizationTokenProvider {
     /**
-     * Create a token for the user.
+     * Create a token for the user with specified type.
      *
      * @param subject the subject to create the token for.
-     * @param signatureProvider the signature provider to sign the token.
+     * @param tokenSubjectSignKeyProvider the signature provider to sign the token.
+     * @param tokenType the type of token to create.
      * @param expiryDuration the expiry duration of the token from now.
-     * @param authorizedScopes the authorized scopes of the token. If empty,
-     * use the default scopes of target user.
+     * @param authorizedScopes the authorized scopes of the token.
      * @return the token.
      */
     fun createToken(
         subject: TokenSubject,
-        signatureProvider: UserSignatureProvider,
+        tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider,
+        tokenId: String,
+        tokenType: TokenType,
         expiryDuration: Duration = Duration.ofDays(1),
         authorizedScopes: Collection<AuthorizationScope> = emptyList()
-    ): AuthorizationToken
+    ): MetadataAuthorizationToken
 
     /**
      * Parse the token to get the user identity.
      *
      * @param token The token.
-     * @param signatureProvider The signature provider to verify the token.
+     * @param tokenSubjectSignKeyProvider The signature provider to verify the token.
      * @return The user identity.
      * @throws AuthenticationException If the token is invalid or expired.
      */
     @Throws(AuthenticationException::class)
     fun parseToken(
         token: AuthorizationToken,
-        signatureProvider: UserSignatureProvider
+        tokenSubjectSignKeyProvider: TokenSubjectSignKeyProvider
     ): MetadataAuthorizationToken
 
-    fun supports(tokenType: String): Boolean
+    fun supports(tokenType: TokenType): Boolean
 }

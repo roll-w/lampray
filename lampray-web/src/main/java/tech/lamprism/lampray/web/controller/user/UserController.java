@@ -37,7 +37,6 @@ import tech.lamprism.lampray.web.controller.user.model.UserCommonDetailsVo;
 import tech.rollw.common.web.AuthErrorCode;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.system.ContextThreadAware;
-import tech.rollw.common.web.system.paged.PageableContext;
 
 import java.util.List;
 
@@ -47,20 +46,17 @@ import java.util.List;
 @Api
 public class UserController {
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
-    private final ContextThreadAware<PageableContext> pageableContextThreadAware;
     private final UserProvider userProvider;
     private final UserSearchService userSearchService;
     private final UserPersonalDataService userPersonalDataService;
     private final StorageUrlProvider storageUrlProvider;
 
     public UserController(ContextThreadAware<ApiContext> apiContextThreadAware,
-                          ContextThreadAware<PageableContext> pageableContextThreadAware,
                           UserProvider userProvider,
                           UserSearchService userSearchService,
                           UserPersonalDataService userPersonalDataService,
                           StorageUrlProvider storageUrlProvider) {
         this.apiContextThreadAware = apiContextThreadAware;
-        this.pageableContextThreadAware = pageableContextThreadAware;
         this.userProvider = userProvider;
         this.userSearchService = userSearchService;
         this.userPersonalDataService = userPersonalDataService;

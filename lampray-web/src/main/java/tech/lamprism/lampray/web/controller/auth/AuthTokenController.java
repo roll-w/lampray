@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,62 +16,68 @@
 
 package tech.lamprism.lampray.web.controller.auth;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import tech.lamprism.lampray.authentication.token.AuthenticationTokenService;
-import tech.lamprism.lampray.authentication.token.TokenAuthResult;
-import tech.lamprism.lampray.user.UserSignatureProvider;
-import tech.rollw.common.web.AuthErrorCode;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import tech.lamprism.lampray.security.token.AuthorizationTokenConfigKeys;
+import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
+import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
+import tech.lamprism.lampray.security.token.SimpleAuthorizationToken;
+import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
+import tech.lamprism.lampray.security.token.TokenType;
+import tech.lamprism.lampray.setting.ConfigReader;
+import tech.lamprism.lampray.web.controller.auth.model.RefreshTokenRequest;
+import tech.lamprism.lampray.web.controller.auth.model.RefreshTokenResponse;
+import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.HttpResponseEntity;
-import tech.rollw.common.web.system.AuthenticationException;
+
+import java.time.Duration;
+import java.util.List;
 
 /**
  * @author RollW
  */
-@AuthApi
+@RestController
+@RequestMapping("/api/v1/auth/")
 public class AuthTokenController {
-    private final AuthenticationTokenService tokenService;
-    private final UserSignatureProvider userSignatureProvider;
+    private final AuthorizationTokenManager authorizationTokenManager;
+    private final TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider;
+    private final ConfigReader configReader;
 
-    public AuthTokenController(AuthenticationTokenService tokenService,
-                               UserSignatureProvider userSignatureProvider) {
-        this.tokenService = tokenService;
-        this.userSignatureProvider = userSignatureProvider;
+    public AuthTokenController(AuthorizationTokenManager authorizationTokenManager,
+                               TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider,
+                               ConfigReader configReader) {
+        this.authorizationTokenManager = authorizationTokenManager;
+        this.tokenSubjectSignKeyProvider = tokenSubjectSignKeyProvider;
+        this.configReader = configReader;
     }
 
-    @PostMapping("/token/r")
-    public HttpResponseEntity<String> refreshToken(
-            @RequestParam(name = "token") String oldToken) {
-        Long userId = tokenService.getUserId(oldToken);
-        if (userId == null) {
-            return HttpResponseEntity.of(AuthErrorCode.ERROR_INVALID_TOKEN);
+    @PostMapping("/token:refresh")
+    public HttpResponseEntity<RefreshTokenResponse> refreshToken(
+            @RequestBody RefreshTokenRequest refreshTokenRequest) {
+        if (refreshTokenRequest == null || StringUtils.isBlank(refreshTokenRequest.getRefreshToken())) {
+            throw new CommonRuntimeException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "Refresh token is required");
         }
-        String sig = userSignatureProvider.getSignature(userId);
-        try {
-            tokenService.verifyToken(oldToken, sig);
-            return HttpResponseEntity.success(
-                    tokenService.generateAuthToken(userId, sig)
-            );
-        } catch (AuthenticationException e) {
-            if (e.getErrorCode() == AuthErrorCode.ERROR_TOKEN_EXPIRED) {
-                return HttpResponseEntity.success(
-                        tokenService.generateAuthToken(userId, sig)
-                );
-            }
-        }
-        return HttpResponseEntity.of(AuthErrorCode.ERROR_INVALID_TOKEN);
+
+        Long accessTokenExpireTime = configReader.get(AuthorizationTokenConfigKeys.ACCESS_TOKEN_EXPIRE_TIME);
+        MetadataAuthorizationToken exchangedToken = authorizationTokenManager.exchangeToken(
+                new SimpleAuthorizationToken(refreshTokenRequest.getRefreshToken(), TokenType.REFRESH),
+                tokenSubjectSignKeyProvider,
+                TokenType.ACCESS,
+                Duration.ofSeconds(accessTokenExpireTime),
+                List.of()
+        );
+        return HttpResponseEntity.success(
+                new RefreshTokenResponse(exchangedToken.getToken(), exchangedToken.getExpirationAt())
+        );
     }
 
-    @GetMapping("/token/v")
-    public HttpResponseEntity<TokenAuthResult> verifyToken(
-            @RequestParam String token) {
-        Long userId = tokenService.getUserId(token);
-        if (userId == null) {
-            return HttpResponseEntity.of(AuthErrorCode.ERROR_INVALID_TOKEN);
-        }
-        String sig = userSignatureProvider.getSignature(userId);
-        TokenAuthResult authResult = tokenService.verifyToken(token, sig);
-        return HttpResponseEntity.success(authResult);
+    @GetMapping("/token:verify")
+    public HttpResponseEntity<Void> verifyToken() {
+        return HttpResponseEntity.success();
     }
 }

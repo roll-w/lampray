@@ -18,10 +18,16 @@ package tech.lamprism.lampray.security.authorization.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import tech.lamprism.lampray.security.authorization.AuthorizationScopeProvider;
 import tech.lamprism.lampray.security.authorization.AuthorizationScopeSupplier;
+import tech.lamprism.lampray.security.authorization.CompositedAuthorizationScopeProvider;
 import tech.lamprism.lampray.security.authorization.RoleBasedAuthorizationScope;
 import tech.lamprism.lampray.security.authorization.SupplierBasedAuthorizationScopeProvider;
+import tech.lamprism.lampray.security.authorization.hierarchy.AuthorizationScopeHierarchyProvider;
+import tech.lamprism.lampray.security.authorization.hierarchy.AuthorizationScopeHierarchyService;
+import tech.lamprism.lampray.security.authorization.hierarchy.LineAuthorizationScopeHierarchyProvider;
+import tech.lamprism.lampray.security.token.RefreshTokenAuthorizationScope;
 
 import java.util.List;
 
@@ -36,7 +42,29 @@ public class AuthorizationScopeConfiguration {
     }
 
     @Bean
-    public AuthorizationScopeProvider authorizationScopeProvider(List<AuthorizationScopeSupplier> suppliers) {
+    public LineAuthorizationScopeHierarchyProvider lineAuthorizationScopeHierarchyProvider() {
+        return new LineAuthorizationScopeHierarchyProvider();
+    }
+
+    @Bean
+    @Primary
+    public CompositedAuthorizationScopeProvider compositedAuthorizationScopeProvider(List<AuthorizationScopeProvider> authorizationScopeProviders) {
+        return new CompositedAuthorizationScopeProvider(authorizationScopeProviders);
+    }
+
+    @Bean
+    public SupplierBasedAuthorizationScopeProvider supplierBasedAuthorizationScopeProvider(List<AuthorizationScopeSupplier> suppliers) {
         return new SupplierBasedAuthorizationScopeProvider(suppliers);
+    }
+
+    @Bean
+    public RefreshTokenAuthorizationScope refreshTokenAuthorizationScope() {
+        return RefreshTokenAuthorizationScope.INSTANCE;
+    }
+
+    @Bean
+    public AuthorizationScopeHierarchyService authorizationScopeHierarchyService(
+            List<AuthorizationScopeHierarchyProvider> authorizationScopeHierarchyProviders) {
+        return new AuthorizationScopeHierarchyService(authorizationScopeHierarchyProviders);
     }
 }

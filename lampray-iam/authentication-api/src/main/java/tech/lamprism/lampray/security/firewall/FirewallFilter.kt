@@ -40,23 +40,8 @@ class FirewallFilter(
     ) {
         val user = apiContextAware.contextThread.context.user
         val firewallAccessRequest = HttpFirewallAccessRequest(request, user)
-        for (firewall in firewallRegistry.firewalls) {
-            val accessResult = firewall.verifyRequest(firewallAccessRequest)
-            when (accessResult.case) {
-                FirewallAccessResult.Case.ALLOW -> {
-                    filterChain.doFilter(request, response)
-                    return
-                }
 
-                FirewallAccessResult.Case.DENY -> {
-                    throw FirewallException("Access denied: ${accessResult.message}")
-                }
-
-                FirewallAccessResult.Case.NEUTRAL -> {
-                    continue
-                }
-            }
-        }
+        firewallRegistry.filter(firewallAccessRequest)
         filterChain.doFilter(request, response)
     }
 

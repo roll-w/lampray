@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ package tech.lamprism.lampray.server.sshd
 import org.apache.sshd.common.AttributeRepository
 import org.apache.sshd.server.auth.password.PasswordAuthenticator
 import org.apache.sshd.server.session.ServerSession
-import org.slf4j.debug
+import org.slf4j.info
 import org.slf4j.logger
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
-import tech.lamprism.lampray.authentication.login.LoginProvider
-import tech.lamprism.lampray.authentication.login.LoginStrategyType
+import tech.lamprism.lampray.security.authentication.login.LoginProvider
+import tech.lamprism.lampray.security.authentication.login.LoginStrategyType
 import tech.rollw.common.web.CommonRuntimeException
 
 /**
@@ -51,8 +51,9 @@ class SshdPasswordAuthenticator(
                 AUTHENTICATION_KEY,
                 SecurityContextHolder.getContext().authentication
             )
-            logger.debug {
-                "Admin '${user.username}' login successfully through SSH"
+            logger.info {
+                "User '${user.username}' login successfully through SSH connection, remote address: " +
+                        "${session.clientAddress} using ${session.clientVersion}"
             }
             true
         } catch (e: CommonRuntimeException) {

@@ -43,12 +43,13 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import tech.lamprism.lampray.authentication.token.AuthenticationTokenService;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationProvider;
 import tech.lamprism.lampray.security.authentication.adapter.TokenBasedAuthenticationProvider;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
+import tech.lamprism.lampray.security.authorization.hierarchy.AuthorizationScopeHierarchy;
 import tech.lamprism.lampray.security.firewall.FirewallFilter;
-import tech.lamprism.lampray.user.UserSignatureProvider;
+import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
+import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.web.configuration.compenent.ForwardedHeaderDelegateFilter;
 import tech.lamprism.lampray.web.configuration.compenent.WebDelegateSecurityHandler;
 import tech.lamprism.lampray.web.configuration.filter.ApiContextInitializeFilter;
@@ -98,7 +99,7 @@ public class WebSecurityConfiguration {
                 configurer.securityContextRepository(securityContextRepository));
         security.authorizeHttpRequests(configurer -> configurer
                 .requestMatchers(HttpMethod.OPTIONS).permitAll()
-                .requestMatchers("/api/{version}/auth/token/**").permitAll()
+                .requestMatchers("/api/{version}/auth/token:refresh").permitAll()
                 .requestMatchers("/api/{version}/admin/**").hasAnyAuthority("role:ADMIN")
                 .requestMatchers("/api/{version}/message/**").hasAnyAuthority("role:USER")
                 .requestMatchers("/api/{version}/{userId}/review/**").hasAnyAuthority("role:ADMIN", "role:REVIEWER")
@@ -153,13 +154,15 @@ public class WebSecurityConfiguration {
 
     @Bean
     public TokenBasedAuthenticationProvider tokenBasedAuthenticationProvider(
-            AuthenticationTokenService authenticationTokenService,
+            AuthorizationTokenManager authorizationTokenManager,
             PrivilegedUserProvider privilegedUserProvider,
-            UserSignatureProvider userSignatureProvider) {
+            TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider,
+            AuthorizationScopeHierarchy authorizationScopeHierarchy) {
         return new TokenBasedAuthenticationProvider(
-                authenticationTokenService,
+                authorizationTokenManager,
                 privilegedUserProvider,
-                userSignatureProvider
+                tokenSubjectSignKeyProvider,
+                authorizationScopeHierarchy
         );
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,4 +34,17 @@ interface AuthorizationScope {
 
     val parents: Collection<AuthorizationScope>
         get() = emptyList()
+
+    infix fun equals(other: AuthorizationScope): Boolean {
+        return scope == other.scope
+    }
+
+    companion object {
+        fun AuthorizationScope.hasScope(scope: AuthorizationScope): Boolean {
+            if (this equals scope) {
+                return true
+            }
+            return parents.any { it.hasScope(scope) }
+        }
+    }
 }

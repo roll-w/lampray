@@ -17,22 +17,23 @@
 package tech.lamprism.lampray.storage.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.lamprism.lampray.storage.StorageUrlProviderStrategy;
+import tech.lamprism.lampray.web.ExternalEndpointProvider;
 
 /**
  * @author RollW
  */
 @Service
 public class DefaultStorageUrlProviderStrategy implements StorageUrlProviderStrategy {
-    // TODO: support read baseUrl from config
+    private final ExternalEndpointProvider externalEndpointProvider;
+
+    public DefaultStorageUrlProviderStrategy(ExternalEndpointProvider externalEndpointProvider) {
+        this.externalEndpointProvider = externalEndpointProvider;
+    }
 
     @Override
     public String getUrlOfStorage(String id) {
-        final String baseUrl = ServletUriComponentsBuilder
-                .fromCurrentContextPath()
-                .build()
-                .toUriString();
-        return baseUrl + "/api/v1/storages/" + id;
+        String externalApiEndpoint = externalEndpointProvider.getExternalApiEndpoint();
+        return externalApiEndpoint + "/api/v1/storage/" + id;
     }
 }

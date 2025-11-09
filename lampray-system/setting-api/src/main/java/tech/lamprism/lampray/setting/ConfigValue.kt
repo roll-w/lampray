@@ -19,14 +19,13 @@ package tech.lamprism.lampray.setting
 /**
  * @author RollW
  */
-@JvmDefaultWithoutCompatibility
 interface ConfigValue<T, V> {
-    val specification: SettingSpecification<T, V>
-
     val value: T?
 
     /**
      * The source of current value from.
      */
     val source: SettingSource
+
+    val specification: SettingSpecification<T, V>
 }

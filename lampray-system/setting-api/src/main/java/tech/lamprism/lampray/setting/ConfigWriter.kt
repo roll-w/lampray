@@ -53,6 +53,14 @@ interface ConfigWriter {
         return set(configValue.specification, configValue.value)
     }
 
+    /**
+     * Reset the setting to its default value. (Remove the stored value if any)
+     *
+     * @return appropriate [SettingSource] if the value is reset successfully,
+     * or [SettingSource.NONE] if the value cannot be reset (or not supported).
+     */
+    fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource
+
     fun supports(spec: SettingSpecification<*, *>): Boolean {
         return supports(spec.key.name)
     }

@@ -44,7 +44,7 @@ object Version {
 
     @JvmStatic
     fun formatVersion(): String = buildString {
-        append("Lampray version $VERSION\n")
+        appendLine("Lampray version $VERSION")
         appendLine(GIT)
         appendLine("=======================")
         appendLine("Built at      : $BUILD_TIME with java version $BUILD_JAVA_VERSION")

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,12 @@ import org.slf4j.debug
 import org.slf4j.logger
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import tech.lamprism.lampray.authentication.SecurityConfigKeys
 import tech.lamprism.lampray.push.mail.MailConfigKeys
+import tech.lamprism.lampray.security.authentication.SecurityConfigKeys
 import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import tech.lamprism.lampray.setting.SettingSpecificationProvider
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier
 import tech.lamprism.lampray.setting.SuppliedSettingSpecificationProvider
-import tech.lamprism.lampray.web.common.keys.DatabaseConfigKeys
 import tech.lamprism.lampray.web.common.keys.ServerConfigKeys
 import tech.lamprism.lampray.web.common.keys.SystemConfigKeys
 import java.lang.management.ManagementFactory
@@ -47,7 +46,6 @@ class SettingKeysRegistryConfiguration {
             listOf(
                 SystemConfigKeys,
                 ServerConfigKeys,
-                DatabaseConfigKeys,
                 SecurityConfigKeys.INSTANCE,
                 MailConfigKeys.INSTANCE
             ) + settingSpecificationSuppliers

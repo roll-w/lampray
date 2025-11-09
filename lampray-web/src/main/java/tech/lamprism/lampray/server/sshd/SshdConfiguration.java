@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.server.sshd;
 
+import org.apache.sshd.common.session.SessionListener;
 import org.apache.sshd.core.CoreModuleProperties;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.auth.password.PasswordAuthenticator;
@@ -34,6 +35,7 @@ import tech.lamprism.lampray.web.configuration.LocalConfigConfiguration;
 
 import java.nio.file.Path;
 import java.security.spec.RSAKeyGenParameterSpec;
+import java.util.List;
 
 /**
  * @author RollW
@@ -55,7 +57,7 @@ public class SshdConfiguration {
     @Bean
     public SshServer sshdServer(
             PasswordAuthenticator sshdPasswordAuthenticator,
-
+            List<SessionListener> sessionListeners,
             @Qualifier(LocalConfigConfiguration.LOCAL_CONFIG_PROVIDER)
             ConfigReader configReader
     ) {
@@ -69,12 +71,16 @@ public class SshdConfiguration {
         generatorHostKeyProvider.setKeySize(4096);
         generatorHostKeyProvider.setKeySpec(new RSAKeyGenParameterSpec(4096, RSAKeyGenParameterSpec.F4));
         sshd.setKeyPairProvider(generatorHostKeyProvider);
+        for (SessionListener listener : sessionListeners) {
+            sshd.addSessionListener(listener);
+        }
         sshd.setPasswordAuthenticator(sshdPasswordAuthenticator);
-        sshd.setKeyboardInteractiveAuthenticator(new SshdKeyboardInteractiveAuthenticator());
+        sshd.setKeyboardInteractiveAuthenticator(null);
         sshd.setShellFactory(new TerminalShellCommandFactory(terminalRegistry, lineReaderFactory, shellRunner));
 
         CoreModuleProperties.SERVER_IDENTIFICATION.set(sshd, "LAMPRAY-" + Version.VERSION);
         CoreModuleProperties.CLIENT_IDENTIFICATION.set(sshd, "LAMPRAY-" + Version.VERSION);
+
         return sshd;
     }
 }

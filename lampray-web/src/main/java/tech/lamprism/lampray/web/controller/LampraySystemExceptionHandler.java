@@ -18,10 +18,12 @@ package tech.lamprism.lampray.web.controller;
 
 import com.google.common.base.Strings;
 import com.google.common.base.VerifyException;
+import jakarta.servlet.ServletException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanInstantiationException;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -34,6 +36,7 @@ import org.springframework.security.authentication.InsufficientAuthenticationExc
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.validation.BindException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -42,8 +45,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
-import tech.lamprism.lampray.authentication.login.LoginTokenException;
 import tech.lamprism.lampray.security.authentication.adapter.TokenAuthenticationException;
+import tech.lamprism.lampray.security.authentication.login.LoginTokenException;
 import tech.lamprism.lampray.security.authentication.registration.RegistrationException;
 import tech.lamprism.lampray.security.firewall.FirewallException;
 import tech.lamprism.lampray.web.common.ApiContext;
@@ -124,12 +127,33 @@ public class LampraySystemExceptionHandler {
     @ExceptionHandler({
             BindException.class,
             ConstraintViolationException.class,
-            MethodArgumentNotValidException.class,
             ValidationException.class
     })
     public HttpResponseEntity<Void> handleParamException(Exception e) {
         return HttpResponseEntity.of(
                 WebCommonErrorCode.ERROR_PARAM_FAILED,
+                e.getMessage()
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public HttpResponseEntity<Void> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .reduce((s1, s2) -> s1 + "; " + s2)
+                .orElse(e.getMessage());
+        return HttpResponseEntity.of(
+                WebCommonErrorCode.ERROR_PARAM_FAILED,
+                message
+        );
+
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public HttpResponseEntity<Void> handle(IllegalArgumentException e) {
+        return HttpResponseEntity.of(
+                WebCommonErrorCode.ERROR_HTTP_REQUEST,
                 e.getMessage()
         );
     }
@@ -197,7 +221,7 @@ public class LampraySystemExceptionHandler {
 
     @ExceptionHandler(NullPointerException.class)
     public HttpResponseEntity<Void> handle(NullPointerException e) {
-        logger.error("Null exception : %s".formatted(e.toString()), e);
+        logger.error("Null pointer exception: {}", e.getMessage(), e);
         recordErrorLog(CommonErrorCode.ERROR_NULL, e);
         return HttpResponseEntity.of(
                 CommonErrorCode.ERROR_NULL,
@@ -264,7 +288,7 @@ public class LampraySystemExceptionHandler {
     public HttpResponseEntity<Void> handleFirewallException(FirewallException e) {
         return HttpResponseEntity.of(
                 AuthErrorCode.ERROR_IN_BLOCKLIST,
-                e.getMessage()
+                "Access denied"
         );
     }
 
@@ -281,9 +305,20 @@ public class LampraySystemExceptionHandler {
         return HttpResponseEntity.of(WebCommonErrorCode.ERROR_BODY_MISSING);
     }
 
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public HttpResponseEntity<Void> handleHttpRequestMethodNotSupportedException() {
+        return HttpResponseEntity.of(WebCommonErrorCode.ERROR_METHOD_NOT_ALLOWED);
+    }
+
     @ExceptionHandler(Exception.class)
-    public HttpResponseEntity<Void> handle(Exception e) {
-        logger.error("Error: %s".formatted(e.toString()), e);
+    public HttpResponseEntity<Void> handleException(Exception e) throws Throwable {
+        if (e instanceof ServletException se && se.getRootCause() != null) {
+            throw se.getRootCause();
+        }
+        if (e instanceof BeanInstantiationException) {
+            throw e;
+        }
+        logger.error("Unhandled exception: {}", e.getMessage(), e);
         ErrorRecord errorRecord = recordErrorLog(e);
         return HttpResponseEntity.of(
                 errorRecord.errorCode(),

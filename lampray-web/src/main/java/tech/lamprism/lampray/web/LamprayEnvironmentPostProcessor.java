@@ -22,15 +22,19 @@ import org.apache.commons.logging.Log;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.boot.logging.DeferredLogFactory;
+import org.springframework.core.Ordered;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
 import tech.lamprism.lampray.LampraySystemApplication;
 import tech.lamprism.lampray.logging.FileCommonStructuredLogFormatter;
 import tech.lamprism.lampray.logging.JsonStructuredLogFormatter;
+import tech.lamprism.lampray.setting.CombinedConfigProvider;
 import tech.lamprism.lampray.setting.ConfigProvider;
+import tech.lamprism.lampray.setting.EnvironmentConfigReader;
 import tech.lamprism.lampray.setting.ReadonlyConfigProvider;
 import tech.lamprism.lampray.setting.TomlConfigReader;
+import tech.lamprism.lampray.setting.utils.ConfigProviderUtils;
 import tech.lamprism.lampray.web.common.keys.LoggingConfigKeys;
 import tech.lamprism.lampray.web.common.keys.ServerConfigKeys;
 
@@ -38,6 +42,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -45,7 +50,7 @@ import java.util.Set;
 /**
  * @author RollW
  */
-public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor {
+public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
     private static final String SETUP_PROPERTIES = "lampraySetupProperties";
 
@@ -127,15 +132,18 @@ public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor
         }
     }
 
-    private ReadonlyConfigProvider createLocalProvider(String path) {
+    private ConfigProvider createLocalProvider(String path) {
         boolean allowFail = Strings.isNullOrEmpty(path);
-
+        ConfigProvider environmentConfigProvider = new ReadonlyConfigProvider(new EnvironmentConfigReader());
         try {
-            return new ReadonlyConfigProvider(
+            ReadonlyConfigProvider localConfigProvider = new ReadonlyConfigProvider(
                     TomlConfigReader.loadConfig(
                             LampraySystemApplication.class,
                             path, allowFail
                     )
+            );
+            return new CombinedConfigProvider(
+                    ConfigProviderUtils.sortByPriority(List.of(environmentConfigProvider, localConfigProvider))
             );
         } catch (FileNotFoundException e) {
             throw new ServerInitializeException(new ServerInitializeException.Detail(
@@ -148,5 +156,11 @@ public class LamprayEnvironmentPostProcessor implements EnvironmentPostProcessor
                     "Check the file path and file content."
             ), e);
         }
+    }
+
+    @Override
+    public int getOrder() {
+        // This processor should run before the default one
+        return Ordered.HIGHEST_PRECEDENCE + 10;
     }
 }

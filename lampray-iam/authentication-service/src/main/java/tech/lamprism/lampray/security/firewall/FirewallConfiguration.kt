@@ -46,6 +46,6 @@ class FirewallConfiguration {
     @Bean
     fun filterTable(): FilterTable {
         // TODO: Make this configurable
-        return FileFilterTable("filtertable.txt")
+        return FileFilterTable("conf/filtertable")
     }
 }

@@ -45,6 +45,41 @@ object ServerConfigKeys : SettingSpecificationSupplier {
             .setRequired(false)
             .build()
 
+    const val HTTP_EXTERNAL_ADDRESS_INHERITED = "[inherited]"
+
+    @JvmField
+    val HTTP_EXTERNAL_API_ADDRESS =
+        SettingSpecificationBuilder(SettingKey.ofString("server.http.external.api.address"))
+            .setTextDescription(
+                "HTTP server external api address, the address will be used to generate api links.\n\n" +
+                        "If set to ${HTTP_EXTERNAL_ADDRESS_INHERITED}, the server will try to infer the address from the request, and " +
+                        "not recommend for production use as it may cause issues when access from different addresses. " +
+                        "Needs to be a full URL, e.g. https://api.example.com . " +
+                        "This config has no effect on http server configs."
+            )
+            .setDefaultValue(HTTP_EXTERNAL_ADDRESS_INHERITED)
+            .setAllowAnyValue(true)
+            .setSupportedSources(SettingSource.VALUES)
+            .setRequired(true)
+            .build()
+
+    @JvmField
+    val HTTP_EXTERNAL_WEB_ADDRESS =
+        SettingSpecificationBuilder(SettingKey.ofString("server.http.external.web.address"))
+            .setTextDescription(
+                "HTTP server external web address, when enabled frontend resource hosting will ignore this address " +
+                        "and use the same address as 'server.http.external.api.address'.\n\n" +
+                        "If set to ${HTTP_EXTERNAL_ADDRESS_INHERITED}, the server will try to infer the address from the request, and " +
+                        "not recommend for production use as it may cause issues when access from different addresses. " +
+                        "Needs to be a full URL, e.g. https://api.example.com . " +
+                        "This config has no effect on http server configs."
+            )
+            .setDefaultValue(HTTP_EXTERNAL_ADDRESS_INHERITED)
+            .setAllowAnyValue(true)
+            .setSupportedSources(SettingSource.VALUES)
+            .setRequired(true)
+            .build()
+
     @JvmField
     val PROCESS_PROXY_HEADERS =
         SettingSpecificationBuilder(SettingKey.ofBoolean("server.http.process-proxy-headers"))
@@ -53,6 +88,8 @@ object ServerConfigKeys : SettingSpecificationSupplier {
                         "process the Forwarded, X-Forwarded-For and X-Forwarded-Proto and other headers " +
                         "to determine the original request information, such as the original IP address and protocol."
             )
+            // TODO: add a method on SettingSpecificationBuilder to set boolean entries
+            .setValueEntries(listOf(false, true))
             .setDefaultValue(false)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .setRequired(true)
@@ -89,7 +126,9 @@ object ServerConfigKeys : SettingSpecificationSupplier {
             .build()
 
     private val keys = listOf(
-        HTTP_PORT, HTTP_HOST, PROCESS_PROXY_HEADERS, SSH_PORT, SSH_HOST, SSH_HOST_KEY
+        HTTP_PORT, HTTP_HOST, PROCESS_PROXY_HEADERS,
+        HTTP_EXTERNAL_API_ADDRESS, HTTP_EXTERNAL_WEB_ADDRESS,
+        SSH_PORT, SSH_HOST, SSH_HOST_KEY
     )
 
     override val specifications: List<AttributedSettingSpecification<*, *>>
