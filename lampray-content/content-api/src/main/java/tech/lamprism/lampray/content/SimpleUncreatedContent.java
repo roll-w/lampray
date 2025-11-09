@@ -18,6 +18,7 @@ package tech.lamprism.lampray.content;
 
 import space.lingu.NonNull;
 import space.lingu.Nullable;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 import tech.lamprism.lampray.user.UserIdentity;
 
 /**
@@ -27,7 +28,7 @@ public record SimpleUncreatedContent(
         @NonNull ContentType contentType,
         @NonNull UserIdentity operator,
         @Nullable String title,
-        @Nullable String content,
+        @Nullable StructuralText content,
         @Nullable ContentDetailsMetadata metadata
 ) implements UncreatedContent {
     @NonNull
@@ -50,7 +51,7 @@ public record SimpleUncreatedContent(
 
     @Nullable
     @Override
-    public String getContent() {
+    public StructuralText getContent() {
         return content;
     }
 

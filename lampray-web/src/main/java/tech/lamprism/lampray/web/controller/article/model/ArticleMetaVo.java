@@ -20,6 +20,7 @@ import tech.lamprism.lampray.content.ContentAccessAuthType;
 import tech.lamprism.lampray.content.ContentMetadataDetails;
 import tech.lamprism.lampray.content.ContentStatus;
 import tech.lamprism.lampray.content.article.Article;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 
 import java.time.OffsetDateTime;
 
@@ -29,7 +30,7 @@ import java.time.OffsetDateTime;
 public record ArticleMetaVo(
         long id,
         String title,
-        String content,
+        StructuralText content,
         long authorId,
         OffsetDateTime createTime,
         OffsetDateTime updateTime,
@@ -40,7 +41,7 @@ public record ArticleMetaVo(
         if (!(contentMetadataDetails.getContentDetails() instanceof Article article)) {
             return null;
         }
-        String content = article.getContent();
+        StructuralText content = article.getContent();
         return new ArticleMetaVo(
                 article.getId(),
                 article.getTitle(),

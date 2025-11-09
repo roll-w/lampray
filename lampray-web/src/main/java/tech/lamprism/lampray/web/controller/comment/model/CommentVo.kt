@@ -18,6 +18,7 @@ package tech.lamprism.lampray.web.controller.comment.model
 import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentType
 import tech.lamprism.lampray.content.comment.CommentDetailsMetadata
+import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.web.controller.content.vo.ContentVo
 import java.time.OffsetDateTime
 
@@ -28,7 +29,7 @@ data class CommentVo(
     val id: Long,
     val userId: Long,
     val parent: Long,
-    val content: String,
+    val content: StructuralText,
     val contentId: Long,
     val contentType: ContentType,
     val createTime: OffsetDateTime,

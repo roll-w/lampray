@@ -18,6 +18,7 @@ package tech.lamprism.lampray.content;
 
 import space.lingu.NonNull;
 import space.lingu.Nullable;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 
 import java.time.OffsetDateTime;
 
@@ -29,7 +30,7 @@ public record SimpleContentDetails(
         @NonNull ContentType contentType,
         long userId,
         @Nullable String title,
-        @Nullable String content,
+        @Nullable StructuralText content,
         OffsetDateTime createTime,
         OffsetDateTime updateTime,
         @Nullable ContentDetailsMetadata contentDetailsMetadata
@@ -58,7 +59,7 @@ public record SimpleContentDetails(
 
     @Override
     @Nullable
-    public String getContent() {
+    public StructuralText getContent() {
         return content;
     }
 

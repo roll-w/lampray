@@ -20,6 +20,7 @@ import tech.lamprism.lampray.content.Content;
 import tech.lamprism.lampray.content.ContentAccessAuthType;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentMetadataDetails;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 import tech.lamprism.lampray.web.controller.content.vo.ContentVo;
 
 import java.time.OffsetDateTime;
@@ -30,7 +31,7 @@ import java.time.OffsetDateTime;
 public record ArticleVo(
         long id,
         String title,
-        String content,
+        StructuralText content,
         long userId,
         OffsetDateTime createTime,
         OffsetDateTime updateTime,

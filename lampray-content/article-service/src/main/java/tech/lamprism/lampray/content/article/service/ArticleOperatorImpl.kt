@@ -20,6 +20,7 @@ import tech.lamprism.lampray.content.ContentDetailsMetadata
 import tech.lamprism.lampray.content.ContentOperator
 import tech.lamprism.lampray.content.article.Article
 import tech.lamprism.lampray.content.service.AbstractContentOperator
+import tech.lamprism.lampray.content.structuraltext.StructuralText
 import java.time.OffsetDateTime
 
 /**
@@ -44,7 +45,7 @@ class ArticleOperatorImpl internal constructor(
         return true
     }
 
-    override fun setContentInternal(content: String?): Boolean {
+    override fun setContentInternal(content: StructuralText): Boolean {
         if (article.content == content) {
             return false
         }

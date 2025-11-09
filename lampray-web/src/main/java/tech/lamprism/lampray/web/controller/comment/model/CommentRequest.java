@@ -16,11 +16,13 @@
 
 package tech.lamprism.lampray.web.controller.comment.model;
 
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
+
 /**
  * @author RollW
  */
 public record CommentRequest(
-        String content,
+        StructuralText content,
         Long parent
 ) {
 }

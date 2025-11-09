@@ -33,9 +33,11 @@ import tech.lamprism.lampray.content.collection.ContentCollectionProvider;
 import tech.lamprism.lampray.content.collection.ContentCollectionType;
 import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author RollW
@@ -59,7 +61,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
                     uncreatedContent.getContentType());
         }
         String title = Validate.notEmpty(uncreatedContent.getTitle());
-        String content = Validate.notEmpty(uncreatedContent.getContent());
+        StructuralText content = Objects.requireNonNull(uncreatedContent.getContent());
 
         long userId = uncreatedContent.getOperator().getUserId();
 

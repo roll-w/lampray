@@ -21,6 +21,8 @@ plugins {
 
 dependencies {
     api(project(":lampray-common"))
+    api("com.fasterxml.jackson.core:jackson-databind")
+    api("com.fasterxml.jackson.module:jackson-module-kotlin")
 }
 
 description = "lampray-common-data"
