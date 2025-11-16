@@ -19,44 +19,20 @@ package tech.lamprism.lampray.setting
 /**
  * @author RollW
  */
-data class AttributedSettingSpec<T, V> @JvmOverloads constructor(
-    private val specification: SettingSpecification<T, V>,
+data class AttributedSettingSpec<T> @JvmOverloads constructor(
+    private val specification: SettingSpecification<T>,
     override val description: SettingDescription = SettingDescription.EMPTY,
     override val secret: Boolean = false,
     override val supportedSources: List<SettingSource> = SettingSource.LOCAL_ONLY
-) : SettingSpecification<T, V> by specification, AttributedSettingSpecification<T, V> {
-
-    override fun withParameters(parameters: Map<String, String>): AttributedSettingSpec<T, V> {
-        val newSpecification = specification.withParameters(parameters)
-        if (newSpecification === specification) {
-            return this
-        }
-        return AttributedSettingSpec(
-            newSpecification,
-            description,
-            secret,
-            supportedSources
-        )
-    }
-
-    override fun withParameters(vararg parameters: Pair<String, String>): AttributedSettingSpec<T, V> {
-        return withParameters(parameters.toMap())
-    }
-
-    override fun withParameter(
-        name: String,
-        value: String
-    ): AttributedSettingSpec<T, V> {
-        return withParameters(mapOf(name to value))
-    }
+) : SettingSpecification<T> by specification, AttributedSettingSpecification<T> {
 
     companion object {
         @JvmStatic
-        fun <T, V> SettingSpecification<T, V>.withAttributes(
+        fun <T> SettingSpecification<T>.withAttributes(
             description: SettingDescription = SettingDescription.EMPTY,
             secret: Boolean = false,
             supportedSources: List<SettingSource> = SettingSource.LOCAL_ONLY
-        ): AttributedSettingSpec<T, V> {
+        ): AttributedSettingSpec<T> {
             return AttributedSettingSpec(
                 this,
                 description,

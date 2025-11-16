@@ -68,16 +68,16 @@ public class SystemSettingController {
     public HttpResponseEntity<List<SettingVo>> getSettings(
             @Valid ListSettingRequest listSettingRequest
     ) {
-        List<AttributedSettingSpecification<?, ?>> specifications = settingSpecificationProvider.getSettingSpecifications();
-        List<AttributedSettingSpecification<?, ?>> settingSpecifications = filterSpecifications(
+        List<AttributedSettingSpecification<?>> specifications = settingSpecificationProvider.getSettingSpecifications();
+        List<AttributedSettingSpecification<?>> settingSpecifications = filterSpecifications(
                 specifications,
                 listSettingRequest
         );
         List<SettingVo> res = configProvider.list(settingSpecifications)
                 .stream()
                 .map(value -> {
-                    AttributedSettingSpecification<?, ?> specification =
-                            (AttributedSettingSpecification<?, ?>) value.getSpecification();
+                    AttributedSettingSpecification<?> specification =
+                            (AttributedSettingSpecification<?>) value.getSpecification();
                     return toSettingVo(value, specification);
                 }).toList();
         return HttpResponseEntity.success(ImmutablePage.of(
@@ -93,7 +93,7 @@ public class SystemSettingController {
                                                         @RequestBody StringValue value) {
         // TODO: check setting key is valid and value is valid
         @SuppressWarnings("unchecked")
-        AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
+        AttributedSettingSpecification<Object> specification = (AttributedSettingSpecification<Object>)
                 getSpecification(key);
         SettingSource source = configProvider.set(
                 specification,
@@ -105,7 +105,7 @@ public class SystemSettingController {
     @DeleteMapping("/system/settings/{key}")
     public HttpResponseEntity<Void> deleteSetting(@PathVariable("key") String key) {
         @SuppressWarnings("unchecked")
-        AttributedSettingSpecification<Object, Object> specification = (AttributedSettingSpecification<Object, Object>)
+        AttributedSettingSpecification<Object> specification = (AttributedSettingSpecification< Object>)
                 getSpecification(key);
         configProvider.reset(specification);
         return HttpResponseEntity.success();
@@ -113,14 +113,14 @@ public class SystemSettingController {
 
     @GetMapping("/system/settings/{key}")
     public HttpResponseEntity<SettingDetailsVo> getSetting(@PathVariable("key") String key) {
-        AttributedSettingSpecification<?, ?> specification = getSpecification(key);
-        ConfigValue<?, ?> configValue = configProvider.getValue(specification);
+        AttributedSettingSpecification<?> specification = getSpecification(key);
+        ConfigValue<?> configValue = configProvider.getValue(specification);
         SettingDetailsVo settingVo = toSettingDetailsVo(configValue, specification);
         return HttpResponseEntity.success(settingVo);
     }
 
-    private List<AttributedSettingSpecification<?, ?>> filterSpecifications(
-            List<AttributedSettingSpecification<?, ?>> specifications,
+    private List<AttributedSettingSpecification<?>> filterSpecifications(
+            List<AttributedSettingSpecification<?>> specifications,
             ListSettingRequest listSettingRequest) {
         if (listSettingRequest == null) {
             return specifications;
@@ -139,9 +139,9 @@ public class SystemSettingController {
                 .toList();
     }
 
-    private SettingVo toSettingVo(ConfigValue<?, ?> value,
-                                  AttributedSettingSpecification<?, ?> specification) {
-        SettingKey<?, ?> key = value.getSpecification().getKey();
+    private SettingVo toSettingVo(ConfigValue<?> value,
+                                  AttributedSettingSpecification<?> specification) {
+        SettingKey<?> key = value.getSpecification().getKey();
         boolean secret = specification.getSecret();
         SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
         Object masked = maskSecret(value.getValue(), secretLevel);
@@ -172,14 +172,14 @@ public class SystemSettingController {
         );
     }
 
-    private SettingDetailsVo toSettingDetailsVo(ConfigValue<?, ?> value,
-                                                AttributedSettingSpecification<?, ?> specification) {
+    private SettingDetailsVo toSettingDetailsVo(ConfigValue<?> value,
+                                                AttributedSettingSpecification<?> specification) {
         // TODO: return value restrictions
-        SettingKey<?, ?> key = value.getSpecification().getKey();
+        SettingKey<?> key = value.getSpecification().getKey();
         boolean secret = specification.getSecret();
         SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
         Object masked = maskSecret(value.getValue(), secretLevel);
-        List<ConfigValue<?, ?>> layers = getValueLayers(value);
+        List<ConfigValue<?>> layers = getValueLayers(value);
         List<SettingDetailsVo.ValueLayer> valueLayers = layers.stream()
                 .map(layerValue -> {
                     Object layerMasked = maskSecret(layerValue.getValue(), secretLevel);
@@ -219,8 +219,8 @@ public class SystemSettingController {
         );
     }
 
-    private List<ConfigValue<?, ?>> getValueLayers(ConfigValue<?, ?> value) {
-        if (value instanceof LayeredConfigValue<?, ?> layeredConfigValue) {
+    private List<ConfigValue<?>> getValueLayers(ConfigValue<?> value) {
+        if (value instanceof LayeredConfigValue<?> layeredConfigValue) {
             return new ArrayList<>(layeredConfigValue.getLayers());
         }
         return List.of();
@@ -235,7 +235,7 @@ public class SystemSettingController {
         return secretLevel.maskValue(valueStr);
     }
 
-    private AttributedSettingSpecification<?, ?> getSpecification(String key) {
+    private AttributedSettingSpecification<?> getSpecification(String key) {
         try {
             return settingSpecificationProvider.getSettingSpecification(key);
         } catch (IllegalArgumentException e) {

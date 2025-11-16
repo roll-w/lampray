@@ -135,7 +135,7 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
                 The value is a list of logger name and level pairs.
                 """.trimIndent()
             )
-            .setDefaultValue("")
+            .setDefaultValue(emptySet())
             .setRequired(false)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .build()
@@ -150,7 +150,7 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
         LOGGING_LEVEL
     )
 
-    private val LEVELS = Level.values().map { it.toString() }
+    private val LEVELS = Level.entries.map { it.toString() }
 
     @JvmStatic
     fun parseLoggingLevel(level: Set<String>?): Map<String, String> {
@@ -188,6 +188,6 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
         }.toMap()
     }
 
-    override val specifications: List<AttributedSettingSpecification<*, *>>
+    override val specifications: List<AttributedSettingSpecification<*>>
         get() = KEYS
 }

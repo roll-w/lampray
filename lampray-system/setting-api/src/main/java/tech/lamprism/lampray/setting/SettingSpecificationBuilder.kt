@@ -21,19 +21,19 @@ import tech.lamprism.lampray.setting.AttributedSettingSpec.Companion.withAttribu
 /**
  * @author RollW
  */
-class SettingSpecificationBuilder<T, V> {
+class SettingSpecificationBuilder<T> {
     constructor()
 
-    constructor(key: SettingKey<T, V>) {
+    constructor(key: SettingKey<T>) {
         this.key = key
 
-        if (key == SettingType.BOOLEAN) {
-            this.valueEntries = listOf(true, false) as List<V?>
+        if (key == ConfigType.BOOLEAN) {
+            this.valueEntries = listOf(true, false) as List<T?>
             this.allowAnyValue = false
         }
     }
 
-    var key: SettingKey<T, V>? = null
+    var key: SettingKey<T>? = null
         private set
 
     var allowAnyValue: Boolean = true
@@ -51,13 +51,13 @@ class SettingSpecificationBuilder<T, V> {
     var defaults: List<Int> = emptyList()
         private set
 
-    var valueEntries: List<V?> = emptyList()
+    var valueEntries: List<T?> = emptyList()
         private set
 
     var secret: Boolean = false
         private set
 
-    fun setKey(key: SettingKey<T, V>) = apply {
+    fun setKey(key: SettingKey<T>) = apply {
         this.key = key
     }
 
@@ -99,7 +99,7 @@ class SettingSpecificationBuilder<T, V> {
      *
      * Must call after [setValueEntries] if value entries is needed.
      */
-    fun setDefaultValue(default: V?) = apply {
+    fun setDefaultValue(default: T?) = apply {
         if (valueEntries.isNotEmpty()) {
             // TODO: fix default value setting
             if (default != null && !valueEntries.contains(default)) {
@@ -114,7 +114,7 @@ class SettingSpecificationBuilder<T, V> {
         this.valueEntries = listOf(default)
     }
 
-    fun setValueEntries(valueEntries: List<V?>) = apply {
+    fun setValueEntries(valueEntries: List<T?>) = apply {
         this.valueEntries = valueEntries
     }
 
@@ -122,7 +122,7 @@ class SettingSpecificationBuilder<T, V> {
         this.secret = secret
     }
 
-    fun buildSimple(): SettingSpecification<T, V> {
+    fun buildSimple(): SettingSpecification<T> {
         return SimpleSettingSpec(
             key = key!!,
             allowAnyValue = allowAnyValue,
@@ -132,7 +132,7 @@ class SettingSpecificationBuilder<T, V> {
         )
     }
 
-    fun build(): AttributedSettingSpecification<T, V> {
+    fun build(): AttributedSettingSpecification<T> {
         return buildSimple().withAttributes(
             description = description,
             secret = secret,

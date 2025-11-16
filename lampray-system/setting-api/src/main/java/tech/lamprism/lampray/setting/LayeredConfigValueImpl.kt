@@ -22,25 +22,25 @@ import java.time.OffsetDateTime
 /**
  * @author RollW
  */
-class LayeredConfigValueImpl<T, V>(
+class LayeredConfigValueImpl<T>(
     /**
      * The setting specification that defines the config key and type.
      */
-    override val specification: SettingSpecification<T, V>,
+    override val specification: SettingSpecification<T>,
 
-    layers: List<ConfigValue<T, V>>
-) : LayeredConfigValue<T, V>, TimeAttributed {
+    layers: List<ConfigValue<T>>
+) : LayeredConfigValue<T>, TimeAttributed {
 
     private val _layers = layers.sortedBy { it.source.priority }
 
-    override val layers: List<ConfigValue<T, V>>
+    override val layers: List<ConfigValue<T>>
         get() = _layers
 
     init {
         require(layers.isNotEmpty()) { "Layers must be specified." }
     }
 
-    private val activeValue: ConfigValue<T, V> by lazy {
+    private val activeValue: ConfigValue<T> by lazy {
         _layers.lastOrNull { it.value != null } ?: _layers.first()
     }
 
@@ -62,7 +62,7 @@ class LayeredConfigValueImpl<T, V>(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is LayeredConfigValueImpl<*, *>) return false
+        if (other !is LayeredConfigValueImpl<*>) return false
 
         if (specification != other.specification) return false
         if (_layers != other._layers) return false

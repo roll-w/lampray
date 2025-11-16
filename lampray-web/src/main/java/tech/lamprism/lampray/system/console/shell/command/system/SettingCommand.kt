@@ -247,7 +247,7 @@ class SettingCommand(
 
             // Parse and validate the value
             @Suppress("UNCHECKED_CAST")
-            val typedSpecification = specification as AttributedSettingSpecification<Any, Any>
+            val typedSpecification = specification as AttributedSettingSpecification<Any>
             val parsedValue = try {
                 value.deserialize(typedSpecification)
             } catch (e: Exception) {
@@ -333,7 +333,7 @@ class SettingCommand(
 
             // Reset to default value
             @Suppress("UNCHECKED_CAST")
-            val typedSpecification = specification as AttributedSettingSpecification<Any, Any>
+            val typedSpecification = specification as AttributedSettingSpecification<Any>
             val source = configProvider.set(typedSpecification, defaultValue)
 
             if (source != SettingSource.NONE) {
@@ -352,10 +352,10 @@ class SettingCommand(
         }
     }
 
-    private fun List<ConfigValue<*, *>>.collectToTableModel(): TableModel {
+    private fun List<ConfigValue<*>>.collectToTableModel(): TableModel {
         val headers = arrayOf("Key", "Value", "Type", "Source", "Updated")
         val data = map { configValue ->
-            val specification = configValue.specification as AttributedSettingSpecification<*, *>
+            val specification = configValue.specification as AttributedSettingSpecification<*>
             val secretLevel = if (specification.secret) SecretLevel.MEDIUM else SecretLevel.NONE
             val maskedValue = maskSecret(configValue.value, secretLevel)
             val updatedTime = if (configValue is TimeAttributed) {

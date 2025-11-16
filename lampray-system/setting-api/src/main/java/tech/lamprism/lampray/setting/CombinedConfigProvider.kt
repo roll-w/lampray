@@ -34,21 +34,7 @@ class CombinedConfigProvider(
     override val metadata: ConfigReader.Metadata
         get() = _metadata
 
-    override fun get(key: String): String? {
-        for (reader in configProviders) {
-            val value = reader[key]
-            if (value != null) {
-                return value
-            }
-        }
-        return null
-    }
-
-    override fun get(key: String, defaultValue: String?): String? {
-        return this[key] ?: defaultValue
-    }
-
-    override fun <T, V> get(specification: SettingSpecification<T, V>): T? {
+    override fun <T> get(specification: SettingSpecification<T>): T? {
         for (reader in configProviders) {
             val value = reader[specification]
             if (value != null) {
@@ -58,11 +44,11 @@ class CombinedConfigProvider(
         return null
     }
 
-    override fun <T, V> get(specification: SettingSpecification<T, V>, defaultValue: T): T {
+    override fun <T> get(specification: SettingSpecification<T>, defaultValue: T): T {
         return this[specification] ?: defaultValue
     }
 
-    override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
+    override fun <T> getValue(specification: SettingSpecification<T>): ConfigValue<T> {
         val defaultValue = SnapshotConfigValue(
             specification.defaultValue,
             SettingSource.NONE,
@@ -72,7 +58,7 @@ class CombinedConfigProvider(
             return defaultValue
         }
 
-        val layers = mutableListOf<ConfigValue<T, V>>()
+        val layers = mutableListOf<ConfigValue<T>>()
         for (reader in configProviders) {
             // Query cost is low, so we get all layers' values.
             val value = reader.getValue(specification)
@@ -89,7 +75,7 @@ class CombinedConfigProvider(
         return LayeredConfigValueImpl(specification, layers)
     }
 
-    override fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>> {
+    override fun list(specifications: List<SettingSpecification<*>>): List<ConfigValue<*>> {
         val valuesByConfigProviders = configProviders.map { it.list(specifications) }
         return specifications.map { spec ->
             for (configValues in valuesByConfigProviders) {
@@ -105,20 +91,11 @@ class CombinedConfigProvider(
                 }
             }
             @Suppress("UNCHECKED_CAST")
-            SnapshotConfigValue(spec.defaultValue, SettingSource.NONE, spec as SettingSpecification<Any?, Any?>)
+            SnapshotConfigValue(spec.defaultValue, SettingSource.NONE, spec as SettingSpecification<Any?>)
         }
     }
 
-    override fun set(key: String, value: String?): SettingSource {
-        for (provider in configProviders) {
-            if (provider.supports(key)) {
-                return provider.set(key, value)
-            }
-        }
-        return SettingSource.NONE
-    }
-
-    override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?): SettingSource {
+    override fun <T> set(spec: SettingSpecification<T>, value: T?): SettingSource {
         for (provider in configProviders) {
             if (provider.supports(spec)) {
                 return provider.set(spec, value)
@@ -127,7 +104,7 @@ class CombinedConfigProvider(
         return SettingSource.NONE
     }
 
-    override fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource {
+    override fun <T> reset(spec: SettingSpecification<T>): SettingSource {
         var resetSource = SettingSource.NONE
         for (provider in configProviders) {
             // Different from set, we try to reset in all providers that support the spec.

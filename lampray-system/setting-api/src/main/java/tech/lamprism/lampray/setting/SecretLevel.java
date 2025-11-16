@@ -83,7 +83,7 @@ public enum SecretLevel {
      */
     public abstract String maskValue(String value);
 
-    public String maskValue(ConfigValue<?, ?> value) {
+    public String maskValue(ConfigValue<?> value) {
         if (value == null) {
             return null;
         }

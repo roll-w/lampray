@@ -22,11 +22,9 @@ package tech.lamprism.lampray.setting
 class ReadonlyConfigProvider(
     private val configReader: ConfigReader
 ) : ConfigReader by configReader, ConfigProvider {
-    override fun set(key: String, value: String?) = SettingSource.NONE
+    override fun <T> set(spec: SettingSpecification<T>, value: T?) = SettingSource.NONE
 
-    override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?) = SettingSource.NONE
-
-    override fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource = SettingSource.NONE
+    override fun <T> reset(spec: SettingSpecification<T>): SettingSource = SettingSource.NONE
 
     override fun supports(key: String): Boolean = false
 

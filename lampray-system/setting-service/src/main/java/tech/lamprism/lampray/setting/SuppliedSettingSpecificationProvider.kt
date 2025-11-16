@@ -25,7 +25,7 @@ class SuppliedSettingSpecificationProvider(
     private val suppliers: List<SettingSpecificationSupplier>,
     private val overrideDuplicates: Boolean = false
 ) : SettingSpecificationProvider {
-    private val specs: MutableMap<String, AttributedSettingSpecification<*, *>> = hashMapOf()
+    private val specs: MutableMap<String, AttributedSettingSpecification<*>> = hashMapOf()
 
     init {
         suppliers.forEach { supplier ->
@@ -38,15 +38,10 @@ class SuppliedSettingSpecificationProvider(
         }
     }
 
-    override fun getSettingSpecification(key: String): AttributedSettingSpecification<*, *> {
+    override fun getSettingSpecification(key: String): AttributedSettingSpecification<*> {
         return specs[key] ?: throw IllegalArgumentException("No such setting: $key")
     }
 
-    override fun checkValidSettingKey(key: String): Boolean {
-        // TODO: check templates
-        return specs.containsKey(key)
-    }
-
-    override val settingSpecifications: List<AttributedSettingSpecification<*, *>>
+    override val settingSpecifications: List<AttributedSettingSpecification<*>>
         get() = specs.values.toList()
 }

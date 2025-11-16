@@ -22,17 +22,17 @@ import tech.lamprism.lampray.setting.SettingSpecification;
 /**
  * @author RollW
  */
-public class SettingValueChangedEvent<T, V> extends ApplicationEvent {
-    private final SettingSpecification<T, V> specification;
+public class SettingValueChangedEvent<T> extends ApplicationEvent {
+    private final SettingSpecification<T> specification;
     private final T value;
 
-    public SettingValueChangedEvent(SettingSpecification<T, V> specification, T value) {
+    public SettingValueChangedEvent(SettingSpecification<T> specification, T value) {
         super(specification);
         this.specification = specification;
         this.value = value;
     }
 
-    public SettingSpecification<T, V> getSpecification() {
+    public SettingSpecification<T> getSpecification() {
         return specification;
     }
 

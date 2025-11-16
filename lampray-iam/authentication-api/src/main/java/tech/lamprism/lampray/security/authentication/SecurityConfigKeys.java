@@ -29,14 +29,14 @@ public class SecurityConfigKeys implements SettingSpecificationSupplier {
 
     public static final String PREFIX = "security.";
 
-    private static final List<AttributedSettingSpecification<?, ?>> KEYS = List.of(
+    private static final List<AttributedSettingSpecification<?>> KEYS = List.of(
     );
 
     public static final SecurityConfigKeys INSTANCE = new SecurityConfigKeys();
 
     @NonNull
     @Override
-    public List<AttributedSettingSpecification<?, ?>> getSpecifications() {
+    public List<AttributedSettingSpecification<?>> getSpecifications() {
         return KEYS;
     }
 

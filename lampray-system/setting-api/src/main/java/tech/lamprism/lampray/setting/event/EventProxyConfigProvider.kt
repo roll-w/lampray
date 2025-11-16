@@ -16,24 +16,20 @@
 package tech.lamprism.lampray.setting.event
 
 import org.springframework.context.ApplicationEventPublisher
-import tech.lamprism.lampray.setting.AttributedSettingSpecification
 import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.setting.ConfigValue
 import tech.lamprism.lampray.setting.SettingSource
 import tech.lamprism.lampray.setting.SettingSpecification
-import tech.lamprism.lampray.setting.SettingSpecificationHelper.deserialize
-import tech.lamprism.lampray.setting.SettingSpecificationProvider
 
 /**
  * @author RollW
  */
 class EventProxyConfigProvider(
     private val configProvider: ConfigProvider,
-    private val specificationProvider: SettingSpecificationProvider,
     private val applicationEventPublisher: ApplicationEventPublisher
 ) : ConfigProvider by configProvider {
 
-    override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?): SettingSource {
+    override fun <T> set(spec: SettingSpecification<T>, value: T?): SettingSource {
         return configProvider.set(spec, value).also {
             if (it == SettingSource.NONE) {
                 return@also
@@ -44,7 +40,7 @@ class EventProxyConfigProvider(
         }
     }
 
-    override fun <T, V> set(configValue: ConfigValue<T, V>): SettingSource {
+    override fun <T> set(configValue: ConfigValue<T>): SettingSource {
         return configProvider.set(configValue).also {
             if (it == SettingSource.NONE) {
                 return@also
@@ -53,25 +49,5 @@ class EventProxyConfigProvider(
                 SettingValueChangedEvent(configValue.specification, configValue.value)
             )
         }
-    }
-
-    override fun set(key: String, value: String?): SettingSource {
-        return configProvider.set(key, value).also {
-            if (it == SettingSource.NONE) {
-                return@also
-            }
-            publishEvent<Any, Any>(key, value)
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T, V> publishEvent(key: String, value: String?) = try {
-        val spec: AttributedSettingSpecification<T, V> = specificationProvider
-            .getSettingSpecification(key) as AttributedSettingSpecification<T, V>
-        val event =
-            SettingValueChangedEvent(spec, value.deserialize(spec))
-        applicationEventPublisher.publishEvent(event)
-    } catch (_: Exception) {
-        // ignore
     }
 }

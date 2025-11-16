@@ -19,7 +19,7 @@ package tech.lamprism.lampray.setting
 /**
  * @author RollW
  */
-interface ConfigValue<T, V> {
+interface ConfigValue<T> {
     val value: T?
 
     /**
@@ -27,5 +27,5 @@ interface ConfigValue<T, V> {
      */
     val source: SettingSource
 
-    val specification: SettingSpecification<T, V>
+    val specification: SettingSpecification<T>
 }

@@ -25,11 +25,11 @@ import java.time.OffsetDateTime
  *
  * @author RollW
  */
-data class ConfigValueInfo<T, V>(
+data class ConfigValueInfo<T>(
     /**
      * The setting specification that defines the config key and type.
      */
-    override val specification: SettingSpecification<T, V>,
+    override val specification: SettingSpecification<T>,
 
     /**
      * The raw key string.
@@ -55,7 +55,7 @@ data class ConfigValueInfo<T, V>(
      * The last modified time of this config if available.
      */
     val lastModified: OffsetDateTime?
-) : ConfigValue<T, V>, TimeAttributed {
+) : ConfigValue<T>, TimeAttributed {
     override fun getCreateTime(): OffsetDateTime =
         TimeAttributed.NONE_TIME
 
@@ -64,13 +64,13 @@ data class ConfigValueInfo<T, V>(
 
     companion object {
         @JvmStatic
-        fun <T, V> from(
-            specification: SettingSpecification<T, V>,
+        fun <T> from(
+            specification: SettingSpecification<T>,
             value: T?,
             rawValue: String?,
             source: SettingSource,
             lastModified: OffsetDateTime?
-        ): ConfigValueInfo<T, V> {
+        ): ConfigValueInfo<T> {
             return ConfigValueInfo(
                 specification = specification,
                 key = specification.keyName,

@@ -330,7 +330,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
             .build()
 
 
-    override val specifications: List<AttributedSettingSpecification<*, *>> = listOf(
+    override val specifications: List<AttributedSettingSpecification<*>> = listOf(
         DATABASE_TYPE,
         DATABASE_TARGET,
         DATABASE_USERNAME,

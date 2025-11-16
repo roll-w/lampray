@@ -22,28 +22,18 @@ package tech.lamprism.lampray.setting
 interface ConfigReader {
     val metadata: Metadata
 
-    /**
-     * Recomment use [get] ([SettingSpecification]) instead of this method.
-     */
-    operator fun get(key: String): String?
+    operator fun <T> get(specification: SettingSpecification<T>): T?
 
-    /**
-     * Recomment use [get] ([SettingSpecification]) instead of this method.
-     */
-    operator fun get(key: String, defaultValue: String?): String?
+    operator fun <T> get(specification: SettingSpecification<T>, defaultValue: T): T
 
-    operator fun <T, V> get(specification: SettingSpecification<T, V>): T?
-
-    operator fun <T, V> get(specification: SettingSpecification<T, V>, defaultValue: T): T
-
-    fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V>
+    fun <T> getValue(specification: SettingSpecification<T>): ConfigValue<T>
 
     /**
      * Get multiple config values by specifications.
      *
      * Note: The order of the returned list is the same as the order of the input specifications.
      */
-    fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>>
+    fun list(specifications: List<SettingSpecification<*>>): List<ConfigValue<*>>
 
     /**
      * Metadata of the config reader.

@@ -20,29 +20,5 @@ package tech.lamprism.lampray.setting
  * @author RollW
  */
 @JvmDefaultWithoutCompatibility
-interface AttributedSettingSpecification<T, V> : SettingSpecification<T, V> {
-    override fun withParameters(parameters: Map<String, String>): AttributedSettingSpecification<T, V>
-
-    override fun withParameters(vararg parameters: Pair<String, String>): AttributedSettingSpecification<T, V> {
-        return withParameters(parameters.toMap())
-    }
-
-    override fun withParameter(
-        name: String,
-        value: String
-    ): AttributedSettingSpecification<T, V> {
-        return withParameters(mapOf(name to value))
-    }
-
-    val description: SettingDescription
-
-    override val isRequired: Boolean
-
-    /**
-     * Whether the setting is a secret. If it is a secret,
-     * it should be masked when displayed.
-     */
-    val secret: Boolean
-
-    val supportedSources: List<SettingSource>
+interface AttributedSettingSpecification<T> : SettingSpecification<T> {
 }

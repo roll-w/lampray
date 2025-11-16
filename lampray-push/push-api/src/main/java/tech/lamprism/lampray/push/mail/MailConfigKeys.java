@@ -31,7 +31,7 @@ import java.util.List;
 public final class MailConfigKeys implements SettingSpecificationSupplier {
     public static final String EMAIL_DISABLED = "disable";
 
-    public static final AttributedSettingSpecification<String, String> SMTP_SERVER_HOST =
+    public static final AttributedSettingSpecification<String> SMTP_SERVER_HOST =
             new SettingSpecificationBuilder<>(SettingKey.ofString("mail.smtp.server.host"))
                     .setTextDescription("SMTP server host. For example 'smtp.example.com'.")
                     .setDefaultValue(EMAIL_DISABLED)
@@ -39,7 +39,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
                     .setSupportedSources(SettingSource.VALUES)
                     .build();
 
-    public static final AttributedSettingSpecification<Integer, Integer> SMTP_SERVER_PORT =
+    public static final AttributedSettingSpecification<Integer> SMTP_SERVER_PORT =
             new SettingSpecificationBuilder<>(SettingKey.ofInt("mail.smtp.server.port"))
                     .setTextDescription("SMTP server port, must be an integer between 0-65535. " +
                             "The default value is 25.")
@@ -48,7 +48,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
                     .setSupportedSources(SettingSource.VALUES)
                     .build();
 
-    public static final AttributedSettingSpecification<Boolean, Boolean> SMTP_SSL_ENABLE =
+    public static final AttributedSettingSpecification<Boolean> SMTP_SSL_ENABLE =
             new SettingSpecificationBuilder<>(SettingKey.ofBoolean("mail.smtp.ssl.enable"))
                     .setTextDescription("Whether to enable SSL connection with SMTP server.")
                     .setValueEntries(List.of(false, true))
@@ -56,7 +56,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
                     .setRequired(false)
                     .setSupportedSources(SettingSource.VALUES)
                     .build();
-    public static final AttributedSettingSpecification<String, String> MAIL_USERNAME =
+    public static final AttributedSettingSpecification<String> MAIL_USERNAME =
             new SettingSpecificationBuilder<>(SettingKey.ofString("mail.username"))
                     .setTextDescription("Login user of the SMTP server. " +
                             "Put `disable` to disable email service.")
@@ -65,7 +65,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
                     .setSupportedSources(SettingSource.VALUES)
                     .build();
 
-    public static final AttributedSettingSpecification<String, String> MAIL_PASSWORD =
+    public static final AttributedSettingSpecification<String> MAIL_PASSWORD =
             new SettingSpecificationBuilder<>(SettingKey.ofString("mail.password"))
                     .setTextDescription("Login password of the SMTP server.")
                     .setDefaultValue(null)
@@ -74,7 +74,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
                     .setSupportedSources(SettingSource.VALUES)
                     .build();
 
-    public static final AttributedSettingSpecification<String, String> MAIL_SENDER_NAME =
+    public static final AttributedSettingSpecification<String> MAIL_SENDER_NAME =
             new SettingSpecificationBuilder<>(SettingKey.ofString("mail.nickname"))
                     .setTextDescription("Mail sender name.")
                     .setDefaultValue("Lampray")
@@ -84,7 +84,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
 
     public static final String PREFIX = "mail.";
 
-    private static final List<AttributedSettingSpecification<?, ?>> KEYS;
+    private static final List<AttributedSettingSpecification<?>> KEYS;
 
     static {
         KEYS = List.of(
@@ -106,7 +106,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
 
     @NonNull
     @Override
-    public List<AttributedSettingSpecification<?, ?>> getSpecifications() {
+    public List<AttributedSettingSpecification<?>> getSpecifications() {
         return KEYS;
     }
 

@@ -31,7 +31,7 @@ class EnvironmentConfigReader(
             paths = listOf(ConfigPath("Environment", SettingSource.ENVIRONMENT))
         )
 
-    override fun get(key: String): String? {
+    private fun get(key: String): String? {
         if (filteredKeys.isNotEmpty() && key !in filteredKeys) {
             return null
         }
@@ -39,19 +39,15 @@ class EnvironmentConfigReader(
         return System.getenv(envKey)
     }
 
-    override fun get(key: String, defaultValue: String?): String? {
-        return this[key] ?: defaultValue
-    }
-
-    override fun <T, V> get(specification: SettingSpecification<T, V>): T? {
+    override fun <T> get(specification: SettingSpecification<T>): T? {
         return getRaw(specification)
     }
 
-    override fun <T, V> get(specification: SettingSpecification<T, V>, defaultValue: T): T {
+    override fun <T> get(specification: SettingSpecification<T>, defaultValue: T): T {
         return this[specification] ?: defaultValue
     }
 
-    override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
+    override fun <T> getValue(specification: SettingSpecification<T>): ConfigValue<T> {
         return SnapshotConfigValue(
             get(specification),
             SettingSource.ENVIRONMENT,
@@ -59,7 +55,7 @@ class EnvironmentConfigReader(
         )
     }
 
-    private fun <T, V> getRaw(specification: SettingSpecification<T, V>): T? {
+    private fun <T> getRaw(specification: SettingSpecification<T>): T? {
         if (filteredKeys.isNotEmpty() && specification.keyName !in filteredKeys) {
             return null
         }
@@ -69,7 +65,7 @@ class EnvironmentConfigReader(
         }
     }
 
-    override fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>> {
+    override fun list(specifications: List<SettingSpecification<*>>): List<ConfigValue<*>> {
         return specifications.map { getValue(it) }
     }
 

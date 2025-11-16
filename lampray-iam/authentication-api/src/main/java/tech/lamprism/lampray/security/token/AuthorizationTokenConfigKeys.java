@@ -51,7 +51,7 @@ import java.util.Locale;
  */
 @Component
 public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplier {
-    public static final AttributedSettingSpecification<String, String> TOKEN_ISSUER =
+    public static final AttributedSettingSpecification<String> TOKEN_ISSUER =
             new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.authorization.issuer"))
                     .setDefaultValue("Lampray")
                     .setSupportedSources(SettingSource.VALUES)
@@ -59,7 +59,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                     .setRequired(true)
                     .build();
 
-    public static final AttributedSettingSpecification<Long, Long> ACCESS_TOKEN_EXPIRE_TIME =
+    public static final AttributedSettingSpecification<Long> ACCESS_TOKEN_EXPIRE_TIME =
             new SettingSpecificationBuilder<>(SettingKey.ofLong("security.token.authorization.access.expire-time"))
                     .setDefaultValue(3600L)
                     .setTextDescription("Access token expiration time in seconds. Default is 3600 seconds (1 hour).")
@@ -67,7 +67,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                     .setRequired(true)
                     .build();
 
-    public static final AttributedSettingSpecification<Long, Long> REFRESH_TOKEN_EXPIRE_TIME =
+    public static final AttributedSettingSpecification<Long> REFRESH_TOKEN_EXPIRE_TIME =
             new SettingSpecificationBuilder<>(SettingKey.ofLong("security.token.authorization.refresh.expire-time"))
                     .setDefaultValue(86400L)
                     .setTextDescription("Refresh token expiration time in seconds. Default is 86400 seconds (24 hours).")
@@ -80,7 +80,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
     public static final String SIGN_KEY_KEYPAIR = "keypair";
     public static final String SIGN_KEY_SECRET = "secret";
 
-    public static final AttributedSettingSpecification<String, String> TOKEN_KEY_TYPE =
+    public static final AttributedSettingSpecification<String> TOKEN_KEY_TYPE =
             new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.authorization.sign-key.type"))
                     .setValueEntries(List.of(SIGN_KEY_SECRET, SIGN_KEY_KEYPAIR))
                     .setDefaultValue(SIGN_KEY_SECRET)
@@ -97,7 +97,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                     .setRequired(true)
                     .build();
 
-    public static final AttributedSettingSpecification<String, String> TOKEN_SECRET_KEY =
+    public static final AttributedSettingSpecification<String> TOKEN_SECRET_KEY =
             // TODO: support generation of RSA/ECDSA key pairs
             // TODO: support rotation of keys
             new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.authorization.sign-key.secret-key"))
@@ -122,7 +122,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                     .setRequired(true)
                     .build();
 
-    public static final AttributedSettingSpecification<String, String> TOKEN_KEY_ALGORITHM =
+    public static final AttributedSettingSpecification<String> TOKEN_KEY_ALGORITHM =
             new SettingSpecificationBuilder<>(SettingKey.ofString("security.token.authorization.sign-key.algorithm"))
                     .setDefaultValue("HmacSHA256")
                     .setTextDescription("The cryptographic algorithm for token signing. " +
@@ -132,7 +132,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                     .setRequired(true)
                     .build();
 
-    private static final List<AttributedSettingSpecification<?, ?>> SPECIFICATIONS =
+    private static final List<AttributedSettingSpecification<?>> SPECIFICATIONS =
             List.of(TOKEN_ISSUER,
                     ACCESS_TOKEN_EXPIRE_TIME,
                     REFRESH_TOKEN_EXPIRE_TIME,
@@ -140,9 +140,9 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                     TOKEN_SECRET_KEY,
                     TOKEN_KEY_ALGORITHM);
 
-    @Override
     @NonNull
-    public List<AttributedSettingSpecification<?, ?>> getSpecifications() {
+    @Override
+    public List<AttributedSettingSpecification<?>> getSpecifications() {
         return SPECIFICATIONS;
     }
 

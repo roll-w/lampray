@@ -36,6 +36,6 @@ object SystemConfigKeys: SettingSpecificationSupplier {
 
     private val keys = listOf(APP_NAME)
 
-    override val specifications: List<AttributedSettingSpecification<*, *>>
+    override val specifications: List<AttributedSettingSpecification<*>>
         get() = keys
 }

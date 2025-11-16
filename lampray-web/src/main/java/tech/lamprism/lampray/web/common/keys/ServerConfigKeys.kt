@@ -131,6 +131,6 @@ object ServerConfigKeys : SettingSpecificationSupplier {
         SSH_PORT, SSH_HOST, SSH_HOST_KEY
     )
 
-    override val specifications: List<AttributedSettingSpecification<*, *>>
+    override val specifications: List<AttributedSettingSpecification<*>>
         get() = keys
 }

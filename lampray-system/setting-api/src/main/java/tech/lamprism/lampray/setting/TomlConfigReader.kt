@@ -80,73 +80,67 @@ class TomlConfigReader(
         return null
     }
 
-    override fun get(key: String): String? {
-        val value = readKey(key) ?: return null
-        return when (value) {
-            is String -> value
-            else -> value.toString()
-        }
-    }
-
-    override fun get(key: String, defaultValue: String?): String? {
-        return get(key) ?: defaultValue
-    }
-
-    override fun <T, V> get(specification: SettingSpecification<T, V>): T? {
+    override fun <T> get(specification: SettingSpecification<T>): T? {
         return readRaw(specification) ?: specification.defaultValue
     }
 
-    override fun <T, V> get(
-        specification: SettingSpecification<T, V>,
+    override fun <T> get(
+        specification: SettingSpecification<T>,
         defaultValue: T
     ): T {
         return readRaw(specification) ?: defaultValue
     }
 
-    private fun <T, V> readRaw(specification: SettingSpecification<T, V>): T? {
+    private fun <T> readRaw(specification: SettingSpecification<T>): T? {
         val value = readKey(specification.keyName) ?: return null
         return convertToType(value, specification)
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T, V> convertToType(value: Any?, specification: SettingSpecification<T, V>): T? {
+    private fun <T> convertToType(value: Any?, specification: SettingSpecification<T>): T? {
         // Converts value to the type specified in SettingSpecification
         if (value == null) {
             return null
         }
-        return when (specification.key.type) {
-            SettingType.STRING -> if (value is String) value as T else value.toString() as T?
-            SettingType.INT -> when (value) {
+        val configType = specification.key.type
+        if (configType.targetClass.isInstance(value)) {
+            return value as T
+        }
+
+        // TODO: fix unsafe casts
+        return when (configType) {
+            ConfigType.STRING -> if (value is String) value as T else value.toString() as T?
+            ConfigType.INT -> when (value) {
                 is Number -> value.toInt() as T
                 is String -> value.toIntOrNull() as T?
                 else -> null
             }
 
-            SettingType.LONG -> when (value) {
+            ConfigType.LONG -> when (value) {
                 is Number -> value.toLong() as T
                 is String -> value.toLongOrNull() as T?
                 else -> null
             }
 
-            SettingType.FLOAT -> when (value) {
+            ConfigType.FLOAT -> when (value) {
                 is Number -> value.toFloat() as T
                 is String -> value.toFloatOrNull() as T?
                 else -> null
             }
 
-            SettingType.DOUBLE -> when (value) {
+            ConfigType.DOUBLE -> when (value) {
                 is Number -> value.toDouble() as T
                 is String -> value.toDoubleOrNull() as T?
                 else -> null
             }
 
-            SettingType.BOOLEAN -> when (value) {
+            ConfigType.BOOLEAN -> when (value) {
                 is Boolean -> value as T
                 is String -> value.toBooleanStrictOrNull() as T?
                 else -> null
             }
 
-            SettingType.STRING_SET -> when (value) {
+            ConfigType.STRING_SET -> when (value) {
                 is List<*> -> value.mapNotNull {
                     when (it) {
                         null -> null
@@ -154,20 +148,21 @@ class TomlConfigReader(
                         else -> it.toString()
                     }
                 }.toSet() as T
+
                 is String -> value.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet() as T
                 else -> null
             }
 
-            else -> throw IllegalArgumentException("Unsupported type: ${specification.key.type}")
+            else -> throw IllegalArgumentException("Unsupported type: $configType")
         }
     }
 
-    override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
+    override fun <T> getValue(specification: SettingSpecification<T>): ConfigValue<T> {
         val value = get(specification)
         return SnapshotConfigValue(value, SettingSource.LOCAL, specification)
     }
 
-    override fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>> {
+    override fun list(specifications: List<SettingSpecification<*>>): List<ConfigValue<*>> {
         return specifications.map { getValue(it) }
     }
 

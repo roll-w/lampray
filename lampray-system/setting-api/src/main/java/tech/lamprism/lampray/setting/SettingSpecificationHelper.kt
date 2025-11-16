@@ -19,55 +19,43 @@ package tech.lamprism.lampray.setting
 /**
  * @author RollW
  */
+@Deprecated("Use ConfigValueParser instead")
 object SettingSpecificationHelper {
     @Suppress("UNCHECKED_CAST")
-    fun <T, V> String?.deserialize(specification: SettingSpecification<T, V>): T? {
+    @Deprecated("Use ConfigValueParser instead")
+    fun <T> String?.deserialize(specification: SettingSpecification<T>): T? {
         if (this == null) {
             return null
         }
         return when (specification.key.type) {
-            SettingType.STRING -> this as T?
-            SettingType.INT -> this.toIntOrNull() as T?
-            SettingType.LONG -> this.toLongOrNull() as T?
-            SettingType.FLOAT -> this.toFloatOrNull() as T?
-            SettingType.DOUBLE -> this.toDoubleOrNull() as T?
-            SettingType.BOOLEAN -> this.toBoolean() as T?
+            ConfigType.STRING -> this as T?
+            ConfigType.INT -> this.toIntOrNull() as T?
+            ConfigType.LONG -> this.toLongOrNull() as T?
+            ConfigType.FLOAT -> this.toFloatOrNull() as T?
+            ConfigType.DOUBLE -> this.toDoubleOrNull() as T?
+            ConfigType.BOOLEAN -> this.toBoolean() as T?
             // TODO: implement a better way to deserialize set
-            SettingType.STRING_SET -> this.split(",").toSet() as T?
+            ConfigType.STRING_SET -> this.split(",").toSet() as T?
             else -> throw IllegalArgumentException("Unsupported type: $this")
         }
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T, V> T?.serialize(specification: SettingSpecification<T, V>): String? {
+    @Deprecated("Use ConfigValueParser instead")
+    fun <T> T?.serialize(specification: SettingSpecification<T>): String? {
         if (this == null) {
             return null
         }
         return when (specification.key.type) {
-            SettingType.STRING -> this as String
-            SettingType.INT -> this.toString()
-            SettingType.LONG -> this.toString()
-            SettingType.FLOAT -> this.toString()
-            SettingType.DOUBLE -> this.toString()
-            SettingType.BOOLEAN -> this.toString()
+            ConfigType.STRING -> this as String
+            ConfigType.INT -> this.toString()
+            ConfigType.LONG -> this.toString()
+            ConfigType.FLOAT -> this.toString()
+            ConfigType.DOUBLE -> this.toString()
+            ConfigType.BOOLEAN -> this.toString()
             // TODO: implement a better way to serialize set
-            SettingType.STRING_SET -> (this as Set<String>).joinToString(",")
+            ConfigType.STRING_SET -> (this as Set<String>).joinToString(",")
             else -> throw IllegalArgumentException("Unsupported type: $this")
-        }
-    }
-
-    fun <T, V> SettingSpecification<T, V>.validate(value: String) {
-        try {
-            when (key.type) {
-                SettingType.INT -> value.toInt()
-                SettingType.LONG -> value.toLong()
-                SettingType.FLOAT -> value.toFloat()
-                SettingType.DOUBLE -> value.toDouble()
-                SettingType.BOOLEAN -> value.toBoolean()
-                SettingType.STRING, SettingType.STRING_SET -> {}
-            }
-        } catch (e: Exception) {
-            throw IllegalArgumentException("Invalid value: $value for '$key', expected type: ${key.type}.")
         }
     }
 }

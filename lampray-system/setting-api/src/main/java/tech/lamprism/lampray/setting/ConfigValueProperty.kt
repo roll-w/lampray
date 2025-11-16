@@ -16,18 +16,17 @@
 
 package tech.lamprism.lampray.setting
 
-import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 /**
- * A delegate for setting value. Can be used to read
- * and write setting value.
+ * A delegate for config value.
+ * Can be used to read and write config value.
  *
  * @author RollW
  */
-class SettingValueProperty<T, V>(
-    override val specification: AttributedSettingSpecification<T, V>,
+class ConfigValueProperty<T>(
+    override val specification: AttributedSettingSpecification<T>,
     override val source: SettingSource,
     private val reader: ConfigReader,
     private val writer: ConfigWriter? = null,
@@ -37,19 +36,13 @@ class SettingValueProperty<T, V>(
      * [SettingSpecification.valueEntries]
      */
     private val allowAnyValue: Boolean = specification.allowAnyValue()
-) : ReadWriteProperty<Any?, T?>, ConfigValue<T, V> {
-
-    init {
-        require(!specification.isTemplate()) {
-            "SettingValueProperty cannot be created from a template specification: ${specification.keyName}"
-        }
-    }
+) : ReadWriteProperty<Any?, T?>, ConfigValue<T> {
 
     override fun getValue(
         thisRef: Any?,
         property: KProperty<*>
     ): T? {
-        return getSettingValue()
+        return getConfigValue()
     }
 
     override fun setValue(
@@ -57,20 +50,20 @@ class SettingValueProperty<T, V>(
         property: KProperty<*>,
         value: T?
     ) {
-        setSettingValue(value)
+        setConfigValue(value)
     }
 
     override var value: T?
-        get() = getSettingValue()
+        get() = getConfigValue()
         set(value) {
-            setSettingValue(value)
+            setConfigValue(value)
         }
 
-    private fun getSettingValue(): T? {
+    private fun getConfigValue(): T? {
         return reader[specification]
     }
 
-    private fun setSettingValue(value: T?) {
+    private fun setConfigValue(value: T?) {
         checkValueIn(value)
         writer?.let {
             it[specification] = value
@@ -89,33 +82,35 @@ class SettingValueProperty<T, V>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun SettingSpecification<T, V>.hasValueByType(value: T?): Boolean {
-        return if (key.type == SettingType.STRING_SET) {
-            valueEntries.containsAll(value as Set<*>)
-        } else {
-            valueEntries.contains(value as V)
-        }
+    private fun SettingSpecification<T>.hasValueByType(value: T?): Boolean {
+        // TODO
+//        return if (key.type == ConfigType.STRING_SET) {
+//            valueEntries.containsAll(value as Set<*>)
+//        } else {
+//            valueEntries.contains(value as T)
+//        }
+        return true
     }
 
     companion object {
-        fun <T, V> AttributedSettingSpecification<T, V>.value(
+        fun <T> AttributedSettingSpecification<T>.value(
             configProvider: ConfigProvider,
             settingSource: SettingSource,
             allowAnyValue: Boolean = this.allowAnyValue()
-        ): SettingValueProperty<T, V> {
-            return SettingValueProperty(
+        ): ConfigValueProperty<T> {
+            return ConfigValueProperty(
                 this, settingSource,
                 configProvider,
                 allowAnyValue = allowAnyValue
             )
         }
 
-        fun ConfigProvider.settingValue(
-            specification: AttributedSettingSpecification<*, *>,
+        fun ConfigProvider.configValue(
+            specification: AttributedSettingSpecification<*>,
             settingSource: SettingSource,
             allowAnyValue: Boolean = specification.allowAnyValue()
-        ): SettingValueProperty<*, *> {
-            return SettingValueProperty(
+        ): ConfigValueProperty<*> {
+            return ConfigValueProperty(
                 specification,
                 settingSource, this,
                 allowAnyValue = allowAnyValue

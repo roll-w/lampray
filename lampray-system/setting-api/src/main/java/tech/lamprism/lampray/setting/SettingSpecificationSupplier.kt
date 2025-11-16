@@ -20,5 +20,5 @@ package tech.lamprism.lampray.setting
  * @author RollW
  */
 interface SettingSpecificationSupplier {
-    val specifications: List<AttributedSettingSpecification<*, *>>
+    val specifications: List<AttributedSettingSpecification<*>>
 }

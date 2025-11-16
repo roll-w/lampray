@@ -22,27 +22,13 @@ package tech.lamprism.lampray.setting
  * @author RollW
  */
 @JvmDefaultWithoutCompatibility
-interface SettingSpecification<T, V> {
-    val key: SettingKey<T, V>
-
-    fun isTemplate(): Boolean {
-        return key.isTemplate()
-    }
-
-    fun withParameters(parameters: Map<String, String>): SettingSpecification<T, V>
-
-    fun withParameters(vararg parameters: Pair<String, String>): SettingSpecification<T, V> {
-        return withParameters(parameters.toMap())
-    }
-
-    fun withParameter(name: String, value: String): SettingSpecification<T, V> {
-        return withParameters(mapOf(name to value))
-    }
+interface SettingSpecification<T> {
+    val key: SettingKey<T>
 
     /**
      * The default value indexes in [valueEntries].
      *
-     * Only [SettingType.STRING_SET] type can have multiple defaults.
+     * Only [ConfigType.STRING_SET] type can have multiple defaults.
      */
     val defaults: List<Int>
 
@@ -53,7 +39,7 @@ interface SettingSpecification<T, V> {
      *
      * The values in the entries should be unique and could be null.
      */
-    val valueEntries: List<V?>
+    val valueEntries: List<T?>
 
     val defaultValue: T?
 
@@ -67,9 +53,9 @@ interface SettingSpecification<T, V> {
      * If the setting spec has predefined values, return the value at
      * the given index. Or return null.
      */
-    operator fun get(index: Int): V?
+    operator fun get(index: Int): T?
 
-    fun hasValue(value: V?): Boolean
+    fun hasValue(value: T?): Boolean
 
     /**
      * Whether the setting allows any value. If not, only the values in
@@ -77,9 +63,19 @@ interface SettingSpecification<T, V> {
      */
     fun allowAnyValue(): Boolean
 
+    val description: SettingDescription
+
+    /**
+     * Whether the setting is a secret.
+     * If it is a secret, it should be masked when displayed.
+     */
+    val secret: Boolean
+
+    val supportedSources: List<SettingSource>
+
     companion object {
         @JvmStatic
-        val SettingSpecification<*, *>.keyName: String
+        val SettingSpecification<*>.keyName: String
             get() = key.name
     }
 }

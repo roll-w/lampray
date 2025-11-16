@@ -46,28 +46,20 @@ class SystemSettingConfigProvider(
             paths = listOf(ConfigPath("system_setting", SettingSource.DATABASE)),
         )
 
-    override fun get(key: String): String? {
-        return systemSettingRepository.findByKey(key)
-            .orElse(null)?.value
-    }
-
-    override fun get(key: String, defaultValue: String?): String? =
-        get(key) ?: defaultValue
-
-    override fun <T, V> get(specification: SettingSpecification<T, V>): T? {
+    override fun <T> get(specification: SettingSpecification<T>): T? {
         val setting = systemSettingRepository.findByKey(specification.keyName)
             .orElse(null) ?: return null
         return with(SettingSpecificationHelper) {
-            setting.value.deserialize(specification)
+            setting.value.deserialize(specification) as T?
         }
     }
 
-    override fun <T, V> get(
-        specification: SettingSpecification<T, V>,
+    override fun <T> get(
+        specification: SettingSpecification<T>,
         defaultValue: T
     ): T = get(specification) ?: defaultValue
 
-    override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
+    override fun <T> getValue(specification: SettingSpecification<T>): ConfigValue<T> {
         val setting = systemSettingRepository.findByKey(specification.keyName)
             .orElse(null) ?: return SnapshotConfigValue(null, SettingSource.DATABASE, specification)
         return with(SettingSpecificationHelper) {
@@ -79,7 +71,7 @@ class SystemSettingConfigProvider(
         }
     }
 
-    override fun list(specifications: List<SettingSpecification<*, *>>): List<ConfigValue<*, *>> {
+    override fun list(specifications: List<SettingSpecification<*>>): List<ConfigValue<*>> {
         if (specifications.isEmpty()) {
             return emptyList()
         }
@@ -87,7 +79,7 @@ class SystemSettingConfigProvider(
         val settings = systemSettingRepository.findByKeyIn(keys)
             .associateBy { it.key }
         @Suppress("UNCHECKED_CAST")
-        return (specifications as List<SettingSpecification<Any, Any>>).map { spec ->
+        return (specifications as List<SettingSpecification<Any>>).map { spec ->
             val setting = settings[spec.keyName] ?: return@map SnapshotConfigValue(null, SettingSource.DATABASE, spec)
             with(SettingSpecificationHelper) {
                 ConfigValueInfo.from(
@@ -101,23 +93,7 @@ class SystemSettingConfigProvider(
         }
     }
 
-    override fun set(key: String, value: String?): SettingSource {
-        val setting = systemSettingRepository.findByKey(key)
-            .orElse(null)
-        if (setting != null) {
-            setting.value = value
-            systemSettingRepository.save(setting)
-            return SettingSource.DATABASE
-        }
-        val newSetting = SystemSettingDo(
-            key = key,
-            value = value
-        )
-        systemSettingRepository.save(newSetting)
-        return SettingSource.DATABASE
-    }
-
-    override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?): SettingSource {
+    override fun <T> set(spec: SettingSpecification<T>, value: T?): SettingSource {
         val setting = systemSettingRepository.findByKey(spec.keyName)
             .orElse(null)
         val value = with(SettingSpecificationHelper) {
@@ -136,7 +112,7 @@ class SystemSettingConfigProvider(
         return SettingSource.DATABASE
     }
 
-    override fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource {
+    override fun <T> reset(spec: SettingSpecification<T>): SettingSource {
         val setting = systemSettingRepository.findByKey(spec.keyName)
             .orElse(null) ?: return SettingSource.NONE
         systemSettingRepository.delete(setting)

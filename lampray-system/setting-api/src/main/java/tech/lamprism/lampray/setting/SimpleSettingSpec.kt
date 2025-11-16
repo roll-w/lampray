@@ -19,21 +19,24 @@ package tech.lamprism.lampray.setting
 /**
  * @author RollW
  */
-data class SimpleSettingSpec<T, V> @JvmOverloads constructor(
-    override val key: SettingKey<T, V>,
+data class SimpleSettingSpec<T> @JvmOverloads constructor(
+    override val key: SettingKey<T>,
     private val allowAnyValue: Boolean = false,
     override val defaults: List<Int> = emptyList(),
-    override val valueEntries: List<V?> = emptyList(),
-    override val isRequired: Boolean = false
-) : SettingSpecification<T, V> {
+    override val valueEntries: List<T?> = emptyList(),
+    override val isRequired: Boolean = false,
+    override val description: SettingDescription = SettingDescription.EMPTY,
+    override val secret: Boolean = false,
+    override val supportedSources: List<SettingSource> = SettingSource.LOCAL_ONLY
+) : SettingSpecification<T> {
     val type = key.type
 
     @JvmOverloads
     constructor(
-        key: SettingKey<T, V>,
+        key: SettingKey<T>,
         isRequired: Boolean = false,
         default: Int,
-        vararg valueEntries: V?
+        vararg valueEntries: T?
     ) : this(
         key,
         defaults = listOf(default),
@@ -43,8 +46,8 @@ data class SimpleSettingSpec<T, V> @JvmOverloads constructor(
 
     @JvmOverloads
     constructor(
-        key: SettingKey<T, V>,
-        default: V?,
+        key: SettingKey<T>,
+        default: T?,
         isRequired: Boolean = false
     ) : this(
         key,
@@ -55,10 +58,10 @@ data class SimpleSettingSpec<T, V> @JvmOverloads constructor(
     )
 
     constructor(
-        key: SettingKey<T, V>,
+        key: SettingKey<T>,
         default: Int,
         allowAnyValue: Boolean,
-        vararg valueEntries: V
+        vararg valueEntries: T
     ) : this(key, allowAnyValue, listOf(default), valueEntries.toList())
 
     init {
@@ -66,42 +69,15 @@ data class SimpleSettingSpec<T, V> @JvmOverloads constructor(
     }
 
     private fun checkDefaults() {
-        if (valueEntries.isEmpty() || defaults.isEmpty()) {
-            return
-        }
-        if (defaults.size > 1 && type != SettingType.STRING_SET) {
-            throw IllegalArgumentException("Only STRING_SET type can have multiple defaults")
-        }
-        if (defaults.any { it >= valueEntries.size }) {
-            throw IllegalArgumentException("Invalid default index: $defaults for ${valueEntries.size}")
-        }
-    }
-
-    override fun withParameters(parameters: Map<String, String>): SimpleSettingSpec<T, V> {
-        val newKey = key.withParameters(parameters)
-        // We only need to check the memory address of the key, no need for equals comparison
-        // since the key will not change if it has no parameters.
-        if (newKey === key) {
-            return this
-        }
-        return copy(
-            key = newKey,
-            allowAnyValue = allowAnyValue,
-            defaults = defaults,
-            valueEntries = valueEntries,
-            isRequired = isRequired
-        )
-    }
-
-    override fun withParameters(vararg parameters: Pair<String, String>): SimpleSettingSpec<T, V> {
-        return withParameters(parameters.toMap())
-    }
-
-    override fun withParameter(
-        name: String,
-        value: String
-    ): SimpleSettingSpec<T, V> {
-        return withParameters(mapOf(name to value))
+//        if (valueEntries.isEmpty() || defaults.isEmpty()) {
+//            return
+//        }
+//        if (defaults.size > 1 && type != ConfigType.STRING_SET) {
+//            throw IllegalArgumentException("Only STRING_SET type can have multiple defaults")
+//        }
+//        if (defaults.any { it >= valueEntries.size }) {
+//            throw IllegalArgumentException("Invalid default index: $defaults for ${valueEntries.size}")
+//        }
     }
 
     /**
@@ -114,50 +90,23 @@ data class SimpleSettingSpec<T, V> @JvmOverloads constructor(
             }
 
             @Suppress("UNCHECKED_CAST")
-            return if (key.type == SettingType.STRING_SET) {
+            return if (key.type == ConfigType.STRING_SET) {
                 defaults.map { valueEntries.elementAtOrNull(it) }.toSet() as T?
             } else {
                 defaults.map { valueEntries[it] }.firstOrNull() as T?
             }
         }
 
-    override operator fun get(index: Int): V? {
+    override operator fun get(index: Int): T? {
         if (index >= valueEntries.size) {
             return null
         }
         return valueEntries[index]
     }
 
-    override fun hasValue(value: V?): Boolean {
+    override fun hasValue(value: T?): Boolean {
         return valueEntries.contains(value)
     }
 
     override fun allowAnyValue() = valueEntries.isEmpty() || allowAnyValue
-
-    companion object {
-        @JvmOverloads
-        @JvmStatic
-        fun ofStringSet(
-            key: String,
-            isRequired: Boolean = false,
-            default: List<Int> = emptyList(),
-            vararg valueEntries: String
-        ) = SimpleSettingSpec(
-            SettingKey.ofStringSet(key),
-            defaults = default,
-            valueEntries = valueEntries.toList()
-        )
-
-        @JvmStatic
-        @JvmOverloads
-        fun ofBoolean(
-            key: String,
-            isRequired: Boolean = false,
-            default: Boolean = false
-        ) = SimpleSettingSpec(
-            SettingKey.ofBoolean(key),
-            default = if (default) 0 else 1,
-            valueEntries = arrayOf(true, false)
-        )
-    }
 }

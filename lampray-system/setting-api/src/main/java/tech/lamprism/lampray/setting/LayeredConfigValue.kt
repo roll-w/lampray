@@ -19,9 +19,9 @@ package tech.lamprism.lampray.setting
 /**
  * @author RollW
  */
-interface LayeredConfigValue<T, V> : ConfigValue<T, V> {
+interface LayeredConfigValue<T> : ConfigValue<T> {
     /**
      * The layers of config value. Including all available sources.
      */
-    val layers: List<ConfigValue<T, V>>
+    val layers: List<ConfigValue<T>>
 }

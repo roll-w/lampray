@@ -33,7 +33,7 @@ import static tech.lamprism.lampray.web.configuration.MailConfiguration.setPrope
  * @author RollW
  */
 @Component
-public class MailSettingListener implements ApplicationListener<SettingValueChangedEvent<?, ?>> {
+public class MailSettingListener implements ApplicationListener<SettingValueChangedEvent<?>> {
     private final MailProperties properties;
     private final JavaMailSenderImpl sender;
     private final ConfigReader configReader;
@@ -52,8 +52,8 @@ public class MailSettingListener implements ApplicationListener<SettingValueChan
     }
 
     @Override
-    public void onApplicationEvent(@NonNull SettingValueChangedEvent<?, ?> event) {
-        SettingSpecification<?, ?> specification = event.getSpecification();
+    public void onApplicationEvent(@NonNull SettingValueChangedEvent<?> event) {
+        SettingSpecification<?> specification = event.getSpecification();
         if (specification.getKey().getName().startsWith(MailConfigKeys.PREFIX)) {
             onEvent();
         }

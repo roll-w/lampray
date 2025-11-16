@@ -22,24 +22,12 @@ package tech.lamprism.lampray.setting
 @JvmDefaultWithoutCompatibility
 interface ConfigWriter {
     /**
-     * Store the raw value of the setting.
-     *
-     * Not recommended to use this method directly, as it will not
-     * check the validity of the value. Use the [SettingSpecification]
-     * version instead.
-     *
-     * @return appropriate [SettingSource] if the value is stored successfully,
-     * or [SettingSource.NONE] if the value is not stored.
-     */
-    operator fun set(key: String, value: String?): SettingSource
-
-    /**
      * Store the value of the setting.
      *
      * @return appropriate [SettingSource] if the value is stored successfully,
      * or [SettingSource.NONE] if the value is not stored.
      */
-    operator fun <T, V> set(spec: SettingSpecification<T, V>, value: T?): SettingSource
+    operator fun <T> set(spec: SettingSpecification<T>, value: T?): SettingSource
 
     /**
      * Store the value of the setting.
@@ -49,7 +37,7 @@ interface ConfigWriter {
      * @return appropriate [SettingSource] if the value is stored successfully,
      * or [SettingSource.NONE] if the value is not stored.
      */
-    fun <T, V> set(configValue: ConfigValue<T, V>): SettingSource {
+    fun <T> set(configValue: ConfigValue<T>): SettingSource {
         return set(configValue.specification, configValue.value)
     }
 
@@ -59,9 +47,9 @@ interface ConfigWriter {
      * @return appropriate [SettingSource] if the value is reset successfully,
      * or [SettingSource.NONE] if the value cannot be reset (or not supported).
      */
-    fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource
+    fun <T> reset(spec: SettingSpecification<T>): SettingSource
 
-    fun supports(spec: SettingSpecification<*, *>): Boolean {
+    fun supports(spec: SettingSpecification<*>): Boolean {
         return supports(spec.key.name)
     }
 

@@ -60,6 +60,6 @@ object ResourceConfigKeys : SettingSpecificationSupplier {
         FRONTEND_ENABLED, RESOURCE_SOURCE
     )
 
-    override val specifications: List<AttributedSettingSpecification<*, *>>
+    override val specifications: List<AttributedSettingSpecification<*>>
         get() = keys
 }

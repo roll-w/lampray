@@ -27,7 +27,6 @@ import tech.lamprism.lampray.setting.CacheSupportConfigProvider
 import tech.lamprism.lampray.setting.CombinedConfigProvider
 import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.setting.MessageSourceSettingDescriptionProvider
-import tech.lamprism.lampray.setting.SettingSpecificationProvider
 import tech.lamprism.lampray.setting.event.EventProxyConfigProvider
 import tech.lamprism.lampray.setting.utils.ConfigProviderUtils.sortByPriority
 
@@ -41,14 +40,12 @@ class SettingConfiguration {
     @Primary
     fun configProvider(
         configProviders: List<ConfigProvider>,
-        specificationProvider: SettingSpecificationProvider,
         applicationEventPublisher: ApplicationEventPublisher,
         cacheManager: CacheManager
     ): ConfigProvider {
         return CacheSupportConfigProvider(
             EventProxyConfigProvider(
                 CombinedConfigProvider(configProviders.sortByPriority()),
-                specificationProvider,
                 applicationEventPublisher
             ), cacheManager["config-cache"]!!
         )

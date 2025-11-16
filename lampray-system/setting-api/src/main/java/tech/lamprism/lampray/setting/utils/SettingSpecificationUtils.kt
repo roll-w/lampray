@@ -18,9 +18,9 @@ package tech.lamprism.lampray.setting.utils
 
 import org.apache.commons.text.WordUtils
 import tech.lamprism.lampray.setting.AttributedSettingSpecification
+import tech.lamprism.lampray.setting.ConfigType
 import tech.lamprism.lampray.setting.SettingDescriptionProvider
 import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
-import tech.lamprism.lampray.setting.SettingType
 import java.util.SortedMap
 import kotlin.math.min
 
@@ -29,7 +29,7 @@ object SettingSpecificationUtils {
 
     private data class Table(
         val key: String,
-        val directives: MutableList<AttributedSettingSpecification<*, *>>,
+        val directives: MutableList<AttributedSettingSpecification<*>>,
     )
 
     private val keyComparator: Comparator<String> = Comparator { o1, o2 ->
@@ -45,7 +45,7 @@ object SettingSpecificationUtils {
         partsA.size - partsB.size
     }
 
-    private fun Collection<AttributedSettingSpecification<*, *>>.asTables(): Map<String, Table> {
+    private fun Collection<AttributedSettingSpecification<*>>.asTables(): Map<String, Table> {
         val tables: SortedMap<String, Table> = sortedMapOf(keyComparator)
         this.sortedWith { o1, o2 ->
             return@sortedWith keyComparator.compare(o1.keyName, o2.keyName)
@@ -104,7 +104,7 @@ object SettingSpecificationUtils {
     }
 
     @JvmStatic
-    fun Collection<AttributedSettingSpecification<*, *>>.formatAsToml(
+    fun Collection<AttributedSettingSpecification<*>>.formatAsToml(
         settingDescriptionProvider: SettingDescriptionProvider
     ): String {
         val tables = this.asTables()
@@ -151,19 +151,20 @@ object SettingSpecificationUtils {
         }.joinToString("\n\n")
     }
 
-    private fun <T, V> SettingType<T, V>.toReadableName(): String {
-        return when (this) {
-            SettingType.STRING -> "String"
-            SettingType.INT -> "Integer"
-            SettingType.BOOLEAN -> "Boolean"
-            SettingType.FLOAT -> "Float"
-            SettingType.DOUBLE -> "Double"
-            SettingType.LONG -> "Long"
-            SettingType.STRING_SET -> "String List"
-            else -> {
-                throw IllegalArgumentException("Unsupported setting type: $this")
-            }
-        }
+    private fun <T> ConfigType<T>.toReadableName(): String {
+//        return when (this) {
+//            SettingType.STRING -> "String"
+//            SettingType.INT -> "Integer"
+//            SettingType.BOOLEAN -> "Boolean"
+//            SettingType.FLOAT -> "Float"
+//            SettingType.DOUBLE -> "Double"
+//            SettingType.LONG -> "Long"
+//            SettingType.STRING_SET -> "String List"
+//            else -> {
+//                throw IllegalArgumentException("Unsupported setting type: $this")
+//            }
+//        }
+        return this.toString()
     }
 
     private fun String.addCommentMark() = "# $this"

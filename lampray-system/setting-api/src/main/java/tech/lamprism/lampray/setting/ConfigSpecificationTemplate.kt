@@ -19,8 +19,10 @@ package tech.lamprism.lampray.setting
 /**
  * @author RollW
  */
-interface SettingSpecificationProvider {
-    fun getSettingSpecification(key: String): AttributedSettingSpecification<*>
+interface ConfigSpecificationTemplate<T> {
+    val template: SettingSpecification<T>
 
-    val settingSpecifications: List<AttributedSettingSpecification<*>>
+    val parameters: Map<String, List<String>>
+
+    fun create(params: Map<String, String>): SettingSpecification<T>
 }
