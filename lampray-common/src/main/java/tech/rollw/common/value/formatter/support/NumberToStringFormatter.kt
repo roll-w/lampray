@@ -14,34 +14,28 @@
  * limitations under the License.
  */
 
-package tech.rollw.common.value.constraint;
+package tech.rollw.common.value.formatter.support
 
-import space.lingu.NonNull;
-import space.lingu.Nullable;
+import tech.rollw.common.value.formatter.ValueFormatter
 
 /**
+ * Formatter for numbers with custom format.
+ *
  * @author RollW
  */
-public interface ValueConstraintRule<V> {
-    /**
-     * Get the constraint type.
-     *
-     * @return the constraint type
-     */
-    @NonNull
-    String getType();
+class NumberToStringFormatter(
+    private val format: String = "%.2f"
+) : ValueFormatter<Number, String> {
+    override fun format(value: Number): String {
+        return String.format(format, value.toDouble())
+    }
 
-    @NonNull
-    ValueValidationResult validate(@Nullable V value);
+    companion object {
+        @JvmStatic
+        fun integer(): NumberToStringFormatter = NumberToStringFormatter("%.0f")
 
-    /**
-     * Get the descriptor of this constraint rule.
-     *
-     * @return the constraint rule descriptor
-     */
-    @NonNull
-    Descriptor getDescriptor();
-
-    interface Descriptor {
+        @JvmStatic
+        fun decimal(precision: Int = 2): NumberToStringFormatter = NumberToStringFormatter("%.${precision}f")
     }
 }
+

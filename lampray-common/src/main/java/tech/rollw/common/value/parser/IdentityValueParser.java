@@ -22,6 +22,8 @@ package tech.rollw.common.value.parser;
  * @author RollW
  */
 public class IdentityValueParser<R> implements ValueParser<R, R> {
+    private IdentityValueParser() {
+    }
 
     private static final IdentityValueParser<?> INSTANCE = new IdentityValueParser<>();
 

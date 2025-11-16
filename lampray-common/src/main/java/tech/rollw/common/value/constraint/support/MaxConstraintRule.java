@@ -16,6 +16,8 @@
 
 package tech.rollw.common.value.constraint.support;
 
+import space.lingu.NonNull;
+import space.lingu.Nullable;
 import tech.rollw.common.value.constraint.ValueConstraintRule;
 import tech.rollw.common.value.constraint.ValueValidationResult;
 
@@ -39,13 +41,15 @@ public class MaxConstraintRule<V extends Comparable<V>> implements ValueConstrai
         this.inclusive = inclusive;
     }
 
+    @NonNull
     @Override
     public String getType() {
         return TYPE;
     }
 
+    @NonNull
     @Override
-    public ValueValidationResult validate(V value) {
+    public ValueValidationResult validate(@Nullable V value) {
         if (value == null) {
             return ValueValidationResult.failure("Value cannot be null");
         }
@@ -60,6 +64,7 @@ public class MaxConstraintRule<V extends Comparable<V>> implements ValueConstrai
         return ValueValidationResult.success();
     }
 
+    @NonNull
     @Override
     public MaxDescriptor<V> getDescriptor() {
         return new MaxDescriptor<>(max, inclusive);

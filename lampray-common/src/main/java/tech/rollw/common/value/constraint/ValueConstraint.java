@@ -16,6 +16,7 @@
 
 package tech.rollw.common.value.constraint;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -97,7 +98,7 @@ public interface ValueConstraint<V> {
 
         @Override
         public List<ValueConstraintRule<V>> getConstraintRules() {
-            List<ValueConstraintRule<V>> rules = new java.util.ArrayList<>(left.getConstraintRules());
+            List<ValueConstraintRule<V>> rules = new ArrayList<>(left.getConstraintRules());
             rules.addAll(right.getConstraintRules());
             return rules;
         }
@@ -131,7 +132,7 @@ public interface ValueConstraint<V> {
 
         @Override
         public List<ValueConstraintRule<V>> getConstraintRules() {
-            List<ValueConstraintRule<V>> rules = new java.util.ArrayList<>(left.getConstraintRules());
+            List<ValueConstraintRule<V>> rules = new ArrayList<>(left.getConstraintRules());
             rules.addAll(right.getConstraintRules());
             return rules;
         }

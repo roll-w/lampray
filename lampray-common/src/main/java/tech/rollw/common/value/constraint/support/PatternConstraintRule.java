@@ -16,6 +16,7 @@
 
 package tech.rollw.common.value.constraint.support;
 
+import space.lingu.NonNull;
 import tech.rollw.common.value.constraint.ValueConstraintRule;
 import tech.rollw.common.value.constraint.ValueValidationResult;
 
@@ -37,11 +38,13 @@ public class PatternConstraintRule implements ValueConstraintRule<String> {
         this.patternType = patternType;
     }
 
+    @NonNull
     @Override
     public String getType() {
         return TYPE;
     }
 
+    @NonNull
     @Override
     public ValueValidationResult validate(String value) {
         if (value == null) {
@@ -65,6 +68,7 @@ public class PatternConstraintRule implements ValueConstraintRule<String> {
         return ValueValidationResult.success();
     }
 
+    @NonNull
     @Override
     public Descriptor getDescriptor() {
         return new PatternDescriptor(pattern, patternType);

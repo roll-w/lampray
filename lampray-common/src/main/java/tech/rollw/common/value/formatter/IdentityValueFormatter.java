@@ -14,34 +14,24 @@
  * limitations under the License.
  */
 
-package tech.rollw.common.value.constraint;
-
-import space.lingu.NonNull;
-import space.lingu.Nullable;
+package tech.rollw.common.value.formatter;
 
 /**
  * @author RollW
  */
-public interface ValueConstraintRule<V> {
-    /**
-     * Get the constraint type.
-     *
-     * @return the constraint type
-     */
-    @NonNull
-    String getType();
+public class IdentityValueFormatter<T> implements ValueFormatter<T, T> {
+    private static final IdentityValueFormatter<?> INSTANCE = new IdentityValueFormatter<>();
 
-    @NonNull
-    ValueValidationResult validate(@Nullable V value);
+    private IdentityValueFormatter() {
+    }
 
-    /**
-     * Get the descriptor of this constraint rule.
-     *
-     * @return the constraint rule descriptor
-     */
-    @NonNull
-    Descriptor getDescriptor();
+    @Override
+    public T format(T value) {
+        return value;
+    }
 
-    interface Descriptor {
+    @SuppressWarnings("unchecked")
+    public static <T> IdentityValueFormatter<T> getInstance() {
+        return (IdentityValueFormatter<T>) INSTANCE;
     }
 }
