@@ -25,7 +25,7 @@ import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import space.lingu.NonNull;
-import tech.lamprism.lampray.server.AddressProvider;
+import tech.lamprism.lampray.server.AutoInferredAddressProvider;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -36,10 +36,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 @EnableAsync(proxyTargetClass = true)
 @Configuration
 public class AsyncConfiguration implements AsyncConfigurer {
-    private final AddressProvider addressProvider;
+    private final AutoInferredAddressProvider autoInferredAddressProvider;
 
-    public AsyncConfiguration(AddressProvider addressProvider) {
-        this.addressProvider = addressProvider;
+    public AsyncConfiguration(AutoInferredAddressProvider autoInferredAddressProvider) {
+        this.autoInferredAddressProvider = autoInferredAddressProvider;
     }
 
     @Override
@@ -61,7 +61,7 @@ public class AsyncConfiguration implements AsyncConfigurer {
         executor.setQueueCapacity(200);
         executor.setKeepAliveSeconds(120);
         executor.setThreadNamePrefix("async-main-");
-        executor.setTaskDecorator(new AddressContextTaskDecorator(addressProvider));
+        executor.setTaskDecorator(new AddressContextTaskDecorator(autoInferredAddressProvider));
 
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return executor;
@@ -72,26 +72,26 @@ public class AsyncConfiguration implements AsyncConfigurer {
      */
     private static class AddressContextTaskDecorator implements TaskDecorator {
 
-        private final AddressProvider addressProvider;
+        private final AutoInferredAddressProvider autoInferredAddressProvider;
 
-        public AddressContextTaskDecorator(AddressProvider addressProvider) {
-            this.addressProvider = addressProvider;
+        public AddressContextTaskDecorator(AutoInferredAddressProvider autoInferredAddressProvider) {
+            this.autoInferredAddressProvider = autoInferredAddressProvider;
         }
 
         @NonNull
         @Override
         public Runnable decorate(@NonNull Runnable runnable) {
             // Capture context in the calling thread
-            AddressProvider.AsyncContext context = addressProvider.captureContext();
+            AutoInferredAddressProvider.AsyncContext context = autoInferredAddressProvider.captureContext();
 
             return () -> {
                 if (context != null) {
-                    addressProvider.setAsyncContext(context);
+                    autoInferredAddressProvider.setAsyncContext(context);
                 }
                 try {
                     runnable.run();
                 } finally {
-                    addressProvider.clearAsyncContext();
+                    autoInferredAddressProvider.clearAsyncContext();
                 }
             };
         }
