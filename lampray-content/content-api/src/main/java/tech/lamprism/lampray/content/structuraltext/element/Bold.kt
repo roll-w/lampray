@@ -30,7 +30,7 @@ data class Bold @JvmOverloads constructor(
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
     init {
-        require(!children.isEmpty() && content.isEmpty()) {
+        require(children.isNotEmpty() || content.isNotEmpty()) {
             "Bold element must have either content or children."
         }
     }

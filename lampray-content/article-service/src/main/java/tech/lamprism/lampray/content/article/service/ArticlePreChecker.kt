@@ -48,7 +48,7 @@ class ArticlePreChecker : UncreatedContentPreChecker {
         if (Strings.isNullOrEmpty(title)) {
             throw ContentException(ArticleErrorCode.ERROR_TITLE_EMPTY)
         }
-        if (title!!.length > 100) {
+        if (title.length > 100) {
             throw ContentException(ArticleErrorCode.ERROR_TITLE_TOO_LONG)
         }
 

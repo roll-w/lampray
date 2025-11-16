@@ -58,7 +58,7 @@ class CommentDo(
     var parentId: Long = 0,
 
     @Lob
-    @Column(name = "content", nullable = false, length = 20000000)
+    @Column(name = "content", nullable = false, length = 1000000)
     private var content: StructuralText = StructuralText.EMPTY,
 
     @Column(name = "create_time", nullable = false)

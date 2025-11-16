@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
-import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.element.Blockquote
@@ -52,7 +51,6 @@ import tech.lamprism.lampray.content.structuraltext.element.Underline
 /**
  * @author RollW
  */
-@Component
 class StructuralTextDeserializer : JsonDeserializer<StructuralText>() {
     private val typeToClass: Map<StructuralTextType, Class<out StructuralText>> = mapOf(
         StructuralTextType.DOCUMENT to Document::class.java,

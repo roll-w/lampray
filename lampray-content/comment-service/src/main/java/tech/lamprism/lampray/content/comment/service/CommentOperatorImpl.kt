@@ -45,17 +45,17 @@ class CommentOperatorImpl internal constructor(
     }
 
     @Throws(CommonRuntimeException::class)
-    override fun setNameInternal(name: String): Boolean {
+    override fun setNameInternal(name: String?): Boolean {
         throw UnsupportedOperationException()
     }
 
     @Throws(CommonRuntimeException::class)
-    override fun setContentInternal(content: StructuralText): Boolean {
+    override fun setContentInternal(content: StructuralText?): Boolean {
         throw UnsupportedOperationException()
     }
 
     @Throws(CommonRuntimeException::class)
-    override fun setMetadataInternal(metadata: ContentDetailsMetadata): Boolean {
+    override fun setMetadataInternal(metadata: ContentDetailsMetadata?): Boolean {
         return false
     }
 }

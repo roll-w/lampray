@@ -45,7 +45,7 @@ class ArticleOperatorImpl internal constructor(
         return true
     }
 
-    override fun setContentInternal(content: StructuralText): Boolean {
+    override fun setContentInternal(content: StructuralText?): Boolean {
         if (article.content == content) {
             return false
         }

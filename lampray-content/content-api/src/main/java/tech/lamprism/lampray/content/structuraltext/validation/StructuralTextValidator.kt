@@ -51,7 +51,7 @@ class StructuralTextValidator(
             throw StructuralTextRootNotDocumentException("Root must be DOCUMENT")
         }
 
-        var totalTextLength = 0
+        var totalTextLength = 0L
         val stack = ArrayDeque<Pair<StructuralText, Int>>()
         stack.add(root to 0)
 
