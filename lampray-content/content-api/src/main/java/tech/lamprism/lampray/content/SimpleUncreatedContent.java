@@ -19,7 +19,7 @@ package tech.lamprism.lampray.content;
 import space.lingu.NonNull;
 import space.lingu.Nullable;
 import tech.lamprism.lampray.content.structuraltext.StructuralText;
-import tech.lamprism.lampray.content.structuraltext.StructuralTextCompressor;
+import tech.lamprism.lampray.content.structuraltext.StructuralTextCompactor;
 import tech.lamprism.lampray.user.UserIdentity;
 
 /**
@@ -34,7 +34,7 @@ public record SimpleUncreatedContent(
 ) implements UncreatedContent {
 
     public SimpleUncreatedContent {
-        content = StructuralTextCompressor.compact(content);
+        content = StructuralTextCompactor.compact(content);
     }
 
     @NonNull

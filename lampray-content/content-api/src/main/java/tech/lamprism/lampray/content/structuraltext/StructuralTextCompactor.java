@@ -49,8 +49,8 @@ import java.util.Objects;
  *
  * @author RollW
  */
-public final class StructuralTextCompressor {
-    private StructuralTextCompressor() {
+public final class StructuralTextCompactor {
+    private StructuralTextCompactor() {
     }
 
     /**
