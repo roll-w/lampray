@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content;
 import space.lingu.NonNull;
 import space.lingu.Nullable;
 import tech.lamprism.lampray.content.structuraltext.StructuralText;
+import tech.lamprism.lampray.content.structuraltext.StructuralTextCompressor;
 import tech.lamprism.lampray.user.UserIdentity;
 
 /**
@@ -31,6 +32,11 @@ public record SimpleUncreatedContent(
         @Nullable StructuralText content,
         @Nullable ContentDetailsMetadata metadata
 ) implements UncreatedContent {
+
+    public SimpleUncreatedContent {
+        content = StructuralTextCompressor.compact(content);
+    }
+
     @NonNull
     @Override
     public ContentType getContentType() {

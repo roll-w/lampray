@@ -116,7 +116,6 @@ public abstract class AbstractContentOperator implements ContentOperator {
     @Override
     public final ContentOperator setContent(StructuralText content)
             throws CommonRuntimeException {
-        // TODO: compare structural text
         if (Objects.equals(content, this.content.getContent())) {
             return this;
         }
