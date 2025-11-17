@@ -205,7 +205,7 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
                             }
                             builder.append("\n")
                         }
-                        rows.forEach { row ->
+                        rows.drop(1).forEach { row ->
                             val cells = row.children.filterIsInstance<TableCell>()
                             if (cells.isNotEmpty()) {
                                 builder.append("|")

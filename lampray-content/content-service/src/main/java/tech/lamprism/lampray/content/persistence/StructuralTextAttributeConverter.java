@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.luben.zstd.Zstd;
+import com.github.luben.zstd.ZstdException;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import org.apache.commons.lang3.ArrayUtils;
@@ -29,13 +29,10 @@ import org.msgpack.jackson.dataformat.MessagePackFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tech.lamprism.lampray.content.structuraltext.StructuralText;
-import tech.lamprism.lampray.content.structuraltext.element.Document;
 import tech.lamprism.lampray.content.structuraltext.element.Text;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -43,6 +40,8 @@ import java.util.Objects;
  */
 @Converter(autoApply = true)
 public class StructuralTextAttributeConverter implements AttributeConverter<StructuralText, byte[]> {
+    private static final Logger logger = LoggerFactory.getLogger(StructuralTextAttributeConverter.class);
+
     private final ObjectMapper objectMapper;
 
     public StructuralTextAttributeConverter(ObjectMapper objectMapper) {
@@ -88,6 +87,9 @@ public class StructuralTextAttributeConverter implements AttributeConverter<Stru
             byte[] compressedData = ArrayUtils.subarray(dbData, HEADER_LENGTH, dbData.length);
             byte[] decompressedData = Zstd.decompress(compressedData);
             return objectMapper.readValue(decompressedData, StructuralText.class);
+        } catch (ZstdException e) {
+            logger.warn("Failed to decompress StructuralText data, returning as plain text.", e);
+            return new Text(new String(dbData, StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException("Error converting stored data to StructuralText", e);
         }
