@@ -146,7 +146,7 @@ public abstract class AbstractContentOperator implements ContentOperator {
 
     protected abstract boolean setNameInternal(@Nullable String name) throws CommonRuntimeException;
 
-    protected abstract boolean setContentInternal(@Nullable StructuralText content) throws CommonRuntimeException;
+    protected abstract boolean setContentInternal(@NonNull StructuralText content) throws CommonRuntimeException;
 
     protected abstract boolean setMetadataInternal(@Nullable ContentDetailsMetadata metadata) throws CommonRuntimeException;
 

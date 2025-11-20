@@ -46,7 +46,7 @@ public interface UncreatedContent {
      *
      * @return content
      */
-    @Nullable
+    @NonNull
     StructuralText getContent();
 
     @Nullable

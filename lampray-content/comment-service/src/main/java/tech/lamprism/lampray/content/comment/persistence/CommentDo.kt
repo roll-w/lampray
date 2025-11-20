@@ -113,7 +113,7 @@ class CommentDo(
 
     override fun getTitle(): String? = null
 
-    override fun getContent(): StructuralText? = content
+    override fun getContent(): StructuralText = content
 
     fun setContent(content: StructuralText) {
         this.content = content

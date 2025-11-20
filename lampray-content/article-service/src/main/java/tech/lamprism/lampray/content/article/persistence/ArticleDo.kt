@@ -102,7 +102,7 @@ class ArticleDo(
         this.title = title
     }
 
-    override fun getContent(): StructuralText? = content
+    override fun getContent(): StructuralText = content
 
     fun setContent(content: StructuralText) {
         this.content = content

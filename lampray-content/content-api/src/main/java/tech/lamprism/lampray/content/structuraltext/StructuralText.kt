@@ -69,7 +69,7 @@ interface StructuralText {
     fun accept(visitor: StructuralTextVisitor)
 
     companion object {
-        @JvmStatic
+        @JvmField
         val EMPTY: StructuralText = Document()
     }
 }

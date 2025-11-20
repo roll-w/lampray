@@ -50,7 +50,7 @@ class CommentOperatorImpl internal constructor(
     }
 
     @Throws(CommonRuntimeException::class)
-    override fun setContentInternal(content: StructuralText?): Boolean {
+    override fun setContentInternal(content: StructuralText): Boolean {
         throw UnsupportedOperationException()
     }
 

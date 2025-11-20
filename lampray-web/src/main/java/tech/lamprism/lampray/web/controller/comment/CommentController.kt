@@ -64,7 +64,7 @@ class CommentController(
             ContentType.COMMENT,
             user,
             null,
-            commentRequest.content,
+            commentRequest.content!!,
             commentDetailsMetadata
         )
         val contentDetails = contentPublishProvider.publishContent(

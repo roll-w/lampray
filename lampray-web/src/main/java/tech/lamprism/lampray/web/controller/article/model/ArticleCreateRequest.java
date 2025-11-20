@@ -33,11 +33,12 @@ public record ArticleCreateRequest(
 ) {
     public UncreatedContent toUncreatedContent(UserIdentity userIdentity,
                                                ArticleDetailsMetadata articleDetailsMetadata) {
+
         return new SimpleUncreatedContent(
                 ContentType.ARTICLE,
                 userIdentity,
                 StringUtils.trim(title),
-                content,
+                content != null ? content : StructuralText.EMPTY,
                 articleDetailsMetadata
         );
     }

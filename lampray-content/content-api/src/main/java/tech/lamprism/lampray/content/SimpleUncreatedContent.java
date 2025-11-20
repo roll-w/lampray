@@ -29,7 +29,7 @@ public record SimpleUncreatedContent(
         @NonNull ContentType contentType,
         @NonNull UserIdentity operator,
         @Nullable String title,
-        @Nullable StructuralText content,
+        @NonNull StructuralText content,
         @Nullable ContentDetailsMetadata metadata
 ) implements UncreatedContent {
 
@@ -55,7 +55,7 @@ public record SimpleUncreatedContent(
         return title;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public StructuralText getContent() {
         return content;

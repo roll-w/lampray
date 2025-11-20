@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,12 +84,15 @@ public class StructuralTextAttributeConverter implements AttributeConverter<Stru
             if (version == null) {
                 return new Text(new String(dbData, StandardCharsets.UTF_8));
             }
-            byte[] compressedData = ArrayUtils.subarray(dbData, HEADER_LENGTH, dbData.length);
-            byte[] decompressedData = Zstd.decompress(compressedData);
-            return objectMapper.readValue(decompressedData, StructuralText.class);
-        } catch (ZstdException e) {
-            logger.warn("Failed to decompress StructuralText data, returning as plain text.", e);
-            return new Text(new String(dbData, StandardCharsets.UTF_8));
+            try {
+                byte[] compressedData = ArrayUtils.subarray(dbData, HEADER_LENGTH, dbData.length);
+                byte[] decompressedData = Zstd.decompress(compressedData);
+                return objectMapper.readValue(decompressedData, StructuralText.class);
+            } catch (ZstdException e) {
+                // With version header, but decompression failed, maybe corrupted data
+                logger.error("Failed to decompress StructuralText data, version: {}", version, e);
+                return new Text(new String(dbData, StandardCharsets.UTF_8));
+            }
         } catch (IOException e) {
             throw new RuntimeException("Error converting stored data to StructuralText", e);
         }
