@@ -29,6 +29,12 @@ data class Italic @JvmOverloads constructor(
     override val content: String = "",
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        require(children.isNotEmpty() || content.isNotEmpty()) {
+            "Italic element must have either content or children."
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.ITALIC
 

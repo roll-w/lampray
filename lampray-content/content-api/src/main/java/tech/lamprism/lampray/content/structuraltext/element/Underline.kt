@@ -27,6 +27,12 @@ data class Underline @JvmOverloads constructor(
     override val content: String = "",
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        require(children.isNotEmpty() || content.isNotEmpty()) {
+            "Underline element must have either content or children."
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.UNDERLINE
 
