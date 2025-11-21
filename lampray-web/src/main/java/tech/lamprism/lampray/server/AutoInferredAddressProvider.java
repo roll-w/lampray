@@ -34,27 +34,24 @@ import tech.lamprism.lampray.web.common.keys.ServerConfigKeys;
 import java.time.Duration;
 
 /**
- * Elegant address provider with automatic async support.
- * Handles both sync and async scenarios transparently.
+ * Provides external API and web endpoints with resolution and caching.
  *
  * @author RollW
  */
 @Component
-public class AddressProvider implements ExternalEndpointProvider {
-    private static final Logger logger = LoggerFactory.getLogger(AddressProvider.class);
+public class AutoInferredAddressProvider implements ExternalEndpointProvider {
+    private static final Logger logger = LoggerFactory.getLogger(AutoInferredAddressProvider.class);
 
     private final ConfigReader configReader;
 
-    // Thread-local storage for async context
     private static final ThreadLocal<AsyncContext> asyncContext = new ThreadLocal<>();
 
-    // Simple cache for resolved addresses
     private final Cache<String, String> cache = Caffeine.newBuilder()
             .expireAfterAccess(Duration.ofMinutes(10))
             .maximumSize(100)
             .build();
 
-    public AddressProvider(ConfigReader configReader) {
+    public AutoInferredAddressProvider(ConfigReader configReader) {
         this.configReader = configReader;
     }
 
@@ -82,7 +79,7 @@ public class AddressProvider implements ExternalEndpointProvider {
     }
 
     /**
-     * Resolve address with intelligent fallback and caching.
+     * Resolve address with fallback and caching.
      */
     private String resolveAddress(SettingSpecification<String, String> configKey, String configured) {
 

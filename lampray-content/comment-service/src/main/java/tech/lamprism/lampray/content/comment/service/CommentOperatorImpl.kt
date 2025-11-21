@@ -20,6 +20,7 @@ import tech.lamprism.lampray.content.ContentDetailsMetadata
 import tech.lamprism.lampray.content.ContentOperator
 import tech.lamprism.lampray.content.comment.Comment
 import tech.lamprism.lampray.content.service.AbstractContentOperator
+import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.rollw.common.web.CommonRuntimeException
 import java.time.OffsetDateTime
 
@@ -44,17 +45,17 @@ class CommentOperatorImpl internal constructor(
     }
 
     @Throws(CommonRuntimeException::class)
-    override fun setNameInternal(name: String): Boolean {
+    override fun setNameInternal(name: String?): Boolean {
         throw UnsupportedOperationException()
     }
 
     @Throws(CommonRuntimeException::class)
-    override fun setContentInternal(content: String): Boolean {
+    override fun setContentInternal(content: StructuralText): Boolean {
         throw UnsupportedOperationException()
     }
 
     @Throws(CommonRuntimeException::class)
-    override fun setMetadataInternal(metadata: ContentDetailsMetadata): Boolean {
+    override fun setMetadataInternal(metadata: ContentDetailsMetadata?): Boolean {
         return false
     }
 }

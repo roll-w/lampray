@@ -25,6 +25,7 @@ import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentDetailsMetadata;
 import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 import tech.rollw.common.web.system.SystemResourceKind;
 
 import java.time.OffsetDateTime;
@@ -44,7 +45,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
      * the parent id is 0.
      */
     private final long parentId;
-    private final String content;
+    private final StructuralText content;
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
 
@@ -60,7 +61,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
     private final ContentIdentity associatedContent;
     private final CommentDetailsMetadata commentDetailsMetadata;
 
-    public Comment(Long id, long userId, long parentId, String content,
+    public Comment(Long id, long userId, long parentId, StructuralText content,
                    OffsetDateTime createTime, OffsetDateTime updateTime,
                    ContentType commentOnType, long commentOnId,
                    @NonNull CommentStatus commentStatus) {
@@ -111,7 +112,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
 
     @Nullable
     @Override
-    public String getContent() {
+    public StructuralText getContent() {
         return content;
     }
 
@@ -174,7 +175,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
         private long userId;
         private long commentOn;
         private long parentId;
-        private String content;
+        private StructuralText content;
         private OffsetDateTime createTime;
         private OffsetDateTime updateTime;
         private ContentType type;
@@ -218,7 +219,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
             return this;
         }
 
-        public Builder setContent(String content) {
+        public Builder setContent(StructuralText content) {
             this.content = content;
             return this;
         }

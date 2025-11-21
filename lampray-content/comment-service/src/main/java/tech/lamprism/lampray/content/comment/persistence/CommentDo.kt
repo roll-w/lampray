@@ -36,6 +36,7 @@ import tech.lamprism.lampray.content.comment.Comment
 import tech.lamprism.lampray.content.comment.CommentDetailsMetadata
 import tech.lamprism.lampray.content.comment.CommentResourceKind
 import tech.lamprism.lampray.content.comment.CommentStatus
+import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 
@@ -57,8 +58,8 @@ class CommentDo(
     var parentId: Long = 0,
 
     @Lob
-    @Column(name = "content", nullable = false, length = 2000)
-    private var content: String = "",
+    @Column(name = "content", nullable = false, length = 1000000)
+    private var content: StructuralText = StructuralText.EMPTY,
 
     @Column(name = "create_time", nullable = false)
     private var createTime: OffsetDateTime = OffsetDateTime.now(),
@@ -112,9 +113,9 @@ class CommentDo(
 
     override fun getTitle(): String? = null
 
-    override fun getContent(): String = content
+    override fun getContent(): StructuralText = content
 
-    fun setContent(content: String) {
+    fun setContent(content: StructuralText) {
         this.content = content
     }
 
@@ -153,7 +154,7 @@ class CommentDo(
         private var id: Long? = null
         private var userId: Long = 0
         private var parentId: Long = 0
-        private var content: String? = null
+        private var content: StructuralText? = null
         private var createTime: OffsetDateTime? = null
         private var updateTime: OffsetDateTime? = null
         private var commentOnType: ContentType? = null
@@ -186,7 +187,7 @@ class CommentDo(
             this.parentId = parentId
         }
 
-        fun setContent(content: String) = apply {
+        fun setContent(content: StructuralText) = apply {
             this.content = content
         }
 

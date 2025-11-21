@@ -18,6 +18,7 @@ package tech.lamprism.lampray.content;
 
 import space.lingu.NonNull;
 import space.lingu.Nullable;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 
 import java.time.OffsetDateTime;
 
@@ -80,7 +81,7 @@ public class ContentMetadataDetails<T extends ContentDetails> implements Content
 
     @Override
     @Nullable
-    public String getContent() {
+    public StructuralText getContent() {
         return contentDetails.getContent();
     }
 

@@ -26,6 +26,7 @@ import tech.lamprism.lampray.content.ContentStatus;
 import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 import tech.rollw.common.web.CommonRuntimeException;
 
 import java.time.OffsetDateTime;
@@ -89,7 +90,7 @@ public abstract class AbstractContentOperator implements ContentOperator {
 
     @Override
     @Nullable
-    public final String getContent() {
+    public final StructuralText getContent() {
         return content.getContent();
     }
 
@@ -113,7 +114,7 @@ public abstract class AbstractContentOperator implements ContentOperator {
     }
 
     @Override
-    public final ContentOperator setContent(String content)
+    public final ContentOperator setContent(StructuralText content)
             throws CommonRuntimeException {
         if (Objects.equals(content, this.content.getContent())) {
             return this;
@@ -145,7 +146,7 @@ public abstract class AbstractContentOperator implements ContentOperator {
 
     protected abstract boolean setNameInternal(@Nullable String name) throws CommonRuntimeException;
 
-    protected abstract boolean setContentInternal(@Nullable String content) throws CommonRuntimeException;
+    protected abstract boolean setContentInternal(@NonNull StructuralText content) throws CommonRuntimeException;
 
     protected abstract boolean setMetadataInternal(@Nullable ContentDetailsMetadata metadata) throws CommonRuntimeException;
 
