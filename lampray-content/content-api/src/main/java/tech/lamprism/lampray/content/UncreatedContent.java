@@ -18,6 +18,7 @@ package tech.lamprism.lampray.content;
 
 import space.lingu.NonNull;
 import space.lingu.Nullable;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 import tech.lamprism.lampray.user.UserIdentity;
 
 /**
@@ -45,8 +46,8 @@ public interface UncreatedContent {
      *
      * @return content
      */
-    @Nullable
-    String getContent();
+    @NonNull
+    StructuralText getContent();
 
     @Nullable
     ContentDetailsMetadata getMetadata();

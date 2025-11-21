@@ -30,6 +30,7 @@ dependencies {
     api("org.apache.commons:commons-lang3")
     api(libs.com.google.guava)
     api(libs.commons.text)
+    api("com.fasterxml.jackson.core:jackson-annotations")
 }
 
 description = "lampray-common"

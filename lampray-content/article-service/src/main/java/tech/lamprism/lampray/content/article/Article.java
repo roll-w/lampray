@@ -23,6 +23,7 @@ import tech.lamprism.lampray.LongEntityBuilder;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentDetailsMetadata;
 import tech.lamprism.lampray.content.ContentType;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 
 import java.time.OffsetDateTime;
 
@@ -34,12 +35,12 @@ public class Article implements DataEntity<Long>, ContentDetails {
     private final long userId;
     private final String title;
     private final String cover;
-    private final String content;
+    private final StructuralText content;
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
 
     public Article(Long id, long userId, String title, String cover,
-                   String content, OffsetDateTime createTime, OffsetDateTime updateTime) {
+                   StructuralText content, OffsetDateTime createTime, OffsetDateTime updateTime) {
         this.id = id;
         this.userId = userId;
         this.title = title;
@@ -72,7 +73,7 @@ public class Article implements DataEntity<Long>, ContentDetails {
 
     @Override
     @Nullable
-    public String getContent() {
+    public StructuralText getContent() {
         return content;
     }
 
@@ -128,7 +129,7 @@ public class Article implements DataEntity<Long>, ContentDetails {
         private long userId;
         private String title;
         private String cover;
-        private String content;
+        private StructuralText content;
         private OffsetDateTime createTime;
         private OffsetDateTime updateTime;
 
@@ -162,7 +163,7 @@ public class Article implements DataEntity<Long>, ContentDetails {
             return this;
         }
 
-        public Builder setContent(String content) {
+        public Builder setContent(StructuralText content) {
             this.content = content;
             return this;
         }

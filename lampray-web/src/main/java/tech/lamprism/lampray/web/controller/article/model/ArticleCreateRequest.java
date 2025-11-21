@@ -21,6 +21,7 @@ import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.SimpleUncreatedContent;
 import tech.lamprism.lampray.content.UncreatedContent;
 import tech.lamprism.lampray.content.article.ArticleDetailsMetadata;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
 import tech.lamprism.lampray.user.UserIdentity;
 
 /**
@@ -28,15 +29,16 @@ import tech.lamprism.lampray.user.UserIdentity;
  */
 public record ArticleCreateRequest(
         String title,
-        String content
+        StructuralText content
 ) {
     public UncreatedContent toUncreatedContent(UserIdentity userIdentity,
                                                ArticleDetailsMetadata articleDetailsMetadata) {
+
         return new SimpleUncreatedContent(
                 ContentType.ARTICLE,
                 userIdentity,
                 StringUtils.trim(title),
-                StringUtils.trim(content),
+                content != null ? content : StructuralText.EMPTY,
                 articleDetailsMetadata
         );
     }

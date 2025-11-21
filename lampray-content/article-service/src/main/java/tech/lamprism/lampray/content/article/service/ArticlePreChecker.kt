@@ -24,27 +24,64 @@ import tech.lamprism.lampray.content.UncreatedContentPreChecker
 import tech.lamprism.lampray.content.article.ArticleDetailsMetadata
 import tech.lamprism.lampray.content.article.common.ArticleErrorCode
 import tech.lamprism.lampray.content.common.ContentException
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextEmptyException
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextNodeTooLongException
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextRootNotDocumentException
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextTooDeepException
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextTooLongException
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextTooShortException
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidator
 
 /**
  * @author RollW
  */
 @Service
 class ArticlePreChecker : UncreatedContentPreChecker {
+    private val structuralTextValidator = StructuralTextValidator(
+        minTotalTextLength = 1,
+        maxTotalTextLength = 100000,
+    )
+
     override fun checkUncreatedContent(uncreatedContent: UncreatedContent) {
-        uncreatedContent.title.let { it ->
-            if (Strings.isNullOrEmpty(it)) {
-                throw ContentException(ArticleErrorCode.ERROR_TITLE_EMPTY)
-            }
-            if (it.length > 100) {
-                throw ContentException(ArticleErrorCode.ERROR_TITLE_TOO_LONG)
-            }
+        val title = uncreatedContent.title
+        if (Strings.isNullOrEmpty(title)) {
+            throw ContentException(ArticleErrorCode.ERROR_TITLE_EMPTY)
         }
-        uncreatedContent.content.let { it ->
-            if (Strings.isNullOrEmpty(it)) {
-                throw ContentException(ArticleErrorCode.ERROR_CONTENT_EMPTY)
-            }
-            if (it.length > 100000) {
-                throw ContentException(ArticleErrorCode.ERROR_CONTENT_TOO_LONG)
+        if (title.length > 100) {
+            throw ContentException(ArticleErrorCode.ERROR_TITLE_TOO_LONG)
+        }
+
+        // Validate content presence first
+        val content = uncreatedContent.content ?: throw ContentException(ArticleErrorCode.ERROR_CONTENT_EMPTY)
+
+        try {
+            structuralTextValidator.validate(content)
+        } catch (e: StructuralTextValidationException) {
+            when (e) {
+                is StructuralTextTooLongException -> {
+                    throw ContentException(ArticleErrorCode.ERROR_CONTENT_TOO_LONG)
+                }
+
+                is StructuralTextTooShortException -> {
+                    throw ContentException(ArticleErrorCode.ERROR_CONTENT_TOO_SHORT)
+                }
+
+                is StructuralTextEmptyException -> {
+                    throw ContentException(ArticleErrorCode.ERROR_CONTENT_EMPTY)
+                }
+
+                is StructuralTextTooDeepException,
+                is StructuralTextRootNotDocumentException,
+                is StructuralTextNodeTooLongException -> {
+                    // Node too long maps to content too long
+                    throw ContentException(ArticleErrorCode.ERROR_CONTENT_TOO_LONG)
+                }
+
+                else -> {
+                    // Fallback to generic article error
+                    throw ContentException(ArticleErrorCode.ERROR_ARTICLE)
+                }
             }
         }
         val metadata = uncreatedContent.metadata

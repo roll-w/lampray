@@ -31,6 +31,7 @@ import tech.lamprism.lampray.content.ContentDetailsMetadata
 import tech.lamprism.lampray.content.ContentType
 import tech.lamprism.lampray.content.article.Article
 import tech.lamprism.lampray.content.article.ArticleDetailsMetadata
+import tech.lamprism.lampray.content.structuraltext.StructuralText
 import java.time.OffsetDateTime
 
 /**
@@ -55,7 +56,7 @@ class ArticleDo(
 
     @Lob
     @Column(name = "content", nullable = false, length = 20000000)
-    private var content: String = "",
+    private var content: StructuralText = StructuralText.EMPTY,
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "createTime", nullable = false)
@@ -101,9 +102,9 @@ class ArticleDo(
         this.title = title
     }
 
-    override fun getContent(): String? = content
+    override fun getContent(): StructuralText = content
 
-    fun setContent(content: String) {
+    fun setContent(content: StructuralText) {
         this.content = content
     }
 
@@ -133,7 +134,7 @@ class ArticleDo(
         private var userId: Long = 0
         private var title: String? = null
         private var cover: String = ""
-        private var content: String? = null
+        private var content: StructuralText? = null
         private var createTime: OffsetDateTime? = null
         private var updateTime: OffsetDateTime? = null
 
@@ -165,7 +166,7 @@ class ArticleDo(
             this.cover = cover
         }
 
-        fun setContent(content: String) = apply {
+        fun setContent(content: StructuralText) = apply {
             this.content = content
         }
 

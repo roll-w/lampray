@@ -18,6 +18,8 @@ package tech.lamprism.lampray.content;
 
 import space.lingu.NonNull;
 import space.lingu.Nullable;
+import tech.lamprism.lampray.content.structuraltext.StructuralText;
+import tech.lamprism.lampray.content.structuraltext.StructuralTextCompactor;
 import tech.lamprism.lampray.user.UserIdentity;
 
 /**
@@ -27,9 +29,14 @@ public record SimpleUncreatedContent(
         @NonNull ContentType contentType,
         @NonNull UserIdentity operator,
         @Nullable String title,
-        @Nullable String content,
+        @NonNull StructuralText content,
         @Nullable ContentDetailsMetadata metadata
 ) implements UncreatedContent {
+
+    public SimpleUncreatedContent {
+        content = StructuralTextCompactor.compact(content);
+    }
+
     @NonNull
     @Override
     public ContentType getContentType() {
@@ -48,9 +55,9 @@ public record SimpleUncreatedContent(
         return title;
     }
 
-    @Nullable
+    @NonNull
     @Override
-    public String getContent() {
+    public StructuralText getContent() {
         return content;
     }
 

@@ -1,0 +1,75 @@
+/*
+ * Copyright (C) 2023-2025 RollW
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package tech.lamprism.lampray.content.structuraltext
+
+import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
+import tech.lamprism.lampray.content.structuraltext.element.Document
+
+/**
+ * Represents a node in a structured text document, which can be either a container node
+ * (like a paragraph or heading) or a leaf node (like plain text or an inline element).
+ * Each node has a type, optional text content, and may have child nodes.
+ *
+ * @author RollW
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+interface StructuralText {
+    @get:JsonProperty("t")
+    @get:JsonAlias("t", "type")
+    val type: StructuralTextType
+
+    /**
+     * The text content of the node (meaningful only for leaf nodes or certain inline nodes).
+     *
+     * Semantic notes:
+     * - For `TEXT`, `INLINE_CODE`, `CODE_BLOCK`, `MATH` etc.: represents the raw text
+     * - For container nodes like `DOCUMENT`, `PARAGRAPH` etc.: typically empty
+     * - For `LINK`, `IMAGE` etc.: not used to store primary data (primary data is in attributes),
+     *   but may contain alt text or title if applicable
+     * - For `BOLD`, `ITALIC`, `UNDERLINE`, `STRIKETHROUGH`: if children are empty, may contain the text.
+     *   If children are present, typically empty and content here will be ignored
+     * - For `MENTION`: may contain the display name or username
+     */
+    @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @get:JsonProperty("c")
+    @get:JsonAlias("c", "content")
+    val content: String
+
+    @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @get:JsonProperty("ch")
+    @get:JsonAlias("ch", "children")
+    val children: List<StructuralText>
+
+    @JsonIgnore
+    fun isLeaf(): Boolean = children.isEmpty()
+
+    @JsonIgnore
+    fun isEmpty(): Boolean = children.isEmpty() && content.isEmpty()
+
+    @JsonIgnore
+    fun hasChildren(): Boolean = children.isNotEmpty()
+
+    fun accept(visitor: StructuralTextVisitor)
+
+    companion object {
+        @JvmField
+        val EMPTY: StructuralText = Document()
+    }
+}
