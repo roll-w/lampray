@@ -87,7 +87,6 @@ function convertNodeToStructuralText(node: any): StructuralText {
     if (node.content && Array.isArray(node.content)) {
         result.children = node.content
             .map((child: any) => convertNodeToStructuralText(child))
-            .filter((child: StructuralText) => !isEmptyNode(child))
     }
 
     optimizeNodeStructure(result)
@@ -356,6 +355,7 @@ function needsTextNode(type: StructuralTextType): boolean {
     return type === StructuralTextType.PARAGRAPH ||
         type === StructuralTextType.BLOCKQUOTE ||
         type === StructuralTextType.TABLE_CELL ||
+        type === StructuralTextType.CODE_BLOCK ||
         MARK_TYPES.has(type)
 }
 

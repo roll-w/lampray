@@ -58,7 +58,7 @@ public final class StructuralTextCompactor {
      */
     public static StructuralText compact(StructuralText root) {
         if (root == null) {
-            return null;
+            return StructuralText.EMPTY;
         }
         return compressNode(root);
     }
@@ -105,18 +105,29 @@ public final class StructuralTextCompactor {
             case INLINE_CODE:
                 return new InlineCode(node.getContent(), compressedChildren);
             case BOLD:
-                // Note: Bold requires non-empty content or children; if both empty after compression, return empty Text to be dropped later.
                 if (isBlank(node.getContent()) && compressedChildren.isEmpty()) {
                     return new Text("");
                 }
                 return new Bold(node.getContent(), compressedChildren);
             case ITALIC:
+                if (isBlank(node.getContent()) && compressedChildren.isEmpty()) {
+                    return new Text("");
+                }
                 return new Italic(node.getContent(), compressedChildren);
             case STRIKETHROUGH:
+                if (isBlank(node.getContent()) && compressedChildren.isEmpty()) {
+                    return new Text("");
+                }
                 return new StrikeThrough(node.getContent(), compressedChildren);
             case UNDERLINE:
+                if (isBlank(node.getContent()) && compressedChildren.isEmpty()) {
+                    return new Text("");
+                }
                 return new Underline(node.getContent(), compressedChildren);
             case HIGHLIGHT:
+                if (isBlank(node.getContent()) && compressedChildren.isEmpty()) {
+                    return new Text("");
+                }
                 return rebuildHighlight((Highlight) node, compressedChildren);
             case TEXT:
                 return new Text(node.getContent(), compressedChildren);
@@ -175,7 +186,9 @@ public final class StructuralTextCompactor {
     }
 
     private static boolean isDroppable(StructuralText node) {
-        if (node == null) return true;
+        if (node == null) {
+            return true;
+        }
         // Drop empty TEXT
         if (node.getType() == StructuralTextType.TEXT) {
             return isBlank(node.getContent()) && node.getChildren().isEmpty();

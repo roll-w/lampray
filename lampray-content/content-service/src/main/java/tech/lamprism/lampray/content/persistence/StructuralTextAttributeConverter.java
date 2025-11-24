@@ -52,7 +52,7 @@ public class StructuralTextAttributeConverter implements AttributeConverter<Stru
 
     @Override
     public byte[] convertToDatabaseColumn(StructuralText attribute) {
-        if (attribute == null) {
+        if (attribute == null || StructuralText.EMPTY.equals(attribute)) {
             return null;
         }
         try {
@@ -67,7 +67,7 @@ public class StructuralTextAttributeConverter implements AttributeConverter<Stru
     @Override
     public StructuralText convertToEntityAttribute(byte[] dbData) {
         if (dbData == null || dbData.length == 0) {
-            return null;
+            return StructuralText.EMPTY;
         }
         try {
             byte[] header = ArrayUtils.subarray(dbData, 0, HEADER_LENGTH);

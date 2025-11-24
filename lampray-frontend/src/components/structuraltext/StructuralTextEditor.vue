@@ -201,7 +201,7 @@ onBeforeUnmount(() => {
 
 /* Blockquote */
 .structural-text-editor blockquote {
-    @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic text-gray-600 dark:text-gray-400 my-4;
+    @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 text-gray-600 dark:text-gray-400 my-4;
 }
 
 /* Code block */
