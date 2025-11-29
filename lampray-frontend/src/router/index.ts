@@ -21,7 +21,6 @@ import {UserRole} from "@/services/user/user.type.ts";
 import {i18n} from "@/i18n/i18n.ts";
 
 const router = createRouter({
-    // history: createWebHistory(import.meta.env.BASE_URL),
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
         {
@@ -34,6 +33,11 @@ const router = createRouter({
                     path: "/",
                     name: RouteName.USER_HOME,
                     component: () => import("@/views/userfaced/user/UserHome.vue"),
+                },
+                {
+                    path: "/editor",
+                    name: "editor",
+                    component: () => import("@/components/structuraltext/EditorPreview.vue"),
                 },
                 {
                     path: "/user/login",

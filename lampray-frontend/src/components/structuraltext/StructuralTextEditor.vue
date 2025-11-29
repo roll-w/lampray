@@ -21,6 +21,7 @@ import Image from "@tiptap/extension-image"
 import {Table, TableCell, TableHeader, TableRow} from "@tiptap/extension-table"
 import Mention from "@tiptap/extension-mention"
 import {Math} from "./extensions/Math"
+import {CodeBlock} from "./extensions/CodeBlock"
 import EditorToolbar from "./EditorToolbar.vue"
 import type {StructuralText} from "./types"
 import {convertFromStructuralText, convertToStructuralText} from "./converter"
@@ -53,17 +54,16 @@ const editor = useEditor({
             heading: {
                 levels: [1, 2, 3, 4, 5, 6]
             },
-            codeBlock: {
-                HTMLAttributes: {
-                    class: "code-block"
-                }
-            },
+            codeBlock: false,
             link: {
                 openOnClick: false,
                 HTMLAttributes: {
                     class: "text-blue-600 dark:text-blue-400 underline cursor-pointer hover:text-blue-700"
                 }
             },
+        }),
+        CodeBlock.configure({
+            enableTabIndentation: true,
         }),
         Image.configure({
             HTMLAttributes: {
@@ -204,14 +204,8 @@ onBeforeUnmount(() => {
     @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 text-gray-600 dark:text-gray-400 my-4;
 }
 
-/* Code block */
-.structural-text-editor .code-block,
-.structural-text-editor pre {
-    @apply bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-4 overflow-x-auto;
-}
-
 .structural-text-editor code {
-    @apply bg-gray-100 dark:bg-gray-800 rounded px-2 py-1 text-sm font-mono;
+    @apply bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 text-sm font-mono;
 }
 
 .structural-text-editor pre code {
@@ -270,16 +264,6 @@ onBeforeUnmount(() => {
 
 .structural-text-editor a:hover {
     @apply text-blue-700 dark:text-blue-300;
-}
-
-/* Mention */
-.structural-text-editor .mention {
-    @apply text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-1 rounded;
-}
-
-/* Math block */
-.structural-text-editor .math-block {
-    @apply bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-4 overflow-x-auto;
 }
 
 .structural-text-editor .math-block pre {
