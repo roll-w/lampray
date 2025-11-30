@@ -108,6 +108,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                                 :placeholder="t('editor.modal.imageUrlPlaceholder')"
                                 autofocus
                                 @keydown="handleKeydown"
+                                class="w-full"
                         />
                     </UFormField>
                     <UFormField :label="t('editor.modal.altText')">
@@ -115,6 +116,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                                 v-model="imageAlt"
                                 :placeholder="t('editor.modal.altTextPlaceholder')"
                                 @keydown="handleKeydown"
+                                class="w-full"
                         />
                     </UFormField>
                 </div>

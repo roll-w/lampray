@@ -286,7 +286,7 @@ const selected = computed(() => props.selected || false);
                 }"
             >
                 <div v-if="showLineNumbers"
-                     class="select-none shrink-0 border-r border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 py-4 text-right sticky left-0 z-20"
+                     class="select-none shrink-0 border-r border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 py-4 text-right sticky left-0 z-10"
                      :class="{
                         'overflow-y-auto': !wrapLines,
                         'overflow-y-hidden': wrapLines
@@ -311,7 +311,7 @@ const selected = computed(() => props.selected || false);
                 >
                     <NodeViewContent
                             as="pre"
-                            class="p-4 text-sm font-mono leading-6 focus:outline-none min-h-12 relative z-10"
+                            class="p-4 text-sm font-mono leading-6 focus:outline-none min-h-12 relative z-5"
                             :class="{
                               '!whitespace-pre-wrap !break-words !overflow-wrap-break-word': wrapLines,
                               '!whitespace-pre': !wrapLines,

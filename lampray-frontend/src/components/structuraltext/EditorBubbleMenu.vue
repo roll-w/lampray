@@ -90,6 +90,7 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
 
 <template>
     <BubbleMenu :editor="editor"
+                class="z-20"
                 :options="{ placement: 'bottom' }"
                 :should-show="shouldShow">
         <div class="flex gap-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">

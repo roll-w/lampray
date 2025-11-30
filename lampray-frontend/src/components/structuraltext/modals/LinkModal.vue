@@ -116,6 +116,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                                 :placeholder="t('editor.modal.urlPlaceholder')"
                                 autofocus
                                 @keydown="handleKeydown"
+                                class="w-full"
                         />
                     </UFormField>
                     <UFormField
@@ -125,6 +126,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                         <UInput
                                 v-model="linkText"
                                 disabled
+                                class="w-full"
                         />
                     </UFormField>
                 </div>

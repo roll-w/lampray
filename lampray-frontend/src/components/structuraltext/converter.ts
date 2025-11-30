@@ -110,8 +110,6 @@ function convertNodeToStructuralText(node: any): StructuralText {
  * 2. Simplifying pure text nodes to use content instead of children
  *
  * Note: Multiple paragraphs are preserved as they represent line breaks.
- *
- * @author RollW
  */
 function optimizeNodeStructure(node: StructuralText): void {
     if (hasSpecialContent(node.type) || node.type === StructuralTextType.DOCUMENT) {
@@ -134,6 +132,11 @@ function shouldFlattenParagraph(type: StructuralTextType): boolean {
         type === StructuralTextType.TABLE_CELL
 }
 
+/**
+ * Flattens a single paragraph child by moving its content to the parent.
+ * Only flattens if the paragraph contains simple text nodes, not mark nodes.
+ * This prevents invalid structures like heading > bold (should be heading > paragraph > bold).
+ */
 function flattenSingleParagraph(node: StructuralText): void {
     if (node.children.length !== 1) {
         return
@@ -145,11 +148,25 @@ function flattenSingleParagraph(node: StructuralText): void {
     }
 
     const paragraph = firstChild
+
+    // Don't flatten if paragraph contains mark nodes - this would create invalid structure
+    // (e.g., heading cannot directly contain bold/italic/code nodes)
+    if (paragraph.children.length > 0 && containsMarkNodes(paragraph.children)) {
+        return
+    }
+
     node.children = paragraph.children
 
     if (paragraph.children.length === 0 && paragraph.content) {
         node.content = paragraph.content
     }
+}
+
+/**
+ * Checks if children array contains any mark nodes.
+ */
+function containsMarkNodes(children: StructuralText[]): boolean {
+    return children.some(child => MARK_TYPES.has(child.type))
 }
 
 function canSimplifyToContent(node: StructuralText): boolean {
@@ -187,10 +204,6 @@ function hasSpecialContent(type: StructuralTextType): boolean {
         type === StructuralTextType.LINK ||
         type === StructuralTextType.HORIZONTAL_DIVIDER ||
         type === StructuralTextType.DOCUMENT
-}
-
-function isEmptyNode(node: StructuralText): boolean {
-    return node.children.length === 0 && !node.content.trim()
 }
 
 function handleNodeAttributes(result: StructuralText, node: any): void {
@@ -319,8 +332,16 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
     }
 
     // Add text content for text nodes
-    if (structuralText.type === StructuralTextType.TEXT && structuralText.content) {
-        result.text = structuralText.content
+    if (structuralText.type === StructuralTextType.TEXT) {
+        // Text nodes must have content, empty text nodes are invalid
+        const textContent = structuralText.content || ""
+        if (textContent.length === 0) {
+            // Return null for empty text nodes, they will be filtered out
+            return null
+        }
+        result.text = textContent
+        // Text nodes should not have marks or content arrays
+        return result
     }
 
     // Add attributes
@@ -329,10 +350,41 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
         result.attrs = attrs
     }
 
-    if (structuralText.children && structuralText.children.length > 0) {
-        result.content = structuralText.children.map(child => convertFromStructuralText(child))
-    } else if (structuralText.content) {
-        // Only when there are NO children, expand content to appropriate structure
+    // Handle children
+    const hasChildren = structuralText.children && structuralText.children.length > 0
+    const hasContent = structuralText.content && structuralText.content.trim().length > 0
+
+    if (hasChildren) {
+        const childContent = structuralText.children
+            .map(child => convertFromStructuralText(child))
+            .filter(child => child !== null) // Filter out null children (empty text nodes)
+
+        if (childContent.length > 0) {
+            result.content = childContent
+        } else if (hasContent) {
+            // Children filtered to empty, but we have content - use content instead
+            if (needsParagraphWrapper(structuralText.type)) {
+                result.content = [{
+                    type: "paragraph",
+                    content: [{
+                        type: "text",
+                        text: structuralText.content
+                    }]
+                }]
+            } else if (needsTextNode(structuralText.type)) {
+                result.content = [{
+                    type: "text",
+                    text: structuralText.content
+                }]
+            } else if (isContainerNode(structuralText.type)) {
+                result.content = []
+            }
+        } else if (isContainerNode(structuralText.type)) {
+            // No children, no content - empty container
+            result.content = []
+        }
+    } else if (hasContent) {
+        // No children but has content - expand content to appropriate structure
         if (needsParagraphWrapper(structuralText.type)) {
             result.content = [{
                 type: "paragraph",
@@ -346,19 +398,40 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
                 type: "text",
                 text: structuralText.content
             }]
+        } else if (isContainerNode(structuralText.type)) {
+            result.content = []
         }
+    } else if (isContainerNode(structuralText.type)) {
+        // Container nodes need content array even if empty
+        result.content = []
     }
 
     return result
 }
 
 /**
+ * Determines if a node type is a container that requires a content array.
+ */
+function isContainerNode(type: StructuralTextType): boolean {
+    return type === StructuralTextType.DOCUMENT ||
+        type === StructuralTextType.PARAGRAPH ||
+        type === StructuralTextType.HEADING ||
+        type === StructuralTextType.LIST_BLOCK ||
+        type === StructuralTextType.LIST_ITEM ||
+        type === StructuralTextType.BLOCKQUOTE ||
+        type === StructuralTextType.TABLE ||
+        type === StructuralTextType.TABLE_ROW ||
+        type === StructuralTextType.TABLE_CELL
+}
+
+/**
  * Determines if a node type needs paragraph wrapper when converting back to TipTap.
- * TipTap"s heading and listItem typically contain paragraph nodes.
+ * TipTap's heading, listItem, and blockquote typically contain paragraph nodes.
  */
 function needsParagraphWrapper(type: StructuralTextType): boolean {
     return type === StructuralTextType.HEADING ||
-        type === StructuralTextType.LIST_ITEM
+        type === StructuralTextType.LIST_ITEM ||
+        type === StructuralTextType.BLOCKQUOTE
 }
 
 /**
@@ -366,7 +439,6 @@ function needsParagraphWrapper(type: StructuralTextType): boolean {
  */
 function needsTextNode(type: StructuralTextType): boolean {
     return type === StructuralTextType.PARAGRAPH ||
-        type === StructuralTextType.BLOCKQUOTE ||
         type === StructuralTextType.TABLE_CELL ||
         type === StructuralTextType.CODE_BLOCK ||
         MARK_TYPES.has(type)
@@ -411,6 +483,11 @@ function convertToMarkFormat(node: StructuralText): any {
 
     // Convert the innermost node
     const result = convertFromStructuralText(currentNode)
+
+    // If result is null (empty text node), return null
+    if (result === null) {
+        return null
+    }
 
     // Apply marks to the result
     if (marks.length > 0) {
