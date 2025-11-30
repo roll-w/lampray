@@ -14,34 +14,29 @@
  * limitations under the License.
  */
 
-/**
- * Types for structural text editor.
- *
- * @author RollW
- */
 export enum StructuralTextType {
-    DOCUMENT = 'DOCUMENT',
-    PARAGRAPH = 'PARAGRAPH',
-    HEADING = 'HEADING',
-    LIST_BLOCK = 'LIST_BLOCK',
-    LIST_ITEM = 'LIST_ITEM',
-    BLOCKQUOTE = 'BLOCKQUOTE',
-    CODE_BLOCK = 'CODE_BLOCK',
-    INLINE_CODE = 'INLINE_CODE',
-    BOLD = 'BOLD',
-    ITALIC = 'ITALIC',
-    STRIKETHROUGH = 'STRIKETHROUGH',
-    UNDERLINE = 'UNDERLINE',
-    HIGHLIGHT = 'HIGHLIGHT',
-    TEXT = 'TEXT',
-    LINK = 'LINK',
-    IMAGE = 'IMAGE',
-    TABLE = 'TABLE',
-    TABLE_ROW = 'TABLE_ROW',
-    TABLE_CELL = 'TABLE_CELL',
-    HORIZONTAL_DIVIDER = 'HORIZONTAL_DIVIDER',
-    MATH = 'MATH',
-    MENTION = 'MENTION'
+    DOCUMENT = "DOCUMENT",
+    PARAGRAPH = "PARAGRAPH",
+    HEADING = "HEADING",
+    LIST_BLOCK = "LIST_BLOCK",
+    LIST_ITEM = "LIST_ITEM",
+    BLOCKQUOTE = "BLOCKQUOTE",
+    CODE_BLOCK = "CODE_BLOCK",
+    INLINE_CODE = "INLINE_CODE",
+    BOLD = "BOLD",
+    ITALIC = "ITALIC",
+    STRIKETHROUGH = "STRIKETHROUGH",
+    UNDERLINE = "UNDERLINE",
+    HIGHLIGHT = "HIGHLIGHT",
+    TEXT = "TEXT",
+    LINK = "LINK",
+    IMAGE = "IMAGE",
+    TABLE = "TABLE",
+    TABLE_ROW = "TABLE_ROW",
+    TABLE_CELL = "TABLE_CELL",
+    HORIZONTAL_DIVIDER = "HORIZONTAL_DIVIDER",
+    MATH = "MATH",
+    MENTION = "MENTION"
 }
 
 /**
@@ -58,7 +53,7 @@ export interface StructuralText {
  */
 export interface DocumentElement extends StructuralText {
     type: StructuralTextType.DOCUMENT
-    content: ''
+    content: ""
 }
 
 /**
@@ -78,8 +73,6 @@ export interface HeadingElement extends StructuralText {
 
 /**
  * List element - ordered, unordered, or task list.
- *
- * @author RollW
  */
 export interface ListElement extends StructuralText {
     type: StructuralTextType.LIST_BLOCK
@@ -87,9 +80,9 @@ export interface ListElement extends StructuralText {
 }
 
 export enum ListType {
-    ORDERED = 'ORDERED',
-    UNORDERED = 'UNORDERED',
-    TASK = 'TASK'
+    ORDERED = "ORDERED",
+    UNORDERED = "UNORDERED",
+    TASK = "TASK"
 }
 
 /**
@@ -174,7 +167,7 @@ export interface LinkElement extends StructuralText {
     type: StructuralTextType.LINK
     href: string
     title?: string
-    content: ''
+    content: ""
 }
 
 /**
@@ -213,7 +206,7 @@ export interface TableCellElement extends StructuralText {
  */
 export interface HorizontalDividerElement extends StructuralText {
     type: StructuralTextType.HORIZONTAL_DIVIDER
-    content: ''
+    content: ""
     children: []
 }
 

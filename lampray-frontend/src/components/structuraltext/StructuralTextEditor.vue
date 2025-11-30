@@ -15,18 +15,18 @@
   -->
 
 <script setup lang="ts">
-import {EditorContent, useEditor} from "@tiptap/vue-3"
-import StarterKit from "@tiptap/starter-kit"
-import Image from "@tiptap/extension-image"
+import {EditorContent, useEditor} from "@tiptap/vue-3";
+import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
 import {Table, TableCell, TableHeader, TableRow} from "@tiptap/extension-table"
-import Mention from "@tiptap/extension-mention"
 import Highlight from "@tiptap/extension-highlight"
-import {CodeBlock} from "./extensions/CodeBlock"
-import {TaskItem, TaskList} from "./extensions/TaskList"
-import {ListKeyboardShortcuts} from "./extensions/ListKeyboardShortcuts"
-import EditorToolbar from "./EditorToolbar.vue"
-import type {StructuralText} from "./types"
-import {convertFromStructuralText, convertToStructuralText} from "./converter"
+import {CodeBlock} from "@/components/structuraltext/extensions/CodeBlock";
+import {TaskItem, TaskList} from "@/components/structuraltext/extensions/TaskList";
+import {ListKeyboardShortcuts} from "@/components/structuraltext/extensions/ListKeyboardShortcuts";
+import EditorToolbar from "@/components/structuraltext/EditorToolbar.vue";
+import BubbleMenu from "@/components/structuraltext/EditorBubbleMenu.vue";
+import type {StructuralText} from "@/components/structuraltext/types";
+import {convertFromStructuralText, convertToStructuralText} from "@/components/structuraltext/converter";
 import {onBeforeUnmount, watch} from "vue";
 import {DefaultKeyboardShortcuts} from "@/components/structuraltext/extensions/DefaultKeyboardShortcuts.ts";
 
@@ -39,13 +39,12 @@ interface Props {
 
 interface Emits {
     (e: "update:modelValue", value: StructuralText): void
-
     (e: "change", value: StructuralText): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
     editable: true,
-    placeholder: "Start writing...",
+    placeholder: "",
     showToolbar: true
 })
 
@@ -62,9 +61,11 @@ const editor = useEditor({
             link: {
                 openOnClick: false,
                 HTMLAttributes: {
-                    class: "text-blue-600 dark:text-blue-400 underline cursor-pointer hover:text-blue-700"
+                    class: "text-blue-600 dark:text-blue-400 underline cursor-pointer " +
+                            "hover:underline underline-offset-2 decoration-2 decoration-blue-500/50 " +
+                            "hover:decoration-blue-500 transition-all transition-duration-500 ease-in-out"
                 }
-            },
+            }
         }),
         CodeBlock.configure({
             enableTabIndentation: true,
@@ -98,12 +99,7 @@ const editor = useEditor({
         }),
         TaskList,
         TaskItem,
-        ListKeyboardShortcuts,
-        Mention.configure({
-            HTMLAttributes: {
-                class: "mention text-blue-600 dark:text-blue-400"
-            }
-        }),
+        ListKeyboardShortcuts
     ],
     editable: props.editable,
     content: props.modelValue ? convertFromStructuralText(props.modelValue) : "",
@@ -142,6 +138,7 @@ onBeforeUnmount(() => {
 <template>
     <div class="editor border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-950">
         <EditorToolbar v-if="showToolbar && editor" :editor="editor"/>
+        <BubbleMenu v-if="editor" :editor="editor" :editable="editable"/>
         <EditorContent :editor="editor"/>
     </div>
 </template>
@@ -207,7 +204,7 @@ onBeforeUnmount(() => {
 }
 
 .editor li[data-type="taskItem"] {
-    @apply flex items-start gap-2 mb-2;
+    @apply flex items-start gap-2;
 }
 
 .editor blockquote {
@@ -261,14 +258,6 @@ onBeforeUnmount(() => {
 
 .editor th {
     @apply bg-gray-100 dark:bg-gray-800 font-bold;
-}
-
-.editor a {
-    @apply text-blue-600 dark:text-blue-400 underline cursor-pointer;
-}
-
-.editor a:hover {
-    @apply text-blue-700 dark:text-blue-300;
 }
 
 .editor .math-block pre {

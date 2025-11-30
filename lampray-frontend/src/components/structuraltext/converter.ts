@@ -56,10 +56,10 @@ function convertNodeToStructuralText(node: any): StructuralText {
     const type = mapTipTapTypeToStructuralType(node.type)
 
     // Handle text nodes with marks
-    if (node.type === 'text') {
+    if (node.type === "text") {
         const textNode: TextElement = {
             type: StructuralTextType.TEXT,
-            content: node.text || '',
+            content: node.text || "",
             children: []
         }
 
@@ -73,7 +73,7 @@ function convertNodeToStructuralText(node: any): StructuralText {
     // Build the base node
     const result: StructuralText = {
         type: type,
-        content: '',
+        content: "",
         children: []
     }
 
@@ -82,16 +82,16 @@ function convertNodeToStructuralText(node: any): StructuralText {
     }
 
     // Handle list types
-    if (node.type === 'bulletList') {
+    if (node.type === "bulletList") {
         (result as ListElement).listType = ListType.UNORDERED
-    } else if (node.type === 'orderedList') {
+    } else if (node.type === "orderedList") {
         (result as ListElement).listType = ListType.ORDERED
-    } else if (node.type === 'taskList') {
+    } else if (node.type === "taskList") {
         (result as ListElement).listType = ListType.TASK
     }
 
     // Handle task item checked state
-    if (node.type === 'taskItem' && node.attrs) {
+    if (node.type === "taskItem" && node.attrs) {
         (result as ListItemElement).checked = node.attrs.checked || false
     }
 
@@ -106,7 +106,7 @@ function convertNodeToStructuralText(node: any): StructuralText {
 
 /**
  * Optimizes the node structure by:
- * 1. Removing unnecessary paragraph wrappers in container nodes (only when there's a single paragraph)
+ * 1. Removing unnecessary paragraph wrappers in container nodes (only when there"s a single paragraph)
  * 2. Simplifying pure text nodes to use content instead of children
  *
  * Note: Multiple paragraphs are preserved as they represent line breaks.
@@ -253,14 +253,14 @@ function createMarkWrapper(
 ): StructuralText {
     const baseWrapper: StructuralText = {
         type: markType,
-        content: '',
+        content: "",
         children: [child]
     }
 
     // Handle link marks
     if (markType === StructuralTextType.LINK && attrs) {
         const linkWrapper = baseWrapper as LinkElement
-        linkWrapper.href = attrs.href || ''
+        linkWrapper.href = attrs.href || ""
         if (attrs.title) {
             linkWrapper.title = attrs.title
         }
@@ -335,15 +335,15 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
         // Only when there are NO children, expand content to appropriate structure
         if (needsParagraphWrapper(structuralText.type)) {
             result.content = [{
-                type: 'paragraph',
+                type: "paragraph",
                 content: [{
-                    type: 'text',
+                    type: "text",
                     text: structuralText.content
                 }]
             }]
         } else if (needsTextNode(structuralText.type)) {
             result.content = [{
-                type: 'text',
+                type: "text",
                 text: structuralText.content
             }]
         }
@@ -354,7 +354,7 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
 
 /**
  * Determines if a node type needs paragraph wrapper when converting back to TipTap.
- * TipTap's heading and listItem typically contain paragraph nodes.
+ * TipTap"s heading and listItem typically contain paragraph nodes.
  */
 function needsParagraphWrapper(type: StructuralTextType): boolean {
     return type === StructuralTextType.HEADING ||
@@ -478,47 +478,47 @@ function mapStructuralTypeToTipTapType(type: StructuralTextType, node?: Structur
     if (type === StructuralTextType.LIST_BLOCK && node) {
         const listNode = node as ListElement
         if (listNode.listType === ListType.TASK) {
-            return 'taskList'
+            return "taskList"
         } else if (listNode.listType === ListType.ORDERED) {
-            return 'orderedList'
+            return "orderedList"
         }
-        return 'bulletList'
+        return "bulletList"
     }
 
     // Special handling for LIST_ITEM - check if it has checked property (task item)
     if (type === StructuralTextType.LIST_ITEM && node) {
         const itemNode = node as ListItemElement
         if (itemNode.checked !== undefined) {
-            return 'taskItem'
+            return "taskItem"
         }
     }
 
     const mapping: Record<StructuralTextType, string> = {
-        [StructuralTextType.DOCUMENT]: 'doc',
-        [StructuralTextType.PARAGRAPH]: 'paragraph',
-        [StructuralTextType.HEADING]: 'heading',
-        [StructuralTextType.LIST_BLOCK]: 'bulletList',
-        [StructuralTextType.LIST_ITEM]: 'listItem',
-        [StructuralTextType.BLOCKQUOTE]: 'blockquote',
-        [StructuralTextType.CODE_BLOCK]: 'codeBlock',
-        [StructuralTextType.INLINE_CODE]: 'code',
-        [StructuralTextType.BOLD]: 'bold',
-        [StructuralTextType.ITALIC]: 'italic',
-        [StructuralTextType.STRIKETHROUGH]: 'strike',
-        [StructuralTextType.UNDERLINE]: 'underline',
-        [StructuralTextType.HIGHLIGHT]: 'highlight',
-        [StructuralTextType.TEXT]: 'text',
-        [StructuralTextType.LINK]: 'link',
-        [StructuralTextType.IMAGE]: 'image',
-        [StructuralTextType.TABLE]: 'table',
-        [StructuralTextType.TABLE_ROW]: 'tableRow',
-        [StructuralTextType.TABLE_CELL]: 'tableCell',
-        [StructuralTextType.HORIZONTAL_DIVIDER]: 'horizontalRule',
-        [StructuralTextType.MATH]: 'math',
-        [StructuralTextType.MENTION]: 'mention'
+        [StructuralTextType.DOCUMENT]: "doc",
+        [StructuralTextType.PARAGRAPH]: "paragraph",
+        [StructuralTextType.HEADING]: "heading",
+        [StructuralTextType.LIST_BLOCK]: "bulletList",
+        [StructuralTextType.LIST_ITEM]: "listItem",
+        [StructuralTextType.BLOCKQUOTE]: "blockquote",
+        [StructuralTextType.CODE_BLOCK]: "codeBlock",
+        [StructuralTextType.INLINE_CODE]: "code",
+        [StructuralTextType.BOLD]: "bold",
+        [StructuralTextType.ITALIC]: "italic",
+        [StructuralTextType.STRIKETHROUGH]: "strike",
+        [StructuralTextType.UNDERLINE]: "underline",
+        [StructuralTextType.HIGHLIGHT]: "highlight",
+        [StructuralTextType.TEXT]: "text",
+        [StructuralTextType.LINK]: "link",
+        [StructuralTextType.IMAGE]: "image",
+        [StructuralTextType.TABLE]: "table",
+        [StructuralTextType.TABLE_ROW]: "tableRow",
+        [StructuralTextType.TABLE_CELL]: "tableCell",
+        [StructuralTextType.HORIZONTAL_DIVIDER]: "horizontalRule",
+        [StructuralTextType.MATH]: "math",
+        [StructuralTextType.MENTION]: "mention"
     }
 
-    return mapping[type] || 'text'
+    return mapping[type] || "text"
 }
 
 

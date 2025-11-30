@@ -167,5 +167,65 @@
         }
       }
     }
+  },
+  "editor": {
+    "toolbar": {
+      "bold": "粗体",
+      "italic": "斜体",
+      "underline": "下划线",
+      "strikethrough": "删除线",
+      "highlight": "高亮",
+      "inlineCode": "行内代码",
+      "paragraph": "段落",
+      "heading1": "一级标题",
+      "heading2": "二级标题",
+      "heading3": "三级标题",
+      "heading4": "四级标题",
+      "heading5": "五级标题",
+      "heading6": "六级标题",
+      "bulletList": "无序列表",
+      "orderedList": "有序列表",
+      "taskList": "任务列表",
+      "blockquote": "引用",
+      "codeBlock": "代码块",
+      "insertLink": "插入链接",
+      "insertImage": "插入图片",
+      "insertTable": "插入表格",
+      "horizontalRule": "分隔线",
+      "editLink": "编辑链接",
+      "openLink": "打开链接",
+      "addLink": "添加链接",
+      "copy": "复制"
+    },
+    "modal": {
+      "insertLink": "插入链接",
+      "editLink": "编辑链接",
+      "insertImage": "插入图片",
+      "url": "链接地址",
+      "urlPlaceholder": "https://example.com",
+      "urlRequired": "链接地址不能为空",
+      "text": "链接文本",
+      "textPlaceholder": "链接文本",
+      "imageUrl": "图片地址",
+      "imageUrlPlaceholder": "https://example.com/image.jpg",
+      "imageUrlRequired": "图片地址不能为空",
+      "altText": "替代文本（可选）",
+      "altTextPlaceholder": "图片描述",
+      "cancel": "取消",
+      "insert": "插入",
+      "update": "更新",
+      "removeLink": "删除链接"
+    },
+    "codeBlock": {
+      "expand": "展开",
+      "collapse": "折叠",
+      "plainText": "纯文本",
+      "showLineNumbers": "显示行号",
+      "hideLineNumbers": "隐藏行号",
+      "enableLineWrap": "启用自动换行",
+      "disableLineWrap": "禁用自动换行",
+      "copyCode": "复制代码",
+      "copied": "已复制"
+    }
   }
 }

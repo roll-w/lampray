@@ -17,9 +17,21 @@
 <script setup lang="ts">
 import {NodeViewContent, type NodeViewProps, NodeViewWrapper} from "@tiptap/vue-3";
 import {computed, nextTick, onMounted, ref, watch} from "vue";
-import "highlight.js/styles/atom-one-light.css";
-import {lowlight} from "../extensions/CodeBlock";
-import {loadLanguage, supportedLanguages} from "../extensions/LanguageLoader";
+import {lowlight} from "@/components/structuraltext/extensions/CodeBlock";
+import {loadLanguage, supportedLanguages} from "@/components/structuraltext/extensions/LanguageLoader";
+import {useColorMode} from "@vueuse/core";
+import {useI18n} from "vue-i18n";
+
+const colorMode = useColorMode();
+const {t} = useI18n();
+
+watch(() => colorMode.value, async (mode) => {
+    if (mode === "dark") {
+        await import("highlight.js/styles/atom-one-dark.css");
+    } else {
+        await import("highlight.js/styles/atom-one-light.css");
+    }
+}, {immediate: true});
 
 interface Props extends NodeViewProps {
 }
@@ -196,24 +208,31 @@ const lineNumbers = computed(() => {
         height: lineHeights.value[i] || 24
     }));
 });
+
+const selected = computed(() => props.selected || false);
 </script>
 
 <template>
     <NodeViewWrapper>
-        <div class="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden my-4">
+        <div class="border rounded-md overflow-hidden my-4 transition-all duration-200"
+             :class="{
+                 'border-gray-300 dark:border-gray-600': !selected,
+                 'border-primary-500 dark:border-primary-400 ring-2 ring-primary-500/20 dark:ring-primary-400/20': selected
+             }">
             <div contenteditable="false"
                  class="flex items-center justify-between px-3 py-2"
                  :class="{
                      'border-b border-gray-300 dark:border-gray-600': !isCollapsed,
                  }">
                 <div class="flex items-center gap-2">
-                    <UButton :icon="isCollapsed ? 'i-lucide-chevron-right' : 'i-lucide-chevron-down'"
-                             color="neutral"
-                             variant="ghost"
-                             size="xs"
-                             @click="toggleCollapse"
-                             :title="isCollapsed ? 'Expand' : 'Collapse'"
-                    />
+                    <UTooltip :text="isCollapsed ? t('editor.codeBlock.expand') : t('editor.codeBlock.collapse')">
+                        <UButton :icon="isCollapsed ? 'i-lucide-chevron-right' : 'i-lucide-chevron-down'"
+                                 color="neutral"
+                                 variant="ghost"
+                                 size="xs"
+                                 @click="toggleCollapse"
+                        />
+                    </UTooltip>
                     <USelectMenu v-if="editor?.isEditable"
                                  v-model="selectedLanguage"
                                  :items="supportedLanguages"
@@ -225,34 +244,37 @@ const lineNumbers = computed(() => {
                     <span v-else
                           class="text-xs font-medium text-gray-700 dark:text-gray-300 select-none"
                     >
-                        {{ selectedLanguage?.label || "Plain Text" }}
+                        {{ selectedLanguage?.label || t('editor.codeBlock.plainText') }}
                     </span>
                 </div>
 
                 <div class="flex items-center gap-1">
-                    <UButton v-if="editor?.isEditable"
-                             :icon="showLineNumbers ? 'i-lucide-list-ordered' : 'i-lucide-list'"
-                             color="neutral"
-                             variant="ghost"
-                             size="xs"
-                             @click="showLineNumbers = !showLineNumbers"
-                             :title="showLineNumbers ? 'Hide line numbers' : 'Show line numbers'"
-                    />
-                    <UButton v-if="editor?.isEditable"
-                             :icon="wrapLines ? 'i-lucide-wrap-text' : 'i-lucide-align-left'"
-                             color="neutral"
-                             variant="ghost"
-                             size="xs"
-                             @click="wrapLines = !wrapLines"
-                             :title="wrapLines ? 'Disable line wrap' : 'Enable line wrap'"
-                    />
-                    <UButton :icon="isCopied ? 'i-lucide-check' : 'i-lucide-copy'"
-                             :color="isCopied ? 'success' : 'neutral'"
-                             variant="ghost"
-                             size="xs"
-                             @click="copyCode"
-                             title="Copy code"
-                    />
+                    <UTooltip v-if="editor?.isEditable" :text="showLineNumbers ? t('editor.codeBlock.hideLineNumbers') : t('editor.codeBlock.showLineNumbers')">
+                        <UButton
+                                :icon="showLineNumbers ? 'i-lucide-list-ordered' : 'i-lucide-list'"
+                                color="neutral"
+                                variant="ghost"
+                                size="xs"
+                                @click="showLineNumbers = !showLineNumbers"
+                        />
+                    </UTooltip>
+                    <UTooltip v-if="editor?.isEditable" :text="wrapLines ? t('editor.codeBlock.disableLineWrap') : t('editor.codeBlock.enableLineWrap')">
+                        <UButton
+                                :icon="wrapLines ? 'i-lucide-wrap-text' : 'i-lucide-align-left'"
+                                color="neutral"
+                                variant="ghost"
+                                size="xs"
+                                @click="wrapLines = !wrapLines"
+                        />
+                    </UTooltip>
+                    <UTooltip :text="isCopied ? t('editor.codeBlock.copied') : t('editor.codeBlock.copyCode')">
+                        <UButton :icon="isCopied ? 'i-lucide-check' : 'i-lucide-copy'"
+                                 :color="isCopied ? 'success' : 'neutral'"
+                                 variant="ghost"
+                                 size="xs"
+                                 @click="copyCode"
+                        />
+                    </UTooltip>
                 </div>
             </div>
 
