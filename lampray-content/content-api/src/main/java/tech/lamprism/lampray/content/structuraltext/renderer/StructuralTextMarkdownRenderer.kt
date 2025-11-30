@@ -32,6 +32,7 @@ import tech.lamprism.lampray.content.structuraltext.element.Italic
 import tech.lamprism.lampray.content.structuraltext.element.Link
 import tech.lamprism.lampray.content.structuraltext.element.ListBlock
 import tech.lamprism.lampray.content.structuraltext.element.ListItem
+import tech.lamprism.lampray.content.structuraltext.element.ListType
 import tech.lamprism.lampray.content.structuraltext.element.Math
 import tech.lamprism.lampray.content.structuraltext.element.Mention
 import tech.lamprism.lampray.content.structuraltext.element.Paragraph
@@ -85,10 +86,13 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
 
                 is ListBlock -> {
                     node.children.filterIsInstance<ListItem>().forEachIndexed { index, item ->
-                        if (node.ordered) {
-                            builder.append("${index + 1}. ")
-                        } else {
-                            builder.append("- ")
+                        when (node.listType) {
+                            ListType.ORDERED -> builder.append("${index + 1}. ")
+                            ListType.TASK -> {
+                                val checkbox = if (item.checked == true) "[x]" else "[ ]"
+                                builder.append("- $checkbox ")
+                            }
+                            ListType.UNORDERED -> builder.append("- ")
                         }
                         if (item.children.isEmpty()) {
                             builder.append(item.content)

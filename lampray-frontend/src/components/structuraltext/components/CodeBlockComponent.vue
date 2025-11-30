@@ -88,7 +88,7 @@ const copyCode = async () => {
     }
 };
 
-// Calculate line count and heights based on actual rendered lines
+// TODO: Optimize line height calculation
 const updateLineCount = async () => {
     await nextTick();
 

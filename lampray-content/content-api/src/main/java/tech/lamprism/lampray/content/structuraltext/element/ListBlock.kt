@@ -21,17 +21,27 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 
 /**
- * Block that contains list items (ordered or unordered).
+ * Block that contains list items (ordered, unordered, or task list).
  *
  * @author RollW
  */
 data class ListBlock @JvmOverloads constructor(
-    val ordered: Boolean,
-    override val content: String = "",
+    val listType: ListType = ListType.UNORDERED,
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        children.forEach {
+            require(it is ListItem) {
+                "ListBlock can only contain ListItem elements, but found: ${it.type}"
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.LIST
+
+    override val content: String
+        get() = ""
 
     override fun accept(visitor: StructuralTextVisitor) {
         visitor.visit(this)

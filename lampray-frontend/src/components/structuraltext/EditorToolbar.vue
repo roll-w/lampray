@@ -59,11 +59,28 @@ const toggleBulletList = () => {
 const toggleOrderedList = () => {
     props.editor.chain().focus().toggleOrderedList().run()
 }
+const toggleTaskList = () => {
+    props.editor.chain().focus().toggleTaskList().run()
+}
 const toggleBlockquote = () => {
     props.editor.chain().focus().toggleBlockquote().run()
 }
 const toggleCodeBlock = () => {
-    props.editor.chain().focus().toggleCodeBlock().run()
+    const {state} = props.editor
+    if (props.editor.isActive('codeBlock')) {
+        return
+    }
+    const {from, to} = state.selection
+    if (from !== to) {
+        props.editor.chain().focus().setCodeBlock().run()
+    } else {
+        props.editor.chain()
+                .insertContent({
+                    type: 'codeBlock',
+                })
+                .focus()
+                .run();
+    }
 }
 
 const insertTable = () => {
@@ -96,6 +113,7 @@ const isHighlight = computed(() => props.editor.isActive('highlight'))
 const isCode = computed(() => props.editor.isActive('code'))
 const isBulletList = computed(() => props.editor.isActive('bulletList'))
 const isOrderedList = computed(() => props.editor.isActive('orderedList'))
+const isTaskList = computed(() => props.editor.isActive('taskList'))
 const isBlockquote = computed(() => props.editor.isActive('blockquote'))
 const isCodeBlock = computed(() => props.editor.isActive('codeBlock'))
 </script>
@@ -206,6 +224,14 @@ const isCodeBlock = computed(() => props.editor.isActive('codeBlock'))
                     icon="i-lucide-list-ordered"
                     @click="toggleOrderedList"
                     title="Ordered List"
+            />
+            <UButton
+                    :variant="isTaskList ? 'solid' : 'ghost'"
+                    color="neutral"
+                    size="sm"
+                    icon="i-lucide-list-checks"
+                    @click="toggleTaskList"
+                    title="Task List"
             />
             <UButton
                     :variant="isBlockquote ? 'solid' : 'ghost'"

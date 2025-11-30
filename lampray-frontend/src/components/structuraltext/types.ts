@@ -23,7 +23,7 @@ export enum StructuralTextType {
     DOCUMENT = 'DOCUMENT',
     PARAGRAPH = 'PARAGRAPH',
     HEADING = 'HEADING',
-    LIST = 'LIST',
+    LIST_BLOCK = 'LIST_BLOCK',
     LIST_ITEM = 'LIST_ITEM',
     BLOCKQUOTE = 'BLOCKQUOTE',
     CODE_BLOCK = 'CODE_BLOCK',
@@ -77,18 +77,29 @@ export interface HeadingElement extends StructuralText {
 }
 
 /**
- * List element - ordered or unordered list.
+ * List element - ordered, unordered, or task list.
+ *
+ * @author RollW
  */
 export interface ListElement extends StructuralText {
-    type: StructuralTextType.LIST
-    ordered: boolean
+    type: StructuralTextType.LIST_BLOCK
+    listType: ListType
+}
+
+export enum ListType {
+    ORDERED = 'ORDERED',
+    UNORDERED = 'UNORDERED',
+    TASK = 'TASK'
 }
 
 /**
  * List item element - an item in a list.
+ *
+ * @author RollW
  */
 export interface ListItemElement extends StructuralText {
     type: StructuralTextType.LIST_ITEM
+    checked?: boolean
 }
 
 /**

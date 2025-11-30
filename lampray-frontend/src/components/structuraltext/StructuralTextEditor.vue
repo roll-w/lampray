@@ -20,13 +20,15 @@ import StarterKit from "@tiptap/starter-kit"
 import Image from "@tiptap/extension-image"
 import {Table, TableCell, TableHeader, TableRow} from "@tiptap/extension-table"
 import Mention from "@tiptap/extension-mention"
-import {Math} from "./extensions/Math"
+import Highlight from "@tiptap/extension-highlight"
 import {CodeBlock} from "./extensions/CodeBlock"
+import {TaskItem, TaskList} from "./extensions/TaskList"
+import {ListKeyboardShortcuts} from "./extensions/ListKeyboardShortcuts"
 import EditorToolbar from "./EditorToolbar.vue"
 import type {StructuralText} from "./types"
 import {convertFromStructuralText, convertToStructuralText} from "./converter"
 import {onBeforeUnmount, watch} from "vue";
-import Highlight from "@tiptap/extension-highlight";
+import {DefaultKeyboardShortcuts} from "@/components/structuraltext/extensions/DefaultKeyboardShortcuts.ts";
 
 interface Props {
     modelValue?: StructuralText
@@ -37,6 +39,7 @@ interface Props {
 
 interface Emits {
     (e: "update:modelValue", value: StructuralText): void
+
     (e: "change", value: StructuralText): void
 }
 
@@ -50,6 +53,7 @@ const emit = defineEmits<Emits>()
 
 const editor = useEditor({
     extensions: [
+        DefaultKeyboardShortcuts,
         StarterKit.configure({
             heading: {
                 levels: [1, 2, 3, 4, 5, 6]
@@ -92,7 +96,9 @@ const editor = useEditor({
                 class: "bg-yellow-200 dark:bg-yellow-800 px-1 rounded"
             }
         }),
-        Math,
+        TaskList,
+        TaskItem,
+        ListKeyboardShortcuts,
         Mention.configure({
             HTMLAttributes: {
                 class: "mention text-blue-600 dark:text-blue-400"
@@ -134,7 +140,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="structural-text-editor border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-950">
+    <div class="editor border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-950">
         <EditorToolbar v-if="showToolbar && editor" :editor="editor"/>
         <EditorContent :editor="editor"/>
     </div>
@@ -143,137 +149,129 @@ onBeforeUnmount(() => {
 <style>
 @reference "../../assets/main.css"
 
-.structural-text-editor .ProseMirror {
+.editor .ProseMirror {
     @apply min-h-[300px];
 }
 
-.structural-text-editor .ProseMirror:focus {
+.editor .ProseMirror:focus {
     @apply outline-none;
 }
 
-/* Heading styles */
-.structural-text-editor h1 {
+.editor h1 {
     @apply text-4xl font-bold mt-6 mb-4;
 }
 
-.structural-text-editor h2 {
+.editor h2 {
     @apply text-3xl font-bold mt-5 mb-3;
 }
 
-.structural-text-editor h3 {
+.editor h3 {
     @apply text-2xl font-bold mt-4 mb-3;
 }
 
-.structural-text-editor h4 {
+.editor h4 {
     @apply text-xl font-bold mt-3 mb-2;
 }
 
-.structural-text-editor h5 {
+.editor h5 {
     @apply text-lg font-bold mt-3 mb-2;
 }
 
-.structural-text-editor h6 {
+.editor h6 {
     @apply text-base font-bold mt-2 mb-2;
 }
 
-/* Paragraph */
-.structural-text-editor p {
+.editor p {
     @apply mb-4;
 }
 
-/* Lists */
-.structural-text-editor ul,
-.structural-text-editor ol {
+.editor ul,
+.editor ol {
     @apply pl-6 mb-4;
 }
 
-.structural-text-editor ul {
+.editor ul {
     @apply list-disc;
 }
 
-.structural-text-editor ol {
+.editor ol {
     @apply list-decimal;
 }
 
-.structural-text-editor li {
+.editor li {
     @apply mb-1;
 }
 
-/* Blockquote */
-.structural-text-editor blockquote {
+.editor ul[data-type="taskList"] {
+    @apply list-none pl-0;
+}
+
+.editor li[data-type="taskItem"] {
+    @apply flex items-start gap-2 mb-2;
+}
+
+.editor blockquote {
     @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 text-gray-600 dark:text-gray-400 my-4;
 }
 
-.structural-text-editor code {
+.editor code {
     @apply bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 text-sm font-mono;
 }
 
-.structural-text-editor pre code {
+.editor pre code {
     @apply bg-transparent p-0;
 }
 
-/* Inline formatting */
-.structural-text-editor strong {
+.editor strong {
     @apply font-bold;
 }
 
-.structural-text-editor em {
+.editor em {
     @apply italic;
 }
 
-.structural-text-editor u {
+.editor u {
     @apply underline;
 }
 
-.structural-text-editor s {
+.editor s {
     @apply line-through;
 }
 
-.structural-text-editor mark {
+.editor mark {
     @apply bg-yellow-200 dark:bg-yellow-800 px-1 rounded;
 }
 
-/* Horizontal rule */
-.structural-text-editor hr {
+.editor hr {
     @apply border-t border-gray-300 dark:border-gray-600 my-6;
 }
 
-/* Image */
-.structural-text-editor img {
+.editor img {
     @apply max-w-full h-auto rounded-lg my-4;
 }
 
-/* Table */
-.structural-text-editor table {
+.editor table {
     @apply border-collapse w-full mb-4;
 }
 
-.structural-text-editor th,
-.structural-text-editor td {
+.editor th,
+.editor td {
     @apply border border-gray-300 dark:border-gray-600 px-4 py-2;
 }
 
-.structural-text-editor th {
+.editor th {
     @apply bg-gray-100 dark:bg-gray-800 font-bold;
 }
 
-/* Link */
-.structural-text-editor a {
+.editor a {
     @apply text-blue-600 dark:text-blue-400 underline cursor-pointer;
 }
 
-.structural-text-editor a:hover {
+.editor a:hover {
     @apply text-blue-700 dark:text-blue-300;
 }
 
-.structural-text-editor .math-block pre {
+.editor .math-block pre {
     @apply bg-transparent p-0 m-0;
 }
-
-/* Placeholder */
-.structural-text-editor .ProseMirror p.is-editor-empty:first-child::before {
-    content: attr(data-placeholder);
-    @apply text-gray-400 dark:text-gray-500 float-left h-0 pointer-events-none;
-}
 </style>
-

@@ -21,11 +21,12 @@ import type {
     ImageElement,
     LinkElement,
     ListElement,
+    ListItemElement,
     MentionElement,
     StructuralText,
     TextElement
 } from "./types.ts";
-import {StructuralTextType} from "./types.ts";
+import {ListType, StructuralTextType} from "./types.ts";
 
 /**
  * TipTap node types that can be converted to marks (inline formatting).
@@ -80,8 +81,18 @@ function convertNodeToStructuralText(node: any): StructuralText {
         handleNodeAttributes(result, node)
     }
 
-    if (node.type === 'bulletList' || node.type === 'orderedList') {
-        (result as ListElement).ordered = node.type === 'orderedList'
+    // Handle list types
+    if (node.type === 'bulletList') {
+        (result as ListElement).listType = ListType.UNORDERED
+    } else if (node.type === 'orderedList') {
+        (result as ListElement).listType = ListType.ORDERED
+    } else if (node.type === 'taskList') {
+        (result as ListElement).listType = ListType.TASK
+    }
+
+    // Handle task item checked state
+    if (node.type === 'taskItem' && node.attrs) {
+        (result as ListItemElement).checked = node.attrs.checked || false
     }
 
     if (node.content && Array.isArray(node.content)) {
@@ -264,9 +275,11 @@ function mapTipTapTypeToStructuralType(type: string): StructuralTextType {
         doc: StructuralTextType.DOCUMENT,
         paragraph: StructuralTextType.PARAGRAPH,
         heading: StructuralTextType.HEADING,
-        bulletList: StructuralTextType.LIST,
-        orderedList: StructuralTextType.LIST,
+        bulletList: StructuralTextType.LIST_BLOCK,
+        orderedList: StructuralTextType.LIST_BLOCK,
         listItem: StructuralTextType.LIST_ITEM,
+        taskList: StructuralTextType.LIST_BLOCK,
+        taskItem: StructuralTextType.LIST_ITEM,
         blockquote: StructuralTextType.BLOCKQUOTE,
         codeBlock: StructuralTextType.CODE_BLOCK,
         code: StructuralTextType.INLINE_CODE,
@@ -294,7 +307,7 @@ function mapTipTapTypeToStructuralType(type: string): StructuralTextType {
  * Converts StructuralText format to TipTap JSON.
  */
 export function convertFromStructuralText(structuralText: StructuralText): any {
-    const tipTapType = mapStructuralTypeToTipTapType(structuralText.type)
+    const tipTapType = mapStructuralTypeToTipTapType(structuralText.type, structuralText)
 
     // Check if this should be converted to a mark
     if (MARK_TYPES.has(structuralText.type) && shouldConvertToMark(structuralText)) {
@@ -378,7 +391,7 @@ function convertToMarkFormat(node: StructuralText): any {
     // Collect all marks from nested mark nodes
     while (MARK_TYPES.has(currentNode.type) && currentNode.children.length === 1) {
         const mark: any = {
-            type: mapStructuralTypeToTipTapType(currentNode.type)
+            type: mapStructuralTypeToTipTapType(currentNode.type, currentNode)
         }
 
         // Add mark attributes if needed
@@ -460,12 +473,31 @@ function buildNodeAttributes(structuralText: StructuralText): any {
     return attrs
 }
 
-function mapStructuralTypeToTipTapType(type: StructuralTextType): string {
+function mapStructuralTypeToTipTapType(type: StructuralTextType, node?: StructuralText): string {
+    // Special handling for LIST type - check listType
+    if (type === StructuralTextType.LIST_BLOCK && node) {
+        const listNode = node as ListElement
+        if (listNode.listType === ListType.TASK) {
+            return 'taskList'
+        } else if (listNode.listType === ListType.ORDERED) {
+            return 'orderedList'
+        }
+        return 'bulletList'
+    }
+
+    // Special handling for LIST_ITEM - check if it has checked property (task item)
+    if (type === StructuralTextType.LIST_ITEM && node) {
+        const itemNode = node as ListItemElement
+        if (itemNode.checked !== undefined) {
+            return 'taskItem'
+        }
+    }
+
     const mapping: Record<StructuralTextType, string> = {
         [StructuralTextType.DOCUMENT]: 'doc',
         [StructuralTextType.PARAGRAPH]: 'paragraph',
         [StructuralTextType.HEADING]: 'heading',
-        [StructuralTextType.LIST]: 'bulletList',
+        [StructuralTextType.LIST_BLOCK]: 'bulletList',
         [StructuralTextType.LIST_ITEM]: 'listItem',
         [StructuralTextType.BLOCKQUOTE]: 'blockquote',
         [StructuralTextType.CODE_BLOCK]: 'codeBlock',

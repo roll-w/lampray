@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
+package tech.lamprism.lampray.content.structuraltext.element
 
-export * from './types'
-export * from './converter'
-export * from './extensions/Math'
-
+/**
+ * Type of list.
+ *
+ * @author RollW
+ */
+enum class ListType {
+    ORDERED,
+    UNORDERED,
+    TASK
+}

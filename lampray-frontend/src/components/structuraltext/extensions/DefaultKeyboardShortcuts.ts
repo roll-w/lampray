@@ -14,37 +14,17 @@
  * limitations under the License.
  */
 
-import {Node} from '@tiptap/core'
+import {Extension} from "@tiptap/core";
 
-export const Math = Node.create({
-    name: 'math',
-    group: 'block',
-    content: 'text*',
-    marks: '',
-    atom: true,
+export const DefaultKeyboardShortcuts = Extension.create({
+    name: "defaultKeyboardShortcuts",
 
-    addAttributes() {
+    addKeyboardShortcuts() {
         return {
-            content: {
-                default: ''
-            }
+            Tab: () => {
+                return this.editor.commands.insertContent("    ")
+            },
         }
     },
-
-    parseHTML() {
-        return [
-            {
-                tag: 'div[data-type="math"]'
-            }
-        ]
-    },
-
-    renderHTML({node, HTMLAttributes}) {
-        return [
-            'div',
-            {'data-type': 'math', class: 'math-block'},
-            ['pre', {}, node.attrs.content || '']
-        ]
-    }
 })
 

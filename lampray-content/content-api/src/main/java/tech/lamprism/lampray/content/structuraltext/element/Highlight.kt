@@ -28,10 +28,32 @@ data class Highlight @JvmOverloads constructor(
     override val content: String,
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        require(color == null || color in HIGHLIGHT_COLORS) {
+            "Invalid highlight color: $color"
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.HIGHLIGHT
 
     override fun accept(visitor: StructuralTextVisitor) {
         visitor.visit(this)
+    }
+
+    companion object {
+        @JvmField
+        val HIGHLIGHT_COLORS = setOf(
+            "yellow",
+            "green",
+            "blue",
+            "pink",
+            "orange",
+            "purple",
+            "red",
+            "lime",
+            "teal",
+            "cyan",
+        )
     }
 }

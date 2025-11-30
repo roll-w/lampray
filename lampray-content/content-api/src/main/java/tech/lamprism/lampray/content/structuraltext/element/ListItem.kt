@@ -27,7 +27,8 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
  */
 data class ListItem @JvmOverloads constructor(
     override val content: String = "",
-    override val children: List<StructuralText> = emptyList()
+    override val children: List<StructuralText> = emptyList(),
+    val checked: Boolean? = null
 ) : StructuralText {
     override val type: StructuralTextType
         get() = StructuralTextType.LIST_ITEM

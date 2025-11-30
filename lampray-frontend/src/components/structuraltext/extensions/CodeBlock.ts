@@ -16,6 +16,7 @@
 
 import {Node} from "@tiptap/core";
 import {VueNodeViewRenderer} from "@tiptap/vue-3";
+import {NodeSelection} from "@tiptap/pm/state";
 import CodeBlockComponent from "@/components/structuraltext/components/CodeBlockComponent.vue";
 import {createLowlight} from "lowlight";
 import {createLowlightPlugin} from "./CodeBlockLowlightPlugin";
@@ -86,6 +87,8 @@ export const CodeBlock = Node.create(
         marks: "bold italic strike underline",
         atom: false,
         code: true,
+        selectable: true,
+        draggable: true,
         defining: true,
         isolating: false,
 
@@ -213,6 +216,30 @@ export const CodeBlock = Node.create(
 
         addKeyboardShortcuts() {
             return {
+                "Backspace": () => {
+                    const {state, view} = this.editor
+                    const {selection} = state
+                    if (selection.empty) {
+                        const {$from, from} = selection
+
+                        if (from > 0) {
+                            const nodeBefore = $from.nodeBefore
+
+                            if (nodeBefore && nodeBefore.type.name === this.name) {
+                                const nodeStartPos = from - nodeBefore.nodeSize;
+                                if (from === nodeStartPos + nodeBefore.nodeSize) {
+
+                                    const tr = state.tr
+                                    const newSelection = NodeSelection.create(state.doc, nodeStartPos)
+                                    tr.setSelection(newSelection)
+                                    view.dispatch(tr)
+                                    return true
+                                }
+                            }
+                        }
+                    }
+                    return false
+                },
                 "Enter": () => {
                     if (!this.editor.isActive(this.name)) {
                         return false;

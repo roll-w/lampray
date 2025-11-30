@@ -27,7 +27,9 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
  */
 data class Text @JvmOverloads constructor(
     override val content: String = "",
-    override val children: List<StructuralText> = emptyList()
+    override val children: List<StructuralText> = emptyList(),
+    val backgroundColor: String? = null,// TODO
+    val textColor: String? = null,
 ) : StructuralText {
     override val type: StructuralTextType
         get() = StructuralTextType.TEXT
