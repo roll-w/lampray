@@ -70,7 +70,6 @@ function convertNodeToStructuralText(node: any): StructuralText {
         return textNode
     }
 
-    // Build the base node
     const result: StructuralText = {
         type: type,
         content: "",
@@ -106,7 +105,7 @@ function convertNodeToStructuralText(node: any): StructuralText {
 
 /**
  * Optimizes the node structure by:
- * 1. Removing unnecessary paragraph wrappers in container nodes (only when there"s a single paragraph)
+ * 1. Removing unnecessary paragraph wrappers in container nodes (only when there's a single paragraph)
  * 2. Simplifying pure text nodes to use content instead of children
  *
  * Note: Multiple paragraphs are preserved as they represent line breaks.
@@ -135,7 +134,6 @@ function shouldFlattenParagraph(type: StructuralTextType): boolean {
 /**
  * Flattens a single paragraph child by moving its content to the parent.
  * Only flattens if the paragraph contains simple text nodes, not mark nodes.
- * This prevents invalid structures like heading > bold (should be heading > paragraph > bold).
  */
 function flattenSingleParagraph(node: StructuralText): void {
     if (node.children.length !== 1) {
@@ -349,7 +347,8 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
 
     // Handle children / content in a consolidated way to avoid duplication
     const hasChildren = structuralText.children && structuralText.children.length > 0
-    const hasContent = structuralText.content && structuralText.content.trim().length > 0
+    // TODO: tiptap don't allow empty text node, but sometimes structuralText may have empty content and need to be displayed
+    const hasContent = structuralText.content && structuralText.content.length > 0
 
     if (hasChildren) {
         const childContent = structuralText.children
@@ -404,7 +403,6 @@ function isContainerNode(type: StructuralTextType): boolean {
  * TipTap's heading, listItem, and blockquote typically contain paragraph nodes.
  */
 const PARAGRAPH_WRAPPER_TYPES = new Set<StructuralTextType>([
-    StructuralTextType.HEADING,
     StructuralTextType.LIST_ITEM,
     StructuralTextType.BLOCKQUOTE
 ])
@@ -414,12 +412,15 @@ function needsParagraphWrapper(type: StructuralTextType): boolean {
 }
 
 /**
- * Determines if a node type needs direct text children (without paragraph wrapper).
+ * Determines if a node type needs direct text children.
  */
 const NEEDS_TEXT_NODE_TYPES = new Set<StructuralTextType>([
+    StructuralTextType.HEADING,
     StructuralTextType.PARAGRAPH,
     StructuralTextType.TABLE_CELL,
-    StructuralTextType.CODE_BLOCK
+    StructuralTextType.CODE_BLOCK,
+    StructuralTextType.LIST_ITEM,
+    StructuralTextType.BLOCKQUOTE
 ])
 
 function needsTextNode(type: StructuralTextType): boolean {

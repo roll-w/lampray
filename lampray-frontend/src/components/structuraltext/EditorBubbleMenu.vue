@@ -36,6 +36,7 @@ const {
     toggleStrike,
     toggleCode,
     toggleHighlight,
+    toggleUnderline,
     setLink,
     unsetLink,
     getLinkHref,
@@ -44,6 +45,7 @@ const {
     isBold,
     isItalic,
     isStrike,
+    isUnderline,
     isCode,
     isHighlight,
     isLink,
@@ -137,12 +139,13 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
                              @click="toggleStrike"
                     />
                 </UTooltip>
-                <UTooltip v-if="!isCodeBlock" :text="t('editor.toolbar.inlineCode')">
-                    <UButton :variant="isCode ? 'solid' : 'ghost'"
-                             color="neutral"
-                             size="xs"
-                             icon="i-lucide-code"
-                             @click="toggleCode"
+                <UTooltip :text="t('editor.toolbar.underline')">
+                    <UButton
+                            :variant="isUnderline ? 'solid' : 'ghost'"
+                            color="neutral"
+                            size="sm"
+                            icon="i-lucide-underline"
+                            @click="toggleUnderline"
                     />
                 </UTooltip>
                 <UTooltip v-if="!isCodeBlock" :text="t('editor.toolbar.highlight')">
@@ -151,6 +154,14 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
                              size="xs"
                              icon="i-lucide-highlighter"
                              @click="toggleHighlight"
+                    />
+                </UTooltip>
+                <UTooltip v-if="!isCodeBlock" :text="t('editor.toolbar.inlineCode')">
+                    <UButton :variant="isCode ? 'solid' : 'ghost'"
+                             color="neutral"
+                             size="xs"
+                             icon="i-lucide-code"
+                             @click="toggleCode"
                     />
                 </UTooltip>
 
