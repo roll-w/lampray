@@ -25,8 +25,8 @@ import type {
     MentionElement,
     StructuralText,
     TextElement
-} from "./types.ts";
-import {ListType, StructuralTextType} from "./types.ts";
+} from "@/components/structuraltext/types";
+import {ListType, StructuralTextType} from "@/components/structuraltext/types";
 
 /**
  * TipTap node types that can be converted to marks (inline formatting).
@@ -181,8 +181,8 @@ function canSimplifyToContent(node: StructuralText): boolean {
 
     // Only simplify if child is a plain TEXT node
     return child.type === StructuralTextType.TEXT &&
-           child.children.length === 0 &&
-           child.content.length > 0
+        child.children.length === 0 &&
+        child.content.length > 0
 }
 
 function simplifyToContent(node: StructuralText): void {
@@ -242,8 +242,6 @@ function handleNodeAttributes(result: StructuralText, node: any): void {
 /**
  * Wraps a StructuralText node with mark elements (inline formatting).
  * This ensures marks are converted to proper StructuralText nodes.
- *
- * @author RollW
  */
 function wrapWithMarks(node: StructuralText, marks: any[]): StructuralText {
     let result = node
@@ -344,13 +342,12 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
         return result
     }
 
-    // Add attributes
     const attrs = buildNodeAttributes(structuralText)
     if (Object.keys(attrs).length > 0) {
         result.attrs = attrs
     }
 
-    // Handle children
+    // Handle children / content in a consolidated way to avoid duplication
     const hasChildren = structuralText.children && structuralText.children.length > 0
     const hasContent = structuralText.content && structuralText.content.trim().length > 0
 
@@ -362,44 +359,18 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
         if (childContent.length > 0) {
             result.content = childContent
         } else if (hasContent) {
-            // Children filtered to empty, but we have content - use content instead
-            if (needsParagraphWrapper(structuralText.type)) {
-                result.content = [{
-                    type: "paragraph",
-                    content: [{
-                        type: "text",
-                        text: structuralText.content
-                    }]
-                }]
-            } else if (needsTextNode(structuralText.type)) {
-                result.content = [{
-                    type: "text",
-                    text: structuralText.content
-                }]
-            } else if (isContainerNode(structuralText.type)) {
-                result.content = []
+            const content = buildContentForStructuralText(structuralText)
+            if (content !== undefined) {
+                result.content = content
             }
         } else if (isContainerNode(structuralText.type)) {
             // No children, no content - empty container
             result.content = []
         }
     } else if (hasContent) {
-        // No children but has content - expand content to appropriate structure
-        if (needsParagraphWrapper(structuralText.type)) {
-            result.content = [{
-                type: "paragraph",
-                content: [{
-                    type: "text",
-                    text: structuralText.content
-                }]
-            }]
-        } else if (needsTextNode(structuralText.type)) {
-            result.content = [{
-                type: "text",
-                text: structuralText.content
-            }]
-        } else if (isContainerNode(structuralText.type)) {
-            result.content = []
+        const content = buildContentForStructuralText(structuralText)
+        if (content !== undefined) {
+            result.content = content
         }
     } else if (isContainerNode(structuralText.type)) {
         // Container nodes need content array even if empty
@@ -412,36 +383,74 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
 /**
  * Determines if a node type is a container that requires a content array.
  */
+const CONTAINER_NODE_TYPES = new Set<StructuralTextType>([
+    StructuralTextType.DOCUMENT,
+    StructuralTextType.PARAGRAPH,
+    StructuralTextType.HEADING,
+    StructuralTextType.LIST_BLOCK,
+    StructuralTextType.LIST_ITEM,
+    StructuralTextType.BLOCKQUOTE,
+    StructuralTextType.TABLE,
+    StructuralTextType.TABLE_ROW,
+    StructuralTextType.TABLE_CELL
+])
+
 function isContainerNode(type: StructuralTextType): boolean {
-    return type === StructuralTextType.DOCUMENT ||
-        type === StructuralTextType.PARAGRAPH ||
-        type === StructuralTextType.HEADING ||
-        type === StructuralTextType.LIST_BLOCK ||
-        type === StructuralTextType.LIST_ITEM ||
-        type === StructuralTextType.BLOCKQUOTE ||
-        type === StructuralTextType.TABLE ||
-        type === StructuralTextType.TABLE_ROW ||
-        type === StructuralTextType.TABLE_CELL
+    return CONTAINER_NODE_TYPES.has(type)
 }
 
 /**
  * Determines if a node type needs paragraph wrapper when converting back to TipTap.
  * TipTap's heading, listItem, and blockquote typically contain paragraph nodes.
  */
+const PARAGRAPH_WRAPPER_TYPES = new Set<StructuralTextType>([
+    StructuralTextType.HEADING,
+    StructuralTextType.LIST_ITEM,
+    StructuralTextType.BLOCKQUOTE
+])
+
 function needsParagraphWrapper(type: StructuralTextType): boolean {
-    return type === StructuralTextType.HEADING ||
-        type === StructuralTextType.LIST_ITEM ||
-        type === StructuralTextType.BLOCKQUOTE
+    return PARAGRAPH_WRAPPER_TYPES.has(type)
 }
 
 /**
  * Determines if a node type needs direct text children (without paragraph wrapper).
  */
+const NEEDS_TEXT_NODE_TYPES = new Set<StructuralTextType>([
+    StructuralTextType.PARAGRAPH,
+    StructuralTextType.TABLE_CELL,
+    StructuralTextType.CODE_BLOCK
+])
+
 function needsTextNode(type: StructuralTextType): boolean {
-    return type === StructuralTextType.PARAGRAPH ||
-        type === StructuralTextType.TABLE_CELL ||
-        type === StructuralTextType.CODE_BLOCK ||
-        MARK_TYPES.has(type)
+    return NEEDS_TEXT_NODE_TYPES.has(type) || MARK_TYPES.has(type)
+}
+
+function buildContentForStructuralText(structuralText: StructuralText): any[] | undefined {
+    const text = structuralText.content || ""
+
+    if (needsParagraphWrapper(structuralText.type)) {
+        return [{
+            type: "paragraph",
+            content: [{
+                type: "text",
+                text
+            }]
+        }]
+    }
+
+    if (needsTextNode(structuralText.type)) {
+        return [{
+            type: "text",
+            text
+        }]
+    }
+
+    if (isContainerNode(structuralText.type)) {
+        return []
+    }
+
+    return undefined
 }
 
 /**
@@ -597,5 +606,3 @@ function mapStructuralTypeToTipTapType(type: StructuralTextType, node?: Structur
 
     return mapping[type] || "text"
 }
-
-

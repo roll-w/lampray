@@ -208,7 +208,7 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
                     :items="headingOptions"
                     size="sm"
                     color="neutral"
-                    variant="outline"
+                    variant="ghost"
                     class="w-36"
             >
                 <template #default>
