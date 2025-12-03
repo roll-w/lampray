@@ -19,7 +19,7 @@ import {Plugin, PluginKey} from "@tiptap/pm/state";
 
 /**
  * Applies enter key behavior as follows:
- * 
+ *
  * - First Enter: Insert a hard break (line break within paragraph)
  * - Second Enter (consecutive): Create a new paragraph
  *
@@ -29,79 +29,77 @@ export const LineBreakEnter = Extension.create({
     name: "lineBreakEnter",
 
     addProseMirrorPlugins() {
+        // Extracted keydown handler to a named constant to improve readability and avoid
+        // linter warnings about unused inline properties.
+        const onKeyDown = (view: any, event: KeyboardEvent): boolean => {
+            // Only handle plain Enter (no modifiers)
+            if ((event as KeyboardEvent).key !== "Enter" || (event as KeyboardEvent).shiftKey || (event as KeyboardEvent).ctrlKey || (event as KeyboardEvent).metaKey) {
+                return false
+            }
+
+            const {state} = view
+            const {$from} = state.selection
+
+            const isInside = (pos: any, names: string[]) => {
+                for (let i = pos.depth; i > 0; i--) {
+                    const node = pos.node(i)
+                    if (names.includes(node.type.name)) return true
+                }
+                return false
+            }
+
+            // Let list or task extensions handle Enter
+            if (isInside($from, ["listItem", "taskItem"])) {
+                return false
+            }
+
+            // Ignore code blocks and non-paragraph parents
+            if ($from.parent.type.name === "codeBlock") {
+                return false
+            }
+            if ($from.parent.type.name !== "paragraph") {
+                return false
+            }
+
+            // Determine whether the cursor is immediately after a hard break
+            const lastNode = $from.nodeBefore
+            const isAfterHardBreak = lastNode?.type?.name === "hardBreak"
+
+            const tr = state.tr
+
+            if (isAfterHardBreak) {
+                // Second Enter: remove the hardBreak and split into a new paragraph
+                // hardBreak is at position $from.pos - 1
+                const breakStart = $from.pos - 1
+                tr.delete(breakStart, $from.pos)
+
+                // Split at the position where the hard break was deleted
+                tr.split(breakStart)
+
+                view.dispatch(tr)
+                return true
+            }
+
+            // First Enter: insert a hard break within the paragraph
+            if (!state.selection.empty) {
+                tr.deleteSelection()
+            }
+
+            const hardBreakType = state.schema.nodes.hardBreak
+            if (!hardBreakType) return false
+
+            tr.replaceSelectionWith(hardBreakType.create())
+            view.dispatch(tr)
+            return true
+        }
+
         return [
             new Plugin({
                 key: new PluginKey("lineBreakEnter"),
                 props: {
-                    handleKeyDown: (view, event) => {
-                        if (event.key !== "Enter" || event.shiftKey || event.ctrlKey || event.metaKey) {
-                            return false
-                        }
-
-                        const {state} = view
-                        const {$from} = state.selection
-
-                        // Don't handle Enter in lists (bullet list, ordered list, task list)
-                        // Let the list extensions handle it
-                        for (let i = $from.depth; i > 0; i--) {
-                            const node = $from.node(i)
-                            if (node.type.name === "listItem" || node.type.name === "taskItem") {
-                                return false
-                            }
-                        }
-
-                        // Don't handle Enter in code blocks
-                        if ($from.parent.type.name === "codeBlock") {
-                            return false
-                        }
-
-                        // Check if we're in a paragraph
-                        if ($from.parent.type.name !== "paragraph") {
-                            return false
-                        }
-
-                        // Check if the last character before cursor is a newline (hard break)
-                        // This indicates a consecutive Enter press
-                        const lastNode = $from.nodeBefore
-                        const isAfterHardBreak = lastNode && lastNode.type.name === "hardBreak"
-
-                        if (isAfterHardBreak) {
-                            // Second Enter: create new paragraph
-                            // Delete the hard break and split the paragraph
-                            const tr = state.tr
-                            tr.delete($from.pos - 1, $from.pos)
-
-                            // Split the block
-                            const splitPos = tr.selection.$from.pos
-                            tr.split(splitPos)
-
-                            view.dispatch(tr)
-                            return true
-                        } else {
-                            // First Enter: insert hard break
-                            const {tr} = state
-
-                            // If there's a selection, delete it first
-                            if (!state.selection.empty) {
-                                tr.deleteSelection()
-                            }
-
-                            // Insert hard break
-                            const hardBreakType = state.schema.nodes.hardBreak
-                            if (!hardBreakType) {
-                                return false
-                            }
-
-                            const hardBreak = hardBreakType.create()
-                            tr.replaceSelectionWith(hardBreak)
-
-                            view.dispatch(tr)
-                            return true
-                        }
-                    },
+                    handleKeyDown: onKeyDown,
                 },
             }),
         ]
     },
 })
-
