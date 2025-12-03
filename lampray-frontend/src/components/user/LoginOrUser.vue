@@ -125,8 +125,15 @@ const buildAdminMenu = (): DropdownMenuItem[] => [
     ]
 ];
 
+const clearData = () => {
+    if (!userStore.isLogin) {
+        userStore.logout();
+    }
+}
+
 const buildMenus = (): DropdownMenuItem[] => {
     if (!userStore.isLogin) {
+        clearData();
         return [];
     }
     if (userStore.hasAdminRole) {

@@ -216,7 +216,7 @@
       "imageUrl": "Image URL",
       "imageUrlPlaceholder": "https://example.com/image.jpg",
       "imageUrlRequired": "Image URL is required",
-      "altText": "Alt Text (Optional)",
+      "altText": "Image Description (Optional)",
       "altTextPlaceholder": "Image description",
       "cancel": "Cancel",
       "insert": "Insert",

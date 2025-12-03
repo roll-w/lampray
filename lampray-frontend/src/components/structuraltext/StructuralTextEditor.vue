@@ -29,6 +29,7 @@ import type {StructuralText} from "@/components/structuraltext/types";
 import {convertFromStructuralText, convertToStructuralText} from "@/components/structuraltext/converter";
 import {onBeforeUnmount, watch} from "vue";
 import {DefaultKeyboardShortcuts} from "@/components/structuraltext/extensions/DefaultKeyboardShortcuts.ts";
+import {LineBreakEnter} from "@/components/structuraltext/extensions/LineBreakEnter.ts";
 
 interface Props {
     modelValue?: StructuralText
@@ -52,6 +53,7 @@ const emit = defineEmits<Emits>()
 
 const editor = useEditor({
     extensions: [
+        LineBreakEnter,
         DefaultKeyboardShortcuts,
         StarterKit.configure({
             heading: {
@@ -65,6 +67,14 @@ const editor = useEditor({
                             "hover:underline underline-offset-2 decoration-2 decoration-blue-500/50 " +
                             "hover:decoration-blue-500 transition-all transition-duration-500 ease-in-out"
                 }
+            },
+            bulletList: {
+                keepMarks: true,
+                keepAttributes: false,
+            },
+            orderedList: {
+                keepMarks: true,
+                keepAttributes: false,
             }
         }),
         CodeBlock.configure({
@@ -184,7 +194,7 @@ onBeforeUnmount(() => {
 
 .editor ul,
 .editor ol {
-    @apply pl-6 mb-4;
+    @apply pl-6 mb-2;
 }
 
 .editor ul {
@@ -201,10 +211,6 @@ onBeforeUnmount(() => {
 
 .editor ul[data-type="taskList"] {
     @apply list-none pl-0;
-}
-
-.editor li[data-type="taskItem"] {
-    @apply flex items-start gap-2;
 }
 
 .editor blockquote {

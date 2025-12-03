@@ -555,6 +555,13 @@ function buildNodeAttributes(structuralText: StructuralText): any {
             const mention = structuralText as MentionElement
             attrs.id = mention.userId
             break
+
+        case StructuralTextType.LIST_ITEM:
+            const listItem = structuralText as ListItemElement
+            if (listItem.checked !== undefined) {
+                attrs.checked = listItem.checked
+            }
+            break
     }
 
     return attrs

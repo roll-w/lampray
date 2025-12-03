@@ -15,14 +15,30 @@
   -->
 
 <script setup lang="ts">
-import {NodeViewContent, nodeViewProps, NodeViewWrapper} from "@tiptap/vue-3";
+import {NodeViewContent, type NodeViewProps, NodeViewWrapper} from "@tiptap/vue-3";
+import {ref, watch} from "vue";
 
-const props = defineProps(nodeViewProps)
+const props = defineProps<NodeViewProps>()
+const checked = ref<boolean>(props.node.attrs.checked)
 
-const handleCheckboxChange = (checked: boolean | "indeterminate") => {
-    props.updateAttributes({
-        checked: checked
-    })
+watch(() => props.node.attrs.checked, (newChecked) => {
+            if (newChecked !== checked.value) {
+                checked.value = newChecked
+            }
+        }, {immediate: true}
+)
+
+const handleToggle = (value: boolean | "indeterminate") => {
+    if (!props.editor.isEditable) {
+        return
+    }
+    const newChecked = value === true
+    if (newChecked !== checked.value) {
+        checked.value = newChecked
+        props.updateAttributes({
+            checked: newChecked,
+        })
+    }
 }
 </script>
 
@@ -31,18 +47,11 @@ const handleCheckboxChange = (checked: boolean | "indeterminate") => {
             as="li"
             :data-type="node.type.name"
             :data-checked="node.attrs.checked"
-            class="flex items-start gap-2 mb-2"
-    >
-        <UCheckbox
-                :model-value="node.attrs.checked"
-                @update:model-value="handleCheckboxChange"
-                class="mt-1"
-        />
-        <NodeViewContent
-                as="div"
-                class="flex-1"
-                :class="{ 'line-through text-gray-500 dark:text-gray-400': node.attrs.checked }"
-        />
+            class="flex items-start gap-2">
+        <UCheckbox :model-value="checked"
+                   @update:model-value="handleToggle"
+                   :disabled="!editor.isEditable"
+                   class="mt-1"/>
+            <NodeViewContent as="div" class="flex-1"/>
     </NodeViewWrapper>
 </template>
-

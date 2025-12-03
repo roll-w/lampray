@@ -79,7 +79,7 @@ declare module "@tiptap/core" {
     }
 }
 
-export const CodeBlock = Node.create(
+export const CodeBlock = Node.create<CodeBlockOptions>(
     {
         name: "codeBlock",
         group: "block",
