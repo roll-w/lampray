@@ -29,7 +29,6 @@ import type {StructuralText} from "@/components/structuraltext/types";
 import {convertFromStructuralText, convertToStructuralText} from "@/components/structuraltext/converter";
 import {onBeforeUnmount, watch} from "vue";
 import {DefaultKeyboardShortcuts} from "@/components/structuraltext/extensions/DefaultKeyboardShortcuts.ts";
-import {LineBreakEnter} from "@/components/structuraltext/extensions/LineBreakEnter.ts";
 
 interface Props {
     modelValue?: StructuralText
@@ -53,7 +52,6 @@ const emit = defineEmits<Emits>()
 
 const editor = useEditor({
     extensions: [
-        LineBreakEnter,
         DefaultKeyboardShortcuts,
         StarterKit.configure({
             heading: {
@@ -154,7 +152,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style>
-@reference "../../assets/main.css"
+@reference "@/assets/main.css"
 
 .editor .ProseMirror {
     @apply min-h-[300px];

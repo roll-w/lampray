@@ -52,6 +52,14 @@ const handleToggle = (value: boolean | "indeterminate") => {
                    @update:model-value="handleToggle"
                    :disabled="!editor.isEditable"
                    class="mt-1"/>
-            <NodeViewContent as="div" class="flex-1"/>
+        <NodeViewContent as="div" class="flex-1"/>
     </NodeViewWrapper>
 </template>
+<style>
+@reference "@/assets/main.css";
+
+li[data-type="taskItem"][data-checked="true"] > div[data-node-view-content] > p {
+    @apply line-through opacity-70;
+}
+
+</style>
