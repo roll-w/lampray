@@ -16,25 +16,13 @@
 
 package tech.lamprism.lampray.content.structuraltext.element
 
-import tech.lamprism.lampray.content.structuraltext.StructuralText
-import tech.lamprism.lampray.content.structuraltext.StructuralTextType
-import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
-
 /**
- * Plain text node.
+ * Type of list.
  *
  * @author RollW
  */
-data class Text @JvmOverloads constructor(
-    override val content: String = "",
-    override val children: List<StructuralText> = emptyList(),
-    val backgroundColor: String? = null,// TODO
-    val textColor: String? = null,
-) : StructuralText {
-    override val type: StructuralTextType
-        get() = StructuralTextType.TEXT
-
-    override fun accept(visitor: StructuralTextVisitor) {
-        visitor.visit(this)
-    }
+enum class ListType {
+    ORDERED,
+    UNORDERED,
+    TASK
 }

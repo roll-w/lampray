@@ -174,5 +174,65 @@
         }
       }
     }
+  },
+  "editor": {
+    "toolbar": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "strikethrough": "Strikethrough",
+      "highlight": "Highlight",
+      "inlineCode": "Inline Code",
+      "paragraph": "Paragraph",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "heading4": "Heading 4",
+      "heading5": "Heading 5",
+      "heading6": "Heading 6",
+      "bulletList": "Bullet List",
+      "orderedList": "Ordered List",
+      "taskList": "Task List",
+      "blockquote": "Blockquote",
+      "codeBlock": "Code Block",
+      "insertLink": "Insert Link",
+      "insertImage": "Insert Image",
+      "insertTable": "Insert Table",
+      "horizontalRule": "Horizontal Rule",
+      "editLink": "Edit Link",
+      "openLink": "Open Link",
+      "addLink": "Add Link",
+      "copy": "Copy"
+    },
+    "modal": {
+      "insertLink": "Insert Link",
+      "editLink": "Edit Link",
+      "insertImage": "Insert Image",
+      "url": "URL",
+      "urlPlaceholder": "https://example.com",
+      "urlRequired": "URL is required",
+      "text": "Text",
+      "textPlaceholder": "Link text",
+      "imageUrl": "Image URL",
+      "imageUrlPlaceholder": "https://example.com/image.jpg",
+      "imageUrlRequired": "Image URL is required",
+      "altText": "Image Description (Optional)",
+      "altTextPlaceholder": "Image description",
+      "cancel": "Cancel",
+      "insert": "Insert",
+      "update": "Update",
+      "removeLink": "Remove Link"
+    },
+    "codeBlock": {
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "plainText": "Plain Text",
+      "showLineNumbers": "Show line numbers",
+      "hideLineNumbers": "Hide line numbers",
+      "enableLineWrap": "Enable line wrap",
+      "disableLineWrap": "Disable line wrap",
+      "copyCode": "Copy code",
+      "copied": "Copied"
+    }
   }
 }
