@@ -18,17 +18,19 @@
 import {EditorContent, useEditor} from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-import {Table, TableCell, TableHeader, TableRow} from "@tiptap/extension-table"
 import Highlight from "@tiptap/extension-highlight"
 import {CodeBlock} from "@/components/structuraltext/extensions/CodeBlock";
 import {TaskItem, TaskList} from "@/components/structuraltext/extensions/TaskList";
 import {ListKeyboardShortcuts} from "@/components/structuraltext/extensions/ListKeyboardShortcuts";
 import EditorToolbar from "@/components/structuraltext/EditorToolbar.vue";
 import BubbleMenu from "@/components/structuraltext/EditorBubbleMenu.vue";
+import EditorContextMenu from "@/components/structuraltext/EditorContextMenu.vue";
 import type {StructuralText} from "@/components/structuraltext/types";
 import {convertFromStructuralText, convertToStructuralText} from "@/components/structuraltext/converter";
 import {onBeforeUnmount, watch} from "vue";
 import {DefaultKeyboardShortcuts} from "@/components/structuraltext/extensions/DefaultKeyboardShortcuts.ts";
+import {Table, TableCell, TableHeader, TableRow} from "@/components/structuraltext/extensions/TableExtension.ts";
+import {HeadingWithId} from "@/components/structuraltext/extensions/HeadingWithId.ts";
 
 interface Props {
     modelValue?: StructuralText
@@ -53,10 +55,9 @@ const emit = defineEmits<Emits>()
 const editor = useEditor({
     extensions: [
         DefaultKeyboardShortcuts,
+        //TableCellTrailingBreakPlugin,
         StarterKit.configure({
-            heading: {
-                levels: [1, 2, 3, 4, 5, 6]
-            },
+            heading: false, // Disable default heading, use HeadingWithId instead
             codeBlock: false,
             link: {
                 openOnClick: false,
@@ -75,6 +76,9 @@ const editor = useEditor({
                 keepAttributes: false,
             }
         }),
+        HeadingWithId.configure({
+            levels: [1, 2, 3, 4, 5, 6]
+        }),
         CodeBlock.configure({
             enableTabIndentation: true,
         }),
@@ -85,21 +89,14 @@ const editor = useEditor({
         }),
         Table.configure({
             resizable: true,
-            HTMLAttributes: {
-                class: "border-collapse table-auto w-full"
-            }
+            allowTableNodeSelection: true,
+            // HTMLAttributes: {
+            //     class: "border-collapse table-auto w-full"
+            // }
         }),
         TableRow,
-        TableCell.configure({
-            HTMLAttributes: {
-                class: "border border-gray-300 dark:border-gray-600 px-4 py-2"
-            }
-        }),
-        TableHeader.configure({
-            HTMLAttributes: {
-                class: "border border-gray-300 dark:border-gray-600 px-4 py-2 bg-gray-100 dark:bg-gray-800 font-bold"
-            }
-        }),
+        TableCell.configure({}),
+        TableHeader,
         Highlight.configure({
             HTMLAttributes: {
                 class: "bg-yellow-200 dark:bg-yellow-800 px-1 rounded"
@@ -119,6 +116,25 @@ const editor = useEditor({
     editorProps: {
         attributes: {
             class: "prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4"
+        },
+        handleDOMEvents: {
+            // Prevent drag and drop within table cells to avoid accidental row/column creation
+            drop: (view, event) => {
+                const pos = view.posAtCoords({left: event.clientX, top: event.clientY})
+                if (!pos) return false
+
+                const $pos = view.state.doc.resolve(pos.pos)
+                const inTable = $pos.node(-1)?.type.name === "tableCell" ||
+                        $pos.node(-1)?.type.name === "tableHeader" ||
+                        $pos.node(-2)?.type.name === "table"
+
+                // If dropping inside table, only allow text content move
+                if (inTable && event.dataTransfer?.effectAllowed === "move") {
+                    return false // Let TipTap handle the text move
+                }
+
+                return false
+            }
         }
     }
 })
@@ -147,7 +163,9 @@ onBeforeUnmount(() => {
     <div class="editor border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-950">
         <EditorToolbar v-if="showToolbar && editor" :editor="editor"/>
         <BubbleMenu v-if="editor" :editor="editor" :editable="editable"/>
-        <EditorContent :editor="editor"/>
+        <EditorContextMenu v-if="editor" :editor="editor" :editable="editable">
+            <EditorContent :editor="editor"/>
+        </EditorContextMenu>
     </div>
 </template>
 
@@ -252,19 +270,47 @@ onBeforeUnmount(() => {
 }
 
 .editor table {
-    @apply border-collapse w-full mb-4;
+    @apply border-collapse w-full mb-4 relative;
 }
 
 .editor th,
 .editor td {
-    @apply border border-gray-300 dark:border-gray-600 px-4 py-2;
+    @apply border border-gray-300 dark:border-gray-600 px-4 py-2 relative;
 }
 
 .editor th {
     @apply bg-gray-100 dark:bg-gray-800 font-bold;
 }
 
+.editor .selectedCell {
+    @apply bg-blue-100 dark:bg-blue-900;
+}
+
+.editor .ProseMirror-selectednode {
+    @apply outline outline-2 outline-blue-500 outline-offset-[-2px];
+}
+
+.editor table.ProseMirror-selectednode {
+    @apply outline outline-2 outline-blue-500;
+}
+
+.column-resize-handle {
+    @apply bg-blue-500 transition-colors;
+    bottom: -2px;
+    pointer-events: none;
+    position: absolute;
+    right: -2px;
+    top: 0;
+    width: 4px;
+}
+
+.editor .resize-cursor {
+    cursor: col-resize;
+}
+
+/* Math block styles */
 .editor .math-block pre {
     @apply bg-transparent p-0 m-0;
 }
 </style>
+

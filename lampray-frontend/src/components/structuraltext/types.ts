@@ -181,10 +181,59 @@ export interface ImageElement extends StructuralText {
 }
 
 /**
+ * Text alignment options.
+ */
+export enum TextAlignment {
+    LEFT = "LEFT",
+    CENTER = "CENTER",
+    RIGHT = "RIGHT",
+    JUSTIFY = "JUSTIFY"
+}
+
+/**
+ * Attribute color options.
+ */
+export type AttributeColor =
+    | "yellow"
+    | "green"
+    | "blue"
+    | "pink"
+    | "orange"
+    | "purple"
+    | "red"
+    | "lime"
+    | "teal"
+    | "cyan"
+    | "light-yellow"
+    | "light-green"
+    | "light-blue"
+    | "light-pink"
+    | "light-orange"
+    | "light-purple"
+    | "light-red"
+    | "light-lime"
+    | "light-teal"
+    | "light-cyan"
+    | "dark-yellow"
+    | "dark-green"
+    | "dark-blue"
+    | "dark-pink"
+    | "dark-orange"
+    | "dark-purple"
+    | "dark-red"
+    | "dark-lime"
+    | "dark-teal"
+    | "dark-cyan"
+
+/**
  * Table element - a table container.
  */
 export interface TableElement extends StructuralText {
     type: StructuralTextType.TABLE
+    hasHeaderColumn?: boolean
+    hasHeaderRow?: boolean
+    /** Optional list of column widths in pixels (px). */
+    columnWidths?: (number | null)[]
 }
 
 /**
@@ -192,6 +241,8 @@ export interface TableElement extends StructuralText {
  */
 export interface TableRowElement extends StructuralText {
     type: StructuralTextType.TABLE_ROW
+    /** Row height in pixels (px) */
+    rowHeight?: number
 }
 
 /**
@@ -199,6 +250,18 @@ export interface TableRowElement extends StructuralText {
  */
 export interface TableCellElement extends StructuralText {
     type: StructuralTextType.TABLE_CELL
+    /** Whether this cell should be treated as a header cell (render as <th>). */
+    isHeader?: boolean
+    /** Background color chosen from the fixed palette */
+    backgroundColor?: AttributeColor
+    /** Number of columns this cell spans. */
+    colspan?: number
+    /** Number of rows this cell spans. */
+    rowspan?: number
+    /** Optional width in pixels (px). */
+    width?: number
+    /** Optional height in pixels (px) */
+    height?: number
 }
 
 /**

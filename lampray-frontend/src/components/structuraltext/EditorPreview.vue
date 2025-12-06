@@ -38,45 +38,60 @@ const formattedJson = computed(() => {
             <h1 class="text-3xl font-bold">Text Editor</h1>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold">Editor</h2>
-                </div>
-                <StructuralTextEditor
-                        v-model="content"
-                        :editable="true"
-                        placeholder="Start writing your content here..."
-                        :show-toolbar="true"
-                        @change="handleChange"
-                />
-            </div>
-
-            <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold">Preview</h2>
-                    <UButton
-                            :variant="showJson ? 'solid' : 'ghost'"
-                            color="neutral"
-                            size="sm"
-                            @click="showJson = !showJson"
-                    >
-                        {{ showJson ? 'Hide JSON' : 'Show JSON' }}
-                    </UButton>
-                </div>
-
-                <div v-if="showJson" class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-auto max-h-[600px]">
-                    <pre class="text-sm"><code>{{ formattedJson }}</code></pre>
-                </div>
-
-                <div v-else class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 min-h-[400px]">
+        <div class="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-semibold">Editor</h2>
+                    </div>
                     <StructuralTextEditor
                             v-model="content"
-                            :editable="false"
-                            :show-toolbar="false"
+                            :editable="true"
+                            placeholder="Start writing your content here..."
+                            :show-toolbar="true"
+                            @change="handleChange"
                     />
                 </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-semibold">Preview</h2>
+                        <UButton
+                                :variant="showJson ? 'solid' : 'ghost'"
+                                color="neutral"
+                                size="sm"
+                                @click="showJson = !showJson"
+                        >
+                            {{ showJson ? 'Hide JSON' : 'Show JSON' }}
+                        </UButton>
+                    </div>
+
+                    <div v-if="showJson" class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-auto max-h-[600px]">
+                        <pre class="text-sm"><code>{{ formattedJson }}</code></pre>
+                    </div>
+
+                    <div v-else class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 min-h-[400px]">
+                        <StructuralTextEditor
+                                v-model="content"
+                                :editable="false"
+                                :show-toolbar="false"
+                        />
+                    </div>
+                </div>
             </div>
+
+            <!-- Document Outline Sidebar -->
+            <aside class="hidden xl:block">
+                <div class="sticky top-6">
+                    <StructuralTextOutline
+                        v-if="content"
+                        :document="content"
+                        title="Document Outline"
+                        color="primary"
+                        size="sm"
+                    />
+                </div>
+            </aside>
         </div>
     </div>
 </template>

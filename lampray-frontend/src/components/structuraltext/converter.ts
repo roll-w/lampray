@@ -24,6 +24,9 @@ import type {
     ListItemElement,
     MentionElement,
     StructuralText,
+    TableCellElement,
+    TableElement,
+    TableRowElement,
     TextElement
 } from "@/components/structuraltext/types";
 import {ListType, StructuralTextType} from "@/components/structuraltext/types";
@@ -46,7 +49,7 @@ const MARK_TYPES = new Set([
  */
 export function convertToStructuralText(editor: Editor): StructuralText {
     const json = editor.getJSON()
-    return convertNodeToStructuralText(json)
+    return convertNodeToStructuralText(json) as StructuralText
 }
 
 /**
@@ -97,6 +100,7 @@ function convertNodeToStructuralText(node: any): StructuralText {
     if (node.content && Array.isArray(node.content)) {
         result.children = node.content
             .map((child: any) => convertNodeToStructuralText(child))
+            // .filter((c: any) => c !== null) as StructuralText[]
     }
 
     optimizeNodeStructure(result)
@@ -235,6 +239,55 @@ function handleNodeAttributes(result: StructuralText, node: any): void {
     if (attrs.id !== undefined || attrs.userId !== undefined) {
         (result as MentionElement).userId = attrs.id || attrs.userId
     }
+
+    // Handle table attributes
+    if (node.type === "table") {
+        const tableElement = result as TableElement
+        if (attrs.hasHeaderRow !== undefined) {
+            tableElement.hasHeaderRow = attrs.hasHeaderRow
+        }
+        if (attrs.hasHeaderColumn !== undefined) {
+            tableElement.hasHeaderColumn = attrs.hasHeaderColumn
+        }
+        if (attrs.columnWidths !== undefined) {
+            tableElement.columnWidths = attrs.columnWidths
+        }
+    }
+
+    // Handle table row attributes
+    if (node.type === "tableRow") {
+        const rowElement = result as TableRowElement
+        if (attrs.rowHeight !== undefined) {
+            rowElement.rowHeight = attrs.rowHeight
+        }
+    }
+
+    // Handle table cell attributes
+    if (node.type === "tableCell" || node.type === "tableHeader") {
+        const cellElement = result as TableCellElement
+        if (attrs.isHeader !== undefined) {
+            cellElement.isHeader = attrs.isHeader
+        }
+        if (attrs.backgroundColor !== undefined) {
+            cellElement.backgroundColor = attrs.backgroundColor
+        }
+        if (attrs.colspan !== undefined && attrs.colspan !== 1) {
+            cellElement.colspan = attrs.colspan
+        }
+        if (attrs.rowspan !== undefined && attrs.rowspan !== 1) {
+            cellElement.rowspan = attrs.rowspan
+        }
+        if (attrs.width !== undefined) {
+            cellElement.width = attrs.colwidth
+        }
+        if (attrs.height !== undefined) {
+            cellElement.height = attrs.height
+        }
+        // Mark table header cells
+        if (node.type === "tableHeader") {
+            cellElement.isHeader = true
+        }
+    }
 }
 
 /**
@@ -364,7 +417,9 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
             }
         } else if (isContainerNode(structuralText.type)) {
             // No children, no content - empty container
-            result.content = []
+            result.content = (structuralText.type === StructuralTextType.TABLE_CELL)
+                ? [{ type: "paragraph", content: [] }]
+                : []
         }
     } else if (hasContent) {
         const content = buildContentForStructuralText(structuralText)
@@ -373,7 +428,9 @@ export function convertFromStructuralText(structuralText: StructuralText): any {
         }
     } else if (isContainerNode(structuralText.type)) {
         // Container nodes need content array even if empty
-        result.content = []
+        result.content = (structuralText.type === StructuralTextType.TABLE_CELL)
+            ? [{ type: "paragraph", content: [] }]
+            : []
     }
 
     return result
@@ -562,6 +619,48 @@ function buildNodeAttributes(structuralText: StructuralText): any {
                 attrs.checked = listItem.checked
             }
             break
+
+        case StructuralTextType.TABLE:
+            const table = structuralText as TableElement
+            if (table.hasHeaderRow !== undefined) {
+                attrs.hasHeaderRow = table.hasHeaderRow
+            }
+            if (table.hasHeaderColumn !== undefined) {
+                attrs.hasHeaderColumn = table.hasHeaderColumn
+            }
+            if (table.columnWidths !== undefined) {
+                attrs.columnWidths = table.columnWidths
+            }
+            break
+
+        case StructuralTextType.TABLE_ROW:
+            const row = structuralText as TableRowElement
+            if (row.rowHeight !== undefined) {
+                attrs.rowHeight = row.rowHeight
+            }
+            break
+
+        case StructuralTextType.TABLE_CELL:
+            const cell = structuralText as TableCellElement
+            if (cell.isHeader !== undefined) {
+                attrs.isHeader = cell.isHeader
+            }
+            if (cell.backgroundColor !== undefined) {
+                attrs.backgroundColor = cell.backgroundColor
+            }
+            if (cell.colspan !== undefined && cell.colspan !== 1) {
+                attrs.colspan = cell.colspan
+            }
+            if (cell.rowspan !== undefined && cell.rowspan !== 1) {
+                attrs.rowspan = cell.rowspan
+            }
+            if (cell.width !== undefined) {
+                attrs.width = cell.width
+            }
+            if (cell.height !== undefined) {
+                attrs.height = cell.height
+            }
+            break
     }
 
     return attrs
@@ -584,6 +683,13 @@ function mapStructuralTypeToTipTapType(type: StructuralTextType, node?: Structur
         const itemNode = node as ListItemElement
         if (itemNode.checked !== undefined) {
             return "taskItem"
+        }
+    }
+
+    if (type === StructuralTextType.TABLE_CELL && node) {
+        const cellNode = node as TableCellElement
+        if (cellNode.isHeader) {
+            return "tableHeader"
         }
     }
 

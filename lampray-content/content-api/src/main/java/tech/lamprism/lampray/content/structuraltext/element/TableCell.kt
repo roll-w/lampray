@@ -16,19 +16,62 @@
 
 package tech.lamprism.lampray.content.structuraltext.element
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Cell inside a table row.
  *
  * @author RollW
  */
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 data class TableCell @JvmOverloads constructor(
     override val content: String = "",
-    override val children: List<StructuralText> = emptyList()
+    override val children: List<StructuralText> = emptyList(),
+    /**
+     * Whether this cell should be treated as a header cell (render as <th>).
+     */
+    val isHeader: Boolean = false,
+    /**
+     * Background color chosen from the fixed palette
+     */
+    val backgroundColor: AttributeColor? = null,
+    /**
+     * Number of columns this cell spans.
+     */
+    val colspan: Int = 1,
+    /**
+     * Number of rows this cell spans.
+     */
+    val rowspan: Int = 1,
+    /**
+     * Optional width in pixels (px).
+     */
+    val width: Double? = null,
+    /**
+     * Optional height in pixels (px)
+     */
+    val height: Double? = null,
 ) : StructuralText {
+    init {
+        // Allow Paragraph, List, Image inside a cell; disallow Table, TableRow, Document directly
+        val disallowed = setOf(
+            StructuralTextType.TABLE,
+            StructuralTextType.TABLE_ROW,
+            StructuralTextType.DOCUMENT
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=TABLE_CELL: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.TABLE_CELL
 

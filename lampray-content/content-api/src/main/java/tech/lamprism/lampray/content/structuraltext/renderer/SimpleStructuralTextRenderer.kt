@@ -168,12 +168,38 @@ class SimpleStructuralTextRenderer: StructuralTextRenderer {
 
                 is Table -> {
                     val rows = node.children.filterIsInstance<TableRow>()
-                    rows.forEach { row ->
+                    rows.forEachIndexed { rowIdx, row ->
                         val cells = row.children.filterIsInstance<TableCell>()
                         if (cells.isNotEmpty()) {
                             cells.forEachIndexed { idx, cell ->
                                 if (idx > 0) builder.append(' ')
-                                builder.append(cell.content)
+
+                                // build prefix annotation
+                                val prefixes = mutableListOf<String>()
+                                if (cell.isHeader || (node.hasHeaderRow && rowIdx == 0) || (node.hasHeaderColumn && idx == 0)) {
+                                    prefixes.add("H")
+                                }
+                                if (cell.colspan > 1 || cell.rowspan > 1) {
+                                    prefixes.add("span=${cell.colspan}x${cell.rowspan}")
+                                }
+                                if (cell.backgroundColor != null) {
+                                    prefixes.add("bg=${cell.backgroundColor.toJson()}")
+                                }
+                                if (cell.width != null || cell.height != null) {
+                                    val w = cell.width?.let { "${it}px" } ?: "auto"
+                                    val h = cell.height?.let { "${it}px" } ?: "auto"
+                                    prefixes.add("size=${w}x${h}")
+                                }
+                                if (prefixes.isNotEmpty()) {
+                                    builder.append('[').append(prefixes.joinToString(",")).append("] ")
+                                }
+
+                                // content or children
+                                if (cell.children.isEmpty()) {
+                                    builder.append(cell.content)
+                                } else {
+                                    cell.children.forEach { it.accept(this) }
+                                }
                             }
                             builder.append("\n")
                         }

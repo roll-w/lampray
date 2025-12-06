@@ -16,9 +16,11 @@
 
 package tech.lamprism.lampray.content.structuraltext.element
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Paragraph element grouping inline children.
@@ -26,8 +28,27 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
  * @author RollW
  */
 data class Paragraph @JvmOverloads constructor(
-    override val children: List<StructuralText> = emptyList()
+    override val children: List<StructuralText> = emptyList(),
+    @field:JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    val alignment: TextAlignment = TextAlignment.LEFT,
 ) : StructuralText {
+    init {
+        // Paragraph should only contain inline children
+        val disallowed = setOf(
+            StructuralTextType.TABLE,
+            StructuralTextType.TABLE_ROW,
+            StructuralTextType.TABLE_CELL,
+            StructuralTextType.DOCUMENT
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=${StructuralTextType.PARAGRAPH}: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.PARAGRAPH
 

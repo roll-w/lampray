@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Code block element which may include language metadata.
@@ -30,6 +31,23 @@ data class CodeBlock @JvmOverloads constructor(
     override val content: String = "",
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        val allowed = setOf(
+            StructuralTextType.BOLD,
+            StructuralTextType.ITALIC,
+            StructuralTextType.UNDERLINE,
+            StructuralTextType.STRIKETHROUGH,
+            StructuralTextType.HIGHLIGHT,
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type !in allowed) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=${StructuralTextType.CODE_BLOCK}: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.CODE_BLOCK
 

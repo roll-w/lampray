@@ -226,6 +226,27 @@
       "disableLineWrap": "禁用自动换行",
       "copyCode": "复制代码",
       "copied": "已复制"
+    },
+    "table": {
+      "insertColumnBefore": "在前面插入列",
+      "insertColumnAfter": "在后面插入列",
+      "deleteColumn": "删除列",
+      "insertRowBefore": "在上方插入行",
+      "insertRowAfter": "在下方插入行",
+      "deleteRow": "删除行",
+      "mergeCells": "合并单元格",
+      "splitCell": "拆分单元格",
+      "toggleHeaderColumn": "切换表头列",
+      "toggleHeaderRow": "切换表头行",
+      "toggleHeaderCell": "切换表头单元格",
+      "deleteTable": "删除表格",
+      "alignment": "对齐方式",
+      "alignLeft": "左对齐",
+      "alignCenter": "居中对齐",
+      "alignRight": "右对齐",
+      "alignJustify": "两端对齐",
+      "backgroundColor": "背景颜色",
+      "noColor": "无颜色"
     }
   }
 }

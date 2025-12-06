@@ -233,6 +233,27 @@
       "disableLineWrap": "Disable line wrap",
       "copyCode": "Copy code",
       "copied": "Copied"
+    },
+    "table": {
+      "insertColumnBefore": "Insert Column Before",
+      "insertColumnAfter": "Insert Column After",
+      "deleteColumn": "Delete Column",
+      "insertRowBefore": "Insert Row Before",
+      "insertRowAfter": "Insert Row After",
+      "deleteRow": "Delete Row",
+      "mergeCells": "Merge Cells",
+      "splitCell": "Split Cell",
+      "toggleHeaderColumn": "Toggle Header Column",
+      "toggleHeaderRow": "Toggle Header Row",
+      "toggleHeaderCell": "Toggle Header Cell",
+      "deleteTable": "Delete Table",
+      "alignment": "Alignment",
+      "alignLeft": "Align Left",
+      "alignCenter": "Align Center",
+      "alignRight": "Align Right",
+      "alignJustify": "Align Justify",
+      "backgroundColor": "Background Color",
+      "noColor": "No Color"
     }
   }
 }

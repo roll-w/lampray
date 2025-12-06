@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Table element grouping rows and cells.
@@ -26,11 +27,33 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
  * @author RollW
  */
 data class Table @JvmOverloads constructor(
-    override val content: String = "",
-    override val children: List<StructuralText> = emptyList()
+    override val children: List<StructuralText> = emptyList(),
+    val hasHeaderColumn: Boolean = false,
+    val hasHeaderRow: Boolean = false,
+    /**
+     * Optional list of column widths in pixels (px).
+     */
+    val columnWidths: List<Double?> = emptyList(),
 ) : StructuralText {
+    init {
+        // Table should primarily contain TableRow children
+        children.forEachIndexed { index, child ->
+            if (child.type != StructuralTextType.TABLE_ROW) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=TABLE: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.TABLE
+
+    /**
+     * Tables do not have direct text content.
+     */
+    override val content: String
+        get() = ""
 
     override fun accept(visitor: StructuralTextVisitor) {
         visitor.visit(this)

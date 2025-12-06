@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Image element represents an image with src, alt and title.
@@ -30,10 +31,18 @@ data class Image @JvmOverloads constructor(
     val alt: String?,
     val title: String?,
     override val content: String = "",
-    override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        if (children.isNotEmpty()) {
+            throw StructuralTextValidationException("Image element must not have children, but found: ${children.map { it.type }}")
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.IMAGE
+
+    override val children: List<StructuralText>
+        get() = emptyList()
 
     override fun accept(visitor: StructuralTextVisitor) {
         visitor.visit(this)
