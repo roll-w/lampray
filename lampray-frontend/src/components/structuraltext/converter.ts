@@ -249,16 +249,19 @@ function handleNodeAttributes(result: StructuralText, node: any): void {
         if (attrs.hasHeaderColumn !== undefined) {
             tableElement.hasHeaderColumn = attrs.hasHeaderColumn
         }
-        if (attrs.columnWidths !== undefined) {
-            tableElement.columnWidths = attrs.columnWidths
+        if (attrs.widths !== undefined) {
+            tableElement.widths = attrs.widths
         }
     }
 
     // Handle table row attributes
     if (node.type === "tableRow") {
         const rowElement = result as TableRowElement
-        if (attrs.rowHeight !== undefined) {
-            rowElement.rowHeight = attrs.rowHeight
+        if (attrs.height !== undefined) {
+            rowElement.height = attrs.height
+        }
+        if (attrs.widths !== undefined) {
+            rowElement.widths = attrs.widths
         }
     }
 
@@ -276,12 +279,6 @@ function handleNodeAttributes(result: StructuralText, node: any): void {
         }
         if (attrs.rowspan !== undefined && attrs.rowspan !== 1) {
             cellElement.rowspan = attrs.rowspan
-        }
-        if (attrs.width !== undefined) {
-            cellElement.width = attrs.colwidth
-        }
-        if (attrs.height !== undefined) {
-            cellElement.height = attrs.height
         }
         // Mark table header cells
         if (node.type === "tableHeader") {
@@ -628,15 +625,18 @@ function buildNodeAttributes(structuralText: StructuralText): any {
             if (table.hasHeaderColumn !== undefined) {
                 attrs.hasHeaderColumn = table.hasHeaderColumn
             }
-            if (table.columnWidths !== undefined) {
-                attrs.columnWidths = table.columnWidths
+            if (table.widths !== undefined) {
+                attrs.widths = table.widths
             }
             break
 
         case StructuralTextType.TABLE_ROW:
             const row = structuralText as TableRowElement
-            if (row.rowHeight !== undefined) {
-                attrs.rowHeight = row.rowHeight
+            if (row.height !== undefined) {
+                attrs.height = row.height
+            }
+            if (row.widths !== undefined) {
+                attrs.widths = row.widths
             }
             break
 
@@ -653,12 +653,6 @@ function buildNodeAttributes(structuralText: StructuralText): any {
             }
             if (cell.rowspan !== undefined && cell.rowspan !== 1) {
                 attrs.rowspan = cell.rowspan
-            }
-            if (cell.width !== undefined) {
-                attrs.width = cell.width
-            }
-            if (cell.height !== undefined) {
-                attrs.height = cell.height
             }
             break
     }

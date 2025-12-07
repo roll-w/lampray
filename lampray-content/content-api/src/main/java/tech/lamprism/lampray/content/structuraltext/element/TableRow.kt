@@ -28,8 +28,15 @@ import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextVal
  */
 data class TableRow @JvmOverloads constructor(
     override val children: List<StructuralText> = emptyList(),
-    /** Row height in pixels (px) */
-    val rowHeight: Double? = null,
+    /**
+     * Row height in pixels (px)
+     */
+    val height: Double? = null,
+    /**
+     * Cell widths in pixels (px) for each cell in this row.
+     * The length should match the number of cells (considering colspan).
+     */
+    val widths: List<Double?>? = null
 ) : StructuralText {
     init {
         children.forEachIndexed { index, child ->

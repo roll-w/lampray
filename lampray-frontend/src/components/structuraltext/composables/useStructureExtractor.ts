@@ -19,8 +19,6 @@ import {StructuralTextType} from "../types"
 
 /**
  * Represents a heading node in the document outline.
- *
- * @author RollW
  */
 export interface OutlineNode {
     /** Unique identifier for the heading */
@@ -53,14 +51,14 @@ function extractTextContent(node: StructuralText): string {
 /**
  * Generates a URL-safe ID from heading text.
  */
-function generateHeadingId(text: string, index: number): string {
+function generateHeadingId(text: string, index: number, level: number): string {
     const sanitized = text
         .toLowerCase()
         .trim()
         .replace(/\s+/g, "-")
         .replace(/[^\w\u4e00-\u9fa5-]/g, "")
 
-    return sanitized ? `heading-${sanitized}` : `heading-${index}`
+    return sanitized ? `heading-${level}-${sanitized}` : `heading-${index}`
 }
 
 /**
@@ -68,8 +66,6 @@ function generateHeadingId(text: string, index: number): string {
  *
  * @param document The StructuralText document to extract outline from
  * @returns Array of top-level outline nodes
- *
- * @author RollW
  */
 export function extractDocumentOutline(document: StructuralText): OutlineNode[] {
     const headings: Array<HeadingElement & { id: string }> = []
@@ -80,7 +76,7 @@ export function extractDocumentOutline(document: StructuralText): OutlineNode[] 
         if (node.type === StructuralTextType.HEADING) {
             const heading = node as HeadingElement
             const text = extractTextContent(heading)
-            const id = generateHeadingId(text, headingIndex++)
+            const id = generateHeadingId(text, headingIndex++, heading.level)
 
             headings.push({
                 ...heading,

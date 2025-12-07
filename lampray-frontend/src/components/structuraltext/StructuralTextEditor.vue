@@ -31,6 +31,8 @@ import {onBeforeUnmount, watch} from "vue";
 import {DefaultKeyboardShortcuts} from "@/components/structuraltext/extensions/DefaultKeyboardShortcuts.ts";
 import {Table, TableCell, TableHeader, TableRow} from "@/components/structuraltext/extensions/TableExtension.ts";
 import {HeadingWithId} from "@/components/structuraltext/extensions/HeadingWithId.ts";
+import {Plugin, PluginKey} from 'prosemirror-state';
+import {CellSelection} from 'prosemirror-tables';
 
 interface Props {
     modelValue?: StructuralText
@@ -52,12 +54,34 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
+/**
+ * Plugin to preserve table cell selection on context menu.
+ * Prevents losing selection when right-clicking on selected cells.
+ */
+const preserveSelectionPlugin = new Plugin({
+    key: new PluginKey('preserveSelection'),
+    props: {
+        handleDOMEvents: {
+            contextmenu: (view, event) => {
+                // Check if we have a cell selection
+                const {selection} = view.state
+                if (selection instanceof CellSelection) {
+                    // Prevent default editor behavior that might clear selection
+                    event.preventDefault()
+                    return true
+                }
+                return false
+            }
+        }
+    }
+})
+
+
 const editor = useEditor({
     extensions: [
         DefaultKeyboardShortcuts,
-        //TableCellTrailingBreakPlugin,
         StarterKit.configure({
-            heading: false, // Disable default heading, use HeadingWithId instead
+            heading: false,
             codeBlock: false,
             link: {
                 openOnClick: false,
@@ -90,12 +114,9 @@ const editor = useEditor({
         Table.configure({
             resizable: true,
             allowTableNodeSelection: true,
-            // HTMLAttributes: {
-            //     class: "border-collapse table-auto w-full"
-            // }
         }),
         TableRow,
-        TableCell.configure({}),
+        TableCell,
         TableHeader,
         Highlight.configure({
             HTMLAttributes: {
@@ -106,13 +127,6 @@ const editor = useEditor({
         TaskItem,
         ListKeyboardShortcuts
     ],
-    editable: props.editable,
-    content: props.modelValue ? convertFromStructuralText(props.modelValue) : "",
-    onUpdate: ({editor}) => {
-        const structuralText = convertToStructuralText(editor)
-        emit("update:modelValue", structuralText)
-        emit("change", structuralText)
-    },
     editorProps: {
         attributes: {
             class: "prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4"
@@ -136,6 +150,19 @@ const editor = useEditor({
                 return false
             }
         }
+    },
+    editable: props.editable,
+    content: props.modelValue ? convertFromStructuralText(props.modelValue) : "",
+    onUpdate: ({editor}) => {
+        const structuralText = convertToStructuralText(editor)
+        emit("update:modelValue", structuralText)
+        emit("change", structuralText)
+    },
+    onCreate: ({editor}) => {
+        // Add custom plugins after editor is created
+        const state = editor.state
+        const plugins = [preserveSelectionPlugin, ...state.plugins]
+        editor.view.updateState(state.reconfigure({plugins}))
     }
 })
 
@@ -286,14 +313,6 @@ onBeforeUnmount(() => {
     @apply bg-blue-100 dark:bg-blue-900;
 }
 
-.editor .ProseMirror-selectednode {
-    @apply outline outline-2 outline-blue-500 outline-offset-[-2px];
-}
-
-.editor table.ProseMirror-selectednode {
-    @apply outline outline-2 outline-blue-500;
-}
-
 .column-resize-handle {
     @apply bg-blue-500 transition-colors;
     bottom: -2px;
@@ -313,4 +332,3 @@ onBeforeUnmount(() => {
     @apply bg-transparent p-0 m-0;
 }
 </style>
-

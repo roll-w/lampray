@@ -19,8 +19,6 @@ import type {Node as ProseMirrorNode} from "@tiptap/pm/model"
 
 /**
  * Custom Heading extension that adds unique IDs to headings for outline navigation.
- *
- * @author RollW
  */
 export const HeadingWithId = TiptapHeading.extend({
     addAttributes() {
@@ -91,6 +89,6 @@ function generateHeadingId(text: string, level: number): string {
         .replace(/\s+/g, "-")
         .replace(/[^\w\u4e00-\u9fa5-]/g, "")
 
-    return sanitized ? `heading-${sanitized}` : `heading-level-${level}`
+    return sanitized ? `heading-${level}-${sanitized}` : `heading-level-${level}`
 }
 

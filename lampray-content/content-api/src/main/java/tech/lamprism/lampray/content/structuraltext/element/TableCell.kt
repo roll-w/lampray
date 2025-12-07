@@ -46,15 +46,7 @@ data class TableCell @JvmOverloads constructor(
     /**
      * Number of rows this cell spans.
      */
-    val rowspan: Int = 1,
-    /**
-     * Optional width in pixels (px).
-     */
-    val width: Double? = null,
-    /**
-     * Optional height in pixels (px)
-     */
-    val height: Double? = null,
+    val rowspan: Int = 1
 ) : StructuralText {
     init {
         // Allow Paragraph, List, Image inside a cell; disallow Table, TableRow, Document directly

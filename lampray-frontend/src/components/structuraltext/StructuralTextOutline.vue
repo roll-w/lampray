@@ -19,14 +19,6 @@ import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue"
 import type {StructuralText} from "./types"
 import {extractDocumentOutline, flattenOutline} from "./composables/useStructureExtractor"
 
-/**
- * StructuralTextOutline component - displays a table of contents sidebar
- * for a StructuralText document with navigation support.
- * Mimics UContentToc appearance with vertical line indicator.
- *
- * @author RollW
- */
-
 interface FlatLink {
     id: string
     text: string
@@ -164,7 +156,9 @@ function updateActiveHeading(id: string) {
 
 // Find the topmost visible heading
 function findTopmostVisibleHeading(): string | null {
-    if (visibleHeadings.value.size === 0) return null
+    if (visibleHeadings.value.size === 0) {
+        return null
+    }
 
     // Find the heading with the smallest index (topmost in document)
     let topmostId: string | null = null
@@ -246,46 +240,41 @@ watch(outline, () => {
 </script>
 
 <template>
-    <div class="pb-3 mb-3">
-        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            {{ title }}
-        </h3>
-        <USeparator/>
-    </div>
-
-    <nav v-if="links.length > 0" class="sticky top-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
-        <div class="relative">
-            <div class="absolute left-0 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"/>
-            <div
-                    class="absolute left-0 w-px transition-all duration-200 ease-out"
-                    :class="colorClasses?.indicator || 'bg-primary'"
-                    :style="indicatorStyle"
-            />
-            <ul ref="linksContainerRef" class="relative space-y-0.5">
-                <li v-for="link in links"
-                    :key="link.id"
-                    :data-link-id="link.id"
-                    :style="{ paddingLeft: `${(link.level - 1) * 0.75}rem` }">
-                    <ULink
-                            :to="`#${link.id}`"
-                            :active="activeId === link.id"
-                            raw
-                            class="block py-1 pl-4 pr-2 text-sm transition-colors duration-200 rounded-r-md"
-                            :active-class="[colorClasses?.text || 'text-primary', 'font-medium'].join(' ')"
-                            inactive-class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                            @click.prevent="scrollToHeading(link.id)">
-                        <span class="block truncate">{{ link.text }}</span>
-                    </ULink>
-                </li>
-            </ul>
+    <div>
+        <div class="pb-3 mb-3">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                {{ title }}
+            </h3>
+            <USeparator/>
         </div>
-    </nav>
 
-    <div
-            v-else
-            class="text-sm text-gray-500 dark:text-gray-400 py-4"
-    >
-        No headings found
+        <nav v-if="links.length > 0" class="sticky top-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
+            <div class="relative">
+                <div class="absolute left-0 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"/>
+                <div
+                        class="absolute left-0 w-px transition-all duration-200 ease-out"
+                        :class="colorClasses?.indicator || 'bg-primary'"
+                        :style="indicatorStyle"
+                />
+                <ul ref="linksContainerRef" class="relative space-y-0.5">
+                    <li v-for="link in links"
+                        :key="link.id"
+                        :data-link-id="link.id"
+                        :style="{ paddingLeft: `${(link.level - 1) * 0.75}rem` }">
+                        <ULink
+                                :to="`#${link.id}`"
+                                :active="activeId === link.id"
+                                raw
+                                class="block py-1 pl-4 pr-2 text-sm transition-colors duration-200 rounded-r-md"
+                                :active-class="[colorClasses?.text || 'text-primary', 'font-medium'].join(' ')"
+                                inactive-class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                                @click.prevent="scrollToHeading(link.id)">
+                            <span class="block truncate">{{ link.text }}</span>
+                        </ULink>
+                    </li>
+                </ul>
+            </div>
+        </nav>
     </div>
 </template>
 

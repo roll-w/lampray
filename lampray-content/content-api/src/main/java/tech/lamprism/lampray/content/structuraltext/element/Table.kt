@@ -31,9 +31,9 @@ data class Table @JvmOverloads constructor(
     val hasHeaderColumn: Boolean = false,
     val hasHeaderRow: Boolean = false,
     /**
-     * Optional list of column widths in pixels (px).
+     * Column widths in pixels (px).
      */
-    val columnWidths: List<Double?> = emptyList(),
+    val widths: List<Double?> = emptyList(),
 ) : StructuralText {
     init {
         // Table should primarily contain TableRow children

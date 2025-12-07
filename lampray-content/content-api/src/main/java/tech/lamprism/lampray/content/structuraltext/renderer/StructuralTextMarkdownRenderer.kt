@@ -207,13 +207,13 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
 
                     // detect advanced attributes that markdown cannot represent
                     var advanced = false
-                    if (node.columnWidths.isNotEmpty()) advanced = true
+                    if (node.widths.isNotEmpty()) advanced = true
                     for (r in rows) {
-                        if (r.rowHeight != null) advanced = true
+                        if (r.height != null) advanced = true
+                        if (r.widths != null) advanced = true
                         for (c in r.children.filterIsInstance<TableCell>()) {
                             if (c.backgroundColor != null) advanced = true
                             if (c.colspan > 1 || c.rowspan > 1) advanced = true
-                            if (c.width != null || c.height != null) advanced = true
                             if (c.isHeader) advanced = true
                         }
                     }
@@ -259,9 +259,9 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
                         // render as HTML table to preserve attributes
                         builder.append("<table>")
                         // colgroup for column widths
-                        if (node.columnWidths.isNotEmpty()) {
+                        if (node.widths.isNotEmpty()) {
                             builder.append("<colgroup>")
-                            for (w in node.columnWidths) {
+                            for (w in node.widths) {
                                 if (w == null) builder.append("<col />")
                                 else builder.append("<col style=\"width:${w}px\" />")
                             }
@@ -269,7 +269,7 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
                         }
                         // rows
                         for ((rowIdx, row) in rows.withIndex()) {
-                            if (row.rowHeight != null) builder.append("<tr style=\"height:${row.rowHeight}px\">")
+                            if (row.height != null) builder.append("<tr style=\"height:${row.height}px\">")
                             else builder.append("<tr>")
                             val cells = row.children.filterIsInstance<TableCell>()
                             for ((colIdx, cell) in cells.withIndex()) {
@@ -286,11 +286,12 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
                                 if (cell.backgroundColor != null) {
                                     styles.add("background:${cell.backgroundColor.toJson()}")
                                 }
-                                if (cell.width != null) {
-                                    styles.add("width:${cell.width}px")
-                                }
-                                if (cell.height != null) {
-                                    styles.add("height:${cell.height}px")
+                                // Cell width from row's widths
+                                if (row.widths != null && colIdx < row.widths.size) {
+                                    val cellWidth = row.widths[colIdx]
+                                    if (cellWidth != null) {
+                                        styles.add("width:${cellWidth}px")
+                                    }
                                 }
                                 if (styles.isNotEmpty()) {
                                     attrs.add("style=\"${styles.joinToString(";")}\"")

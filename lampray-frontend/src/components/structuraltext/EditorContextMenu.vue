@@ -20,6 +20,7 @@ import {computed, ref} from "vue";
 import {useI18n} from "vue-i18n";
 import type {AttributeColor} from "@/components/structuraltext/types";
 import type {ContextMenuItem} from "@nuxt/ui";
+import {BASIC_COLORS} from "@/components/structuraltext/utils/color.ts";
 
 interface Props {
     editor: Editor
@@ -39,18 +40,7 @@ const canSplitCell = computed(() => props.editor.can().splitCell())
 
 const menuOpen = ref(false)
 
-const colors: { name: AttributeColor; class: string }[] = [
-    {name: "red", class: "bg-red-200 dark:bg-red-800"},
-    {name: "yellow", class: "bg-yellow-200 dark:bg-yellow-800"},
-    {name: "green", class: "bg-green-200 dark:bg-green-800"},
-    {name: "blue", class: "bg-blue-200 dark:bg-blue-800"},
-    {name: "pink", class: "bg-pink-200 dark:bg-pink-800"},
-    {name: "orange", class: "bg-orange-200 dark:bg-orange-800"},
-    {name: "purple", class: "bg-purple-200 dark:bg-purple-800"},
-    {name: "lime", class: "bg-lime-200 dark:bg-lime-800"},
-    {name: "teal", class: "bg-teal-200 dark:bg-teal-800"},
-    {name: "cyan", class: "bg-cyan-200 dark:bg-cyan-800"}
-]
+const colors = BASIC_COLORS
 
 function selectColor(color: AttributeColor | null) {
     props.editor.chain().focus().updateAttributes("tableCell", {backgroundColor: color}).run()
@@ -172,7 +162,6 @@ const menuItems = computed(() => {
         <template #color-grid>
             <div class="p-2 space-y-2">
                 <div class="grid grid-cols-6 gap-2">
-
                     <UButton
                             type="button"
                             class="w-6 h-6 rounded-sm border border-default flex items-center justify-center"
@@ -184,14 +173,13 @@ const menuItems = computed(() => {
                             @click="selectColor(null)">
                         <span class="text-xs text-muted">×</span>
                     </UButton>
-                    <!-- TODO: hover class mapping-->
                     <UButton
                             v-for="color in colors"
                             :key="color.name"
                             type="button"
                             :aria-label="color.name"
-                            class="w-6 h-6 rounded-sm border border-default "
-                            :class="color.class"
+                            class="w-6 h-6 rounded-sm border border-default"
+                            :class="[color.backgroundClass, color.hoverClass]"
                             variant="ghost"
                             color="neutral"
                             size="sm"

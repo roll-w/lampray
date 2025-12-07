@@ -87,8 +87,6 @@ export enum ListType {
 
 /**
  * List item element - an item in a list.
- *
- * @author RollW
  */
 export interface ListItemElement extends StructuralText {
     type: StructuralTextType.LIST_ITEM
@@ -232,8 +230,8 @@ export interface TableElement extends StructuralText {
     type: StructuralTextType.TABLE
     hasHeaderColumn?: boolean
     hasHeaderRow?: boolean
-    /** Optional list of column widths in pixels (px). */
-    columnWidths?: (number | null)[]
+    /** Column widths in pixels (px). */
+    widths?: (number | null)[]
 }
 
 /**
@@ -242,7 +240,9 @@ export interface TableElement extends StructuralText {
 export interface TableRowElement extends StructuralText {
     type: StructuralTextType.TABLE_ROW
     /** Row height in pixels (px) */
-    rowHeight?: number
+    height?: number
+    /** Cell widths in pixels (px) for each cell in this row */
+    widths?: (number | null)[]
 }
 
 /**
@@ -258,10 +258,6 @@ export interface TableCellElement extends StructuralText {
     colspan?: number
     /** Number of rows this cell spans. */
     rowspan?: number
-    /** Optional width in pixels (px). */
-    width?: number
-    /** Optional height in pixels (px) */
-    height?: number
 }
 
 /**

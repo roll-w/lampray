@@ -21,12 +21,10 @@ import {
     TableRow as TiptapTableRow
 } from "@tiptap/extension-table"
 import {mergeAttributes} from "@tiptap/core"
-import type {AttributeColor, TextAlignment} from "@/components/structuraltext/types"
+import {getBackgroundColorClass} from "@/components/structuraltext/utils/color.ts"
 
 /**
  * Enhanced Table extension with custom attributes.
- *
- * @author RollW
  */
 export const Table = TiptapTable.extend({
     addAttributes() {
@@ -56,18 +54,18 @@ export const Table = TiptapTable.extend({
                     }
                 }
             },
-            columnWidths: {
+            widths: {
                 default: null,
                 parseHTML: element => {
-                    const widths = element.getAttribute("data-column-widths")
+                    const widths = element.getAttribute("data-widths")
                     return widths ? JSON.parse(widths) : null
                 },
                 renderHTML: attributes => {
-                    if (!attributes.columnWidths) {
+                    if (!attributes.widths) {
                         return {}
                     }
                     return {
-                        "data-column-widths": JSON.stringify(attributes.columnWidths)
+                        "data-widths": JSON.stringify(attributes.widths)
                     }
                 }
             }
@@ -76,27 +74,40 @@ export const Table = TiptapTable.extend({
 })
 
 /**
- * Enhanced TableRow extension with row height support.
- *
- * @author RollW
+ * Enhanced TableRow extension with row height and cell widths support.
  */
 export const TableRow = TiptapTableRow.extend({
     addAttributes() {
         return {
             ...this.parent?.(),
-            rowHeight: {
+            height: {
                 default: null,
                 parseHTML: element => {
                     const height = element.getAttribute("data-row-height")
                     return height ? parseFloat(height) : null
                 },
                 renderHTML: attributes => {
-                    if (!attributes.rowHeight) {
+                    if (!attributes.height) {
                         return {}
                     }
                     return {
-                        "data-row-height": attributes.rowHeight,
-                        style: `height: ${attributes.rowHeight}px`
+                        "data-row-height": attributes.height,
+                        style: `height: ${attributes.height}px`
+                    }
+                }
+            },
+            widths: {
+                default: null,
+                parseHTML: element => {
+                    const widths = element.getAttribute("data-widths")
+                    return widths ? JSON.parse(widths) : null
+                },
+                renderHTML: attributes => {
+                    if (!attributes.widths) {
+                        return {}
+                    }
+                    return {
+                        "data-widths": JSON.stringify(attributes.widths)
                     }
                 }
             }
@@ -106,8 +117,6 @@ export const TableRow = TiptapTableRow.extend({
 
 /**
  * Enhanced TableCell extension with alignment, background color, and span support.
- *
- * @author RollW
  */
 export const TableCell = TiptapTableCell.extend({
     addAttributes() {
@@ -157,42 +166,6 @@ export const TableCell = TiptapTableCell.extend({
                     }
                 }
             },
-            width: {
-                default: null,
-                parseHTML: element => {
-                    const width = element.getAttribute("data-width")
-                    if (width) {
-                        return parseFloat(width)
-                    }
-                    const widthLegacy = element.getAttribute("colwidth")
-                    return widthLegacy ? parseFloat(widthLegacy) : null
-                },
-                renderHTML: attributes => {
-                    if (!attributes.width) {
-                        return {}
-                    }
-                    return {
-                        "data-width": attributes.width,
-                        style: `width: ${attributes.width}px`
-                    }
-                }
-            },
-            height: {
-                default: null,
-                parseHTML: element => {
-                    const height = element.getAttribute("data-height")
-                    return height ? parseFloat(height) : null
-                },
-                renderHTML: attributes => {
-                    if (!attributes.height) {
-                        return {}
-                    }
-                    return {
-                        "data-height": attributes.height,
-                        style: `height: ${attributes.height}px`
-                    }
-                }
-            },
             isHeader: {
                 default: false,
                 parseHTML: element => element.getAttribute("data-is-header") === "true",
@@ -225,8 +198,6 @@ export const TableCell = TiptapTableCell.extend({
 
 /**
  * Enhanced TableHeader extension with alignment and background color support.
- *
- * @author RollW
  */
 export const TableHeader = TiptapTableHeader.extend({
     addAttributes() {
@@ -283,8 +254,8 @@ export const TableHeader = TiptapTableHeader.extend({
                     if (width) {
                         return parseFloat(width)
                     }
-                    const widthLegacy = element.getAttribute("colwidth")
-                    return widthLegacy ? parseFloat(widthLegacy) : null
+                    const colwidth = element.getAttribute("colwidth")
+                    return colwidth ? parseFloat(colwidth) : null
                 },
                 renderHTML: attributes => {
                     if (!attributes.width) {
@@ -292,6 +263,7 @@ export const TableHeader = TiptapTableHeader.extend({
                     }
                     return {
                         "data-width": attributes.width,
+                        "colwidth": attributes.width,
                         style: `width: ${attributes.width}px`
                     }
                 }
@@ -329,49 +301,4 @@ export const TableHeader = TiptapTableHeader.extend({
     }
 })
 
-function getAlignmentClass(alignment: TextAlignment): string {
-    const alignmentMap: Record<TextAlignment, string> = {
-        LEFT: "text-left",
-        CENTER: "text-center",
-        RIGHT: "text-right",
-        JUSTIFY: "text-justify"
-    }
-    return alignmentMap[alignment] || "text-left"
-}
-
-function getBackgroundColorClass(color: AttributeColor): string {
-    const colorMap: Record<string, string> = {
-        "yellow": "bg-yellow-200 dark:bg-yellow-800",
-        "green": "bg-green-200 dark:bg-green-800",
-        "blue": "bg-blue-200 dark:bg-blue-800",
-        "pink": "bg-pink-200 dark:bg-pink-800",
-        "orange": "bg-orange-200 dark:bg-orange-800",
-        "purple": "bg-purple-200 dark:bg-purple-800",
-        "red": "bg-red-200 dark:bg-red-800",
-        "lime": "bg-lime-200 dark:bg-lime-800",
-        "teal": "bg-teal-200 dark:bg-teal-800",
-        "cyan": "bg-cyan-200 dark:bg-cyan-800",
-        "light-yellow": "bg-yellow-100 dark:bg-yellow-900",
-        "light-green": "bg-green-100 dark:bg-green-900",
-        "light-blue": "bg-blue-100 dark:bg-blue-900",
-        "light-pink": "bg-pink-100 dark:bg-pink-900",
-        "light-orange": "bg-orange-100 dark:bg-orange-900",
-        "light-purple": "bg-purple-100 dark:bg-purple-900",
-        "light-red": "bg-red-100 dark:bg-red-900",
-        "light-lime": "bg-lime-100 dark:bg-lime-900",
-        "light-teal": "bg-teal-100 dark:bg-teal-900",
-        "light-cyan": "bg-cyan-100 dark:bg-cyan-900",
-        "dark-yellow": "bg-yellow-300 dark:bg-yellow-700",
-        "dark-green": "bg-green-300 dark:bg-green-700",
-        "dark-blue": "bg-blue-300 dark:bg-blue-700",
-        "dark-pink": "bg-pink-300 dark:bg-pink-700",
-        "dark-orange": "bg-orange-300 dark:bg-orange-700",
-        "dark-purple": "bg-purple-300 dark:bg-purple-700",
-        "dark-red": "bg-red-300 dark:bg-red-700",
-        "dark-lime": "bg-lime-300 dark:bg-lime-700",
-        "dark-teal": "bg-teal-300 dark:bg-teal-700",
-        "dark-cyan": "bg-cyan-300 dark:bg-cyan-700"
-    }
-    return colorMap[color] || ""
-}
 

@@ -171,12 +171,17 @@ class SimpleStructuralTextRenderer: StructuralTextRenderer {
                     rows.forEachIndexed { rowIdx, row ->
                         val cells = row.children.filterIsInstance<TableCell>()
                         if (cells.isNotEmpty()) {
-                            cells.forEachIndexed { idx, cell ->
-                                if (idx > 0) builder.append(' ')
+                            // Row-level height
+                            if (row.height != null) {
+                                builder.append("[row h=${row.height}px] ")
+                            }
+
+                            cells.forEachIndexed { cellIdx, cell ->
+                                if (cellIdx > 0) builder.append(' ')
 
                                 // build prefix annotation
                                 val prefixes = mutableListOf<String>()
-                                if (cell.isHeader || (node.hasHeaderRow && rowIdx == 0) || (node.hasHeaderColumn && idx == 0)) {
+                                if (cell.isHeader || (node.hasHeaderRow && rowIdx == 0) || (node.hasHeaderColumn && cellIdx == 0)) {
                                     prefixes.add("H")
                                 }
                                 if (cell.colspan > 1 || cell.rowspan > 1) {
@@ -185,10 +190,12 @@ class SimpleStructuralTextRenderer: StructuralTextRenderer {
                                 if (cell.backgroundColor != null) {
                                     prefixes.add("bg=${cell.backgroundColor.toJson()}")
                                 }
-                                if (cell.width != null || cell.height != null) {
-                                    val w = cell.width?.let { "${it}px" } ?: "auto"
-                                    val h = cell.height?.let { "${it}px" } ?: "auto"
-                                    prefixes.add("size=${w}x${h}")
+                                // Cell width from row's widths
+                                if (row.widths != null && cellIdx < row.widths.size) {
+                                    val cellWidth = row.widths[cellIdx]
+                                    if (cellWidth != null) {
+                                        prefixes.add("w=${cellWidth}px")
+                                    }
                                 }
                                 if (prefixes.isNotEmpty()) {
                                     builder.append('[').append(prefixes.joinToString(",")).append("] ")
