@@ -241,14 +241,14 @@ watch(outline, () => {
 
 <template>
     <div>
-        <div class="pb-3 mb-3">
+        <div class="pb-3">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                 {{ title }}
             </h3>
             <USeparator/>
         </div>
 
-        <nav v-if="links.length > 0" class="sticky top-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
+        <nav v-if="links.length > 0" class="sticky top-6 overflow-y-auto h-[calc(90vh-50px)]">
             <div class="relative">
                 <div class="absolute left-0 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"/>
                 <div
@@ -258,6 +258,7 @@ watch(outline, () => {
                 />
                 <ul ref="linksContainerRef" class="relative space-y-0.5">
                     <li v-for="link in links"
+                        class="list-none"
                         :key="link.id"
                         :data-link-id="link.id"
                         :style="{ paddingLeft: `${(link.level - 1) * 0.75}rem` }">

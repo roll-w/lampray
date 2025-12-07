@@ -33,6 +33,10 @@ const routes: RouteRecordRaw[] = [
                 component: () => import("@/views/userfaced/user/UserHome.vue"),
             },
             {
+                path: "/article/editor",
+                name: RouteName.ARTICLE_EDITOR,
+                component: () => import("@/views/userfaced/article/ArticleEditor.vue"),
+            }, {
                 path: "/editor",
                 name: "editor",
                 component: () => import("@/components/structuraltext/EditorPreview.vue"),
@@ -132,9 +136,9 @@ const router = createRouter({
 })
 
 if (import.meta.env.DEV) {
-    const layout = routes.find(r => r.path === "/layout");
+    const layout = routes.find(r => r.name === "user-layout")
     layout!.children!.push({
-        path: "editor",
+        path: "/editor",
         name: "editor",
         component: () => import("@/components/structuraltext/EditorPreview.vue"),
     });

@@ -33,7 +33,6 @@ userStore.load()
 
 <template>
     <UApp :toaster="toaster" :locale="uLocale">
-        <div class="relative">
             <UHeader :toggle="false" :ui="{container: 'max-w-full'}">
                 <template #title>
                     <div class="flex items-center">
@@ -48,7 +47,6 @@ userStore.load()
                     <LoginOrUser/>
                 </template>
             </UHeader>
-        </div>
         <UMain>
             <RouterView/>
         </UMain>

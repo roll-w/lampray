@@ -80,7 +80,6 @@ const formattedJson = computed(() => {
                 </div>
             </div>
 
-            <!-- Document Outline Sidebar -->
             <aside class="hidden xl:block">
                 <div class="sticky top-6">
                     <StructuralTextOutline

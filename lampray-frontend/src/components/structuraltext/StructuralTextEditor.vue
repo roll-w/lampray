@@ -18,12 +18,12 @@
 import {EditorContent, useEditor} from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-import Highlight from "@tiptap/extension-highlight"
+import Highlight from "@tiptap/extension-highlight";
 import {CodeBlock} from "@/components/structuraltext/extensions/CodeBlock";
 import {TaskItem, TaskList} from "@/components/structuraltext/extensions/TaskList";
 import {ListKeyboardShortcuts} from "@/components/structuraltext/extensions/ListKeyboardShortcuts";
 import EditorToolbar from "@/components/structuraltext/EditorToolbar.vue";
-import BubbleMenu from "@/components/structuraltext/EditorBubbleMenu.vue";
+import EditorBubbleMenu from "@/components/structuraltext/EditorBubbleMenu.vue";
 import EditorContextMenu from "@/components/structuraltext/EditorContextMenu.vue";
 import type {StructuralText} from "@/components/structuraltext/types";
 import {convertFromStructuralText, convertToStructuralText} from "@/components/structuraltext/converter";
@@ -31,35 +31,56 @@ import {onBeforeUnmount, watch} from "vue";
 import {DefaultKeyboardShortcuts} from "@/components/structuraltext/extensions/DefaultKeyboardShortcuts.ts";
 import {Table, TableCell, TableHeader, TableRow} from "@/components/structuraltext/extensions/TableExtension.ts";
 import {HeadingWithId} from "@/components/structuraltext/extensions/HeadingWithId.ts";
-import {Plugin, PluginKey} from 'prosemirror-state';
-import {CellSelection} from 'prosemirror-tables';
+import {Plugin, PluginKey} from "@tiptap/pm/state";
+import {CellSelection} from "@tiptap/pm/tables";
+import StructuralTextOutline from "@/components/structuraltext/StructuralTextOutline.vue";
 
 interface Props {
     modelValue?: StructuralText
-    editable?: boolean
+    editable: boolean
     placeholder?: string
     showToolbar?: boolean
-}
-
-interface Emits {
-    (e: "update:modelValue", value: StructuralText): void
-    (e: "change", value: StructuralText): void
+    showOutline?: boolean
+    outlineTitle?: string
+    outlineColor?: "primary" | "secondary" | "success" | "info" | "warning" | "error" | "neutral"
+    variant?: "ghost" | "outline"
+    ui?: {
+        content?: {
+            root?: string
+        },
+        toolbar?: {
+            root?: string
+            // When true, toolbar menu items will be centered horizontally
+            centered?: boolean
+        },
+        outline?: {
+            root?: string
+        }
+    }
 }
 
 const props = withDefaults(defineProps<Props>(), {
     editable: true,
     placeholder: "",
-    showToolbar: true
+    showToolbar: true,
+    showOutline: false,
+    outlineTitle: 'Outline',
 })
 
 const emit = defineEmits<Emits>()
+
+interface Emits {
+    (e: "update:modelValue", value: StructuralText): void
+
+    (e: "change", value: StructuralText): void
+}
 
 /**
  * Plugin to preserve table cell selection on context menu.
  * Prevents losing selection when right-clicking on selected cells.
  */
 const preserveSelectionPlugin = new Plugin({
-    key: new PluginKey('preserveSelection'),
+    key: new PluginKey("preserveSelection"),
     props: {
         handleDOMEvents: {
             contextmenu: (view, event) => {
@@ -159,7 +180,6 @@ const editor = useEditor({
         emit("change", structuralText)
     },
     onCreate: ({editor}) => {
-        // Add custom plugins after editor is created
         const state = editor.state
         const plugins = [preserveSelectionPlugin, ...state.plugins]
         editor.view.updateState(state.reconfigure({plugins}))
@@ -187,12 +207,41 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="editor border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-950">
-        <EditorToolbar v-if="showToolbar && editor" :editor="editor"/>
-        <BubbleMenu v-if="editor" :editor="editor" :editable="editable"/>
-        <EditorContextMenu v-if="editor" :editor="editor" :editable="editable">
-            <EditorContent :editor="editor"/>
-        </EditorContextMenu>
+    <div>
+        <EditorToolbar v-if="showToolbar && editor" :editor="editor"
+                       :sticky="true"
+                       :class="{[ui?.toolbar?.root || '']: ui && ui!.toolbar && ui!.toolbar.root}"
+                       :centered="ui && ui.toolbar ? ui.toolbar.centered : false"/>
+        <div class="flex relative">
+            <div class="mx-auto max-w-4xl px-4">
+                <slot name="before-content"/>
+                <EditorBubbleMenu v-if="editor" :editor="editor" :editable="editable"/>
+                <EditorDragHandle v-if="editor" :editor="editor"/>
+                <EditorContextMenu v-if="editor" :editor="editor" :editable="editable">
+                    <div :class="{'px-5': props.editable, [ui?.content?.root || '']: ui && ui!.content && ui!.content.root}">
+                        <EditorContent :editor="editor" class="editor"/>
+                    </div>
+                </EditorContextMenu>
+            </div>
+
+            <!--TODO: fix aside-->
+            <aside v-if="showOutline" class="hidden xl:block fixed right-4 w-72 z-30" :class="ui?.outline?.root || ''">
+                <div class="flex flex-col bg-transparent">
+                    <div class="flex-1 overflow-auto">
+                        <StructuralTextOutline
+                                color="primary"
+                                size="sm"
+                                :document="modelValue"
+                                :title="outlineTitle"
+                        />
+                    </div>
+                    <div>
+                        <slot name="outline-bottom"/>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
     </div>
 </template>
 
@@ -327,8 +376,12 @@ onBeforeUnmount(() => {
     cursor: col-resize;
 }
 
-/* Math block styles */
 .editor .math-block pre {
     @apply bg-transparent p-0 m-0;
 }
+
+.editor .ProseMirror-selectednode:not(img):not(pre):not([data-node-view-wrapper]) {
+    @apply bg-primary/20;
+}
+
 </style>

@@ -27,6 +27,9 @@ export const RouteName = {
 
     USER_SPACE: "user-space",
 
+    ARTICLE_EDITOR: "article-editor",
+
+
     ADMIN_HOME: "admin-home",
     ADMIN_USER_LIST: "admin-user-list",
     ADMIN_USER_DETAIL: "admin-user-detail",

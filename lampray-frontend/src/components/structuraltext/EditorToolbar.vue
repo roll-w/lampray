@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import type {Editor} from "@tiptap/core";
-import {computed, ref} from "vue";
+import {computed, nextTick, onBeforeUnmount, onMounted, ref} from "vue";
 import {useEditorActions} from "@/components/structuraltext/composables/useEditorActions";
 import {useI18n} from "vue-i18n";
 import LinkModal from "@/components/structuraltext/modals/LinkModal.vue";
@@ -24,9 +24,16 @@ import ImageModal from "@/components/structuraltext/modals/ImageModal.vue";
 
 interface Props {
     editor: Editor;
+    // When true, toolbar menu items will be centered horizontally
+    centered?: boolean;
+    // When true, toolbar will stick to top of viewport when scrolling
+    sticky?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    centered: false,
+    sticky: false
+});
 const {t} = useI18n();
 
 const {
@@ -142,16 +149,68 @@ const isOrderedList = computed(() => props.editor.isActive("orderedList"));
 const isTaskList = computed(() => props.editor.isActive("taskList"));
 const isBlockquote = computed(() => props.editor.isActive("blockquote"));
 const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
+
+const toolbarClasses = computed(() => {
+    return [
+        "flex flex-wrap gap-1 p-2",
+        {"justify-center": props.centered, "bg-default/75 backdrop-blur-sm sticky z-40": props.sticky,}
+    ];
+});
+
+const toolbarRoot = ref<HTMLElement | null>(null)
+let resizeObserver: ResizeObserver | null = null
+
+function setToolbarHeight(height: number) {
+    if (typeof document === 'undefined') {
+        return
+    }
+    document.documentElement.style.setProperty('--toolbar-height', `${Math.ceil(height)}px`)
+}
+
+function measureToolbar() {
+    const el = toolbarRoot.value
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    setToolbarHeight(rect.height)
+}
+
+onMounted(() => {
+    nextTick(() => {
+        // Initial measure
+        try {
+            measureToolbar()
+        } catch (e) {
+        }
+        if (typeof ResizeObserver !== 'undefined' && toolbarRoot.value) {
+            resizeObserver = new ResizeObserver(() => measureToolbar())
+            resizeObserver.observe(toolbarRoot.value)
+        }
+    })
+})
+
+onBeforeUnmount(() => {
+    if (resizeObserver) {
+        try {
+            resizeObserver.disconnect()
+        } catch (e) {
+        }
+        resizeObserver = null
+    }
+    // When toolbar is removed, set toolbar-height to 0 to avoid leaving stale value
+    try {
+        setToolbarHeight(0)
+    } catch (e) {
+    }
+})
 </script>
 
 <template>
-    <div class="flex flex-wrap gap-1 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-        <!-- Text formatting -->
+    <div :class="toolbarClasses" ref="toolbarRoot">
         <div class="flex gap-1">
             <UTooltip :text="t('editor.toolbar.bold')">
                 <UButton
-                        :variant="isBold ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isBold ? 'soft' : 'ghost'"
+                        :color="isBold ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-bold"
                         @click="toggleBold"
@@ -159,8 +218,8 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.italic')">
                 <UButton
-                        :variant="isItalic ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isItalic ? 'soft' : 'ghost'"
+                        :color="isItalic ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-italic"
                         @click="toggleItalic"
@@ -168,8 +227,8 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.underline')">
                 <UButton
-                        :variant="isUnderline ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isUnderline ? 'soft' : 'ghost'"
+                        :color="isUnderline ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-underline"
                         @click="toggleUnderline"
@@ -177,8 +236,8 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.strikethrough')">
                 <UButton
-                        :variant="isStrike ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isStrike ? 'soft' : 'ghost'"
+                        :color="isStrike ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-strikethrough"
                         @click="toggleStrike"
@@ -186,8 +245,8 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.highlight')">
                 <UButton
-                        :variant="isHighlight ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isHighlight ? 'soft' : 'ghost'"
+                        :color="isHighlight ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-highlighter"
                         @click="toggleHighlight"
@@ -195,8 +254,8 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.inlineCode')">
                 <UButton
-                        :variant="isCode ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isCode ? 'soft' : 'ghost'"
+                        :color="isCode ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-code"
                         @click="toggleCode"
@@ -221,8 +280,8 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
 
             <UTooltip :text="t('editor.toolbar.bulletList')">
                 <UButton
-                        :variant="isBulletList ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isBulletList ? 'soft' : 'ghost'"
+                        :color="isBulletList ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-list"
                         @click="toggleBulletList"
@@ -230,8 +289,8 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.orderedList')">
                 <UButton
-                        :variant="isOrderedList ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isOrderedList ? 'soft' : 'ghost'"
+                        :color="isOrderedList ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-list-ordered"
                         @click="toggleOrderedList"
@@ -239,8 +298,8 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.taskList')">
                 <UButton
-                        :variant="isTaskList ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isTaskList ? 'soft' : 'ghost'"
+                        :color="isTaskList ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-list-checks"
                         @click="toggleTaskList"
@@ -248,8 +307,8 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.blockquote')">
                 <UButton
-                        :variant="isBlockquote ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isBlockquote ? 'soft' : 'ghost'"
+                        :color="isBlockquote ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-quote"
                         @click="toggleBlockquote"
@@ -257,8 +316,8 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.codeBlock')">
                 <UButton
-                        :variant="isCodeBlock ? 'solid' : 'ghost'"
-                        color="neutral"
+                        :variant="isCodeBlock ? 'soft' : 'ghost'"
+                        :color="isCodeBlock ? 'primary' : 'neutral'"
                         size="sm"
                         icon="i-lucide-code-2"
                         @click="toggleCodeBlock"
@@ -320,4 +379,3 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
         />
     </div>
 </template>
-
