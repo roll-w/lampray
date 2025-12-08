@@ -58,14 +58,15 @@ function onClick() {
                 :editor="editor"
                 :on-node-change="onNodeChange"
                 @click="onClick"
-                class="hidden sm:flex items-center justify-center transition-all duration-200 ease-out"
+                class="hidden sm:flex items-center justify-center transition-all duration-200 ease-out pe-4"
     >
         <UButton
                 type="button"
                 variant="ghost"
                 color="neutral"
                 size="sm"
-                class="cursor-grab px-1"
+                square
+                class="cursor-grab"
                 icon="i-lucide-grip-vertical"
         />
     </DragHandle>

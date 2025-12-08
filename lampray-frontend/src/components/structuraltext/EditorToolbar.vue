@@ -153,7 +153,7 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
 const toolbarClasses = computed(() => {
     return [
         "flex flex-wrap gap-1 p-2",
-        {"justify-center": props.centered, "bg-default/75 backdrop-blur-sm sticky z-40": props.sticky,}
+        {"justify-center": props.centered, "bg-default/75 backdrop-blur sticky z-40": props.sticky,}
     ];
 });
 

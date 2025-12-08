@@ -213,12 +213,12 @@ onBeforeUnmount(() => {
                        :class="{[ui?.toolbar?.root || '']: ui && ui!.toolbar && ui!.toolbar.root}"
                        :centered="ui && ui.toolbar ? ui.toolbar.centered : false"/>
         <div class="flex relative">
-            <div class="mx-auto max-w-4xl px-4">
+            <div class="mx-auto px-4">
                 <slot name="before-content"/>
                 <EditorBubbleMenu v-if="editor" :editor="editor" :editable="editable"/>
                 <EditorDragHandle v-if="editor" :editor="editor"/>
                 <EditorContextMenu v-if="editor" :editor="editor" :editable="editable">
-                    <div :class="{'px-5': props.editable, [ui?.content?.root || '']: ui && ui!.content && ui!.content.root}">
+                    <div :class="{[ui?.content?.root || '']: ui && ui!.content && ui!.content.root}">
                         <EditorContent :editor="editor" class="editor"/>
                     </div>
                 </EditorContextMenu>
@@ -230,7 +230,6 @@ onBeforeUnmount(() => {
                     <div class="flex-1 overflow-auto">
                         <StructuralTextOutline
                                 color="primary"
-                                size="sm"
                                 :document="modelValue"
                                 :title="outlineTitle"
                         />

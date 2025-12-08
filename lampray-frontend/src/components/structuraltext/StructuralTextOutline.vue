@@ -32,6 +32,11 @@ interface Props {
     title?: string
     /** Color theme for links */
     color?: "primary" | "secondary" | "success" | "info" | "warning" | "error" | "neutral"
+
+    ui?: {
+        title?: string
+        container?: string
+    }
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -44,7 +49,6 @@ const emit = defineEmits<{
     move: [id: string]
 }>()
 
-// Extract outline from document
 const outline = computed(() => {
     if (!props.document) return []
     return extractDocumentOutline(props.document)
@@ -52,7 +56,6 @@ const outline = computed(() => {
 
 const flatOutline = computed(() => flattenOutline(outline.value))
 
-// Convert to flat links for rendering
 const links = computed<FlatLink[]>(() => {
     return flatOutline.value.map(node => ({
         id: node.id,
@@ -61,24 +64,22 @@ const links = computed<FlatLink[]>(() => {
     }))
 })
 
-// Track active heading
 const activeId = ref<string>("")
 const activeIndex = ref<number>(-1)
 const visibleHeadings = ref<Set<string>>(new Set())
 
-// Refs for DOM elements
 const linksContainerRef = ref<HTMLElement | null>(null)
 
 // Calculate indicator position and height based on actual DOM element
 const indicatorStyle = computed(() => {
     if (activeIndex.value < 0 || !linksContainerRef.value) {
-        return { display: 'none' }
+        return {display: 'none'}
     }
 
     // Find the active link element
     const activeLinkElement = linksContainerRef.value.querySelector(`[data-link-id="${activeId.value}"]`)
     if (!activeLinkElement) {
-        return { display: 'none' }
+        return {display: 'none'}
     }
 
     // Get actual position and height from DOM
@@ -94,7 +95,6 @@ const indicatorStyle = computed(() => {
     }
 })
 
-// Color classes
 const colorClasses = computed(() => {
     const map: Record<string, { text: string, indicator: string }> = {
         primary: {
@@ -129,7 +129,6 @@ const colorClasses = computed(() => {
     return map[props.color] || map.primary
 })
 
-// Scroll to heading smoothly
 function scrollToHeading(id: string) {
     const element = document.getElementById(id)
     if (element) {
@@ -140,7 +139,6 @@ function scrollToHeading(id: string) {
     }
 }
 
-// Update active heading
 function updateActiveHeading(id: string) {
     activeId.value = id
     activeIndex.value = links.value.findIndex(link => link.id === id)
@@ -242,19 +240,20 @@ watch(outline, () => {
 <template>
     <div>
         <div class="pb-3">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3"
+                :class="[props.ui?.title || '']">
                 {{ title }}
             </h3>
             <USeparator/>
         </div>
 
-        <nav v-if="links.length > 0" class="sticky top-6 overflow-y-auto h-[calc(90vh-50px)]">
+        <nav v-if="links.length > 0" class="sticky top-6 overflow-y-auto"
+             :class="[props.ui?.container || '']">
             <div class="relative">
                 <div class="absolute left-0 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"/>
-                <div
-                        class="absolute left-0 w-px transition-all duration-200 ease-out"
-                        :class="colorClasses?.indicator || 'bg-primary'"
-                        :style="indicatorStyle"
+                <div class="absolute left-0 w-px transition-all duration-200 ease-out"
+                     :class="colorClasses?.indicator || 'bg-primary'"
+                     :style="indicatorStyle"
                 />
                 <ul ref="linksContainerRef" class="relative space-y-0.5">
                     <li v-for="link in links"
@@ -278,4 +277,3 @@ watch(outline, () => {
         </nav>
     </div>
 </template>
-
