@@ -238,7 +238,7 @@ watch(outline, () => {
 </script>
 
 <template>
-    <div>
+    <div class="flex flex-col">
         <div class="pb-3">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3"
                 :class="[props.ui?.title || '']">
@@ -247,7 +247,7 @@ watch(outline, () => {
             <USeparator/>
         </div>
 
-        <nav v-if="links.length > 0" class="sticky top-6 overflow-y-auto"
+        <nav v-if="links.length > 0" class="flex-1 overflow-y-auto min-h-0 max-h-[70vh] pr-2"
              :class="[props.ui?.container || '']">
             <div class="relative">
                 <div class="absolute left-0 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"/>
@@ -274,6 +274,10 @@ watch(outline, () => {
                     </li>
                 </ul>
             </div>
+            <slot name="section-bottom"/>
         </nav>
+        <div class="flex-1">
+            <slot name="footer"/>
+        </div>
     </div>
 </template>

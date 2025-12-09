@@ -43,29 +43,16 @@ const handleChange = (value: StructuralText) => {
                     root: 'top-[calc(var(--ui-header-height)+var(--toolbar-height))]',
                 }}"
         >
+            <template #toolbar-menu-end>
+
+            </template>
+
             <template #before-content>
                 <div class="p-4 w-full md:w-[85vw] lg:w-[50vw] mx-auto">
                     <input type="text"
                            placeholder="Type your article title here..."
                            class="w-full h-12 text-3xl font-bold outline-none border-none
                            focus:ring-0 focus:outline-none bg-transparent"/>
-                </div>
-            </template>
-
-            <template #outline-bottom>
-                <div>
-                    <UCard>
-                        <template #header>
-                            <h3 class="text-lg font-medium">文章大纲</h3>
-                        </template>
-                        <template #body>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">
-                                这里显示文章的大纲信息，帮助你快速导航和了解文章结构。
-                            </div>
-                        </template>
-
-                    </UCard>
-
                 </div>
             </template>
         </StructuralTextEditor>

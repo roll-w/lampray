@@ -365,6 +365,7 @@ onBeforeUnmount(() => {
                         @click="insertHorizontalRule"
                 />
             </UTooltip>
+            <slot name="menu-end"/>
         </div>
 
         <LinkModal

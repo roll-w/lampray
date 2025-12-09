@@ -211,7 +211,11 @@ onBeforeUnmount(() => {
         <EditorToolbar v-if="showToolbar && editor" :editor="editor"
                        :sticky="true"
                        :class="{[ui?.toolbar?.root || '']: ui && ui!.toolbar && ui!.toolbar.root}"
-                       :centered="ui && ui.toolbar ? ui.toolbar.centered : false"/>
+                       :centered="ui && ui.toolbar ? ui.toolbar.centered : false">
+            <template #menu-end>
+                <slot name="toolbar-menu-end"/>
+            </template>
+        </EditorToolbar>
         <div class="flex relative">
             <div class="mx-auto px-4">
                 <slot name="before-content"/>
@@ -226,18 +230,16 @@ onBeforeUnmount(() => {
 
             <!--TODO: fix aside-->
             <aside v-if="showOutline" class="hidden xl:block fixed right-4 w-72 z-30" :class="ui?.outline?.root || ''">
-                <div class="flex flex-col bg-transparent">
-                    <div class="flex-1 overflow-auto">
-                        <StructuralTextOutline
-                                color="primary"
-                                :document="modelValue"
-                                :title="outlineTitle"
-                        />
-                    </div>
-                    <div>
+                <StructuralTextOutline color="primary"
+                                       :document="modelValue"
+                                       :title="outlineTitle">
+                    <template #section-bottom>
                         <slot name="outline-bottom"/>
-                    </div>
-                </div>
+                    </template>
+                    <template #footer>
+                        <slot name="outline-footer"/>
+                    </template>
+                </StructuralTextOutline>
             </aside>
         </div>
 
