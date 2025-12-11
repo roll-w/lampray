@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.content.structuraltext.element
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
@@ -41,10 +42,16 @@ data class Image @JvmOverloads constructor(
     override val type: StructuralTextType
         get() = StructuralTextType.IMAGE
 
+    @get:JsonIgnore
     override val children: List<StructuralText>
         get() = emptyList()
 
     override fun accept(visitor: StructuralTextVisitor) {
         visitor.visit(this)
+    }
+
+    @JsonIgnore
+    fun isFileId(): Boolean {
+        return src.startsWith("storage://")
     }
 }

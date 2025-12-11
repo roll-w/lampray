@@ -25,7 +25,7 @@ const toaster: ToasterProps = {position: 'top-right', progress: false};
 const {locale} = useI18n()
 const userStore = useUserStore();
 
-const uLocale = locales[locale.value as keyof typeof locales] || locales['en']
+const uLocale = locales[locale.value.replace("-", "_").toLocaleLowerCase() as keyof typeof locales] || locales['en']
 
 userStore.load()
 

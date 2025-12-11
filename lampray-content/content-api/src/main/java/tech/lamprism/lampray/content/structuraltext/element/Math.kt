@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.content.structuraltext.element
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
@@ -31,6 +32,8 @@ data class Math @JvmOverloads constructor(
 ) : StructuralText {
     override val type: StructuralTextType
         get() = StructuralTextType.MATH
+
+    @get:JsonIgnore
     override val children: List<StructuralText>
         get() = emptyList()
 

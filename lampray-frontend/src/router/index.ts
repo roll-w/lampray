@@ -36,10 +36,9 @@ const routes: RouteRecordRaw[] = [
                 path: "/article/editor",
                 name: RouteName.ARTICLE_EDITOR,
                 component: () => import("@/views/userfaced/article/ArticleEditor.vue"),
-            }, {
-                path: "/editor",
-                name: "editor",
-                component: () => import("@/components/structuraltext/EditorPreview.vue"),
+                meta: {
+                    requireLogin: true
+                }
             },
             {
                 path: "/user/login",

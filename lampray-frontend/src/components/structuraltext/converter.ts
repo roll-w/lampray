@@ -334,10 +334,10 @@ function mapTipTapTypeToStructuralType(type: string): StructuralTextType {
         doc: StructuralTextType.DOCUMENT,
         paragraph: StructuralTextType.PARAGRAPH,
         heading: StructuralTextType.HEADING,
-        bulletList: StructuralTextType.LIST_BLOCK,
-        orderedList: StructuralTextType.LIST_BLOCK,
+        bulletList: StructuralTextType.LIST,
+        orderedList: StructuralTextType.LIST,
         listItem: StructuralTextType.LIST_ITEM,
-        taskList: StructuralTextType.LIST_BLOCK,
+        taskList: StructuralTextType.LIST,
         taskItem: StructuralTextType.LIST_ITEM,
         blockquote: StructuralTextType.BLOCKQUOTE,
         codeBlock: StructuralTextType.CODE_BLOCK,
@@ -440,7 +440,7 @@ const CONTAINER_NODE_TYPES = new Set<StructuralTextType>([
     StructuralTextType.DOCUMENT,
     StructuralTextType.PARAGRAPH,
     StructuralTextType.HEADING,
-    StructuralTextType.LIST_BLOCK,
+    StructuralTextType.LIST,
     StructuralTextType.LIST_ITEM,
     StructuralTextType.BLOCKQUOTE,
     StructuralTextType.TABLE,
@@ -662,7 +662,7 @@ function buildNodeAttributes(structuralText: StructuralText): any {
 
 function mapStructuralTypeToTipTapType(type: StructuralTextType, node?: StructuralText): string {
     // Special handling for LIST type - check listType
-    if (type === StructuralTextType.LIST_BLOCK && node) {
+    if (type === StructuralTextType.LIST && node) {
         const listNode = node as ListElement
         if (listNode.listType === ListType.TASK) {
             return "taskList"
@@ -691,7 +691,7 @@ function mapStructuralTypeToTipTapType(type: StructuralTextType, node?: Structur
         [StructuralTextType.DOCUMENT]: "doc",
         [StructuralTextType.PARAGRAPH]: "paragraph",
         [StructuralTextType.HEADING]: "heading",
-        [StructuralTextType.LIST_BLOCK]: "bulletList",
+        [StructuralTextType.LIST]: "bulletList",
         [StructuralTextType.LIST_ITEM]: "listItem",
         [StructuralTextType.BLOCKQUOTE]: "blockquote",
         [StructuralTextType.CODE_BLOCK]: "codeBlock",

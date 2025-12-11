@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import tech.lamprism.lampray.content.UncreatedContent
 import tech.lamprism.lampray.content.UncreatedContentPreChecker
 import tech.lamprism.lampray.content.article.ArticleDetailsMetadata
 import tech.lamprism.lampray.content.article.common.ArticleErrorCode
+import tech.lamprism.lampray.content.common.ContentErrorCode
 import tech.lamprism.lampray.content.common.ContentException
 import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextEmptyException
 import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextNodeTooLongException
@@ -74,8 +75,7 @@ class ArticlePreChecker : UncreatedContentPreChecker {
                 is StructuralTextTooDeepException,
                 is StructuralTextRootNotDocumentException,
                 is StructuralTextNodeTooLongException -> {
-                    // Node too long maps to content too long
-                    throw ContentException(ArticleErrorCode.ERROR_CONTENT_TOO_LONG)
+                    throw ContentException(ContentErrorCode.ERROR_CONTENT_STRUCTURE_INVALID)
                 }
 
                 else -> {

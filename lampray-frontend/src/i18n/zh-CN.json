@@ -21,7 +21,8 @@
     "actions": "操作",
     "loading": "加载中...",
     "noData": "暂无数据",
-    "back": "返回"
+    "back": "返回",
+    "publish": "发布"
   },
   "route": {
     "user-home": "首页",
@@ -248,6 +249,30 @@
       "alignJustify": "两端对齐",
       "backgroundColor": "背景颜色",
       "noColor": "无颜色"
+    }
+  },
+  "article": {
+    "editor": {
+      "placeholder": {
+        "title": "在此输入文章标题...",
+        "content": "在此开始撰写你的内容..."
+      },
+      "title": {
+        "required": "标题不能为空",
+        "tooLong": "标题太长"
+      },
+      "content": {
+        "empty": "内容为空",
+        "rootMustBeDocument": "内容结构无效",
+        "tooShort": "内容太短",
+        "tooLong": "内容太长"
+      },
+      "publish": {
+        "success": "已发布文章",
+        "failure": {
+          "invalidInput": "不是有效的输入"
+        }
+      }
     }
   }
 }

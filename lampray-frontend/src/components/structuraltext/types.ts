@@ -18,7 +18,7 @@ export enum StructuralTextType {
     DOCUMENT = "DOCUMENT",
     PARAGRAPH = "PARAGRAPH",
     HEADING = "HEADING",
-    LIST_BLOCK = "LIST_BLOCK",
+    LIST = "LIST",
     LIST_ITEM = "LIST_ITEM",
     BLOCKQUOTE = "BLOCKQUOTE",
     CODE_BLOCK = "CODE_BLOCK",
@@ -75,7 +75,7 @@ export interface HeadingElement extends StructuralText {
  * List element - ordered, unordered, or task list.
  */
 export interface ListElement extends StructuralText {
-    type: StructuralTextType.LIST_BLOCK
+    type: StructuralTextType.LIST
     listType: ListType
 }
 

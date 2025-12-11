@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.content.structuraltext.element
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
@@ -32,6 +33,7 @@ object HorizontalDivider : StructuralText {
     override val content: String
         get() = ""
 
+    @get:JsonIgnore
     override val children: List<StructuralText>
         get() = emptyList()
 
