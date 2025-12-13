@@ -129,11 +129,6 @@ const routes: RouteRecordRaw[] = [
     },
 ]
 
-const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
-    routes: routes
-})
-
 if (import.meta.env.DEV) {
     const layout = routes.find(r => r.name === "user-layout")
     layout!.children!.push({
@@ -142,6 +137,11 @@ if (import.meta.env.DEV) {
         component: () => import("@/components/structuraltext/EditorPreview.vue"),
     });
 }
+
+const router = createRouter({
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes: routes
+})
 
 export const getTitleSuffix = () => {
     return " | 灯辉 - Lampray"

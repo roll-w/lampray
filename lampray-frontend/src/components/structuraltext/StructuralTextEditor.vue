@@ -207,17 +207,19 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div>
+    <div :class="{'border border-gray-300 dark:border-gray-700 rounded-md': variant === 'outline'}">
         <EditorToolbar v-if="showToolbar && editor" :editor="editor"
                        :sticky="true"
-                       :class="{[ui?.toolbar?.root || '']: ui && ui!.toolbar && ui!.toolbar.root}"
+                       :class="{[ui?.toolbar?.root || '']: ui && ui!.toolbar && ui!.toolbar.root,
+                       'rounded-md border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900': variant === 'outline'
+                       }"
                        :centered="ui && ui.toolbar ? ui.toolbar.centered : false">
             <template #menu-end>
                 <slot name="toolbar-menu-end"/>
             </template>
         </EditorToolbar>
         <div class="flex relative">
-            <div class="mx-auto px-4">
+            <div class="w-full mx-auto px-4">
                 <slot name="before-content"/>
                 <EditorBubbleMenu v-if="editor" :editor="editor" :editable="editable"/>
                 <EditorDragHandle v-if="editor" :editor="editor"/>

@@ -47,9 +47,11 @@ const formattedJson = computed(() => {
                     <StructuralTextEditor
                             v-model="content"
                             :editable="true"
+                            variant="outline"
                             placeholder="Start writing your content here..."
                             :show-toolbar="true"
                             @change="handleChange"
+                            :ui="{content:{root: 'w-full'}}"
                     />
                 </div>
 
@@ -66,7 +68,8 @@ const formattedJson = computed(() => {
                         </UButton>
                     </div>
 
-                    <div v-if="showJson" class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-auto max-h-[600px]">
+                    <div v-if="showJson"
+                         class="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 overflow-auto max-h-[600px]">
                         <pre class="text-sm"><code>{{ formattedJson }}</code></pre>
                     </div>
 
@@ -75,6 +78,7 @@ const formattedJson = computed(() => {
                                 v-model="content"
                                 :editable="false"
                                 :show-toolbar="false"
+                                :ui="{content:{root: 'w-full'}}"
                         />
                     </div>
                 </div>
@@ -83,11 +87,11 @@ const formattedJson = computed(() => {
             <aside class="hidden xl:block">
                 <div class="sticky top-6">
                     <StructuralTextOutline
-                        v-if="content"
-                        :document="content"
-                        title="Document Outline"
-                        color="primary"
-                        size="sm"
+                            v-if="content"
+                            :document="content"
+                            title="Document Outline"
+                            color="primary"
+                            size="sm"
                     />
                 </div>
             </aside>
