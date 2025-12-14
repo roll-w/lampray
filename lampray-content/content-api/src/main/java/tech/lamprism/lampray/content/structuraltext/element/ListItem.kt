@@ -30,6 +30,20 @@ data class ListItem @JvmOverloads constructor(
     override val children: List<StructuralText> = emptyList(),
     val checked: Boolean? = null
 ) : StructuralText {
+    init {
+        val disallowed = setOf(
+            StructuralTextType.DOCUMENT,
+            StructuralTextType.LIST_ITEM
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw IllegalArgumentException(
+                    "Disallowed child type for parent=LIST_ITEM: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.LIST_ITEM
 

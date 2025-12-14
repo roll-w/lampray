@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Bold inline element.
@@ -32,6 +33,23 @@ data class Bold @JvmOverloads constructor(
     init {
         require(children.isNotEmpty() || content.isNotEmpty()) {
             "Bold element must have either content or children."
+        }
+        val disallowed = setOf(
+            StructuralTextType.DOCUMENT,
+            StructuralTextType.PARAGRAPH,
+            StructuralTextType.LIST,
+            StructuralTextType.CODE_BLOCK,
+            StructuralTextType.BLOCKQUOTE,
+            StructuralTextType.TABLE,
+            StructuralTextType.TABLE_ROW,
+            StructuralTextType.TABLE_CELL
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=${StructuralTextType.BOLD}: index=$index, child=${child.type}"
+                )
+            }
         }
     }
 

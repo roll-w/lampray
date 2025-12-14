@@ -12,7 +12,8 @@
     "reset": "Reset",
     "search": "Search",
     "submit": "Submit",
-    "back": "Back"
+    "back": "Back",
+    "publish": "Publish"
   },
  "route": {
    "user-home": "Home",
@@ -28,6 +29,7 @@
    "admin-user-detail": "User Details",
    "admin-system-settings": "System Settings",
    "admin-system-setting-detail": "Setting Details",
+   "article-editor": "Article Editor",
    "not-found": "Not Found",
    "blocked": "Blocked"
  },
@@ -233,6 +235,51 @@
       "disableLineWrap": "Disable line wrap",
       "copyCode": "Copy code",
       "copied": "Copied"
+    },
+    "table": {
+      "insertColumnBefore": "Insert Column Before",
+      "insertColumnAfter": "Insert Column After",
+      "deleteColumn": "Delete Column",
+      "insertRowBefore": "Insert Row Before",
+      "insertRowAfter": "Insert Row After",
+      "deleteRow": "Delete Row",
+      "mergeCells": "Merge Cells",
+      "splitCell": "Split Cell",
+      "toggleHeaderColumn": "Toggle Header Column",
+      "toggleHeaderRow": "Toggle Header Row",
+      "toggleHeaderCell": "Toggle Header Cell",
+      "deleteTable": "Delete Table",
+      "alignment": "Alignment",
+      "alignLeft": "Align Left",
+      "alignCenter": "Align Center",
+      "alignRight": "Align Right",
+      "alignJustify": "Align Justify",
+      "backgroundColor": "Background Color",
+      "noColor": "No Color"
+    }
+  },
+  "article": {
+    "editor": {
+      "placeholder": {
+        "title": "Type your article title here...",
+        "content": "Start writing your content here..."
+      },
+      "title": {
+        "required": "Title cannot be empty",
+        "tooLong": "Title too long"
+      },
+      "content": {
+        "empty": "Content is empty",
+        "rootMustBeDocument": "Content structure not valid",
+        "tooShort": "Content is too short",
+        "tooLong": "Content is too long"
+      },
+      "publish": {
+        "success": "Article published successfully",
+        "failure": {
+          "invalidInput": "Not a valid input"
+        }
+      }
     }
   }
 }

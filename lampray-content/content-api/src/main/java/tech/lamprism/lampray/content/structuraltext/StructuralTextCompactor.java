@@ -134,13 +134,26 @@ public final class StructuralTextCompactor {
             case LINK:
                 return rebuildLink((Link) node, compressedChildren);
             case IMAGE:
-                return rebuildImage((Image) node, compressedChildren);
-            case TABLE:
-                return new Table(node.getContent(), compressedChildren);
-            case TABLE_ROW:
-                return new TableRow(node.getContent(), compressedChildren);
-            case TABLE_CELL:
-                return new TableCell(node.getContent(), compressedChildren);
+                return rebuildImage((Image) node);
+            case TABLE: {
+                Table t = (Table) node;
+                return new Table(compressedChildren, t.getHasHeaderColumn(), t.getHasHeaderRow(), t.getWidths());
+            }
+            case TABLE_ROW: {
+                TableRow tr = (TableRow) node;
+                return new TableRow(compressedChildren, tr.getHeight(), tr.getWidths());
+            }
+            case TABLE_CELL: {
+                TableCell tc = (TableCell) node;
+                return new TableCell(
+                        tc.getContent(),
+                        compressedChildren,
+                        tc.isHeader(),
+                        tc.getBackgroundColor(),
+                        tc.getColspan(),
+                        tc.getRowspan()
+                );
+            }
             case HORIZONTAL_DIVIDER:
                 return HorizontalDivider.INSTANCE;
             case MATH: {
@@ -236,10 +249,26 @@ public final class StructuralTextCompactor {
             case UNDERLINE -> new Underline(a.getContent(), mergedChildren);
             case HIGHLIGHT -> rebuildHighlight((Highlight) a, mergedChildren);
             case LINK -> rebuildLink((Link) a, mergedChildren);
-            case IMAGE -> rebuildImage((Image) a, mergedChildren);
-            case TABLE -> new Table(a.getContent(), mergedChildren);
-            case TABLE_ROW -> new TableRow(a.getContent(), mergedChildren);
-            case TABLE_CELL -> new TableCell(a.getContent(), mergedChildren);
+            case IMAGE -> rebuildImage((Image) a);
+            case TABLE -> {
+                Table ta = (Table) a;
+                yield new Table(mergedChildren, ta.getHasHeaderColumn(), ta.getHasHeaderRow(), ta.getWidths());
+            }
+            case TABLE_ROW -> {
+                TableRow tra = (TableRow) a;
+                yield new TableRow(mergedChildren, tra.getHeight(), tra.getWidths());
+            }
+            case TABLE_CELL -> {
+                TableCell tca = (TableCell) a;
+                yield new TableCell(
+                        tca.getContent(),
+                        mergedChildren,
+                        tca.isHeader(),
+                        tca.getBackgroundColor(),
+                        tca.getColspan(),
+                        tca.getRowspan()
+                );
+            }
             case DOCUMENT -> {
                 // normally handled at root, but support here for completeness
                 List<StructuralText> flattened = new ArrayList<>();
@@ -257,9 +286,33 @@ public final class StructuralTextCompactor {
     private static boolean shallowEquals(StructuralText a, StructuralText b) {
         if (a.getType() != b.getType()) return false;
         switch (a.getType()) {
-            case PARAGRAPH, TABLE, TABLE_ROW, TABLE_CELL, BLOCKQUOTE, INLINE_CODE, BOLD, ITALIC, STRIKETHROUGH,
+            case PARAGRAPH, BLOCKQUOTE, INLINE_CODE, BOLD, ITALIC, STRIKETHROUGH,
                  UNDERLINE -> {
                 return Objects.equals(a.getContent(), b.getContent());
+            }
+            case TABLE -> {
+                Table ta = (Table) a;
+                Table tb = (Table) b;
+                return ta.getHasHeaderColumn() == tb.getHasHeaderColumn()
+                        && ta.getHasHeaderRow() == tb.getHasHeaderRow()
+                        && Objects.equals(ta.getWidths(), tb.getWidths())
+                        && Objects.equals(a.getContent(), b.getContent());
+            }
+            case TABLE_ROW -> {
+                TableRow ra = (TableRow) a;
+                TableRow rb = (TableRow) b;
+                return Objects.equals(ra.getHeight(), rb.getHeight()) &&
+                        Objects.equals(a.getContent(), b.getContent()) &&
+                        Objects.equals(ra.getWidths(), rb.getWidths());
+            }
+            case TABLE_CELL -> {
+                TableCell ca = (TableCell) a;
+                TableCell cb = (TableCell) b;
+                return Objects.equals(ca.getContent(), cb.getContent())
+                        && ca.isHeader() == cb.isHeader()
+                        && Objects.equals(ca.getBackgroundColor(), cb.getBackgroundColor())
+                        && ca.getColspan() == cb.getColspan()
+                        && ca.getRowspan() == cb.getRowspan();
             }
             case LIST -> {
                 ListBlock la = (ListBlock) a;
@@ -338,15 +391,15 @@ public final class StructuralTextCompactor {
     }
 
     private static Highlight rebuildHighlight(Highlight src, List<StructuralText> children) {
-        return new Highlight(src.getColor(), src.getContent(), children);
+        return new Highlight(src.getContent(), children, src.getColor());
     }
 
     private static Link rebuildLink(Link src, List<StructuralText> children) {
         return new Link(src.getHref(), src.getTitle(), children);
     }
 
-    private static Image rebuildImage(Image src, List<StructuralText> children) {
-        return new Image(src.getSrc(), src.getAlt(), src.getTitle(), src.getContent(), children);
+    private static Image rebuildImage(Image src) {
+        return new Image(src.getSrc(), src.getAlt(), src.getTitle(), src.getContent());
     }
 
     private static Mention rebuildMention(Mention src, List<StructuralText> children) {

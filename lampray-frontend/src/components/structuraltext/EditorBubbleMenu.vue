@@ -116,24 +116,24 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
                     <div class="w-px h-6 bg-gray-300 dark:bg-gray-600"/>
                 </template>
                 <UTooltip :text="t('editor.toolbar.bold')">
-                    <UButton :variant="isBold ? 'solid' : 'ghost'"
-                             color="neutral"
+                    <UButton :variant="isBold ? 'soft' : 'ghost'"
+                             :color="isBold ? 'primary' : 'neutral'"
                              size="xs"
                              icon="i-lucide-bold"
                              @click="toggleBold"
                     />
                 </UTooltip>
                 <UTooltip :text="t('editor.toolbar.italic')">
-                    <UButton :variant="isItalic ? 'solid' : 'ghost'"
-                             color="neutral"
+                    <UButton :variant="isItalic ? 'soft' : 'ghost'"
+                             :color="isItalic ? 'primary' : 'neutral'"
                              size="xs"
                              icon="i-lucide-italic"
                              @click="toggleItalic"
                     />
                 </UTooltip>
                 <UTooltip :text="t('editor.toolbar.strikethrough')">
-                    <UButton :variant="isStrike ? 'solid' : 'ghost'"
-                             color="neutral"
+                    <UButton :variant="isStrike ? 'soft' : 'ghost'"
+                             :color="isStrike ? 'primary' : 'neutral'"
                              size="xs"
                              icon="i-lucide-strikethrough"
                              @click="toggleStrike"
@@ -141,24 +141,24 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
                 </UTooltip>
                 <UTooltip :text="t('editor.toolbar.underline')">
                     <UButton
-                            :variant="isUnderline ? 'solid' : 'ghost'"
-                            color="neutral"
+                            :variant="isUnderline ? 'soft' : 'ghost'"
+                            :color="isUnderline ? 'primary' : 'neutral'"
                             size="sm"
                             icon="i-lucide-underline"
                             @click="toggleUnderline"
                     />
                 </UTooltip>
                 <UTooltip v-if="!isCodeBlock" :text="t('editor.toolbar.highlight')">
-                    <UButton :variant="isHighlight ? 'solid' : 'ghost'"
-                             color="neutral"
+                    <UButton :variant="isHighlight ? 'soft' : 'ghost'"
+                             :color="isHighlight ? 'primary' : 'neutral'"
                              size="xs"
                              icon="i-lucide-highlighter"
                              @click="toggleHighlight"
                     />
                 </UTooltip>
                 <UTooltip v-if="!isCodeBlock" :text="t('editor.toolbar.inlineCode')">
-                    <UButton :variant="isCode ? 'solid' : 'ghost'"
-                             color="neutral"
+                    <UButton :variant="isCode ? 'soft' : 'ghost'"
+                             :color="isCode ? 'primary' : 'neutral'"
                              size="xs"
                              icon="i-lucide-code"
                              @click="toggleCode"
@@ -196,4 +196,3 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
             @remove="handleLinkRemove"
     />
 </template>
-

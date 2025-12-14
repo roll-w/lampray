@@ -33,9 +33,12 @@ const routes: RouteRecordRaw[] = [
                 component: () => import("@/views/userfaced/user/UserHome.vue"),
             },
             {
-                path: "/editor",
-                name: "editor",
-                component: () => import("@/components/structuraltext/EditorPreview.vue"),
+                path: "/article/editor",
+                name: RouteName.ARTICLE_EDITOR,
+                component: () => import("@/views/userfaced/article/ArticleEditor.vue"),
+                meta: {
+                    requireLogin: true
+                }
             },
             {
                 path: "/user/login",
@@ -126,19 +129,19 @@ const routes: RouteRecordRaw[] = [
     },
 ]
 
-const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
-    routes: routes
-})
-
 if (import.meta.env.DEV) {
-    const layout = routes.find(r => r.path === "/layout");
+    const layout = routes.find(r => r.name === "user-layout")
     layout!.children!.push({
-        path: "editor",
+        path: "/editor",
         name: "editor",
         component: () => import("@/components/structuraltext/EditorPreview.vue"),
     });
 }
+
+const router = createRouter({
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes: routes
+})
 
 export const getTitleSuffix = () => {
     return " | 灯辉 - Lampray"

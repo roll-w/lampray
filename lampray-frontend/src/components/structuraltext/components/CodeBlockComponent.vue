@@ -19,8 +19,10 @@ import {NodeViewContent, type NodeViewProps, NodeViewWrapper} from "@tiptap/vue-
 import {computed, nextTick, onMounted, ref, watch} from "vue";
 import {lowlight} from "@/components/structuraltext/extensions/CodeBlock";
 import {loadLanguage, supportedLanguages} from "@/components/structuraltext/extensions/LanguageLoader";
-import {useColorMode} from "@vueuse/core";
+import {useColorMode, useDebounceFn, useElementSize, useEventListener, useResizeObserver} from "@vueuse/core";
 import {useI18n} from "vue-i18n";
+
+// TODO: may replace with CodeMirror for better editing experience
 
 const colorMode = useColorMode();
 const {t} = useI18n();
@@ -83,6 +85,106 @@ const codeElementRef = ref<HTMLElement | null>(null);
 const lineHeights = ref<number[]>([]);
 const isCopied = ref(false);
 
+// Active line set for highlighting line numbers
+const activeLineSet = ref<Set<number>>(new Set());
+
+// Caches to avoid repeated computations
+const cachedLines = ref<string[]>([]);
+const cachedStarts = ref<number[]>([]);
+const charWidthRef = ref<number>(8);
+const measuredFontRef = ref<string | null>(null);
+
+const buildStarts = (lines: string[]) => {
+    const starts: number[] = [];
+    let acc = 0;
+    for (let i = 0; i < lines.length; i++) {
+        starts.push(acc);
+        const ln = lines[i] ?? "";
+        acc += ln.length + (i < lines.length - 1 ? 1 : 0);
+    }
+    return starts;
+};
+
+// Measure char width once and cache it
+const measureCharWidth = (font: string | undefined) => {
+    try {
+        // If font is unchanged, keep cached value
+        if (font && measuredFontRef.value === font && charWidthRef.value > 0) return charWidthRef.value;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return 8; // fallback
+        if (font) ctx.font = font;
+        const metrics = ctx.measureText('0');
+        const w = metrics.width || 8;
+        charWidthRef.value = w;
+        measuredFontRef.value = font ?? null;
+        return w;
+    } catch (e) {
+        return 8;
+    }
+};
+
+watch(() => props.node?.textContent, (val) => {
+    const code = val || "";
+    const lines = code.split('\n');
+    cachedLines.value = lines;
+    cachedStarts.value = buildStarts(lines);
+    updateLineCountDebounced();
+    updateActiveLinesDebounced();
+});
+
+const updateActiveLines = () => {
+    activeLineSet.value.clear();
+
+    if (!props.editor || typeof props.getPos !== 'function' || !props.node) return;
+
+    try {
+        const sel = props.editor.state.selection;
+        const nodePos = props.getPos();
+        if (typeof nodePos !== 'number') return;
+
+        const contentStart = nodePos + 1;
+        const nodeSize = props.node.nodeSize ?? 0;
+        if (sel.to <= contentStart || sel.from >= contentStart + Math.max(0, nodeSize - 2)) return;
+
+        const relativeFrom = Math.max(0, sel.from - contentStart);
+        const relativeTo = Math.max(0, sel.to - contentStart);
+
+        const lines = cachedLines.value.length ? cachedLines.value : (props.node?.textContent || "").split('\n');
+        const starts = cachedStarts.value.length ? cachedStarts.value : buildStarts(lines);
+        const lastLineLen = lines.length ? (lines[lines.length - 1]?.length ?? 0) : 0;
+        const acc = starts.length ? ((starts[starts.length - 1] ?? 0) + lastLineLen) : 0;
+
+        const findLineIndex = (offset: number) => {
+            // binary search on starts
+            let lo = 0;
+            let hi = Math.max(0, starts.length - 1);
+            if (starts.length === 0) return 0;
+            if (offset >= acc) return Math.max(0, lines.length - 1);
+            while (lo <= hi) {
+                const mid = Math.floor((lo + hi) / 2);
+                const s = starts[mid] ?? 0;
+                const e = (mid < starts.length - 1) ? (starts[mid + 1] ?? acc) : acc;
+                if (offset < s) {
+                    hi = mid - 1;
+                } else if (offset >= e) {
+                    lo = mid + 1;
+                } else {
+                    return mid;
+                }
+            }
+            return Math.max(0, Math.min(lines.length - 1, lo));
+        };
+
+        const startIndex = findLineIndex(relativeFrom);
+        const endIndex = findLineIndex(Math.max(0, relativeTo - 1));
+
+        for (let i = startIndex; i <= endIndex; i++) activeLineSet.value.add(i + 1);
+    } catch (e) {
+        console.error('updateActiveLines error', e);
+    }
+};
+
 const toggleCollapse = () => {
     isCollapsed.value = !isCollapsed.value;
 };
@@ -119,73 +221,42 @@ const updateLineCount = async () => {
         return;
     }
 
-    // For wrapped lines, calculate actual heights
-    if (!codeElementRef.value) {
-        const lines = code.split("\n");
-        lineCount.value = Math.max(1, lines.length);
-        lineHeights.value = Array(lineCount.value).fill(24);
-        return;
-    }
+    const elSize = useElementSize(codeElementRef);
+    const contentWidth = (elSize.width.value && elSize.width.value > 0) ? elSize.width.value : undefined;
 
-    // Get the pre element (either the overlay or the editable one)
-    const preElement = codeElementRef.value.querySelector('pre');
-    if (!preElement) {
-        const lines = code.split("\n");
-        lineCount.value = Math.max(1, lines.length);
-        lineHeights.value = Array(lineCount.value).fill(24);
-        return;
-    }
-
-    // Create a temporary element to measure each line with proper wrapping
     const lines = code.split("\n");
-    const computedStyle = window.getComputedStyle(preElement);
+    if (!contentWidth) {
+        // Fallback to simple per-line fixed height
+        lineCount.value = Math.max(1, lines.length);
+        lineHeights.value = Array(lineCount.value).fill(24);
+        return;
+    }
 
-    // Get the actual content width (excluding padding)
-    const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
-    const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
-    const contentWidth = preElement.clientWidth - paddingLeft - paddingRight;
+    const tabSize = 4;
+    const charsPerLine = Math.max(10, Math.floor(contentWidth / Math.max(1, charWidthRef.value)));
 
-    const tempContainer = document.createElement('div');
-    tempContainer.style.cssText = `
-        position: absolute;
-        visibility: hidden;
-        width: ${contentWidth}px;
-        font-family: ${computedStyle.fontFamily};
-        font-size: ${computedStyle.fontSize};
-        line-height: ${computedStyle.lineHeight};
-        padding: 0;
-        margin: 0;
-        border: 0;
-        box-sizing: content-box;
-    `;
-
-    const tempPre = document.createElement('pre');
-    tempPre.style.cssText = `
-        font-family: inherit;
-        font-size: inherit;
-        line-height: inherit;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        word-break: break-word;
-        padding: 0;
-        margin: 0;
-        tab-size: 4;
-        -moz-tab-size: 4;
-        box-sizing: content-box;
-    `;
-
-    tempContainer.appendChild(tempPre);
-    document.body.appendChild(tempContainer);
+    const baseLineHeight =  (() => {
+        const preEl = codeElementRef.value?.querySelector('pre') as HTMLElement | null;
+        const computedStyle = preEl ? window.getComputedStyle(preEl) : undefined;
+        if (computedStyle && computedStyle.lineHeight && computedStyle.lineHeight !== 'normal') {
+            const v = parseFloat(computedStyle.lineHeight as string);
+            return isNaN(v) ? (parseFloat(computedStyle.fontSize || '16') * 1.2) : v;
+        }
+        return computedStyle ? (parseFloat(computedStyle.fontSize || '16') * 1.2) : 20;
+    })();
 
     const heights: number[] = [];
-    for (const line of lines) {
-        tempPre.textContent = line || ' '; // Empty lines need at least a space
-        const height = tempPre.offsetHeight;
-        heights.push(height > 0 ? height : 24); // Fallback to 24px if height is 0
+    let visualLineCount = 0;
+    for (const ln of lines) {
+        // Expand tabs to spaces for length estimation without regex
+        const parts = ln.split('\t');
+        const expanded = parts.join(' '.repeat(tabSize));
+        const length = expanded.length;
+        const vLines = Math.max(1, Math.ceil(length / charsPerLine));
+        const h = Math.max( Math.round(vLines * baseLineHeight), 16);
+        heights.push(h);
+        visualLineCount += vLines;
     }
-
-    document.body.removeChild(tempContainer);
 
     lineCount.value = lines.length;
     lineHeights.value = heights;
@@ -196,10 +267,55 @@ watch([
     () => wrapLines.value
 ], () => {
     updateLineCount();
+    updateActiveLines();
 }, {immediate: true});
 
 onMounted(() => {
     updateLineCount();
+    updateActiveLinesDebounced();
+
+    useEventListener(document, 'selectionchange', () => {
+        updateActiveLinesDebounced();
+    });
+
+    const editorDom = props.editor?.view?.dom;
+    if (editorDom) {
+        useEventListener(editorDom, 'mouseup', () => updateActiveLinesDebounced());
+        useEventListener(editorDom, 'keyup', () => updateActiveLinesDebounced());
+    }
+
+    // Ensure code area is selectable when editor is read-only by stopping
+    // ProseMirror's node-selection behavior on mousedown/touchstart. Use
+    // vueuse's useEventListener on the code container ref and check editor state.
+    const stopIfReadOnly = (e: Event) => {
+        try {
+            if (!props.editor?.isEditable) {
+                e.stopPropagation();
+                // Allow the browser to handle selection inside the pre element
+            }
+        } catch (err) {
+            // ignore
+        }
+    };
+
+    // Use capture phase so we intercept the event before editor handlers.
+    useEventListener(codeElementRef, 'mousedown', stopIfReadOnly, {passive: false, capture: true});
+    useEventListener(codeElementRef, 'touchstart', stopIfReadOnly, {passive: false, capture: true});
+
+    // measure char width initially
+    const preEl = codeElementRef.value?.querySelector('pre') as HTMLElement | null;
+    const computedStyle = preEl ? window.getComputedStyle(preEl) : undefined;
+    const font = computedStyle ? `${computedStyle.fontWeight} ${computedStyle.fontSize} ${computedStyle.fontFamily}` : undefined;
+    measureCharWidth(font);
+
+    useResizeObserver(codeElementRef, () => {
+        // On resize, recompute char width & line counts
+        const pre = codeElementRef.value?.querySelector('pre') as HTMLElement | null;
+        const style = pre ? window.getComputedStyle(pre) : undefined;
+        const f = style ? `${style.fontWeight} ${style.fontSize} ${style.fontFamily}` : undefined;
+        measureCharWidth(f);
+        updateLineCountDebounced();
+    });
 });
 
 const lineNumbers = computed(() => {
@@ -209,7 +325,12 @@ const lineNumbers = computed(() => {
     }));
 });
 
+// Debounce heavy operations (declare before usage)
+const updateActiveLinesDebounced = useDebounceFn(updateActiveLines, 50);
+const updateLineCountDebounced = useDebounceFn(updateLineCount, 120);
+
 const selected = computed(() => props.selected || false);
+const isEditorEditable = computed(() => props.editor?.isEditable ?? false);
 </script>
 
 <template>
@@ -249,7 +370,7 @@ const selected = computed(() => props.selected || false);
                 </div>
 
                 <div class="flex items-center gap-1">
-                    <UTooltip v-if="editor?.isEditable" :text="showLineNumbers ? t('editor.codeBlock.hideLineNumbers') : t('editor.codeBlock.showLineNumbers')">
+                    <UTooltip :text="showLineNumbers ? t('editor.codeBlock.hideLineNumbers') : t('editor.codeBlock.showLineNumbers')">
                         <UButton
                                 :icon="showLineNumbers ? 'i-lucide-list-ordered' : 'i-lucide-list'"
                                 color="neutral"
@@ -258,7 +379,7 @@ const selected = computed(() => props.selected || false);
                                 @click="showLineNumbers = !showLineNumbers"
                         />
                     </UTooltip>
-                    <UTooltip v-if="editor?.isEditable" :text="wrapLines ? t('editor.codeBlock.disableLineWrap') : t('editor.codeBlock.enableLineWrap')">
+                    <UTooltip :text="wrapLines ? t('editor.codeBlock.disableLineWrap') : t('editor.codeBlock.enableLineWrap')">
                         <UButton
                                 :icon="wrapLines ? 'i-lucide-wrap-text' : 'i-lucide-align-left'"
                                 color="neutral"
@@ -296,6 +417,10 @@ const selected = computed(() => props.selected || false);
                     <div v-for="line in lineNumbers"
                          :key="line.number"
                          class="text-xs text-gray-500 dark:text-gray-400 font-mono leading-6 min-h-6"
+                         :class="{
+                             'text-primary-800 dark:text-primary-200': activeLineSet.has(line.number),
+                             'text-gray-500 dark:text-gray-400': !activeLineSet.has(line.number)
+                         }"
                          :style="{ height: line.height + 'px' }"
                     >
                         {{ line.number }}

@@ -16,9 +16,11 @@
 
 package tech.lamprism.lampray.content.structuraltext.element
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Heading element representing a heading with a specified level.
@@ -28,8 +30,31 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
 data class Heading @JvmOverloads constructor(
     val level: Int,
     override val content: String = "",
-    override val children: List<StructuralText> = emptyList()
+    override val children: List<StructuralText> = emptyList(),
+    @field:JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    val alignment: TextAlignment = TextAlignment.LEFT,
 ) : StructuralText {
+    init {
+        // Heading should only contain inline children
+        val disallowed = setOf(
+            StructuralTextType.DOCUMENT,
+            StructuralTextType.PARAGRAPH,
+            StructuralTextType.LIST,
+            StructuralTextType.TABLE,
+            StructuralTextType.TABLE_ROW,
+            StructuralTextType.TABLE_CELL,
+            StructuralTextType.BLOCKQUOTE,
+            StructuralTextType.CODE_BLOCK
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=${StructuralTextType.HEADING}: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.HEADING
 

@@ -34,7 +34,7 @@
     --ui-color-primary-800: var(--color-amber-800);
     --ui-color-primary-900: var(--color-amber-900);
 
-    @apply selection:bg-amber-300/40 selection:text-amber-900/70 dark:selection:bg-amber-600/40 dark:selection:text-amber-100/70;
+    @apply selection:bg-primary/20;
 }
 
 .dark {

@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Link element with href and optional title.
@@ -30,6 +31,27 @@ data class Link @JvmOverloads constructor(
     val title: String?,
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        // Inline disallowed children check for Link (link should contain inline content only)
+        val disallowed = setOf(
+            StructuralTextType.DOCUMENT,
+            StructuralTextType.PARAGRAPH,
+            StructuralTextType.TABLE,
+            StructuralTextType.TABLE_ROW,
+            StructuralTextType.TABLE_CELL,
+            StructuralTextType.CODE_BLOCK,
+            StructuralTextType.BLOCKQUOTE,
+            StructuralTextType.LIST
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=LINK: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.LINK
 

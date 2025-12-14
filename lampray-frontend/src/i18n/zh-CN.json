@@ -21,7 +21,8 @@
     "actions": "操作",
     "loading": "加载中...",
     "noData": "暂无数据",
-    "back": "返回"
+    "back": "返回",
+    "publish": "发布"
   },
   "route": {
     "user-home": "首页",
@@ -37,6 +38,7 @@
     "admin-user-detail": "用户详情",
     "admin-system-settings": "系统设置",
     "admin-system-setting-detail": "设置详情",
+    "article-editor": "文章编辑器",
     "not-found": "未找到",
     "blocked": "已封禁"
   },
@@ -226,6 +228,51 @@
       "disableLineWrap": "禁用自动换行",
       "copyCode": "复制代码",
       "copied": "已复制"
+    },
+    "table": {
+      "insertColumnBefore": "在前面插入列",
+      "insertColumnAfter": "在后面插入列",
+      "deleteColumn": "删除列",
+      "insertRowBefore": "在上方插入行",
+      "insertRowAfter": "在下方插入行",
+      "deleteRow": "删除行",
+      "mergeCells": "合并单元格",
+      "splitCell": "拆分单元格",
+      "toggleHeaderColumn": "切换表头列",
+      "toggleHeaderRow": "切换表头行",
+      "toggleHeaderCell": "切换表头单元格",
+      "deleteTable": "删除表格",
+      "alignment": "对齐方式",
+      "alignLeft": "左对齐",
+      "alignCenter": "居中对齐",
+      "alignRight": "右对齐",
+      "alignJustify": "两端对齐",
+      "backgroundColor": "背景颜色",
+      "noColor": "无颜色"
+    }
+  },
+  "article": {
+    "editor": {
+      "placeholder": {
+        "title": "在此输入文章标题...",
+        "content": "在此开始撰写你的内容..."
+      },
+      "title": {
+        "required": "标题不能为空",
+        "tooLong": "标题太长"
+      },
+      "content": {
+        "empty": "内容为空",
+        "rootMustBeDocument": "内容结构无效",
+        "tooShort": "内容太短",
+        "tooLong": "内容太长"
+      },
+      "publish": {
+        "success": "已发布文章",
+        "failure": {
+          "invalidInput": "不是有效的输入"
+        }
+      }
     }
   }
 }

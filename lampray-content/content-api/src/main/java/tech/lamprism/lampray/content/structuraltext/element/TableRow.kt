@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Row in a table containing cells.
@@ -26,11 +27,35 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
  * @author RollW
  */
 data class TableRow @JvmOverloads constructor(
-    override val content: String = "",
-    override val children: List<StructuralText> = emptyList()
+    override val children: List<StructuralText> = emptyList(),
+    /**
+     * Row height in pixels (px)
+     */
+    val height: Double? = null,
+    /**
+     * Cell widths in pixels (px) for each cell in this row.
+     * The length should match the number of cells (considering colspan).
+     */
+    val widths: List<Double?>? = null
 ) : StructuralText {
+    init {
+        children.forEachIndexed { index, child ->
+            if (child.type != StructuralTextType.TABLE_CELL) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=TABLE_ROW: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.TABLE_ROW
+
+    /**
+     * Table rows do not have direct text content.
+     */
+    override val content: String
+        get() = ""
 
     override fun accept(visitor: StructuralTextVisitor) {
         visitor.visit(this)

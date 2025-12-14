@@ -18,7 +18,7 @@ export enum StructuralTextType {
     DOCUMENT = "DOCUMENT",
     PARAGRAPH = "PARAGRAPH",
     HEADING = "HEADING",
-    LIST_BLOCK = "LIST_BLOCK",
+    LIST = "LIST",
     LIST_ITEM = "LIST_ITEM",
     BLOCKQUOTE = "BLOCKQUOTE",
     CODE_BLOCK = "CODE_BLOCK",
@@ -75,7 +75,7 @@ export interface HeadingElement extends StructuralText {
  * List element - ordered, unordered, or task list.
  */
 export interface ListElement extends StructuralText {
-    type: StructuralTextType.LIST_BLOCK
+    type: StructuralTextType.LIST
     listType: ListType
 }
 
@@ -87,8 +87,6 @@ export enum ListType {
 
 /**
  * List item element - an item in a list.
- *
- * @author RollW
  */
 export interface ListItemElement extends StructuralText {
     type: StructuralTextType.LIST_ITEM
@@ -181,10 +179,59 @@ export interface ImageElement extends StructuralText {
 }
 
 /**
+ * Text alignment options.
+ */
+export enum TextAlignment {
+    LEFT = "LEFT",
+    CENTER = "CENTER",
+    RIGHT = "RIGHT",
+    JUSTIFY = "JUSTIFY"
+}
+
+/**
+ * Attribute color options.
+ */
+export type AttributeColor =
+    | "yellow"
+    | "green"
+    | "blue"
+    | "pink"
+    | "orange"
+    | "purple"
+    | "red"
+    | "lime"
+    | "teal"
+    | "cyan"
+    | "light-yellow"
+    | "light-green"
+    | "light-blue"
+    | "light-pink"
+    | "light-orange"
+    | "light-purple"
+    | "light-red"
+    | "light-lime"
+    | "light-teal"
+    | "light-cyan"
+    | "dark-yellow"
+    | "dark-green"
+    | "dark-blue"
+    | "dark-pink"
+    | "dark-orange"
+    | "dark-purple"
+    | "dark-red"
+    | "dark-lime"
+    | "dark-teal"
+    | "dark-cyan"
+
+/**
  * Table element - a table container.
  */
 export interface TableElement extends StructuralText {
     type: StructuralTextType.TABLE
+    hasHeaderColumn?: boolean
+    hasHeaderRow?: boolean
+    /** Column widths in pixels (px). */
+    widths?: (number | null)[]
 }
 
 /**
@@ -192,6 +239,10 @@ export interface TableElement extends StructuralText {
  */
 export interface TableRowElement extends StructuralText {
     type: StructuralTextType.TABLE_ROW
+    /** Row height in pixels (px) */
+    height?: number
+    /** Cell widths in pixels (px) for each cell in this row */
+    widths?: (number | null)[]
 }
 
 /**
@@ -199,6 +250,14 @@ export interface TableRowElement extends StructuralText {
  */
 export interface TableCellElement extends StructuralText {
     type: StructuralTextType.TABLE_CELL
+    /** Whether this cell should be treated as a header cell (render as <th>). */
+    isHeader?: boolean
+    /** Background color chosen from the fixed palette */
+    backgroundColor?: AttributeColor
+    /** Number of columns this cell spans. */
+    colspan?: number
+    /** Number of rows this cell spans. */
+    rowspan?: number
 }
 
 /**

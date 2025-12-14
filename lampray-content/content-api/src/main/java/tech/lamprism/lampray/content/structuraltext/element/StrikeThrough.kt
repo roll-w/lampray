@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * @author RollW
@@ -28,8 +29,19 @@ data class StrikeThrough @JvmOverloads constructor(
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
     init {
-        require(children.isNotEmpty() || content.isNotEmpty()) {
-            "StrikeThrough element must have either content or children."
+        val disallowed = setOf(
+            StructuralTextType.DOCUMENT,
+            StructuralTextType.PARAGRAPH,
+            StructuralTextType.LIST,
+            StructuralTextType.TABLE,
+            StructuralTextType.CODE_BLOCK
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=STRIKETHROUGH: index=$index, child=${child.type}"
+                )
+            }
         }
     }
 

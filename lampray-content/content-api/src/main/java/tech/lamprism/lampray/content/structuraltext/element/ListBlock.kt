@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Block that contains list items (ordered, unordered, or task list).
@@ -33,6 +34,13 @@ data class ListBlock @JvmOverloads constructor(
         children.forEach {
             require(it is ListItem) {
                 "ListBlock can only contain ListItem elements, but found: ${it.type}"
+            }
+        }
+        children.forEachIndexed { index, child ->
+            if (child.type != StructuralTextType.LIST_ITEM) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=LIST: index=$index, child=${child.type}"
+                )
             }
         }
     }
