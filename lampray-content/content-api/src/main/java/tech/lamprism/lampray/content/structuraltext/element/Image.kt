@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
-import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Image element represents an image with src, alt and title.
@@ -33,12 +32,6 @@ data class Image @JvmOverloads constructor(
     val title: String?,
     override val content: String = "",
 ) : StructuralText {
-    init {
-        if (children.isNotEmpty()) {
-            throw StructuralTextValidationException("Image element must not have children, but found: ${children.map { it.type }}")
-        }
-    }
-
     override val type: StructuralTextType
         get() = StructuralTextType.IMAGE
 
