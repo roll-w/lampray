@@ -120,6 +120,16 @@ const routes: RouteRecordRaw[] = [
                 name: RouteName.ADMIN_SYSTEM_SETTING_DETAIL,
                 component: () => import("@/views/adminfaced/system/SettingDetailPage.vue"),
             },
+            {
+                path: "/admin/firewall",
+                name: RouteName.ADMIN_FIREWALL,
+                component: () => import("@/views/adminfaced/system/FirewallManagementPage.vue"),
+            },
+            {
+                path: "/admin/firewall/filter-table",
+                name: RouteName.ADMIN_FILTER_TABLE,
+                component: () => import("@/views/adminfaced/system/FilterTableManagementPage.vue"),
+            },
 
         ],
         meta: {

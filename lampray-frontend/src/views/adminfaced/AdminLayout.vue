@@ -14,89 +14,93 @@
   - limitations under the License.
   -->
 <script setup lang="ts">
-import type {NavigationMenuItem} from '@nuxt/ui';
+import type {NavigationMenuItem} from "@nuxt/ui";
 import {RouteName} from "@/router/routeName.ts";
 import {RouterView} from "vue-router";
 
 const items: NavigationMenuItem[] = [
     {
-        label: '系统首页',
-        icon: 'i-lucide-home',
+        label: "系统首页",
+        icon: "i-lucide-home",
         to: {name: RouteName.ADMIN_HOME}
     },
     {
-        label: '返回博客',
-        icon: 'i-lucide-arrow-left-right',
+        label: "返回博客",
+        icon: "i-lucide-arrow-left-right",
         to: {name: RouteName.USER_HOME}
     },
     {
-        label: '用户管理',
-        icon: 'i-lucide-users',
+        label: "用户管理",
+        icon: "i-lucide-users",
         children: [
             {
-                label: '用户列表',
+                label: "用户列表",
                 to: {name: RouteName.ADMIN_USER_LIST}
             },
             {
-                label: '工作人员管理',
+                label: "工作人员管理",
             }
         ]
     },
     {
-        label: '文章管理',
-        icon: 'i-lucide-file-text',
+        label: "文章管理",
+        icon: "i-lucide-file-text",
         children: [
             {
-                label: '文章列表',
+                label: "文章列表",
             },
             {
-                label: '文章分类',
+                label: "文章分类",
             },
             {
-                label: '文章标签',
+                label: "文章标签",
             }
         ]
     },
     {
-        label: '评论管理',
-        icon: 'i-lucide-message-square',
+        label: "评论管理",
+        icon: "i-lucide-message-square",
         children: [
             {
-                label: '评论列表',
+                label: "评论列表",
             }
         ]
     },
     {
-        label: '审核管理',
-        icon: 'i-lucide-check-circle',
+        label: "审核管理",
+        icon: "i-lucide-check-circle",
         children: [
             {
-                label: '管理审核列表',
+                label: "管理审核列表",
             },
             {
-                label: '审核列表',
+                label: "审核列表",
             },
             {
-                label: '审核任务',
+                label: "审核任务",
             }
         ]
     },
     {
-        label: '系统管理',
-        icon: 'i-lucide-settings',
+        label: "系统管理",
+        icon: "i-lucide-settings",
         children: [
             {
-                label: '系统设置',
+                label: "系统设置",
                 to: {name: RouteName.ADMIN_SYSTEM_SETTINGS}
             },
             {
-                label: '系统日志',
+                label: "防火墙管理",
+                to: {name: RouteName.ADMIN_FIREWALL}
             },
             {
-                label: '消息资源',
+                label: "系统日志",
             },
             {
-                label: '系统监控',
+                label: "消息资源",
+            },
+            {
+                label: "系统监控",
             }
         ]
     }

@@ -37,6 +37,9 @@ export const RouteName = {
     ADMIN_SYSTEM_SETTINGS: "admin-system-settings",
     ADMIN_SYSTEM_SETTING_DETAIL: "admin-system-setting-detail",
 
+    ADMIN_FIREWALL: "admin-firewall",
+    ADMIN_FILTER_TABLE: "admin-filter-table",
+
     NOT_FOUND: "not-found",
     BLOCKED: "blocked",
 } as const;
