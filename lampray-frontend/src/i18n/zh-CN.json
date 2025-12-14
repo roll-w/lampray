@@ -31,6 +31,29 @@
       "total": "总计: {days}天 {hours}小时 {minutes}分钟"
     }
   },
+  "adminMenu": {
+    "home": "管理首页",
+    "backToBlog": "返回博客",
+    "userManagement": "用户管理",
+    "userList": "用户列表",
+    "staffManagement": "工作人员管理",
+    "articleManagement": "文章管理",
+    "articleList": "文章列表",
+    "articleCategory": "文章分类",
+    "articleTag": "文章标签",
+    "commentManagement": "评论管理",
+    "commentList": "评论列表",
+    "reviewManagement": "审核管理",
+    "adminReviewList": "管理审核列表",
+    "reviewList": "审核列表",
+    "reviewTask": "审核任务",
+    "systemManagement": "系统管理",
+    "systemSettings": "系统设置",
+    "firewallManagement": "防火墙管理",
+    "systemLog": "系统日志",
+    "messageResource": "消息资源",
+    "systemMonitor": "系统监控"
+  },
   "route": {
     "user-home": "首页",
     "login": "登录",

@@ -17,94 +17,98 @@
 import type {NavigationMenuItem} from "@nuxt/ui";
 import {RouteName} from "@/router/routeName.ts";
 import {RouterView} from "vue-router";
+import {useI18n} from "vue-i18n";
+import {computed} from "vue";
 
-const items: NavigationMenuItem[] = [
+const {t} = useI18n()
+
+const items = computed<NavigationMenuItem[]>(() => [
     {
-        label: "系统首页",
+        label: t("adminMenu.home"),
         icon: "i-lucide-home",
         to: {name: RouteName.ADMIN_HOME}
     },
     {
-        label: "返回博客",
+        label: t("adminMenu.backToBlog"),
         icon: "i-lucide-arrow-left-right",
         to: {name: RouteName.USER_HOME}
     },
     {
-        label: "用户管理",
+        label: t("adminMenu.userManagement"),
         icon: "i-lucide-users",
         children: [
             {
-                label: "用户列表",
+                label: t("adminMenu.userList"),
                 to: {name: RouteName.ADMIN_USER_LIST}
             },
             {
-                label: "工作人员管理",
+                label: t("adminMenu.staffManagement"),
             }
         ]
     },
     {
-        label: "文章管理",
+        label: t("adminMenu.articleManagement"),
         icon: "i-lucide-file-text",
         children: [
             {
-                label: "文章列表",
+                label: t("adminMenu.articleList"),
             },
             {
-                label: "文章分类",
+                label: t("adminMenu.articleCategory"),
             },
             {
-                label: "文章标签",
+                label: t("adminMenu.articleTag"),
             }
         ]
     },
     {
-        label: "评论管理",
+        label: t("adminMenu.commentManagement"),
         icon: "i-lucide-message-square",
         children: [
             {
-                label: "评论列表",
+                label: t("adminMenu.commentList"),
             }
         ]
     },
     {
-        label: "审核管理",
+        label: t("adminMenu.reviewManagement"),
         icon: "i-lucide-check-circle",
         children: [
             {
-                label: "管理审核列表",
+                label: t("adminMenu.adminReviewList"),
             },
             {
-                label: "审核列表",
+                label: t("adminMenu.reviewList"),
             },
             {
-                label: "审核任务",
+                label: t("adminMenu.reviewTask"),
             }
         ]
     },
     {
-        label: "系统管理",
+        label: t("adminMenu.systemManagement"),
         icon: "i-lucide-settings",
         children: [
             {
-                label: "系统设置",
+                label: t("adminMenu.systemSettings"),
                 to: {name: RouteName.ADMIN_SYSTEM_SETTINGS}
             },
             {
-                label: "防火墙管理",
+                label: t("adminMenu.firewallManagement"),
                 to: {name: RouteName.ADMIN_FIREWALL}
             },
             {
-                label: "系统日志",
+                label: t("adminMenu.systemLog"),
             },
             {
-                label: "消息资源",
+                label: t("adminMenu.messageResource"),
             },
             {
-                label: "系统监控",
+                label: t("adminMenu.systemMonitor"),
             }
         ]
     }
-]
+])
 </script>
 
 <template>

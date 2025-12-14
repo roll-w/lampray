@@ -22,6 +22,29 @@
       "total": "Total: {days} days {hours} hours {minutes} minutes"
     }
   },
+  "adminMenu": {
+    "home": "Admin Home",
+    "backToBlog": "Back to Blog",
+    "userManagement": "User Management",
+    "userList": "User List",
+    "staffManagement": "Staff Management",
+    "articleManagement": "Article Management",
+    "articleList": "Article List",
+    "articleCategory": "Article Category",
+    "articleTag": "Article Tag",
+    "commentManagement": "Comment Management",
+    "commentList": "Comment List",
+    "reviewManagement": "Review Management",
+    "adminReviewList": "Admin Review List",
+    "reviewList": "Review List",
+    "reviewTask": "Review Task",
+    "systemManagement": "System Management",
+    "systemSettings": "System Settings",
+    "firewallManagement": "Firewall Management",
+    "systemLog": "System Log",
+    "messageResource": "Message Resource",
+    "systemMonitor": "System Monitor"
+  },
  "route": {
    "user-home": "Home",
    "login": "Login",
