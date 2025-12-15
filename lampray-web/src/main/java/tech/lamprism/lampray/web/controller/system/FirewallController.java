@@ -71,7 +71,7 @@ public class FirewallController {
      *
      * @return a list of filter table entries.
      */
-    @GetMapping("/firewalls/filter-table")
+    @GetMapping("/firewalls/filtertable")
     public HttpResponseEntity<List<FilterEntryVo>> getFilterTable() {
         List<FilterEntryVo> entries = new ArrayList<>();
         // TODO: page support
@@ -87,7 +87,7 @@ public class FirewallController {
         return HttpResponseEntity.success(entries);
     }
 
-    @PatchMapping("/firewalls/filter-table")
+    @PatchMapping("/firewalls/filtertable")
     public HttpResponseEntity<Void> addFilterEntry(@RequestBody AddFilterEntryRequest request) {
         OffsetDateTime expiration = calculateExpiration(request.getExpirationSeconds());
 
@@ -102,7 +102,7 @@ public class FirewallController {
         return HttpResponseEntity.success();
     }
 
-    @PutMapping("/firewalls/filter-table")
+    @PutMapping("/firewalls/filtertable")
     public HttpResponseEntity<Void> updateFilterEntry(
             @RequestBody AddFilterEntryRequest request) {
         OffsetDateTime expiration = calculateExpiration(request.getExpirationSeconds());
@@ -117,7 +117,7 @@ public class FirewallController {
         return HttpResponseEntity.success();
     }
 
-    @DeleteMapping("/firewalls/filter-table")
+    @DeleteMapping("/firewalls/filtertable")
     public HttpResponseEntity<Void> removeFilterEntry(@RequestParam String identifier, @RequestParam String type) {
         IdentifierType identifierType = IdentifierType.fromString(type);
         RequestIdentifier requestIdentifier = new RequestIdentifier(
@@ -130,7 +130,7 @@ public class FirewallController {
         return HttpResponseEntity.success();
     }
 
-    @PostMapping("/firewalls/filter-table/clear")
+    @PostMapping("/firewalls/filtertable/clear")
     public HttpResponseEntity<Void> clearFilterTable() {
         filterTable.clear();
         return HttpResponseEntity.success();

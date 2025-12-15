@@ -126,7 +126,7 @@ const routes: RouteRecordRaw[] = [
                 component: () => import("@/views/adminfaced/system/FirewallManagementPage.vue"),
             },
             {
-                path: "/admin/firewall/filter-table",
+                path: "/admin/firewall/filtertable",
                 name: RouteName.ADMIN_FILTER_TABLE,
                 component: () => import("@/views/adminfaced/system/FilterTableManagementPage.vue"),
             },

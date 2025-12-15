@@ -35,7 +35,7 @@ export const firewallService = (axios: AxiosInstance) => {
         async getFilterTable(options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<FilterEntryVo[]>>> {
             const mergedOptions = {...options};
             return await axios.get<HttpResponseBody<FilterEntryVo[]>>(
-                "/api/v1/admin/firewalls/filter-table", mergedOptions
+                "/api/v1/admin/firewalls/filtertable", mergedOptions
             );
         },
 
@@ -49,7 +49,7 @@ export const firewallService = (axios: AxiosInstance) => {
                 };
             }
             return await axios.patch<HttpResponseBody<void>>(
-                "/api/v1/admin/firewalls/filter-table", request, mergedOptions
+                "/api/v1/admin/firewalls/filtertable", request, mergedOptions
             );
         },
 
@@ -63,7 +63,7 @@ export const firewallService = (axios: AxiosInstance) => {
                 };
             }
             return await axios.put<HttpResponseBody<void>>(
-                "/api/v1/admin/firewalls/filter-table", request, mergedOptions
+                "/api/v1/admin/firewalls/filtertable", request, mergedOptions
             );
         },
 
@@ -75,14 +75,14 @@ export const firewallService = (axios: AxiosInstance) => {
             mergedOptions.params.identifier = identifier;
             mergedOptions.params.type = type;
             return await axios.delete<HttpResponseBody<void>>(
-                "/api/v1/admin/firewalls/filter-table", mergedOptions
+                "/api/v1/admin/firewalls/filtertable", mergedOptions
             );
         },
 
         async clearFilterTable(options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<void>>> {
             const mergedOptions = {...options};
             return await axios.post<HttpResponseBody<void>>(
-                "/api/v1/admin/firewalls/filter-table/clear", null, mergedOptions
+                "/api/v1/admin/firewalls/filtertable/clear", null, mergedOptions
             );
         }
     }
