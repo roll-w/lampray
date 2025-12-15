@@ -15,44 +15,20 @@
   -->
 
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
+import {ref} from "vue";
 import {useRouter} from "vue-router";
-import {useAxios} from "@/composables/useAxios";
-import {firewallService} from "@/services/system/firewall.service";
 import DashboardPanel from "@/views/adminfaced/DashboardPanel.vue";
 import {useI18n} from "vue-i18n";
-import {newErrorToastFromError} from "@/utils/toasts.ts";
 import {RouteName} from "@/router/routeName.ts";
 
-const axios = useAxios()
-const firewall = firewallService(axios)
-const toast = useToast()
 const router = useRouter()
 const {t} = useI18n()
 
 const filterTableCount = ref(0)
-const loading = ref(false)
-
-const loadFirewallStats = async () => {
-    try {
-        loading.value = true
-        const response = await firewall.getFilterTable()
-        const body = response.data
-        filterTableCount.value = body.data?.length || 0
-    } catch (error) {
-        toast.add(newErrorToastFromError(error, t("request.error.title")))
-    } finally {
-        loading.value = false
-    }
-}
 
 const navigateToFilterTable = () => {
     router.push({name: RouteName.ADMIN_FILTER_TABLE})
 }
-
-onMounted(() => {
-    loadFirewallStats()
-})
 </script>
 
 <template>
@@ -93,18 +69,6 @@ onMounted(() => {
                             </UButton>
                         </div>
                     </template>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="p-4 bg-neutral-50 dark:bg-neutral-900 rounded-lg">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm text-neutral-500">{{ t("views.adminfaced.system.firewall.totalEntries") }}</p>
-                                    <p class="text-2xl font-bold mt-1">{{ filterTableCount }}</p>
-                                </div>
-                                <UIcon name="i-lucide-shield" class="w-8 h-8 text-primary-500" />
-                            </div>
-                        </div>
-                    </div>
                 </UCard>
             </div>
         </template>
