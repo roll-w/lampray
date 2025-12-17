@@ -39,12 +39,14 @@ const hours = ref(0)
 const minutes = ref(0)
 const isPermanent = ref(false)
 
-// Parse modelValue to days, hours, minutes
 watch(() => props.modelValue, (value) => {
-    if (value === -1 || value === 0) {
+    if (value <= 0) {
         days.value = 0
         hours.value = 0
         minutes.value = 0
+    }
+    if (value < 0) {
+        isPermanent.value = true
     } else {
         isPermanent.value = false
         let remaining = value
@@ -84,36 +86,36 @@ watch(isPermanent, (value) => {
         <div v-if="!isPermanent" class="grid grid-cols-3 gap-2">
             <UFormField :label="t('common.duration.days')">
                 <UInput
-                    v-model.number="days"
-                    type="number"
-                    :min="0"
-                    class="w-full"
-                    placeholder="0"
+                        v-model.number="days"
+                        type="number"
+                        :min="0"
+                        class="w-full"
+                        placeholder="0"
                 />
             </UFormField>
             <UFormField :label="t('common.duration.hours')">
                 <UInput
-                    v-model.number="hours"
-                    type="number"
-                    :min="0"
-                    :max="23"
-                    class="w-full"
-                    placeholder="0"
+                        v-model.number="hours"
+                        type="number"
+                        :min="0"
+                        :max="23"
+                        class="w-full"
+                        placeholder="0"
                 />
             </UFormField>
             <UFormField :label="t('common.duration.minutes')">
                 <UInput
-                    v-model.number="minutes"
-                    type="number"
-                    :min="0"
-                    :max="59"
-                    class="w-full"
-                    placeholder="0"
+                        v-model.number="minutes"
+                        type="number"
+                        :min="0"
+                        :max="59"
+                        class="w-full"
+                        placeholder="0"
                 />
             </UFormField>
         </div>
         <div v-if="!isPermanent" class="text-xs text-neutral-500">
-            {{ t('common.duration.total', { days, hours, minutes }) }}
+            {{ t('common.duration.total', {days, hours, minutes}) }}
         </div>
     </div>
 </template>

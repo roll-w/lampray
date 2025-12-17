@@ -292,6 +292,26 @@ const formatDate = (dateString: string) => {
     }
 }
 
+const submitAddForm = async () => {
+    const result = filterEntrySchema.safeParse(newEntryState);
+    if (!result.success) {
+        const firstError = result.error.issues[0]?.message || t("request.error.title");
+        toast.add(newErrorToastFromError(new Error(firstError), t("request.error.title")));
+        return;
+    }
+    await addFilterEntry({ data: newEntryState } as any)
+}
+
+const submitEditForm = async () => {
+    const result = filterEntrySchema.safeParse(editingEntryState);
+    if (!result.success) {
+        const firstError = result.error.issues[0]?.message || t("request.error.title");
+        toast.add(newErrorToastFromError(new Error(firstError), t("request.error.title")));
+        return;
+    }
+    await updateFilterEntry({ data: editingEntryState } as any)
+}
+
 onMounted(() => {
     loadFilterTable()
 })
@@ -354,7 +374,7 @@ onMounted(() => {
 
     <UModal v-model:open="isAddModalOpen" :title="t('views.adminfaced.system.firewall.addEntry')">
         <template #body>
-            <UForm :schema="filterEntrySchema" :state="newEntryState" @submit="addFilterEntry">
+            <UForm :schema="filterEntrySchema" :state="newEntryState">
                 <div class="space-y-4 p-4">
                     <UFormField :label="t('views.adminfaced.system.firewall.identifier')" name="identifier" required>
                         <UInput
@@ -403,7 +423,7 @@ onMounted(() => {
                 <UButton variant="ghost" @click="closeAddModal" type="button">
                     {{ t("common.cancel") }}
                 </UButton>
-                <UButton color="primary" type="submit" :loading="loading">
+                <UButton color="primary" type="button" :loading="loading" @click="submitAddForm">
                     {{ t("common.submit") }}
                 </UButton>
             </div>
@@ -412,7 +432,7 @@ onMounted(() => {
 
     <UModal v-model:open="isEditModalOpen" :title="t('views.adminfaced.system.firewall.editEntry')">
         <template #body>
-            <UForm :schema="filterEntrySchema" :state="editingEntryState" @submit="updateFilterEntry">
+            <UForm :schema="filterEntrySchema" :state="editingEntryState">
                 <div class="space-y-4 p-4">
                     <UFormField :label="t('views.adminfaced.system.firewall.identifier')" name="identifier" required>
                         <UInput
@@ -463,7 +483,7 @@ onMounted(() => {
                 <UButton variant="ghost" @click="closeEditModal" type="button">
                     {{ t("common.cancel") }}
                 </UButton>
-                <UButton color="primary" type="submit" :loading="loading">
+                <UButton color="primary" type="button" :loading="loading" @click="submitEditForm">
                     {{ t("common.update") }}
                 </UButton>
             </div>
