@@ -100,6 +100,34 @@
       }
     },
     "adminfaced": {
+      "review": {
+        "title": "Review Queue",
+        "description": "Review pending content submissions",
+        "refresh": "Refresh",
+        "progress": "Progress: {current} / {total}",
+        "loading": "Loading review jobs...",
+        "noPendingReviews": "No Pending Reviews",
+        "allCompleted": "All review jobs have been completed.",
+        "checkForNew": "Check for New Jobs",
+        "queueComplete": "Queue complete - all jobs reviewed",
+        "jobId": "Job ID",
+        "resourceType": "Resource Type",
+        "resourceId": "Resource ID",
+        "created": "Created",
+        "contentToReview": "Content to Review",
+        "reviewDecision": "Review Decision",
+        "reviewComments": "Review Comments",
+        "reviewCommentsPlaceholder": "Provide feedback or reason (required for rejection)",
+        "approve": "Approve",
+        "reject": "Reject",
+        "skip": "Skip",
+        "approveSuccess": "Review approved successfully",
+        "rejectSuccess": "Review rejected successfully",
+        "validation": {
+          "title": "Validation Error",
+          "reasonRequired": "Please provide a reason for rejection"
+        }
+      },
       "system": {
         "settings": {
           "hideSecret": "Hide secret information",

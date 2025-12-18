@@ -101,6 +101,34 @@
       }
     },
     "adminfaced": {
+      "review": {
+        "title": "审核队列",
+        "description": "审核待处理的内容提交",
+        "refresh": "刷新",
+        "progress": "进度：{current} / {total}",
+        "loading": "正在加载审核任务...",
+        "noPendingReviews": "暂无待审核内容",
+        "allCompleted": "所有审核任务已完成。",
+        "checkForNew": "检查新任务",
+        "queueComplete": "队列已完成 - 所有任务已审核",
+        "jobId": "任务 ID",
+        "resourceType": "资源类型",
+        "resourceId": "资源 ID",
+        "created": "创建时间",
+        "contentToReview": "待审核内容",
+        "reviewDecision": "审核决定",
+        "reviewComments": "审核意见",
+        "reviewCommentsPlaceholder": "提供反馈或原因（拒绝时必填）",
+        "approve": "通过",
+        "reject": "拒绝",
+        "skip": "跳过",
+        "approveSuccess": "审核通过成功",
+        "rejectSuccess": "审核拒绝成功",
+        "validation": {
+          "title": "验证错误",
+          "reasonRequired": "请提供拒绝原因"
+        }
+      },
       "system": {
         "settings": {
           "hideSecret": "隐藏敏感信息",

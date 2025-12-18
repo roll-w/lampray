@@ -34,6 +34,8 @@ export const RouteName = {
     ADMIN_USER_LIST: "admin-user-list",
     ADMIN_USER_DETAIL: "admin-user-detail",
 
+    ADMIN_CONTENT_REVIEW_QUEUE: "admin-content-review-queue",
+
     ADMIN_SYSTEM_SETTINGS: "admin-system-settings",
     ADMIN_SYSTEM_SETTING_DETAIL: "admin-system-setting-detail",
 
