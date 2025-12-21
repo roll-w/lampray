@@ -307,7 +307,7 @@ onMounted(() => {
                                 </h4>
                             </div>
 
-                            <div class="overflow-hidden border-t border-gray-200 dark:border-gray-700">
+                            <div class="overflow-hidden border-t border-gray-200 dark:border-gray-700 max-w-[80vw]">
                                 <StructuralTextEditor
                                         :model-value="currentJobView!.content"
                                         :editable="false"
@@ -319,13 +319,15 @@ onMounted(() => {
                             <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <div class="grid grid-cols-2 gap-4 text-sm">
                                     <div>
-                                        <span class="text-gray-500 dark:text-gray-400">User ID:</span>
+                                        <span class="text-gray-500 dark:text-gray-400">User ID</span>
                                         <span class="ml-2 text-gray-900 dark:text-white">{{
                                                 currentJobView.userId
                                             }}</span>
                                     </div>
                                     <div>
-                                        <span class="text-gray-500 dark:text-gray-400">Created:</span>
+                                        <span class="text-gray-500 dark:text-gray-400"> {{
+                                                t("views.adminfaced.review.created")
+                                            }}</span>
                                         <span class="ml-2 text-gray-900 dark:text-white">
                                             {{ new Date(currentJobView.createTime).toLocaleString() }}
                                         </span>
@@ -337,7 +339,7 @@ onMounted(() => {
                 </div>
 
                 <div class="lg:col-span-1 space-y-4">
-                    <UPageCard :title="t('views.adminfaced.review.navigation')">
+                    <UPageCard :title="t('views.adminfaced.review.reviewDecision')">
                         <div class="flex w-full justify-between gap-2">
                             <UButton
                                     block
@@ -362,9 +364,6 @@ onMounted(() => {
                                 {{ t("views.adminfaced.review.next") }}
                             </UButton>
                         </div>
-                    </UPageCard>
-
-                    <UPageCard :title="t('views.adminfaced.review.reviewDecision')">
                         <div class="space-y-4 w-full">
                             <UFormField
                                     :label="t('views.adminfaced.review.reviewComments')"
@@ -387,8 +386,8 @@ onMounted(() => {
                                          icon="i-lucide-check-circle"
                                          :loading="isSubmitting"
                                          :disabled="loadingContent"
-                                         @click="handleApprove"
-                                >{{ t("views.adminfaced.review.approve") }}
+                                         @click="handleApprove">
+                                    {{ t("views.adminfaced.review.approve") }}
                                 </UButton>
                                 <UButton block
                                          color="error"
