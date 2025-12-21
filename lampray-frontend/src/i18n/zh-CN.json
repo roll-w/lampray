@@ -46,7 +46,7 @@
     "reviewManagement": "审核管理",
     "adminReviewList": "管理审核列表",
     "reviewList": "审核列表",
-    "reviewTask": "审核任务",
+    "reviewQueue": "审核队列",
     "systemManagement": "系统管理",
     "systemSettings": "系统设置",
     "firewallManagement": "防火墙管理",
@@ -66,6 +66,7 @@
     "admin-home": "管理首页",
     "admin-user-list": "用户列表",
     "admin-user-detail": "用户详情",
+    "admin-content-review-queue": "内容审核队列",
     "admin-system-settings": "系统设置",
     "admin-system-setting-detail": "设置详情",
     "admin-firewall": "防火墙管理",
@@ -101,6 +102,35 @@
       }
     },
     "adminfaced": {
+      "review": {
+        "title": "审核队列",
+        "description": "审核待处理的内容项",
+        "refresh": "刷新",
+        "progress": "进度：{current} / {total}",
+        "loading": "正在加载审核任务...",
+        "noPendingReviews": "暂无待审核内容",
+        "allCompleted": "所有审核任务已完成。",
+        "checkForNew": "检查新任务",
+        "queueComplete": "队列已完成 - 所有任务已审核",
+        "jobId": "任务 ID",
+        "contentType": "内容类型",
+        "contentId": "内容 ID",
+        "created": "创建时间",
+        "contentToReview": "待审核内容",
+        "reviewDecision": "审核决定",
+        "reviewComments": "审核意见",
+        "reviewCommentsPlaceholder": "提供反馈或原因（拒绝时必填）",
+        "approve": "通过",
+        "reject": "拒绝",
+        "next": "下一个",
+        "prev": "上一个",
+        "approveSuccess": "审核通过成功",
+        "rejectSuccess": "审核拒绝成功",
+        "validation": {
+          "title": "验证错误",
+          "reasonRequired": "请提供拒绝原因"
+        }
+      },
       "system": {
         "settings": {
           "hideSecret": "隐藏敏感信息",
@@ -354,6 +384,15 @@
           "invalidInput": "不是有效的输入"
         }
       }
+    }
+  },
+  "content": {
+    "type": {
+      "article": "文章",
+      "comment": "评论",
+      "post": "帖子",
+      "image": "图片",
+      "user_space": "用户空间"
     }
   }
 }

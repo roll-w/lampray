@@ -79,7 +79,10 @@ class StructuralTextDeserializer : JsonDeserializer<StructuralText>() {
 
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext): StructuralText {
         val mapper = p.codec as ObjectMapper
-        val node = mapper.readTree<JsonNode>(p) as ObjectNode
+        val node = mapper.readTree<JsonNode>(p)
+        if (node !is ObjectNode) {
+            throw JsonMappingException.from(p, "Expected JSON object, got: ${node.nodeType}")
+        }
 
         val typeNode = node["t"] ?: node["type"]
         if (typeNode == null || !typeNode.isTextual) {

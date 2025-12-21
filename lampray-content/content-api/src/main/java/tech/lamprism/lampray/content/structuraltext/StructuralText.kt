@@ -19,7 +19,6 @@ package tech.lamprism.lampray.content.structuraltext
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.annotation.JsonProperty
 import tech.lamprism.lampray.content.structuraltext.element.Document
 
 /**
@@ -31,7 +30,6 @@ import tech.lamprism.lampray.content.structuraltext.element.Document
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 interface StructuralText {
-    @get:JsonProperty("t")
     @get:JsonAlias("t", "type")
     val type: StructuralTextType
 
@@ -48,12 +46,10 @@ interface StructuralText {
      * - For `MENTION`: may contain the display name or username
      */
     @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @get:JsonProperty("c")
     @get:JsonAlias("c", "content")
     val content: String
 
     @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @get:JsonProperty("ch")
     @get:JsonAlias("ch", "children")
     val children: List<StructuralText>
 

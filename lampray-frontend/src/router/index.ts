@@ -111,6 +111,11 @@ const routes: RouteRecordRaw[] = [
                 component: () => import("@/views/adminfaced/user/UserDetailManagementPage.vue"),
             },
             {
+                path: "/admin/content/review/queue",
+                name: RouteName.ADMIN_CONTENT_REVIEW_QUEUE,
+                component: () => import("@/views/adminfaced/review/ReviewQueuePage.vue"),
+            },
+            {
                 path: "/admin/settings",
                 name: RouteName.ADMIN_SYSTEM_SETTINGS,
                 component: () => import("@/views/adminfaced/system/SystemSettingListPage.vue"),
@@ -130,7 +135,6 @@ const routes: RouteRecordRaw[] = [
                 name: RouteName.ADMIN_FILTER_TABLE,
                 component: () => import("@/views/adminfaced/system/FilterTableManagementPage.vue"),
             },
-
         ],
         meta: {
             requireAdmin: true,

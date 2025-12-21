@@ -150,7 +150,7 @@ const editor = useEditor({
     ],
     editorProps: {
         attributes: {
-            class: "prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] p-4"
+            class: "prose dark:prose-invert max-w-none focus:outline-none min-h-[300px]"
         },
         handleDOMEvents: {
             // Prevent drag and drop within table cells to avoid accidental row/column creation
@@ -219,7 +219,7 @@ onBeforeUnmount(() => {
             </template>
         </EditorToolbar>
         <div class="flex relative">
-            <div class="w-full mx-auto px-4">
+            <div class="w-full mx-auto ">
                 <slot name="before-content"/>
                 <EditorBubbleMenu v-if="editor" :editor="editor" :editable="editable"/>
                 <EditorDragHandle v-if="editor" :editor="editor"/>

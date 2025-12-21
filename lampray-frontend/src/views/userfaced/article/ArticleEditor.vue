@@ -120,7 +120,7 @@ const publishArticle = async () => {
                 :show-outline="true"
                 @change="handleChange"
                 :ui="{content: {
-                    root: 'w-full md:w-[85vw] lg:w-[50vw] mx-auto overflow-y-auto'
+                    root: 'w-full md:w-[85vw] lg:w-[50vw] mx-auto overflow-y-auto px-4'
                 }, toolbar: {
                     root: 'border-b border-gray-200 dark:border-gray-700 overflow-hidden top-[var(--ui-header-height)]',
                     centered: true
