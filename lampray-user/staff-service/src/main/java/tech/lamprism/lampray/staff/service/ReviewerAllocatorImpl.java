@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@ package tech.lamprism.lampray.staff.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.review.ReviewStatus;
 import tech.lamprism.lampray.content.review.ReviewerAllocator;
+import tech.lamprism.lampray.content.review.persistence.ReviewJobDo;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository;
 import tech.lamprism.lampray.staff.AttributedStaff;
 import tech.lamprism.lampray.staff.OnStaffEventListener;
@@ -31,94 +32,169 @@ import tech.lamprism.lampray.staff.Staff;
 import tech.lamprism.lampray.staff.StaffType;
 import tech.lamprism.lampray.staff.persistence.StaffRepository;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author RollW
  */
 @Service
 public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventListener {
-   private static final Logger logger = LoggerFactory.getLogger(ReviewerAllocatorImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(ReviewerAllocatorImpl.class);
 
     private final ReviewJobRepository reviewJobRepository;
     private final StaffRepository staffRepository;
-    private final Map<Long, Integer> weights = new HashMap<>();
-    private final TreeMap<Integer, List<Long>> staffReviewingCount = new TreeMap<>();
 
-    @Lazy
+    private final Map<Long, Integer> weights = new HashMap<>();
+    private final TreeMap<Integer, Deque<Long>> staffReviewingCount = new TreeMap<>();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Executor executor;
+
     public ReviewerAllocatorImpl(ReviewJobRepository reviewJobRepository,
-                                 StaffRepository staffRepository) {
+                                 StaffRepository staffRepository,
+                                 @Qualifier("mainScheduledExecutorService") Executor executor) {
         this.reviewJobRepository = reviewJobRepository;
         this.staffRepository = staffRepository;
-        loadStaffReviewingCount();
+        this.executor = executor;
+        startAsyncLoad();
     }
 
+    private void startAsyncLoad() {
+        executor.execute(this::loadStaffReviewingCount);
+    }
+
+
     private void loadStaffReviewingCount() {
-        weights.clear();
-        staffReviewingCount.clear();
+        lock.writeLock().lock();
+        try {
+            weights.clear();
+            staffReviewingCount.clear();
 
-        // add weight by reviewer
-        reviewJobRepository.findByStatus(ReviewStatus.NOT_REVIEWED).forEach(reviewJob -> {
-            long reviewerId = reviewJob.getReviewerId();
-            int weight = reviewJob.getReviewContentType().getWeight();
-            weights.put(reviewerId, weights.getOrDefault(reviewerId, 0) + weight);
-        });
-
-        List<? extends AttributedStaff> staffs = loadStaffs();
-        // TODO: load staffs
-        staffs.forEach(staff -> {
-            if (weights.containsKey(staff.getUserId())) {
-                return;
+            // Accumulate weight from existing not-reviewed jobs
+            List<ReviewJobDo> jobs = reviewJobRepository.findByStatus(ReviewStatus.PENDING);
+            for (ReviewJobDo reviewJob : jobs) {
+                if (reviewJob == null) {
+                    continue;
+                }
+                long reviewerId = reviewJob.getReviewerId();
+                ContentType type = reviewJob.getReviewContentType();
+                int weight = type.getWeight();
+                weights.put(reviewerId, weights.getOrDefault(reviewerId, 0) + weight);
             }
-            weights.put(staff.getUserId(), 0);
-        });
 
-        weights.forEach((staffId, weight) -> {
-            List<Long> staffIds = staffReviewingCount.getOrDefault(weight,
-                    new ArrayList<>());
-            staffIds.add(staffId);
-            staffReviewingCount.put(weight, staffIds);
-        });
+            List<? extends AttributedStaff> staffs = loadStaffs();
+            staffs.forEach(staff -> {
+                if (staff == null) {
+                    return;
+                }
+                weights.putIfAbsent(staff.getUserId(), 0);
+            });
 
-        logger.info("Load staff reviewing count: {}", staffReviewingCount);
+            // Build buckets
+            weights.forEach((staffId, weight) -> {
+                Deque<Long> deque = staffReviewingCount.getOrDefault(weight, new ArrayDeque<>());
+                if (!deque.contains(staffId)) {
+                    deque.addLast(staffId);
+                }
+                staffReviewingCount.put(weight, deque);
+            });
+
+            logger.info("Load ReviewerAllocator staffs: {}, weights: {}",
+                    weights.size(), staffReviewingCount.size());
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     private List<? extends AttributedStaff> loadStaffs() {
-        return staffRepository
-                .findByTypes(Set.of(StaffType.ADMIN, StaffType.REVIEWER));
+        return staffRepository.findByTypes(Set.of(StaffType.ADMIN, StaffType.REVIEWER));
     }
 
-    private void remappingReviewer(long reviewer, int original, int weight) {
-        weights.put(reviewer, weight);
+    private void remappingReviewer(long reviewer, int original, int newWeight) {
+        lock.writeLock().lock();
+        try {
+            weights.put(reviewer, newWeight);
 
-        List<Long> staffIds = staffReviewingCount.get(original);
-        staffIds.remove(reviewer);
-        if (staffIds.isEmpty()) {
-            staffReviewingCount.remove(original);
+            Deque<Long> originalDeque = staffReviewingCount.get(original);
+            if (originalDeque != null) {
+                // Safe removal
+                originalDeque.removeFirstOccurrence(reviewer);
+                if (originalDeque.isEmpty()) {
+                    staffReviewingCount.remove(original);
+                }
+            }
+
+            // Add to new bucket
+            Deque<Long> newDeque = staffReviewingCount.getOrDefault(newWeight, new ArrayDeque<>());
+            if (!newDeque.contains(reviewer)) {
+                newDeque.addLast(reviewer);
+            }
+            staffReviewingCount.put(newWeight, newDeque);
+        } finally {
+            lock.writeLock().unlock();
         }
-        staffIds = staffReviewingCount.getOrDefault(weight, new ArrayList<>());
-        staffIds.add(reviewer);
-        staffReviewingCount.put(weight, staffIds);
     }
 
     @Override
     public long allocateReviewer(ContentIdentity contentIdentity, boolean allowAutoReviewer) {
+        if (contentIdentity == null) {
+            return AUTO_REVIEWER;
+        }
+
         if (canAutoReview(contentIdentity.getContentType()) && allowAutoReviewer) {
             return AUTO_REVIEWER;
         }
-        Map.Entry<Integer, List<Long>> entry = staffReviewingCount.firstEntry();
-        if (entry == null) {
-            return AUTO_REVIEWER;
+
+        lock.writeLock().lock();
+        try {
+            Map.Entry<Integer, Deque<Long>> entry = staffReviewingCount.firstEntry();
+            if (entry == null) {
+                return AUTO_REVIEWER;
+            }
+
+            Deque<Long> ids = entry.getValue();
+            if (ids == null || ids.isEmpty()) {
+                // Clean empty bucket then retry
+                staffReviewingCount.remove(entry.getKey());
+                Map.Entry<Integer, Deque<Long>> next = staffReviewingCount.firstEntry();
+                if (next == null) {
+                    return AUTO_REVIEWER;
+                }
+                ids = next.getValue();
+                if (ids == null || ids.isEmpty()) {
+                    return AUTO_REVIEWER;
+                }
+                entry = next;
+            }
+
+            // Pick the first reviewer from the deque (round-robin among same-weight)
+            long reviewerId = ids.removeFirst();
+            if (ids.isEmpty()) {
+                staffReviewingCount.remove(entry.getKey());
+            } else {
+                staffReviewingCount.put(entry.getKey(), ids);
+            }
+
+            int addedWeight = contentIdentity.getContentType().getWeight();
+            // Put reviewer into new weight bucket and update weights map
+            int newWeight = entry.getKey() + addedWeight;
+            weights.put(reviewerId, newWeight);
+            Deque<Long> newDeque = staffReviewingCount.getOrDefault(newWeight, new ArrayDeque<>());
+            newDeque.addLast(reviewerId);
+            staffReviewingCount.put(newWeight, newDeque);
+
+            return reviewerId;
+        } finally {
+            lock.writeLock().unlock();
         }
-        List<Long> ids = entry.getValue();
-        long reviewerId = ids.get(0);
-        remappingReviewer(reviewerId, entry.getKey(), entry.getKey() + contentIdentity.getContentType().getWeight());
-        return reviewerId;
     }
 
     @Override
@@ -126,24 +202,42 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
         if (reviewerId == AUTO_REVIEWER) {
             return;
         }
-        Integer weight = weights.get(reviewerId);
-        if (weight == null) {
-            return;
+        if (contentIdentity == null) return;
+
+        lock.writeLock().lock();
+        try {
+            Integer weight = weights.get(reviewerId);
+            if (weight == null) {
+                return;
+            }
+            int decrement = (contentIdentity.getContentType() == null) ? 0 : contentIdentity.getContentType().getWeight();
+            int newWeight = Math.max(0, weight - decrement);
+            remappingReviewer(reviewerId, weight, newWeight);
+        } finally {
+            lock.writeLock().unlock();
         }
-        remappingReviewer(reviewerId, weight,
-                weight - contentIdentity.getContentType().getWeight());
     }
 
     private boolean canAutoReview(ContentType contentType) {
-        return false;
+        return contentType.getWeight() == 0;
     }
 
     @Override
     public void onStaffCreated(Staff staff) {
-        weights.put(staff.getUserId(), 0);
-        List<Long> staffIds =
-                staffReviewingCount.getOrDefault(0, new ArrayList<>());
-        staffIds.add(staff.getUserId());
-        staffReviewingCount.put(0, staffIds);
+        if (staff == null) {
+            return;
+        }
+        lock.writeLock().lock();
+        try {
+            long userId = staff.getUserId();
+            weights.putIfAbsent(userId, 0);
+            Deque<Long> deque = staffReviewingCount.getOrDefault(0, new ArrayDeque<>());
+            if (!deque.contains(userId)) {
+                deque.addLast(userId);
+            }
+            staffReviewingCount.put(0, deque);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 }

@@ -80,7 +80,7 @@ public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
                 .setReviewContentId(contentId)
                 .setReviewerId(reviewerId)
                 .setReviewContentType(contentType)
-                .setStatus(ReviewStatus.NOT_REVIEWED)
+                .setStatus(ReviewStatus.PENDING)
                 .setAssignedTime(assignedTime)
                 .setReviewMark(ReviewMark.NORMAL);
         if (!old.isEmpty()) {

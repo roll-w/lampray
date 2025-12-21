@@ -149,7 +149,7 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJob
         return new ReviewJob(
                 jobId, reviewContentId, reviewContentType,
                 reviewerId, operatorId,
-                ReviewStatus.REVIEWED, null, assignedTime, reviewTime,
+                ReviewStatus.APPROVED, null, assignedTime, reviewTime,
                 reviewMark);
     }
 

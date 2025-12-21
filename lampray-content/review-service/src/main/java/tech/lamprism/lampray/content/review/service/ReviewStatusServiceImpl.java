@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,19 @@
 
 package tech.lamprism.lampray.content.review.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.content.review.ReviewJob;
 import tech.lamprism.lampray.content.review.ReviewJobInfo;
 import tech.lamprism.lampray.content.review.ReviewerAllocator;
+import tech.lamprism.lampray.content.review.common.ReviewErrorCode;
 import tech.lamprism.lampray.content.review.common.ReviewException;
 import tech.lamprism.lampray.content.review.event.OnReviewStateChangeEvent;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobDo;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository;
 import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.CommonRuntimeException;
 
 import java.time.OffsetDateTime;
 
@@ -46,17 +49,17 @@ public class ReviewStatusServiceImpl implements ReviewStatusService {
         this.reviewerAllocator = reviewerAllocator;
     }
 
-
     @Override
+    @Transactional(dontRollbackOn = CommonRuntimeException.class)
     public ReviewJobInfo makeReview(long jobId, long operator,
                                     boolean passed, String reason) throws ReviewException {
         ReviewJobDo job = reviewJobRepository.findById(jobId).orElse(null);
         if (job == null) {
             throw new ReviewException(CommonErrorCode.ERROR_NOT_FOUND);
         }
-        // if (job.getStatus().isReviewed()) {
-        //     throw new ReviewException(ReviewErrorCode.ERROR_REVIEWED);
-        // }
+        if (job.getStatus().isReviewed()) {
+            throw new ReviewException(ReviewErrorCode.ERROR_REVIEWED, "Already reviewed, create new review job instead.");
+        }
         ReviewJobDo reviewed = switchStatus(job, operator, passed, reason);
         reviewed = reviewJobRepository.save(reviewed);
 
@@ -70,9 +73,6 @@ public class ReviewStatusServiceImpl implements ReviewStatusService {
 
     private ReviewJobDo switchStatus(ReviewJobDo job, long operator,
                                      boolean passed, String reason) {
-        if (job == null) {
-            return null;
-        }
         OffsetDateTime time = OffsetDateTime.now();
         reviewerAllocator.releaseReviewer(job.getReviewerId(), job.getAssociatedContent());
         if (passed) {

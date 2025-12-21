@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ class ReviewJobDo(
     @Column(name = "status", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    var status: ReviewStatus = ReviewStatus.NOT_REVIEWED,
+    var status: ReviewStatus = ReviewStatus.PENDING,
 
     @Column(name = "result", nullable = false)
     var result: String = "",
@@ -123,7 +123,7 @@ class ReviewJobDo(
 
     fun reviewPass(operator: Long, time: OffsetDateTime) = apply {
         this.operatorId = operator
-        this.status = ReviewStatus.REVIEWED
+        this.status = ReviewStatus.APPROVED
         this.reviewTime = time
     }
 
@@ -140,7 +140,7 @@ class ReviewJobDo(
         private var reviewContentType: ContentType = ContentType.ARTICLE
         private var reviewerId: Long = 0
         private var operatorId: Long? = null
-        private var status: ReviewStatus = ReviewStatus.NOT_REVIEWED
+        private var status: ReviewStatus = ReviewStatus.PENDING
         private var result: String = ""
         private var assignedTime: OffsetDateTime = OffsetDateTime.now()
         private var reviewTime: OffsetDateTime = OffsetDateTime.now()

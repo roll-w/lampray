@@ -38,8 +38,8 @@ class OnContentPublishReviewListener(
         try {
             val reviewInfo = tryAssignReviewer(contentDetails)
             return when (reviewInfo.status) {
-                ReviewStatus.NOT_REVIEWED -> ContentStatus.REVIEWING
-                ReviewStatus.REVIEWED -> ContentStatus.PUBLISHED
+                ReviewStatus.PENDING -> ContentStatus.REVIEWING
+                ReviewStatus.APPROVED -> ContentStatus.PUBLISHED
                 ReviewStatus.REJECTED -> ContentStatus.FORBIDDEN
                 ReviewStatus.CANCELED -> ContentStatus.FORBIDDEN
             }
