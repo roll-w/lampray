@@ -260,57 +260,54 @@ onMounted(() => {
 
             <div v-else-if="hasCurrentJob" class="grid grid-cols-1 lg:grid-cols-4 gap-4 px-4">
                 <div class="lg:col-span-3 space-y-4">
-                    <UCard>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ t("views.adminfaced.review.jobId") }}
-                                </span>
-                                <p class="font-medium text-gray-900 dark:text-white">
-                                    #{{ currentJob!.id }}
-                                </p>
-                            </div>
-                            <div>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ t("views.adminfaced.review.contentType") }}
-                                </span>
-                                <p class="font-medium text-gray-900 dark:text-white">
-                                    {{ contentTypeDisplay }}
-                                </p>
-                            </div>
-                            <div>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ t("views.adminfaced.review.contentId") }}
-                                </span>
-                                <p class="font-medium text-gray-900 dark:text-white">
-                                    {{ currentJob!.contentId }}
-                                </p>
-                            </div>
-                            <div>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ t("views.adminfaced.review.created") }}
-                                </span>
-                                <p class="font-medium text-gray-900 dark:text-white">
-                                    {{ new Date(currentJob!.assignedTime).toLocaleString() }}
-                                </p>
-                            </div>
-                        </div>
-                    </UCard>
 
                     <UPageCard :title="t('views.adminfaced.review.contentToReview')">
                         <div v-if="loadingContent" class="flex items-center justify-center py-8">
                             <UIcon name="i-lucide-loader-2"
                                    class="w-6 h-6 animate-spin text-primary"/>
                         </div>
-
                         <div v-else-if="currentJobView">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-8">
+                                <div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">
+                                    {{ t("views.adminfaced.review.jobId") }}
+                                </span>
+                                    <p class="font-medium text-gray-900 dark:text-white">
+                                        #{{ currentJob!.id }}
+                                    </p>
+                                </div>
+                                <div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">
+                                    {{ t("views.adminfaced.review.contentType") }}
+                                </span>
+                                    <p class="font-medium text-gray-900 dark:text-white">
+                                        {{ contentTypeDisplay }}
+                                    </p>
+                                </div>
+                                <div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">
+                                    {{ t("views.adminfaced.review.contentId") }}
+                                </span>
+                                    <p class="font-medium text-gray-900 dark:text-white">
+                                        {{ currentJob!.contentId }}
+                                    </p>
+                                </div>
+                                <div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">
+                                    {{ t("views.adminfaced.review.created") }}
+                                </span>
+                                    <p class="font-medium text-gray-900 dark:text-white">
+                                        {{ new Date(currentJob!.assignedTime).toLocaleString() }}
+                                    </p>
+                                </div>
+                            </div>
                             <div v-if="currentJobView.title" class="mb-4">
                                 <h4 class="text-xl font-bold text-gray-900 dark:text-white">
                                     {{ currentJobView.title }}
                                 </h4>
                             </div>
 
-                            <div class="rounded-lg overflow-hidden border-t border-gray-200 dark:border-gray-700">
+                            <div class="overflow-hidden border-t border-gray-200 dark:border-gray-700">
                                 <StructuralTextEditor
                                         :model-value="currentJobView!.content"
                                         :editable="false"

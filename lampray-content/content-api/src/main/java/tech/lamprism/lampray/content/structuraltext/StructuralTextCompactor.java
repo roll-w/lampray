@@ -236,39 +236,11 @@ public final class StructuralTextCompactor {
         mergedChildren.addAll(a.getChildren());
         mergedChildren.addAll(b.getChildren());
         return switch (a.getType()) {
-            case PARAGRAPH -> new Paragraph(mergedChildren);
-            case LIST -> rebuildListBlock((ListBlock) a, mergedChildren);
-            case LIST_ITEM -> new ListItem(a.getContent(), mergedChildren, ((ListItem) a).getChecked());
-            case HEADING -> rebuildHeading((Heading) a, mergedChildren);
-            case BLOCKQUOTE -> new Blockquote(a.getContent(), mergedChildren);
-            case CODE_BLOCK -> rebuildCodeBlock((CodeBlock) a, mergedChildren);
-            case INLINE_CODE -> new InlineCode(a.getContent(), mergedChildren);
             case BOLD -> new Bold(a.getContent(), mergedChildren);
             case ITALIC -> new Italic(a.getContent(), mergedChildren);
             case STRIKETHROUGH -> new StrikeThrough(a.getContent(), mergedChildren);
             case UNDERLINE -> new Underline(a.getContent(), mergedChildren);
             case HIGHLIGHT -> rebuildHighlight((Highlight) a, mergedChildren);
-            case LINK -> rebuildLink((Link) a, mergedChildren);
-            case IMAGE -> rebuildImage((Image) a);
-            case TABLE -> {
-                Table ta = (Table) a;
-                yield new Table(mergedChildren, ta.getHasHeaderColumn(), ta.getHasHeaderRow(), ta.getWidths());
-            }
-            case TABLE_ROW -> {
-                TableRow tra = (TableRow) a;
-                yield new TableRow(mergedChildren, tra.getHeight(), tra.getWidths());
-            }
-            case TABLE_CELL -> {
-                TableCell tca = (TableCell) a;
-                yield new TableCell(
-                        tca.getContent(),
-                        mergedChildren,
-                        tca.isHeader(),
-                        tca.getBackgroundColor(),
-                        tca.getColspan(),
-                        tca.getRowspan()
-                );
-            }
             case DOCUMENT -> {
                 // normally handled at root, but support here for completeness
                 List<StructuralText> flattened = new ArrayList<>();
@@ -286,84 +258,14 @@ public final class StructuralTextCompactor {
     private static boolean shallowEquals(StructuralText a, StructuralText b) {
         if (a.getType() != b.getType()) return false;
         switch (a.getType()) {
-            case PARAGRAPH, BLOCKQUOTE, INLINE_CODE, BOLD, ITALIC, STRIKETHROUGH,
+            case PARAGRAPH, BLOCKQUOTE, BOLD, ITALIC, STRIKETHROUGH,
                  UNDERLINE -> {
                 return Objects.equals(a.getContent(), b.getContent());
-            }
-            case TABLE -> {
-                Table ta = (Table) a;
-                Table tb = (Table) b;
-                return ta.getHasHeaderColumn() == tb.getHasHeaderColumn()
-                        && ta.getHasHeaderRow() == tb.getHasHeaderRow()
-                        && Objects.equals(ta.getWidths(), tb.getWidths())
-                        && Objects.equals(a.getContent(), b.getContent());
-            }
-            case TABLE_ROW -> {
-                TableRow ra = (TableRow) a;
-                TableRow rb = (TableRow) b;
-                return Objects.equals(ra.getHeight(), rb.getHeight()) &&
-                        Objects.equals(a.getContent(), b.getContent()) &&
-                        Objects.equals(ra.getWidths(), rb.getWidths());
-            }
-            case TABLE_CELL -> {
-                TableCell ca = (TableCell) a;
-                TableCell cb = (TableCell) b;
-                return Objects.equals(ca.getContent(), cb.getContent())
-                        && ca.isHeader() == cb.isHeader()
-                        && Objects.equals(ca.getBackgroundColor(), cb.getBackgroundColor())
-                        && ca.getColspan() == cb.getColspan()
-                        && ca.getRowspan() == cb.getRowspan();
-            }
-            case LIST -> {
-                ListBlock la = (ListBlock) a;
-                ListBlock lb = (ListBlock) b;
-                return la.getListType() == lb.getListType() && Objects.equals(a.getContent(), b.getContent());
-            }
-            case LIST_ITEM -> {
-                ListItem la = (ListItem) a;
-                ListItem lb = (ListItem) b;
-                return Objects.equals(la.getChecked(), lb.getChecked()) && Objects.equals(a.getContent(), b.getContent());
-            }
-            case HEADING -> {
-                Heading ha = (Heading) a;
-                Heading hb = (Heading) b;
-                return ha.getLevel() == hb.getLevel() && Objects.equals(a.getContent(), b.getContent());
-            }
-            case CODE_BLOCK -> {
-                CodeBlock ca = (CodeBlock) a;
-                CodeBlock cb = (CodeBlock) b;
-                return Objects.equals(ca.getLanguage(), cb.getLanguage()) && Objects.equals(a.getContent(), b.getContent());
             }
             case HIGHLIGHT -> {
                 Highlight ha = (Highlight) a;
                 Highlight hb = (Highlight) b;
                 return Objects.equals(ha.getColor(), hb.getColor()) && Objects.equals(a.getContent(), b.getContent());
-            }
-            case LINK -> {
-                Link la = (Link) a;
-                Link lb = (Link) b;
-                return Objects.equals(la.getHref(), lb.getHref()) && Objects.equals(la.getTitle(), lb.getTitle());
-            }
-            case IMAGE -> {
-                Image ia = (Image) a;
-                Image ib = (Image) b;
-                return Objects.equals(ia.getSrc(), ib.getSrc())
-                        && Objects.equals(ia.getAlt(), ib.getAlt())
-                        && Objects.equals(ia.getTitle(), ib.getTitle())
-                        && Objects.equals(a.getContent(), b.getContent());
-            }
-            case MENTION -> {
-                Mention ma = (Mention) a;
-                Mention mb = (Mention) b;
-                return Objects.equals(ma.getUserId(), mb.getUserId()) && Objects.equals(a.getContent(), b.getContent());
-            }
-            case MATH -> {
-                Math ma = (Math) a;
-                Math mb = (Math) b;
-                return ma.getDisplay() == mb.getDisplay() && Objects.equals(ma.getContent(), mb.getContent());
-            }
-            case HORIZONTAL_DIVIDER -> {
-                return true; // all dividers are identical in header
             }
             case DOCUMENT -> {
                 return true;
