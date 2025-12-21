@@ -37,7 +37,7 @@
     "reviewManagement": "Review Management",
     "adminReviewList": "Admin Review List",
     "reviewList": "Review List",
-    "reviewTask": "Review Task",
+    "reviewQueue": "Review Queue",
     "systemManagement": "System Management",
     "systemSettings": "System Settings",
     "firewallManagement": "Firewall Management",
@@ -57,6 +57,7 @@
    "admin-home": "Admin Home",
    "admin-user-list": "User List",
    "admin-user-detail": "User Details",
+   "admin-content-review-queue": "Content Review Queue",
    "admin-system-settings": "System Settings",
    "admin-system-setting-detail": "Setting Details",
    "admin-firewall": "Firewall Management",
@@ -111,8 +112,8 @@
         "checkForNew": "Check for New Jobs",
         "queueComplete": "Queue complete - all jobs reviewed",
         "jobId": "Job ID",
-        "resourceType": "Resource Type",
-        "resourceId": "Resource ID",
+        "contentType": "Content Type",
+        "contentId": "Content ID",
         "created": "Created",
         "contentToReview": "Content to Review",
         "reviewDecision": "Review Decision",
@@ -120,7 +121,8 @@
         "reviewCommentsPlaceholder": "Provide feedback or reason (required for rejection)",
         "approve": "Approve",
         "reject": "Reject",
-        "skip": "Skip",
+        "next": "Next",
+        "prev": "Previous",
         "approveSuccess": "Review approved successfully",
         "rejectSuccess": "Review rejected successfully",
         "validation": {
@@ -389,6 +391,15 @@
           "invalidInput": "Not a valid input"
         }
       }
+    }
+  },
+  "content": {
+    "type": {
+      "article": "Article",
+      "comment": "Comment",
+      "post": "Post",
+      "image": "Image",
+      "user_space": "User Space"
     }
   }
 }

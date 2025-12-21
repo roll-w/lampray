@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import type {ContentType} from "./content.type";
+import type {StructuralText} from "@/components/structuraltext/types.ts";
+
 export enum ReviewStatuses {
     FINISHED = "FINISHED",
     PASSED = "PASSED",
@@ -35,7 +38,7 @@ export enum ReviewStatus {
 export interface ReviewJobView {
     id: number | string;
     contentId: number | string;
-    contentType: string;
+    contentType: ContentType;
     reviewer: number;
     status: ReviewStatus;
     assignedTime: string;
@@ -44,9 +47,9 @@ export interface ReviewJobView {
 
 export interface ReviewJobContentView {
     contentId: number | string;
-    contentType: string;
+    contentType: ContentType;
     title?: string;
-    content: string;
+    content: StructuralText;
     userId: number;
     createTime: string;
     updateTime: string;
@@ -54,6 +57,6 @@ export interface ReviewJobContentView {
 
 export interface ReviewRequest {
     pass: boolean;
-    result: string;
+    reason: string;
 }
 

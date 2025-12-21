@@ -81,7 +81,8 @@ const items = computed<NavigationMenuItem[]>(() => [
                 label: t("adminMenu.reviewList"),
             },
             {
-                label: t("adminMenu.reviewTask"),
+                label: t("adminMenu.reviewQueue"),
+                to: {name: RouteName.ADMIN_CONTENT_REVIEW_QUEUE}
             }
         ]
     },
