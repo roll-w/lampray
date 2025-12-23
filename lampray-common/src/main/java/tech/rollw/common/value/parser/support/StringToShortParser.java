@@ -25,7 +25,9 @@ import tech.rollw.common.value.parser.ValueParser;
  * @author RollW
  */
 public class StringToShortParser implements ValueParser<String, Short> {
-    public StringToShortParser() {
+    private static final StringToShortParser INSTANCE = new StringToShortParser();
+
+    private StringToShortParser() {
     }
 
     @Override
@@ -39,6 +41,10 @@ public class StringToShortParser implements ValueParser<String, Short> {
         } catch (NumberFormatException e) {
             throw new ValueParseException("Invalid short format: " + value, e);
         }
+    }
+
+    public static StringToShortParser getInstance() {
+        return INSTANCE;
     }
 }
 

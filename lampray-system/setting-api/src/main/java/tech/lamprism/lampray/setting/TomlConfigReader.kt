@@ -93,68 +93,7 @@ class TomlConfigReader(
 
     private fun <T> readRaw(specification: SettingSpecification<T>): T? {
         val value = readKey(specification.keyName) ?: return null
-        return convertToType(value, specification)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T> convertToType(value: Any?, specification: SettingSpecification<T>): T? {
-        // Converts value to the type specified in SettingSpecification
-        if (value == null) {
-            return null
-        }
-        val configType = specification.key.type
-        if (configType.targetClass.isInstance(value)) {
-            return value as T
-        }
-
-        // TODO: fix unsafe casts
-        return when (configType) {
-            ConfigType.STRING -> if (value is String) value as T else value.toString() as T?
-            ConfigType.INT -> when (value) {
-                is Number -> value.toInt() as T
-                is String -> value.toIntOrNull() as T?
-                else -> null
-            }
-
-            ConfigType.LONG -> when (value) {
-                is Number -> value.toLong() as T
-                is String -> value.toLongOrNull() as T?
-                else -> null
-            }
-
-            ConfigType.FLOAT -> when (value) {
-                is Number -> value.toFloat() as T
-                is String -> value.toFloatOrNull() as T?
-                else -> null
-            }
-
-            ConfigType.DOUBLE -> when (value) {
-                is Number -> value.toDouble() as T
-                is String -> value.toDoubleOrNull() as T?
-                else -> null
-            }
-
-            ConfigType.BOOLEAN -> when (value) {
-                is Boolean -> value as T
-                is String -> value.toBooleanStrictOrNull() as T?
-                else -> null
-            }
-
-            ConfigType.STRING_SET -> when (value) {
-                is List<*> -> value.mapNotNull {
-                    when (it) {
-                        null -> null
-                        is String -> it.trim()
-                        else -> it.toString()
-                    }
-                }.toSet() as T
-
-                is String -> value.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet() as T
-                else -> null
-            }
-
-            else -> throw IllegalArgumentException("Unsupported type: $configType")
-        }
+        return specification.key.type.parse(value)
     }
 
     override fun <T> getValue(specification: SettingSpecification<T>): ConfigValue<T> {

@@ -23,7 +23,7 @@ package tech.lamprism.lampray.setting
  */
 @JvmDefaultWithoutCompatibility
 interface SettingSpecification<T> {
-    val key: SettingKey<T>
+    val key: ConfigKey<T>
 
     /**
      * The default value indexes in [valueEntries].

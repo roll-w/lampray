@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.setting
 
+import tech.rollw.common.value.ValueCodec
+import tech.rollw.common.value.formatter.IdentityValueFormatter
+import tech.rollw.common.value.formatter.ValueFormatter
 import tech.rollw.common.value.parser.IdentityValueParser
 import tech.rollw.common.value.parser.ValueParser
 
@@ -23,18 +26,22 @@ import tech.rollw.common.value.parser.ValueParser
  * Configuration type definition.
  *
  * @param T the target type used in the application.
+ * @param codecs the map of raw value types to their respective codecs.
+ * @param targetClass the target class type.
+ * @param preferredRawType the preferred raw type for serialization (default is String).
  * @author RollW
  */
 data class ConfigType<T>(
-    val parsers: Map<Class<*>, ValueParser<*, T>> = emptyMap(),
-    val targetClass: Class<T>
+    val codecs: Map<Class<*>, ValueCodec<*, T>> = emptyMap(),
+    val targetClass: Class<T>,
+    val preferredRawType: Class<*> = String::class.java
 ) {
     override fun toString(): String {
-        return "ConfigType<$targetClass>(parsers=${parsers.keys})"
+        return "ConfigType<$targetClass>(codecs=${codecs.keys})"
     }
 
-    operator fun get(rawValueType: Class<*>): ValueParser<*, T>? {
-        return parsers[rawValueType]
+    operator fun <R> get(rawValueType: Class<R>): ValueCodec<R, T>? {
+        return codecs[rawValueType] as ValueCodec<R, T>?
     }
 
     /**
@@ -44,49 +51,81 @@ data class ConfigType<T>(
      * @return the parsed value of type T.
      * @throws IllegalArgumentException if no parser is found for the raw value's type.
      */
-    fun parse(rawValue: Any): T {
-        val parser = get(rawValue::class.java)
-            ?: throw IllegalArgumentException(
-                "No parser found for type: ${rawValue::class.java} to target type: $targetClass"
-            )
+    fun <R> parse(rawValue: R): T {
+        if (rawValue == null) {
+            throw IllegalArgumentException("Raw value cannot be null for parsing to type: $targetClass")
+        }
+        val parser = get(rawValue::class.java) ?: throw IllegalArgumentException(
+            "No parser found for raw type: ${rawValue::class.java} to target type: $targetClass"
+        )
         @Suppress("UNCHECKED_CAST")
-        return (parser as ValueParser<Any, T>).parse(rawValue)
+        return (parser as ValueParser<R, T>).parse(rawValue)
+    }
+
+    /**
+     * Format value to a specific raw type.
+     *
+     * @param value the value to format.
+     * @param rawClass the target raw type class.
+     * @return the formatted value in the specified raw type.
+     * @throws IllegalArgumentException if no formatter is found for the specified raw type.
+     */
+    fun <R> format(value: T, rawClass: Class<R>): R {
+        val formatter = get(rawClass) ?: throw IllegalArgumentException(
+            "No formatter found for target type: $targetClass to raw type: $rawClass"
+        )
+        @Suppress("UNCHECKED_CAST")
+        return (formatter as ValueFormatter<T, R>).format(value)
     }
 
     class Builder<T>(
         private var targetClass: Class<T>? = null
     ) {
-        private val parsers: MutableMap<Class<*>, ValueParser<*, T>> = LinkedHashMap()
+        private val parsers: MutableMap<Class<*>, ValueCodec<*, T>> = LinkedHashMap()
+        private var preferredRawType: Class<*> = String::class.java
 
-        fun <R> addParser(type: Class<R>, parser: ValueParser<R, T>): Builder<T> {
+        fun <R> addCodec(type: Class<R>, parser: ValueCodec<R, T>): Builder<T> {
             parsers[type] = parser
             return this
         }
 
-        inline fun <reified R> addParser(parser: ValueParser<R, T>): Builder<T> {
-            return addParser(R::class.java, parser)
+        inline fun <reified R> addCodec(parser: ValueCodec<R, T>): Builder<T> {
+            return addCodec(R::class.java, parser)
         }
 
-        fun addParsers(map: Map<Class<*>, ValueParser<*, T>>): Builder<T> {
+        fun addCodecs(map: Map<Class<*>, ValueCodec<*, T>>): Builder<T> {
             for ((k, v) in map) {
                 parsers[k] = v
             }
             return this
         }
 
+        fun setPreferredRawType(rawType: Class<*>): Builder<T> {
+            this.preferredRawType = rawType
+            return this
+        }
+
+        inline fun <reified R> setPreferredRawType(): Builder<T> {
+            return setPreferredRawType(R::class.java)
+        }
+
         fun build(): ConfigType<T> {
             val tc = targetClass
                 ?: throw IllegalStateException("targetClass is required to build ConfigType")
-            return ConfigType(parsers = parsers.toMap(), targetClass = tc)
+            return ConfigType(
+                codecs = parsers.toMap(),
+                targetClass = tc,
+                preferredRawType = preferredRawType
+            )
         }
     }
 
     companion object {
         @JvmStatic
-        inline fun <reified R, reified T> of(parser: ValueParser<R, T>): ConfigType<T> {
+        inline fun <reified R, reified T> of(codec: ValueCodec<R, T>): ConfigType<T> {
             return ConfigType(
-                parsers = mapOf(
-                    R::class.java to parser
+                codecs = mapOf(
+                    R::class.java to codec
                 ),
                 T::class.java
             )
@@ -113,29 +152,59 @@ data class ConfigType<T>(
         @JvmStatic
         fun <T> from(configType: ConfigType<T>): Builder<T> {
             val b = Builder(configType.targetClass)
-            b.addParsers(configType.parsers)
+            b.addCodecs(configType.codecs)
+            b.setPreferredRawType(configType.preferredRawType)
             return b
         }
 
         @JvmField
-        val STRING = of(IdentityValueParser.getInstance<String>())
+        val STRING = of(
+            ValueCodec.of(
+                IdentityValueParser.getInstance<String>(), IdentityValueFormatter.getInstance<String>()
+            )
+        )
 
         @JvmField
-        val INT = of(IdentityValueParser.getInstance<Int>())
+        val INT = of(
+            ValueCodec.of(
+                IdentityValueParser.getInstance<Int>(), IdentityValueFormatter.getInstance<Int>()
+            )
+        )
 
         @JvmField
-        val LONG = of(IdentityValueParser.getInstance<Long>())
+        val LONG = of(
+            ValueCodec.of(
+                IdentityValueParser.getInstance<Long>(), IdentityValueFormatter.getInstance<Long>()
+            )
+        )
 
         @JvmField
-        val FLOAT = of(IdentityValueParser.getInstance<Float>())
+        val FLOAT = of(
+            ValueCodec.of(
+                IdentityValueParser.getInstance<Float>(), IdentityValueFormatter.getInstance<Float>()
+            )
+        )
 
         @JvmField
-        val DOUBLE = of(IdentityValueParser.getInstance<Double>())
+        val DOUBLE = of(
+            ValueCodec.of(
+                IdentityValueParser.getInstance<Double>(), IdentityValueFormatter.getInstance<Double>()
+            )
+        )
 
         @JvmField
-        val BOOLEAN = of(IdentityValueParser.getInstance<Boolean>())
+        val BOOLEAN = of(
+            ValueCodec.of(
+                IdentityValueParser.getInstance<Boolean>(), IdentityValueFormatter.getInstance<Boolean>()
+            )
+        )
 
         @JvmField
-        val STRING_SET = of(IdentityValueParser.getInstance<Set<String>>())
+        val STRING_SET = of(
+            ValueCodec.of(
+                IdentityValueParser.getInstance<Set<String>>(),
+                IdentityValueFormatter.getInstance<Set<String>>()
+            )
+        )
     }
 }

@@ -24,7 +24,7 @@ import tech.lamprism.lampray.setting.AttributedSettingSpec.Companion.withAttribu
 class SettingSpecificationBuilder<T> {
     constructor()
 
-    constructor(key: SettingKey<T>) {
+    constructor(key: ConfigKey<T>) {
         this.key = key
 
         if (key == ConfigType.BOOLEAN) {
@@ -33,7 +33,7 @@ class SettingSpecificationBuilder<T> {
         }
     }
 
-    var key: SettingKey<T>? = null
+    var key: ConfigKey<T>? = null
         private set
 
     var allowAnyValue: Boolean = true
@@ -57,7 +57,7 @@ class SettingSpecificationBuilder<T> {
     var secret: Boolean = false
         private set
 
-    fun setKey(key: SettingKey<T>) = apply {
+    fun setKey(key: ConfigKey<T>) = apply {
         this.key = key
     }
 

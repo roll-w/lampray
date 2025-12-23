@@ -19,7 +19,7 @@ package tech.lamprism.lampray.system.database
 import org.springframework.stereotype.Component
 import tech.lamprism.lampray.setting.AttributedSettingSpecification
 import tech.lamprism.lampray.setting.SettingDescription
-import tech.lamprism.lampray.setting.SettingKey
+import tech.lamprism.lampray.setting.ConfigKey
 import tech.lamprism.lampray.setting.SettingSource
 import tech.lamprism.lampray.setting.SettingSpecificationBuilder
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier
@@ -44,7 +44,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * driver based on this selection.
      */
     @JvmField
-    val DATABASE_TYPE = SettingSpecificationBuilder(SettingKey.ofString("database.type"))
+    val DATABASE_TYPE = SettingSpecificationBuilder(ConfigKey.ofString("database.type"))
         .setDescription(
             SettingDescription.text(
                 "Database type selection. Determines which database system to connect to and " +
@@ -69,7 +69,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * connection type and generate appropriate JDBC URLs.
      */
     @JvmField
-    val DATABASE_TARGET = SettingSpecificationBuilder(SettingKey.ofString("database.target"))
+    val DATABASE_TARGET = SettingSpecificationBuilder(ConfigKey.ofString("database.target"))
         .setDescription(
             SettingDescription.text(
                 "Database connection address with flexible format support. " +
@@ -93,7 +93,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * Not required for file-based or in-memory databases.
      */
     @JvmField
-    val DATABASE_USERNAME = SettingSpecificationBuilder(SettingKey.ofString("database.username"))
+    val DATABASE_USERNAME = SettingSpecificationBuilder(ConfigKey.ofString("database.username"))
         .setDescription(
             SettingDescription.text(
                 "Database login username. Required for network-based database servers " +
@@ -113,7 +113,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * environment variables or secure configuration management for sensitive passwords.
      */
     @JvmField
-    val DATABASE_PASSWORD = SettingSpecificationBuilder(SettingKey.ofString("database.password"))
+    val DATABASE_PASSWORD = SettingSpecificationBuilder(ConfigKey.ofString("database.password"))
         .setDescription(
             SettingDescription.text(
                 "Database login password. Provides authentication credentials for database access. " +
@@ -135,7 +135,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * and in-memory databases.
      */
     @JvmField
-    val DATABASE_NAME = SettingSpecificationBuilder(SettingKey.ofString("database.name"))
+    val DATABASE_NAME = SettingSpecificationBuilder(ConfigKey.ofString("database.name"))
         .setDescription(
             SettingDescription.text(
                 "Target database name on the server. Specifies which specific database to use " +
@@ -160,7 +160,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * Leave empty to use database server defaults.
      */
     @JvmField
-    val DATABASE_CHARSET = SettingSpecificationBuilder(SettingKey.ofString("database.charset"))
+    val DATABASE_CHARSET = SettingSpecificationBuilder(ConfigKey.ofString("database.charset"))
         .setDescription(
             SettingDescription.text(
                 "Database character encoding setting. Ensures correct handling of international " +
@@ -184,7 +184,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * Example: ["timezone=UTC", "allowMultiQueries=true", "useSSL=false"]
      */
     @JvmField
-    val DATABASE_OPTIONS = SettingSpecificationBuilder(SettingKey.ofStringSet("database.options"))
+    val DATABASE_OPTIONS = SettingSpecificationBuilder(ConfigKey.ofStringSet("database.options"))
         .setDescription(
             SettingDescription.text(
                 "Additional JDBC connection parameters. Allows specifying database-specific " +
@@ -207,7 +207,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * Typical range: 10-50 for most applications.
      */
     @JvmField
-    val DATABASE_POOL_MAX_SIZE = SettingSpecificationBuilder(SettingKey.ofInt("database.pool.max.size"))
+    val DATABASE_POOL_MAX_SIZE = SettingSpecificationBuilder(ConfigKey.ofInt("database.pool.max.size"))
         .setDescription(
             SettingDescription.text(
                 "Maximum number of database connections in the pool. Controls the upper limit " +
@@ -227,7 +227,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * Should be set based on typical concurrent load. Must not exceed max pool size.
      */
     @JvmField
-    val DATABASE_POOL_MIN_IDLE = SettingSpecificationBuilder(SettingKey.ofInt("database.pool.min.idle"))
+    val DATABASE_POOL_MIN_IDLE = SettingSpecificationBuilder(ConfigKey.ofInt("database.pool.min.idle"))
         .setDescription(
             SettingDescription.text(
                 "Minimum number of idle connections in the pool. Ensures responsive performance " +
@@ -249,7 +249,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      */
     @JvmField
     val DATABASE_POOL_CONNECTION_TIMEOUT =
-        SettingSpecificationBuilder(SettingKey.ofLong("database.pool.connection.timeout"))
+        SettingSpecificationBuilder(ConfigKey.ofLong("database.pool.connection.timeout"))
             .setDescription(
                 SettingDescription.text(
                     "Maximum wait time for acquiring a connection in milliseconds. " +
@@ -271,7 +271,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * Recommended: 30 minutes to 1 hour (1800000-3600000ms).
      */
     @JvmField
-    val DATABASE_POOL_MAX_LIFETIME = SettingSpecificationBuilder(SettingKey.ofLong("database.pool.max.lifetime"))
+    val DATABASE_POOL_MAX_LIFETIME = SettingSpecificationBuilder(ConfigKey.ofLong("database.pool.max.lifetime"))
         .setDescription(
             SettingDescription.text(
                 "Maximum lifetime of a connection before retirement in milliseconds. " +
@@ -293,7 +293,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      * Typical values: 5-10 minutes (300000-600000ms).
      */
     @JvmField
-    val DATABASE_POOL_IDLE_TIMEOUT = SettingSpecificationBuilder(SettingKey.ofLong("database.pool.idle.timeout"))
+    val DATABASE_POOL_IDLE_TIMEOUT = SettingSpecificationBuilder(ConfigKey.ofLong("database.pool.idle.timeout"))
         .setDescription(
             SettingDescription.text(
                 "Idle timeout before connection eviction in milliseconds. " +
@@ -316,7 +316,7 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
      */
     @JvmField
     val DATABASE_POOL_LEAK_DETECTION_THRESHOLD =
-        SettingSpecificationBuilder(SettingKey.ofLong("database.pool.leak.detection.threshold"))
+        SettingSpecificationBuilder(ConfigKey.ofLong("database.pool.leak.detection.threshold"))
             .setDescription(
                 SettingDescription.text(
                     "Connection leak detection threshold in milliseconds. " +

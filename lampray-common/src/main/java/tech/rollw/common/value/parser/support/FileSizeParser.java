@@ -88,5 +88,11 @@ public class FileSizeParser implements ValueParser<String, FileSize> {
 
         return FileSize.of(number, fileSizeUnit);
     }
+
+    private static final FileSizeParser INSTANCE = new FileSizeParser();
+
+    public static FileSizeParser getInstance() {
+        return INSTANCE;
+    }
 }
 

@@ -20,7 +20,7 @@ package tech.lamprism.lampray.setting
  * @author RollW
  */
 data class SimpleSettingSpec<T> @JvmOverloads constructor(
-    override val key: SettingKey<T>,
+    override val key: ConfigKey<T>,
     private val allowAnyValue: Boolean = false,
     override val defaults: List<Int> = emptyList(),
     override val valueEntries: List<T?> = emptyList(),
@@ -33,7 +33,7 @@ data class SimpleSettingSpec<T> @JvmOverloads constructor(
 
     @JvmOverloads
     constructor(
-        key: SettingKey<T>,
+        key: ConfigKey<T>,
         isRequired: Boolean = false,
         default: Int,
         vararg valueEntries: T?
@@ -46,7 +46,7 @@ data class SimpleSettingSpec<T> @JvmOverloads constructor(
 
     @JvmOverloads
     constructor(
-        key: SettingKey<T>,
+        key: ConfigKey<T>,
         default: T?,
         isRequired: Boolean = false
     ) : this(
@@ -58,7 +58,7 @@ data class SimpleSettingSpec<T> @JvmOverloads constructor(
     )
 
     constructor(
-        key: SettingKey<T>,
+        key: ConfigKey<T>,
         default: Int,
         allowAnyValue: Boolean,
         vararg valueEntries: T

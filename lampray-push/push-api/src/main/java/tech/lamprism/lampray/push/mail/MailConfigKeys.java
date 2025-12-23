@@ -18,7 +18,7 @@ package tech.lamprism.lampray.push.mail;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.setting.AttributedSettingSpecification;
-import tech.lamprism.lampray.setting.SettingKey;
+import tech.lamprism.lampray.setting.ConfigKey;
 import tech.lamprism.lampray.setting.SettingSource;
 import tech.lamprism.lampray.setting.SettingSpecificationBuilder;
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier;
@@ -32,7 +32,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
     public static final String EMAIL_DISABLED = "disable";
 
     public static final AttributedSettingSpecification<String> SMTP_SERVER_HOST =
-            new SettingSpecificationBuilder<>(SettingKey.ofString("mail.smtp.server.host"))
+            new SettingSpecificationBuilder<>(ConfigKey.ofString("mail.smtp.server.host"))
                     .setTextDescription("SMTP server host. For example 'smtp.example.com'.")
                     .setDefaultValue(EMAIL_DISABLED)
                     .setRequired(false)
@@ -40,7 +40,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
                     .build();
 
     public static final AttributedSettingSpecification<Integer> SMTP_SERVER_PORT =
-            new SettingSpecificationBuilder<>(SettingKey.ofInt("mail.smtp.server.port"))
+            new SettingSpecificationBuilder<>(ConfigKey.ofInt("mail.smtp.server.port"))
                     .setTextDescription("SMTP server port, must be an integer between 0-65535. " +
                             "The default value is 25.")
                     .setDefaultValue(25)
@@ -49,7 +49,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
                     .build();
 
     public static final AttributedSettingSpecification<Boolean> SMTP_SSL_ENABLE =
-            new SettingSpecificationBuilder<>(SettingKey.ofBoolean("mail.smtp.ssl.enable"))
+            new SettingSpecificationBuilder<>(ConfigKey.ofBoolean("mail.smtp.ssl.enable"))
                     .setTextDescription("Whether to enable SSL connection with SMTP server.")
                     .setValueEntries(List.of(false, true))
                     .setDefaultValue(false)
@@ -57,7 +57,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
                     .setSupportedSources(SettingSource.VALUES)
                     .build();
     public static final AttributedSettingSpecification<String> MAIL_USERNAME =
-            new SettingSpecificationBuilder<>(SettingKey.ofString("mail.username"))
+            new SettingSpecificationBuilder<>(ConfigKey.ofString("mail.username"))
                     .setTextDescription("Login user of the SMTP server. " +
                             "Put `disable` to disable email service.")
                     .setDefaultValue(null)
@@ -66,7 +66,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
                     .build();
 
     public static final AttributedSettingSpecification<String> MAIL_PASSWORD =
-            new SettingSpecificationBuilder<>(SettingKey.ofString("mail.password"))
+            new SettingSpecificationBuilder<>(ConfigKey.ofString("mail.password"))
                     .setTextDescription("Login password of the SMTP server.")
                     .setDefaultValue(null)
                     .setSecret(true)
@@ -75,7 +75,7 @@ public final class MailConfigKeys implements SettingSpecificationSupplier {
                     .build();
 
     public static final AttributedSettingSpecification<String> MAIL_SENDER_NAME =
-            new SettingSpecificationBuilder<>(SettingKey.ofString("mail.nickname"))
+            new SettingSpecificationBuilder<>(ConfigKey.ofString("mail.nickname"))
                     .setTextDescription("Mail sender name.")
                     .setDefaultValue("Lampray")
                     .setRequired(false)

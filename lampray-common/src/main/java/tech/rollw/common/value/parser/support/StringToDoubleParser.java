@@ -25,7 +25,9 @@ import tech.rollw.common.value.parser.ValueParser;
  * @author RollW
  */
 public class StringToDoubleParser implements ValueParser<String, Double> {
-    public StringToDoubleParser() {
+    private static final StringToDoubleParser INSTANCE = new StringToDoubleParser();
+
+    private StringToDoubleParser() {
     }
 
     @Override
@@ -39,6 +41,10 @@ public class StringToDoubleParser implements ValueParser<String, Double> {
         } catch (NumberFormatException e) {
             throw new ValueParseException("Invalid double format: " + value, e);
         }
+    }
+
+    public static StringToDoubleParser getInstance() {
+        return INSTANCE;
     }
 }
 

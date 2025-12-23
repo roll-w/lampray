@@ -20,8 +20,18 @@ package tech.rollw.common.value.parser;
  * @author RollW
  */
 public class ToStringParser<R> implements ValueParser<R, String> {
+    private static final ToStringParser<?> INSTANCE = new ToStringParser<>();
+
+    private ToStringParser() {
+    }
+
     @Override
     public String parse(R value) {
         return value.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <R> ToStringParser<R> getInstance() {
+        return (ToStringParser<R>) INSTANCE;
     }
 }

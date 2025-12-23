@@ -30,7 +30,9 @@ import java.time.format.DateTimeParseException;
  * @author RollW
  */
 public class DurationParser implements ValueParser<String, Duration> {
-    public DurationParser() {
+    private static final DurationParser INSTANCE = new DurationParser();
+
+    private DurationParser() {
     }
 
     @Override
@@ -138,6 +140,10 @@ public class DurationParser implements ValueParser<String, Duration> {
             case "ms", "millis", "millisecond", "milliseconds" -> (long) number;
             default -> throw new ValueParseException("Unknown duration unit: " + unit);
         };
+    }
+
+    public static DurationParser getInstance() {
+        return INSTANCE;
     }
 }
 

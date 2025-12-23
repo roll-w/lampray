@@ -25,7 +25,9 @@ import tech.rollw.common.value.parser.ValueParser;
  * @author RollW
  */
 public class StringToIntegerParser implements ValueParser<String, Integer> {
-    public StringToIntegerParser() {
+    private static final StringToIntegerParser INSTANCE = new StringToIntegerParser();
+
+    private StringToIntegerParser() {
     }
 
     @Override
@@ -39,6 +41,10 @@ public class StringToIntegerParser implements ValueParser<String, Integer> {
         } catch (NumberFormatException e) {
             throw new ValueParseException("Invalid integer format: " + value, e);
         }
+    }
+
+    public static StringToIntegerParser getInstance() {
+        return INSTANCE;
     }
 }
 

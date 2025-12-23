@@ -29,7 +29,7 @@ import tech.lamprism.lampray.setting.ConfigValue;
 import tech.lamprism.lampray.setting.LayeredConfigValue;
 import tech.lamprism.lampray.setting.SecretLevel;
 import tech.lamprism.lampray.setting.SettingDescriptionProvider;
-import tech.lamprism.lampray.setting.SettingKey;
+import tech.lamprism.lampray.setting.ConfigKey;
 import tech.lamprism.lampray.setting.SettingSource;
 import tech.lamprism.lampray.setting.SettingSpecificationHelper;
 import tech.lamprism.lampray.setting.SettingSpecificationProvider;
@@ -141,7 +141,7 @@ public class SystemSettingController {
 
     private SettingVo toSettingVo(ConfigValue<?> value,
                                   AttributedSettingSpecification<?> specification) {
-        SettingKey<?> key = value.getSpecification().getKey();
+        ConfigKey<?> key = value.getSpecification().getKey();
         boolean secret = specification.getSecret();
         SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
         Object masked = maskSecret(value.getValue(), secretLevel);
@@ -175,7 +175,7 @@ public class SystemSettingController {
     private SettingDetailsVo toSettingDetailsVo(ConfigValue<?> value,
                                                 AttributedSettingSpecification<?> specification) {
         // TODO: return value restrictions
-        SettingKey<?> key = value.getSpecification().getKey();
+        ConfigKey<?> key = value.getSpecification().getKey();
         boolean secret = specification.getSecret();
         SecretLevel secretLevel = secret ? SecretLevel.MEDIUM : SecretLevel.NONE;
         Object masked = maskSecret(value.getValue(), secretLevel);

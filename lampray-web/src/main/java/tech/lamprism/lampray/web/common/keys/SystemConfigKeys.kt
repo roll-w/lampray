@@ -16,7 +16,7 @@
 package tech.lamprism.lampray.web.common.keys
 
 import tech.lamprism.lampray.setting.AttributedSettingSpecification
-import tech.lamprism.lampray.setting.SettingKey
+import tech.lamprism.lampray.setting.ConfigKey
 import tech.lamprism.lampray.setting.SettingSource
 import tech.lamprism.lampray.setting.SettingSpecificationBuilder
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier
@@ -27,7 +27,7 @@ import tech.lamprism.lampray.setting.SettingSpecificationSupplier
 object SystemConfigKeys: SettingSpecificationSupplier {
     @JvmField
     val APP_NAME =
-        SettingSpecificationBuilder(SettingKey.ofString("system.app.name"))
+        SettingSpecificationBuilder(ConfigKey.ofString("system.app.name"))
             .setDefaultValue("Lampray")
             .setRequired(true)
             .setTextDescription("The name of the application.")

@@ -25,7 +25,9 @@ import tech.rollw.common.value.parser.ValueParser;
  * @author RollW
  */
 public class StringToByteParser implements ValueParser<String, Byte> {
-    public StringToByteParser() {
+    private static final StringToByteParser INSTANCE = new StringToByteParser();
+
+    private StringToByteParser() {
     }
 
     @Override
@@ -39,6 +41,10 @@ public class StringToByteParser implements ValueParser<String, Byte> {
         } catch (NumberFormatException e) {
             throw new ValueParseException("Invalid byte format: " + value, e);
         }
+    }
+
+    public static StringToByteParser getInstance() {
+        return INSTANCE;
     }
 }
 

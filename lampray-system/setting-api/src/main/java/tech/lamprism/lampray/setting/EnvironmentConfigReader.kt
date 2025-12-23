@@ -20,6 +20,16 @@ import com.google.common.base.CaseFormat
 import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 
 /**
+ * Configuration reader for environment variables.
+ *
+ * This reader loads configuration from environment variables and converts values
+ * to the appropriate types. Environment variable keys are converted from
+ * lowercase-with-dots to UPPER_CASE_WITH_UNDERSCORES format.
+ *
+ * For example, the configuration key "database.host" will be read from the
+ * environment variable "DATABASE_HOST".
+ *
+ * @param filteredKeys optional list of keys to allow; if empty, all keys are allowed
  * @author RollW
  */
 class EnvironmentConfigReader(
@@ -60,8 +70,26 @@ class EnvironmentConfigReader(
             return null
         }
         val value = get(specification.keyName.asEnvKey()) ?: return null
-        return with(SettingSpecificationHelper) {
-            value.deserialize(specification)
+
+        // Use String codec to convert environment variable value to target type
+        val configType = specification.key.type.withStringCodec()
+
+        // Check if String codec is available
+        if (configType[String::class.java] == null) {
+            throw IllegalArgumentException(
+                "No String codec available for type ${configType.targetClass} " +
+                        "for environment variable key: ${specification.keyName.asEnvKey()}"
+            )
+        }
+
+        return try {
+            configType.parse(value)
+        } catch (e: Exception) {
+            throw IllegalArgumentException(
+                "Failed to parse environment variable ${specification.keyName.asEnvKey()} " +
+                        "to type ${configType.targetClass}: ${e.message}",
+                e
+            )
         }
     }
 

@@ -19,7 +19,8 @@ package tech.rollw.common.value.formatter
 /**
  * @author RollW
  */
-interface ValueFormatter<T, R> {
+@JvmDefaultWithoutCompatibility
+fun interface ValueFormatter<T, R> {
     fun format(value: T): R
 
     fun <O> before(next: ValueFormatter<R, O>): ValueFormatter<T, O> =

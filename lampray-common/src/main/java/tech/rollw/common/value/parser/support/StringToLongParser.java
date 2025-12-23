@@ -25,7 +25,9 @@ import tech.rollw.common.value.parser.ValueParser;
  * @author RollW
  */
 public class StringToLongParser implements ValueParser<String, Long> {
-    public StringToLongParser() {
+    private static final StringToLongParser INSTANCE = new StringToLongParser();
+
+    private StringToLongParser() {
     }
 
     @Override
@@ -39,6 +41,10 @@ public class StringToLongParser implements ValueParser<String, Long> {
         } catch (NumberFormatException e) {
             throw new ValueParseException("Invalid long format: " + value, e);
         }
+    }
+
+    public static StringToLongParser getInstance() {
+        return INSTANCE;
     }
 }
 

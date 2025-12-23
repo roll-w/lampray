@@ -26,7 +26,9 @@ import tech.rollw.common.value.parser.ValueParser;
  * @author RollW
  */
 public class StringToBooleanParser implements ValueParser<String, Boolean> {
-    public StringToBooleanParser() {
+    private static final StringToBooleanParser INSTANCE = new StringToBooleanParser();
+
+    private StringToBooleanParser() {
     }
 
     @Override
@@ -41,6 +43,10 @@ public class StringToBooleanParser implements ValueParser<String, Boolean> {
             case "false", "no", "0", "off" -> false;
             default -> throw new ValueParseException("Invalid boolean format: " + value);
         };
+    }
+
+    public static StringToBooleanParser getInstance() {
+        return INSTANCE;
     }
 }
 

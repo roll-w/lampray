@@ -81,7 +81,7 @@ public class AutoInferredAddressProvider implements ExternalEndpointProvider {
     /**
      * Resolve address with fallback and caching.
      */
-    private String resolveAddress(SettingSpecification<String, String> configKey, String configured) {
+    private String resolveAddress(SettingSpecification<String> configKey, String configured) {
 
         // Use explicit configuration if provided
         if (!ServerConfigKeys.HTTP_EXTERNAL_ADDRESS_INHERITED.equals(configured)) {

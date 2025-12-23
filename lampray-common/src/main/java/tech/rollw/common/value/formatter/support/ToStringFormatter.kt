@@ -23,9 +23,17 @@ import tech.rollw.common.value.formatter.ValueFormatter
  *
  * @author RollW
  */
-class ToStringFormatter<T> : ValueFormatter<T, String> {
+class ToStringFormatter<T> private constructor() : ValueFormatter<T, String> {
     override fun format(value: T): String {
         return value.toString()
+    }
+
+    companion object {
+        private val INSTANCE = ToStringFormatter<Any>()
+
+        @Suppress("UNCHECKED_CAST")
+        @JvmStatic
+        fun <T> getInstance(): ToStringFormatter<T> = INSTANCE as ToStringFormatter<T>
     }
 }
 

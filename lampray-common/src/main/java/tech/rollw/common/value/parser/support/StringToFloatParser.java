@@ -25,7 +25,9 @@ import tech.rollw.common.value.parser.ValueParser;
  * @author RollW
  */
 public class StringToFloatParser implements ValueParser<String, Float> {
-    public StringToFloatParser() {
+    private static final StringToFloatParser INSTANCE = new StringToFloatParser();
+
+    private StringToFloatParser() {
     }
 
     @Override
@@ -39,6 +41,10 @@ public class StringToFloatParser implements ValueParser<String, Float> {
         } catch (NumberFormatException e) {
             throw new ValueParseException("Invalid float format: " + value, e);
         }
+    }
+
+    public static StringToFloatParser getInstance() {
+        return INSTANCE;
     }
 }
 

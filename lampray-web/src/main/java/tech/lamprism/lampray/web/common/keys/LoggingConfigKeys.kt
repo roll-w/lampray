@@ -19,10 +19,16 @@ package tech.lamprism.lampray.web.common.keys
 import org.slf4j.event.Level
 import org.springframework.stereotype.Component
 import tech.lamprism.lampray.setting.AttributedSettingSpecification
-import tech.lamprism.lampray.setting.SettingKey
+import tech.lamprism.lampray.setting.ConfigKey
+import tech.lamprism.lampray.setting.ConfigType
 import tech.lamprism.lampray.setting.SettingSource
 import tech.lamprism.lampray.setting.SettingSpecificationBuilder
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier
+import tech.rollw.common.value.FileSize
+import tech.rollw.common.value.ValueCodec
+import tech.rollw.common.value.formatter.support.FileSizeFormatter
+import tech.rollw.common.value.parser.ValueParser
+import tech.rollw.common.value.parser.support.FileSizeParser
 
 /**
  * @author RollW
@@ -34,7 +40,7 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
     // TODO: may support database setting source
     @JvmField
     val LOGGING_FILE_PATH =
-        SettingSpecificationBuilder(SettingKey.ofString("logging.file.path"))
+        SettingSpecificationBuilder(ConfigKey.ofString("logging.file.path"))
             .setTextDescription("The path of the log file, set the value to '[console]' to disable file logging.")
             .setDefaultValue("logs")
             .setRequired(false)
@@ -43,16 +49,26 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val LOGGING_FILE_MAX_SIZE =
-        SettingSpecificationBuilder(SettingKey.ofLong("logging.file.max-size"))// TODO: use String to support size unit => e.g. "10MB", "100KB", "1GB"
+        SettingSpecificationBuilder(ConfigKey("logging.file.max-size",
+            ConfigType.builder<FileSize>()
+                .addCodec(String::class.java, ValueCodec.of(FileSizeParser.getInstance(), FileSizeFormatter.getInstance()))
+                .addCodec(Number::class.java, ValueCodec.of( object : ValueParser<Number, String> {
+                    override fun parse(value: Number): String {
+                        return value.toString() + "B"
+                    }
+                }.then(FileSizeParser.getInstance())) {
+                    it.bytes
+                })
+                .build()))
             .setTextDescription("The maximum size of the log file.")
-            .setDefaultValue(10 * 1024 * 1024) // = 10MB
+            .setDefaultValue(FileSize.of(10.0, FileSize.Unit.MB))
             .setRequired(false)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
             .build()
 
     @JvmField
     val LOGGING_FILE_MAX_HISTORY =
-        SettingSpecificationBuilder(SettingKey.ofInt("logging.file.max-history"))
+        SettingSpecificationBuilder(ConfigKey.ofInt("logging.file.max-history"))
             .setTextDescription("The maximum history of the log file.")
             .setDefaultValue(7)
             .setRequired(false)
@@ -61,7 +77,7 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val LOGGING_FILE_TOTAL_SIZE_CAP =
-        SettingSpecificationBuilder(SettingKey.ofLong("logging.file.total-size-cap"))
+        SettingSpecificationBuilder(ConfigKey.ofLong("logging.file.total-size-cap"))
             .setTextDescription("The total size cap of all log files.")
             .setDefaultValue(1024 * 1024 * 1024) // = 1GB
             .setRequired(false)
@@ -73,7 +89,7 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val LOGGING_FILE_FORMAT =
-        SettingSpecificationBuilder(SettingKey.ofString("logging.file.format"))
+        SettingSpecificationBuilder(ConfigKey.ofString("logging.file.format"))
             .setTextDescription(
                 """
                 The format of the log file, can be either 'text' or 'json'.
@@ -122,7 +138,7 @@ object LoggingConfigKeys : SettingSpecificationSupplier {
      */
     @JvmField
     val LOGGING_LEVEL =
-        SettingSpecificationBuilder(SettingKey.ofStringSet("logging.level"))
+        SettingSpecificationBuilder(ConfigKey.ofStringSet("logging.level"))
             .setTextDescription(
                 """
                 Logging level for loggers, for example:

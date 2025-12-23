@@ -17,7 +17,7 @@
 package tech.lamprism.lampray.web.common.keys
 
 import tech.lamprism.lampray.setting.AttributedSettingSpecification
-import tech.lamprism.lampray.setting.SettingKey
+import tech.lamprism.lampray.setting.ConfigKey
 import tech.lamprism.lampray.setting.SettingSource
 import tech.lamprism.lampray.setting.SettingSpecificationBuilder
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier
@@ -29,7 +29,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val HTTP_PORT =
-        SettingSpecificationBuilder(SettingKey.ofInt("server.http.port"))
+        SettingSpecificationBuilder(ConfigKey.ofInt("server.http.port"))
             .setTextDescription("HTTP server port")
             .setDefaultValue(5100)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
@@ -38,7 +38,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val HTTP_HOST =
-        SettingSpecificationBuilder(SettingKey.ofString("server.http.host"))
+        SettingSpecificationBuilder(ConfigKey.ofString("server.http.host"))
             .setResourceDescription("HTTP server host")
             .setDefaultValue(null)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
@@ -49,7 +49,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val HTTP_EXTERNAL_API_ADDRESS =
-        SettingSpecificationBuilder(SettingKey.ofString("server.http.external.api.address"))
+        SettingSpecificationBuilder(ConfigKey.ofString("server.http.external.api.address"))
             .setTextDescription(
                 "HTTP server external api address, the address will be used to generate api links.\n\n" +
                         "If set to ${HTTP_EXTERNAL_ADDRESS_INHERITED}, the server will try to infer the address from the request, and " +
@@ -65,7 +65,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val HTTP_EXTERNAL_WEB_ADDRESS =
-        SettingSpecificationBuilder(SettingKey.ofString("server.http.external.web.address"))
+        SettingSpecificationBuilder(ConfigKey.ofString("server.http.external.web.address"))
             .setTextDescription(
                 "HTTP server external web address, when enabled frontend resource hosting will ignore this address " +
                         "and use the same address as 'server.http.external.api.address'.\n\n" +
@@ -82,7 +82,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val PROCESS_PROXY_HEADERS =
-        SettingSpecificationBuilder(SettingKey.ofBoolean("server.http.process-proxy-headers"))
+        SettingSpecificationBuilder(ConfigKey.ofBoolean("server.http.process-proxy-headers"))
             .setTextDescription(
                 "Process proxy headers for HTTP server, if enabled, the server will " +
                         "process the Forwarded, X-Forwarded-For and X-Forwarded-Proto and other headers " +
@@ -97,7 +97,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val SSH_PORT =
-        SettingSpecificationBuilder(SettingKey.ofInt("server.ssh.port"))
+        SettingSpecificationBuilder(ConfigKey.ofInt("server.ssh.port"))
             .setTextDescription("SSH server port")
             .setDefaultValue(5101)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
@@ -106,7 +106,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val SSH_HOST =
-        SettingSpecificationBuilder(SettingKey.ofString("server.ssh.host"))
+        SettingSpecificationBuilder(ConfigKey.ofString("server.ssh.host"))
             .setTextDescription("SSH server host")
             .setDefaultValue(null)
             .setSupportedSources(SettingSource.LOCAL_ONLY)
@@ -115,7 +115,7 @@ object ServerConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val SSH_HOST_KEY =
-        SettingSpecificationBuilder(SettingKey.ofString("server.ssh.host.key"))
+        SettingSpecificationBuilder(ConfigKey.ofString("server.ssh.host.key"))
             .setTextDescription(
                 "Private key path for SSH host, if specified file does not exist, " +
                         "a new key will be generated"

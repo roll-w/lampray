@@ -18,7 +18,7 @@ package tech.lamprism.lampray.web.common.keys
 
 import org.springframework.stereotype.Component
 import tech.lamprism.lampray.setting.AttributedSettingSpecification
-import tech.lamprism.lampray.setting.SettingKey
+import tech.lamprism.lampray.setting.ConfigKey
 import tech.lamprism.lampray.setting.SettingSource
 import tech.lamprism.lampray.setting.SettingSpecificationBuilder
 import tech.lamprism.lampray.setting.SettingSpecificationSupplier
@@ -33,7 +33,7 @@ object ResourceConfigKeys : SettingSpecificationSupplier {
     // TODO: may rename setting keys
     @JvmField
     val FRONTEND_ENABLED =
-        SettingSpecificationBuilder(SettingKey.ofBoolean("resource.frontend.enabled"))
+        SettingSpecificationBuilder(ConfigKey.ofBoolean("resource.frontend.enabled"))
             .setTextDescription("""
                 Enable frontend resource hosting.
                 """.trimIndent())
@@ -45,7 +45,7 @@ object ResourceConfigKeys : SettingSpecificationSupplier {
 
     @JvmField
     val RESOURCE_SOURCE =
-        SettingSpecificationBuilder(SettingKey.ofString("resource.frontend.path"))
+        SettingSpecificationBuilder(ConfigKey.ofString("resource.frontend.path"))
             .setTextDescription("""
                 Frontend resource path, must be local path or embedded. 
                 

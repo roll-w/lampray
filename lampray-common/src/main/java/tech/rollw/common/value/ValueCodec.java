@@ -45,7 +45,71 @@ public interface ValueCodec<R, T> extends ValueParser<R, T>, ValueFormatter<T, R
         }
     }
 
+    /**
+     * Builder for creating ValueCodec instances with fluent API.
+     *
+     * @param <R> the raw type
+     * @param <T> the target type
+     * @author RollW
+     */
+    class Builder<R, T> {
+        private ValueParser<R, T> parser;
+        private ValueFormatter<T, R> formatter;
+
+        private Builder() {
+        }
+
+        /**
+         * Set the parser for this codec.
+         *
+         * @param parser the parser
+         * @return this builder
+         */
+        public Builder<R, T> parser(ValueParser<R, T> parser) {
+            this.parser = parser;
+            return this;
+        }
+
+        /**
+         * Set the formatter for this codec.
+         *
+         * @param formatter the formatter
+         * @return this builder
+         */
+        public Builder<R, T> formatter(ValueFormatter<T, R> formatter) {
+            this.formatter = formatter;
+            return this;
+        }
+
+        /**
+         * Build the ValueCodec instance.
+         *
+         * @return the built ValueCodec
+         * @throws IllegalStateException if parser or formatter is not set
+         */
+        public ValueCodec<R, T> build() {
+            if (parser == null) {
+                throw new IllegalStateException("Parser must be set");
+            }
+            if (formatter == null) {
+                throw new IllegalStateException("Formatter must be set");
+            }
+            return new SimpleValueCodec<>(parser, formatter);
+        }
+    }
+
     static <R, T> ValueCodec<R, T> of(ValueParser<R, T> parser, ValueFormatter<T, R> formatter) {
         return new SimpleValueCodec<>(parser, formatter);
+    }
+
+    /**
+     * Create a new builder for constructing ValueCodec instances.
+     *
+     * @param <R> the raw type
+     * @param <T> the target type
+     * @return a new builder instance
+     */
+    static <R, T> Builder<R, T> builder() {
+        return new Builder<>();
     }
 }

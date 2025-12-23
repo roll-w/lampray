@@ -17,12 +17,12 @@
 package tech.lamprism.lampray.setting
 
 /**
- * The key of a setting.
+ * The key of a config.
  *
  * @see ConfigType
  * @author RollW
  */
-data class SettingKey<T>(
+data class ConfigKey<T>(
     val name: String,
     val type: ConfigType<T>,
 ) {
@@ -32,42 +32,42 @@ data class SettingKey<T>(
 
     companion object {
         @JvmStatic
-        fun <T> of(name: String, type: ConfigType<T>): SettingKey<T> {
-            return SettingKey(name, type)
+        fun <T> of(name: String, type: ConfigType<T>): ConfigKey<T> {
+            return ConfigKey(name, type)
         }
 
         @JvmStatic
-        fun ofString(name: String): SettingKey<String> {
+        fun ofString(name: String): ConfigKey<String> {
             return of(name, ConfigType.STRING)
         }
 
         @JvmStatic
-        fun ofStringSet(name: String): SettingKey<Set<String>> {
+        fun ofStringSet(name: String): ConfigKey<Set<String>> {
             return of(name, ConfigType.STRING_SET)
         }
 
         @JvmStatic
-        fun ofInt(name: String): SettingKey<Int> {
+        fun ofInt(name: String): ConfigKey<Int> {
             return of(name, ConfigType.INT)
         }
 
         @JvmStatic
-        fun ofLong(name: String): SettingKey<Long> {
+        fun ofLong(name: String): ConfigKey<Long> {
             return of(name, ConfigType.LONG)
         }
 
         @JvmStatic
-        fun ofFloat(name: String): SettingKey<Float> {
+        fun ofFloat(name: String): ConfigKey<Float> {
             return of(name, ConfigType.FLOAT)
         }
 
         @JvmStatic
-        fun ofDouble(name: String): SettingKey<Double> {
+        fun ofDouble(name: String): ConfigKey<Double> {
             return of(name, ConfigType.DOUBLE)
         }
 
         @JvmStatic
-        fun ofBoolean(name: String): SettingKey<Boolean> {
+        fun ofBoolean(name: String): ConfigKey<Boolean> {
             return of(name, ConfigType.BOOLEAN)
         }
     }

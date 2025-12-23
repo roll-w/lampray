@@ -25,9 +25,16 @@ import tech.rollw.common.value.formatter.ValueFormatter
  *
  * @author RollW
  */
-class FileSizeFormatter : ValueFormatter<FileSize, String> {
+class FileSizeFormatter private constructor() : ValueFormatter<FileSize, String> {
     override fun format(value: FileSize): String {
         return value.format()
+    }
+
+    companion object {
+        private val INSTANCE = FileSizeFormatter()
+
+        @JvmStatic
+        fun getInstance(): FileSizeFormatter = INSTANCE
     }
 }
 
