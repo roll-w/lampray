@@ -27,12 +27,20 @@ export const RouteName = {
 
     USER_SPACE: "user-space",
 
+    ARTICLE_EDITOR: "article-editor",
+
+
     ADMIN_HOME: "admin-home",
     ADMIN_USER_LIST: "admin-user-list",
     ADMIN_USER_DETAIL: "admin-user-detail",
 
+    ADMIN_CONTENT_REVIEW_QUEUE: "admin-content-review-queue",
+
     ADMIN_SYSTEM_SETTINGS: "admin-system-settings",
     ADMIN_SYSTEM_SETTING_DETAIL: "admin-system-setting-detail",
+
+    ADMIN_FIREWALL: "admin-firewall",
+    ADMIN_FILTER_TABLE: "admin-filter-table",
 
     NOT_FOUND: "not-found",
     BLOCKED: "blocked",

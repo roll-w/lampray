@@ -19,19 +19,60 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * @author RollW
  */
 data class Highlight @JvmOverloads constructor(
-    val color: String?,
     override val content: String,
-    override val children: List<StructuralText> = emptyList()
+    override val children: List<StructuralText> = emptyList(),
+    val color: AttributeColor? = null
 ) : StructuralText {
+    init {
+        if (color != null) {
+            require(color in HIGHLIGHTS) { "Invalid highlight color: $color" }
+        }
+
+        val disallowed = setOf(
+            StructuralTextType.TABLE,
+            StructuralTextType.TABLE_CELL,
+            StructuralTextType.TABLE_ROW,
+            StructuralTextType.DOCUMENT,
+            StructuralTextType.PARAGRAPH,
+            StructuralTextType.LIST,
+            StructuralTextType.CODE_BLOCK,
+            StructuralTextType.BLOCKQUOTE
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=HIGHLIGHT: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.HIGHLIGHT
 
     override fun accept(visitor: StructuralTextVisitor) {
         visitor.visit(this)
+    }
+
+    companion object {
+        @JvmField
+        val HIGHLIGHTS: Set<AttributeColor> = setOf(
+            AttributeColor.YELLOW,
+            AttributeColor.GREEN,
+            AttributeColor.BLUE,
+            AttributeColor.PINK,
+            AttributeColor.ORANGE,
+            AttributeColor.PURPLE,
+            AttributeColor.RED,
+            AttributeColor.LIME,
+            AttributeColor.TEAL,
+            AttributeColor.CYAN,
+        )
     }
 }

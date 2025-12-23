@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Mention of a user within the structural text.
@@ -30,6 +31,23 @@ data class Mention @JvmOverloads constructor(
     override val content: String = "",
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        val disallowed = setOf(
+            StructuralTextType.DOCUMENT,
+            StructuralTextType.PARAGRAPH,
+            StructuralTextType.LIST,
+            StructuralTextType.TABLE,
+            StructuralTextType.CODE_BLOCK
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=MENTION: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.MENTION
 

@@ -32,6 +32,7 @@ import tech.lamprism.lampray.content.structuraltext.element.Italic
 import tech.lamprism.lampray.content.structuraltext.element.Link
 import tech.lamprism.lampray.content.structuraltext.element.ListBlock
 import tech.lamprism.lampray.content.structuraltext.element.ListItem
+import tech.lamprism.lampray.content.structuraltext.element.ListType
 import tech.lamprism.lampray.content.structuraltext.element.Math
 import tech.lamprism.lampray.content.structuraltext.element.Mention
 import tech.lamprism.lampray.content.structuraltext.element.Paragraph
@@ -57,6 +58,12 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
 
         val result: String
             get() = builder.toString()
+
+        private fun renderNodeContent(node: StructuralText): String {
+            val sub = Visitor()
+            node.accept(sub)
+            return sub.result
+        }
 
         override fun visit(node: StructuralText) {
             when (node) {
@@ -85,10 +92,14 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
 
                 is ListBlock -> {
                     node.children.filterIsInstance<ListItem>().forEachIndexed { index, item ->
-                        if (node.ordered) {
-                            builder.append("${index + 1}. ")
-                        } else {
-                            builder.append("- ")
+                        when (node.listType) {
+                            ListType.ORDERED -> builder.append("${index + 1}. ")
+                            ListType.TASK -> {
+                                val checkbox = if (item.checked == true) "[x]" else "[ ]"
+                                builder.append("- $checkbox ")
+                            }
+
+                            ListType.UNORDERED -> builder.append("- ")
                         }
                         if (item.children.isEmpty()) {
                             builder.append(item.content)
@@ -192,30 +203,117 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
 
                 is Table -> {
                     val rows = node.children.filterIsInstance<TableRow>()
-                    if (rows.isNotEmpty()) {
-                        val headerCells = rows.first().children.filterIsInstance<TableCell>()
-                        if (headerCells.isNotEmpty()) {
+                    if (rows.isEmpty()) return
+
+                    // detect advanced attributes that markdown cannot represent
+                    var advanced = false
+                    if (node.widths.isNotEmpty()) advanced = true
+                    for (r in rows) {
+                        if (r.height != null) advanced = true
+                        if (r.widths != null) advanced = true
+                        for (c in r.children.filterIsInstance<TableCell>()) {
+                            if (c.backgroundColor != null) advanced = true
+                            if (c.colspan > 1 || c.rowspan > 1) advanced = true
+                            if (c.isHeader) advanced = true
+                        }
+                    }
+
+                    if (!advanced) {
+                        // simple markdown table
+                        val first = rows.first()
+                        val headerCells = first.children.filterIsInstance<TableCell>()
+                        if (node.hasHeaderRow && headerCells.isNotEmpty()) {
                             builder.append("|")
                             headerCells.forEach { cell ->
                                 builder.append(" ").append(cell.content).append(" |")
                             }
                             builder.append("\n|")
-                            headerCells.forEach { _ ->
+                            // alignment row
+                            headerCells.forEach { cell ->
                                 builder.append(" --- |")
                             }
                             builder.append("\n")
-                        }
-                        rows.drop(1).forEach { row ->
-                            val cells = row.children.filterIsInstance<TableCell>()
-                            if (cells.isNotEmpty()) {
-                                builder.append("|")
-                                cells.forEach { cell ->
-                                    builder.append(" ").append(cell.content).append(" |")
+                            // remaining rows
+                            rows.drop(1).forEach { row ->
+                                val cells = row.children.filterIsInstance<TableCell>()
+                                if (cells.isNotEmpty()) {
+                                    builder.append("|")
+                                    cells.forEach { cell -> builder.append(" ").append(cell.content).append(" |") }
+                                    builder.append("\n")
                                 }
-                                builder.append("\n")
                             }
+                            builder.append("\n")
+                        } else {
+                            // no header row, render every row as normal rows
+                            rows.forEach { row ->
+                                val cells = row.children.filterIsInstance<TableCell>()
+                                if (cells.isNotEmpty()) {
+                                    builder.append("|")
+                                    cells.forEach { cell -> builder.append(" ").append(cell.content).append(" |") }
+                                    builder.append("\n")
+                                }
+                            }
+                            builder.append("\n")
                         }
-                        builder.append("\n")
+                    } else {
+                        // render as HTML table to preserve attributes
+                        builder.append("<table>")
+                        // colgroup for column widths
+                        if (node.widths.isNotEmpty()) {
+                            builder.append("<colgroup>")
+                            for (w in node.widths) {
+                                if (w == null) builder.append("<col />")
+                                else builder.append("<col style=\"width:${w}px\" />")
+                            }
+                            builder.append("</colgroup>")
+                        }
+                        // rows
+                        for ((rowIdx, row) in rows.withIndex()) {
+                            if (row.height != null) builder.append("<tr style=\"height:${row.height}px\">")
+                            else builder.append("<tr>")
+                            val cells = row.children.filterIsInstance<TableCell>()
+                            for ((colIdx, cell) in cells.withIndex()) {
+                                val tag =
+                                    if (cell.isHeader || (node.hasHeaderRow && rowIdx == 0) || (node.hasHeaderColumn && colIdx == 0)) "th" else "td"
+                                val attrs = mutableListOf<String>()
+                                if (cell.colspan > 1) {
+                                    attrs.add("colspan=\"${cell.colspan}\"")
+                                }
+                                if (cell.rowspan > 1) {
+                                    attrs.add("rowspan=\"${cell.rowspan}\"")
+                                }
+                                val styles = mutableListOf<String>()
+                                if (cell.backgroundColor != null) {
+                                    styles.add("background:${cell.backgroundColor.toJson()}")
+                                }
+                                // Cell width from row's widths
+                                if (row.widths != null && colIdx < row.widths.size) {
+                                    val cellWidth = row.widths[colIdx]
+                                    if (cellWidth != null) {
+                                        styles.add("width:${cellWidth}px")
+                                    }
+                                }
+                                if (styles.isNotEmpty()) {
+                                    attrs.add("style=\"${styles.joinToString(";")}\"")
+                                }
+                                builder.append("<").append(tag)
+                                if (attrs.isNotEmpty()) {
+                                    builder.append(" ").append(attrs.joinToString(" "))
+                                }
+                                builder.append(">")
+                                // cell content (render children or content)
+                                if (cell.children.isEmpty()) {
+                                    builder.append(escapeHtml(cell.content))
+                                } else {
+                                    builder.append(
+                                        escapeHtml(renderNodeContent(TableCell(cell.content, cell.children)))
+                                    )
+                                }
+                                builder.append("</").append(tag).append(">")
+                            }
+                            builder.append("</tr>")
+                        }
+                        builder.append("</table>\n\n")
                     }
                 }
 
@@ -244,6 +342,10 @@ class StructuralTextMarkdownRenderer : StructuralTextRenderer {
                     node.children.forEach { it.accept(this) }
                 }
             }
+        }
+
+        private fun escapeHtml(s: String): String {
+            return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         }
     }
 }

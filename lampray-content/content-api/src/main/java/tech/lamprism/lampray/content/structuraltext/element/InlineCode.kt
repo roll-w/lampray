@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
  * Inline code element.
@@ -29,6 +30,24 @@ data class InlineCode @JvmOverloads constructor(
     override val content: String = "",
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        val disallowed = setOf(
+            StructuralTextType.DOCUMENT,
+            StructuralTextType.PARAGRAPH,
+            StructuralTextType.LIST,
+            StructuralTextType.CODE_BLOCK,
+            StructuralTextType.BLOCKQUOTE,
+            StructuralTextType.TABLE
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=INLINE_CODE: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.INLINE_CODE
 

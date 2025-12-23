@@ -21,7 +21,38 @@
     "actions": "操作",
     "loading": "加载中...",
     "noData": "暂无数据",
-    "back": "返回"
+    "back": "返回",
+    "publish": "发布",
+    "duration": {
+      "permanent": "永久",
+      "days": "天",
+      "hours": "小时",
+      "minutes": "分钟",
+      "total": "总计: {days}天 {hours}小时 {minutes}分钟"
+    }
+  },
+  "adminMenu": {
+    "home": "管理首页",
+    "backToBlog": "返回博客",
+    "userManagement": "用户管理",
+    "userList": "用户列表",
+    "staffManagement": "工作人员管理",
+    "articleManagement": "文章管理",
+    "articleList": "文章列表",
+    "articleCategory": "文章分类",
+    "articleTag": "文章标签",
+    "commentManagement": "评论管理",
+    "commentList": "评论列表",
+    "reviewManagement": "审核管理",
+    "adminReviewList": "管理审核列表",
+    "reviewList": "审核列表",
+    "reviewQueue": "审核队列",
+    "systemManagement": "系统管理",
+    "systemSettings": "系统设置",
+    "firewallManagement": "防火墙管理",
+    "systemLog": "系统日志",
+    "messageResource": "消息资源",
+    "systemMonitor": "系统监控"
   },
   "route": {
     "user-home": "首页",
@@ -35,8 +66,12 @@
     "admin-home": "管理首页",
     "admin-user-list": "用户列表",
     "admin-user-detail": "用户详情",
+    "admin-content-review-queue": "内容审核队列",
     "admin-system-settings": "系统设置",
     "admin-system-setting-detail": "设置详情",
+    "admin-firewall": "防火墙管理",
+    "admin-filter-table": "过滤表管理",
+    "article-editor": "文章编辑器",
     "not-found": "未找到",
     "blocked": "已封禁"
   },
@@ -67,6 +102,35 @@
       }
     },
     "adminfaced": {
+      "review": {
+        "title": "审核队列",
+        "description": "审核待处理的内容项",
+        "refresh": "刷新",
+        "progress": "进度：{current} / {total}",
+        "loading": "正在加载审核任务...",
+        "noPendingReviews": "暂无待审核内容",
+        "allCompleted": "所有审核任务已完成。",
+        "checkForNew": "检查新任务",
+        "queueComplete": "队列已完成 - 所有任务已审核",
+        "jobId": "任务 ID",
+        "contentType": "内容类型",
+        "contentId": "内容 ID",
+        "created": "创建时间",
+        "contentToReview": "待审核内容",
+        "reviewDecision": "审核决定",
+        "reviewComments": "审核意见",
+        "reviewCommentsPlaceholder": "提供反馈或原因（拒绝时必填）",
+        "approve": "通过",
+        "reject": "拒绝",
+        "next": "下一个",
+        "prev": "上一个",
+        "approveSuccess": "审核通过成功",
+        "rejectSuccess": "审核拒绝成功",
+        "validation": {
+          "title": "验证错误",
+          "reasonRequired": "请提供拒绝原因"
+        }
+      },
       "system": {
         "settings": {
           "hideSecret": "隐藏敏感信息",
@@ -105,6 +169,55 @@
             "noDefaults": "暂无默认值",
             "noValueEntries": "暂无值条目",
             "noValue": "无值"
+          }
+        },
+        "firewall": {
+          "title": "防火墙管理",
+          "overview": "防火墙系统概览",
+          "filterTable": "过滤表管理",
+          "filterTableDescription": "过滤表是防火墙的一部分，用于管理IP地址和用户的访问控制规则",
+          "manage": "管理",
+          "totalEntries": "总条目数",
+          "addEntry": "添加条目",
+          "editEntry": "编辑条目",
+          "identifier": "标识符",
+          "identifierPlaceholder": "输入 IP 地址或用户 ID",
+          "type": "类型",
+          "mode": "模式",
+          "expiration": "过期时间",
+          "expirationPlaceholder": "输入时长（如：2d3h、1h30m）或日期时间，留空为永久",
+          "expirationHint": "支持格式：2d3h（2天3小时）、1h30m（1小时30分钟）、inf（永久）或 ISO 日期时间",
+          "reason": "原因",
+          "reasonPlaceholder": "输入封禁原因",
+          "actions": "操作",
+          "edit": "编辑",
+          "delete": "删除",
+          "clear": "清空所有",
+          "confirmDelete": "确认删除",
+          "deleteDescription": "您确定要删除此过滤条目吗？此操作无法撤销。",
+          "confirmClear": "确认清空",
+          "clearDescription": "您确定要清空所有过滤条目吗？这将删除 {count} 个条目，此操作无法撤销。",
+          "addSuccess": "成功添加过滤条目",
+          "updateSuccess": "成功更新过滤条目",
+          "deleteSuccess": "成功删除过滤条目",
+          "clearSuccess": "成功清空过滤表",
+          "noEntries": "暂无过滤条目",
+          "permanent": "永久",
+          "identifierType": {
+            "IP": "IP 地址",
+            "USER": "用户 ID"
+          },
+          "filterMode": {
+            "ALLOW": "允许",
+            "DENY": "拒绝"
+          },
+          "validation": {
+            "identifierRequired": "标识符不能为空",
+            "identifierInvalid": "标识符格式无效，请输入有效的 IP 地址（如：192.168.1.1 或 192.168.1.0/24）或用户 ID（纯数字）",
+            "typeRequired": "类型不能为空",
+            "modeRequired": "模式不能为空",
+            "expirationRequired": "过期时间不能为空",
+            "reasonRequired": "原因不能为空"
           }
         }
       }
@@ -166,6 +279,120 @@
           "subtitle": "请检查你的邮箱，点击激活链接激活你的账户。"
         }
       }
+    }
+  },
+  "editor": {
+    "toolbar": {
+      "bold": "粗体",
+      "italic": "斜体",
+      "underline": "下划线",
+      "strikethrough": "删除线",
+      "highlight": "高亮",
+      "inlineCode": "行内代码",
+      "paragraph": "段落",
+      "heading1": "一级标题",
+      "heading2": "二级标题",
+      "heading3": "三级标题",
+      "heading4": "四级标题",
+      "heading5": "五级标题",
+      "heading6": "六级标题",
+      "bulletList": "无序列表",
+      "orderedList": "有序列表",
+      "taskList": "任务列表",
+      "blockquote": "引用",
+      "codeBlock": "代码块",
+      "insertLink": "插入链接",
+      "insertImage": "插入图片",
+      "insertTable": "插入表格",
+      "horizontalRule": "分隔线",
+      "editLink": "编辑链接",
+      "openLink": "打开链接",
+      "addLink": "添加链接",
+      "copy": "复制"
+    },
+    "modal": {
+      "insertLink": "插入链接",
+      "editLink": "编辑链接",
+      "insertImage": "插入图片",
+      "url": "链接地址",
+      "urlPlaceholder": "https://example.com",
+      "urlRequired": "链接地址不能为空",
+      "text": "链接文本",
+      "textPlaceholder": "链接文本",
+      "imageUrl": "图片地址",
+      "imageUrlPlaceholder": "https://example.com/image.jpg",
+      "imageUrlRequired": "图片地址不能为空",
+      "altText": "图片描述（可选）",
+      "altTextPlaceholder": "图片描述",
+      "cancel": "取消",
+      "insert": "插入",
+      "update": "更新",
+      "removeLink": "删除链接"
+    },
+    "codeBlock": {
+      "expand": "展开",
+      "collapse": "折叠",
+      "plainText": "纯文本",
+      "showLineNumbers": "显示行号",
+      "hideLineNumbers": "隐藏行号",
+      "enableLineWrap": "启用自动换行",
+      "disableLineWrap": "禁用自动换行",
+      "copyCode": "复制代码",
+      "copied": "已复制"
+    },
+    "table": {
+      "insertColumnBefore": "在前面插入列",
+      "insertColumnAfter": "在后面插入列",
+      "deleteColumn": "删除列",
+      "insertRowBefore": "在上方插入行",
+      "insertRowAfter": "在下方插入行",
+      "deleteRow": "删除行",
+      "mergeCells": "合并单元格",
+      "splitCell": "拆分单元格",
+      "toggleHeaderColumn": "切换表头列",
+      "toggleHeaderRow": "切换表头行",
+      "toggleHeaderCell": "切换表头单元格",
+      "deleteTable": "删除表格",
+      "alignment": "对齐方式",
+      "alignLeft": "左对齐",
+      "alignCenter": "居中对齐",
+      "alignRight": "右对齐",
+      "alignJustify": "两端对齐",
+      "backgroundColor": "背景颜色",
+      "noColor": "无颜色"
+    }
+  },
+  "article": {
+    "editor": {
+      "placeholder": {
+        "title": "在此输入文章标题...",
+        "content": "在此开始撰写你的内容..."
+      },
+      "title": {
+        "required": "标题不能为空",
+        "tooLong": "标题太长"
+      },
+      "content": {
+        "empty": "内容为空",
+        "rootMustBeDocument": "内容结构无效",
+        "tooShort": "内容太短",
+        "tooLong": "内容太长"
+      },
+      "publish": {
+        "success": "已发布文章",
+        "failure": {
+          "invalidInput": "不是有效的输入"
+        }
+      }
+    }
+  },
+  "content": {
+    "type": {
+      "article": "文章",
+      "comment": "评论",
+      "post": "帖子",
+      "image": "图片",
+      "user_space": "用户空间"
     }
   }
 }

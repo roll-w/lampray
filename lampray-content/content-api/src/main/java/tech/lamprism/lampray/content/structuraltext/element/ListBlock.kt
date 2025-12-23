@@ -19,19 +19,37 @@ package tech.lamprism.lampray.content.structuraltext.element
 import tech.lamprism.lampray.content.structuraltext.StructuralText
 import tech.lamprism.lampray.content.structuraltext.StructuralTextType
 import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
+import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextValidationException
 
 /**
- * Block that contains list items (ordered or unordered).
+ * Block that contains list items (ordered, unordered, or task list).
  *
  * @author RollW
  */
 data class ListBlock @JvmOverloads constructor(
-    val ordered: Boolean,
-    override val content: String = "",
+    val listType: ListType = ListType.UNORDERED,
     override val children: List<StructuralText> = emptyList()
 ) : StructuralText {
+    init {
+        children.forEach {
+            require(it is ListItem) {
+                "ListBlock can only contain ListItem elements, but found: ${it.type}"
+            }
+        }
+        children.forEachIndexed { index, child ->
+            if (child.type != StructuralTextType.LIST_ITEM) {
+                throw StructuralTextValidationException(
+                    "Disallowed child type for parent=LIST: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.LIST
+
+    override val content: String
+        get() = ""
 
     override fun accept(visitor: StructuralTextVisitor) {
         visitor.visit(this)

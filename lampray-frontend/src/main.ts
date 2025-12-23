@@ -29,15 +29,11 @@ import {addCollection} from "@iconify/vue"
 import {useNavigatorLanguage, useStorage} from "@vueuse/core";
 
 async function bootstrap() {
-    // Load icon collection (with fallback and error handling)
     try {
         const lucideModule = await import("@iconify-json/lucide/icons.json");
-        // some bundlers put the json on `default`
         const lucide = (lucideModule as any).default || lucideModule;
         addCollection(lucide);
     } catch (e) {
-        // Non-fatal: app can still run without the icon collection
-        // Log for debugging purposes
         console.error("Failed to load icon collection:", e);
     }
 
@@ -71,10 +67,7 @@ async function bootstrap() {
         }
     };
 
-    // create the store after pinia has been installed
     const userStore = useUserStore();
-
-    // Handlers reuse userStore and router
     const onLoginExpired = () => {
         userStore.logout();
         router.push({
@@ -91,7 +84,6 @@ async function bootstrap() {
         })
     }
 
-    // create axios client before mounting so components can inject/use it during setup
     const axios = createAxios(userStore, onLoginExpired, onUserBlocked);
     const server = ((window as any).config?.server) || {
         httpProtocol: "http",
@@ -105,13 +97,11 @@ async function bootstrap() {
 
     app.provide("axios", axios);
 
-    // initialize locale and then mount
     const initialLocale = mappingToAvailableLocale(localeStored.value);
     await refreshLocale(initialLocale);
     app.use(i18n);
     app.mount("#app");
 
-    // watch for external changes to stored locale and refresh messages
     watch(localeStored, (newVal, oldVal) => {
         if (newVal && newVal !== oldVal) {
             const lc = mappingToAvailableLocale(newVal);
@@ -120,7 +110,6 @@ async function bootstrap() {
     });
 }
 
-// Start the app and surface any unexpected errors
 bootstrap().catch((e) => {
     console.error("Failed to bootstrap the application:", e);
 });

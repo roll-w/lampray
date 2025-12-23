@@ -27,8 +27,30 @@ import tech.lamprism.lampray.content.structuraltext.StructuralTextVisitor
  */
 data class Text @JvmOverloads constructor(
     override val content: String = "",
-    override val children: List<StructuralText> = emptyList()
+    override val children: List<StructuralText> = emptyList(),
+    val backgroundColor: String? = null,// TODO
+    val textColor: String? = null,
 ) : StructuralText {
+    init {
+        val disallowed = setOf(
+            StructuralTextType.TABLE,
+            StructuralTextType.TABLE_ROW,
+            StructuralTextType.TABLE_CELL,
+            StructuralTextType.DOCUMENT,
+            StructuralTextType.LIST,
+            StructuralTextType.PARAGRAPH,
+            StructuralTextType.CODE_BLOCK,
+            StructuralTextType.BLOCKQUOTE,
+        )
+        children.forEachIndexed { index, child ->
+            if (child.type in disallowed) {
+                throw IllegalArgumentException(
+                    "Disallowed child type for parent=${StructuralTextType.TEXT}: index=$index, child=${child.type}"
+                )
+            }
+        }
+    }
+
     override val type: StructuralTextType
         get() = StructuralTextType.TEXT
 

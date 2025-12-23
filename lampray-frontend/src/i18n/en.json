@@ -12,7 +12,38 @@
     "reset": "Reset",
     "search": "Search",
     "submit": "Submit",
-    "back": "Back"
+    "back": "Back",
+    "publish": "Publish",
+    "duration": {
+      "permanent": "Permanent",
+      "days": "Days",
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "total": "Total: {days} days {hours} hours {minutes} minutes"
+    }
+  },
+  "adminMenu": {
+    "home": "Admin Home",
+    "backToBlog": "Back to Blog",
+    "userManagement": "User Management",
+    "userList": "User List",
+    "staffManagement": "Staff Management",
+    "articleManagement": "Article Management",
+    "articleList": "Article List",
+    "articleCategory": "Article Category",
+    "articleTag": "Article Tag",
+    "commentManagement": "Comment Management",
+    "commentList": "Comment List",
+    "reviewManagement": "Review Management",
+    "adminReviewList": "Admin Review List",
+    "reviewList": "Review List",
+    "reviewQueue": "Review Queue",
+    "systemManagement": "System Management",
+    "systemSettings": "System Settings",
+    "firewallManagement": "Firewall Management",
+    "systemLog": "System Log",
+    "messageResource": "Message Resource",
+    "systemMonitor": "System Monitor"
   },
  "route": {
    "user-home": "Home",
@@ -26,8 +57,12 @@
    "admin-home": "Admin Home",
    "admin-user-list": "User List",
    "admin-user-detail": "User Details",
+   "admin-content-review-queue": "Content Review Queue",
    "admin-system-settings": "System Settings",
    "admin-system-setting-detail": "Setting Details",
+   "admin-firewall": "Firewall Management",
+   "admin-filter-table": "Filter Table Management",
+   "article-editor": "Article Editor",
    "not-found": "Not Found",
    "blocked": "Blocked"
  },
@@ -66,6 +101,35 @@
       }
     },
     "adminfaced": {
+      "review": {
+        "title": "Review Queue",
+        "description": "Review pending content submissions",
+        "refresh": "Refresh",
+        "progress": "Progress: {current} / {total}",
+        "loading": "Loading review jobs...",
+        "noPendingReviews": "No Pending Reviews",
+        "allCompleted": "All review jobs have been completed.",
+        "checkForNew": "Check for New Jobs",
+        "queueComplete": "Queue complete - all jobs reviewed",
+        "jobId": "Job ID",
+        "contentType": "Content Type",
+        "contentId": "Content ID",
+        "created": "Created",
+        "contentToReview": "Content to Review",
+        "reviewDecision": "Review Decision",
+        "reviewComments": "Review Comments",
+        "reviewCommentsPlaceholder": "Provide feedback or reason (required for rejection)",
+        "approve": "Approve",
+        "reject": "Reject",
+        "next": "Next",
+        "prev": "Previous",
+        "approveSuccess": "Review approved successfully",
+        "rejectSuccess": "Review rejected successfully",
+        "validation": {
+          "title": "Validation Error",
+          "reasonRequired": "Please provide a reason for rejection"
+        }
+      },
       "system": {
         "settings": {
           "hideSecret": "Hide secret information",
@@ -105,7 +169,56 @@
              "noValueEntries": "No value entries",
              "noValue": "No value"
            }
-         }
+         },
+        "firewall": {
+          "title": "Firewall Management",
+          "overview": "Firewall System Overview",
+          "filterTable": "Filter Table Management",
+          "filterTableDescription": "The filter table is part of the firewall, used to manage access control rules for IP addresses and users",
+          "manage": "Manage",
+          "totalEntries": "Total Entries",
+          "addEntry": "Add Entry",
+          "editEntry": "Edit Entry",
+          "identifier": "Identifier",
+          "identifierPlaceholder": "Enter IP address or user ID",
+          "type": "Type",
+          "mode": "Mode",
+          "expiration": "Expiration",
+          "expirationPlaceholder": "Enter duration (e.g.: 2d3h, 1h30m) or datetime, leave empty for permanent",
+          "expirationHint": "Supported formats: 2d3h (2 days 3 hours), 1h30m (1 hour 30 minutes), inf (permanent) or ISO datetime",
+          "reason": "Reason",
+          "reasonPlaceholder": "Enter reason for blocking",
+          "actions": "Actions",
+          "edit": "Edit",
+          "delete": "Delete",
+          "clear": "Clear All",
+          "confirmDelete": "Confirm Delete",
+          "deleteDescription": "Are you sure you want to delete this filter entry? This action cannot be undone.",
+          "confirmClear": "Confirm Clear",
+          "clearDescription": "Are you sure you want to clear all filter entries? This will delete {count} entries and cannot be undone.",
+          "addSuccess": "Filter entry added successfully",
+          "updateSuccess": "Filter entry updated successfully",
+          "deleteSuccess": "Filter entry deleted successfully",
+          "clearSuccess": "Filter table cleared successfully",
+          "noEntries": "No filter entries",
+          "permanent": "Permanent",
+          "identifierType": {
+            "IP": "IP Address",
+            "USER": "User ID"
+          },
+          "filterMode": {
+            "ALLOW": "Allow",
+            "DENY": "Deny"
+          },
+          "validation": {
+            "identifierRequired": "Identifier is required",
+            "identifierInvalid": "Invalid identifier format. Please enter a valid IP address (e.g., 192.168.1.1 or 192.168.1.0/24) or user ID (numbers only)",
+            "typeRequired": "Type is required",
+            "modeRequired": "Mode is required",
+            "expirationRequired": "Expiration is required",
+            "reasonRequired": "Reason is required"
+          }
+        }
       }
     },
     "userfaced": {
@@ -173,6 +286,120 @@
           "subtitle": "Please check your email and click the activation link to activate your account."
         }
       }
+    }
+  },
+  "editor": {
+    "toolbar": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "strikethrough": "Strikethrough",
+      "highlight": "Highlight",
+      "inlineCode": "Inline Code",
+      "paragraph": "Paragraph",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "heading4": "Heading 4",
+      "heading5": "Heading 5",
+      "heading6": "Heading 6",
+      "bulletList": "Bullet List",
+      "orderedList": "Ordered List",
+      "taskList": "Task List",
+      "blockquote": "Blockquote",
+      "codeBlock": "Code Block",
+      "insertLink": "Insert Link",
+      "insertImage": "Insert Image",
+      "insertTable": "Insert Table",
+      "horizontalRule": "Horizontal Rule",
+      "editLink": "Edit Link",
+      "openLink": "Open Link",
+      "addLink": "Add Link",
+      "copy": "Copy"
+    },
+    "modal": {
+      "insertLink": "Insert Link",
+      "editLink": "Edit Link",
+      "insertImage": "Insert Image",
+      "url": "URL",
+      "urlPlaceholder": "https://example.com",
+      "urlRequired": "URL is required",
+      "text": "Text",
+      "textPlaceholder": "Link text",
+      "imageUrl": "Image URL",
+      "imageUrlPlaceholder": "https://example.com/image.jpg",
+      "imageUrlRequired": "Image URL is required",
+      "altText": "Image Description (Optional)",
+      "altTextPlaceholder": "Image description",
+      "cancel": "Cancel",
+      "insert": "Insert",
+      "update": "Update",
+      "removeLink": "Remove Link"
+    },
+    "codeBlock": {
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "plainText": "Plain Text",
+      "showLineNumbers": "Show line numbers",
+      "hideLineNumbers": "Hide line numbers",
+      "enableLineWrap": "Enable line wrap",
+      "disableLineWrap": "Disable line wrap",
+      "copyCode": "Copy code",
+      "copied": "Copied"
+    },
+    "table": {
+      "insertColumnBefore": "Insert Column Before",
+      "insertColumnAfter": "Insert Column After",
+      "deleteColumn": "Delete Column",
+      "insertRowBefore": "Insert Row Before",
+      "insertRowAfter": "Insert Row After",
+      "deleteRow": "Delete Row",
+      "mergeCells": "Merge Cells",
+      "splitCell": "Split Cell",
+      "toggleHeaderColumn": "Toggle Header Column",
+      "toggleHeaderRow": "Toggle Header Row",
+      "toggleHeaderCell": "Toggle Header Cell",
+      "deleteTable": "Delete Table",
+      "alignment": "Alignment",
+      "alignLeft": "Align Left",
+      "alignCenter": "Align Center",
+      "alignRight": "Align Right",
+      "alignJustify": "Align Justify",
+      "backgroundColor": "Background Color",
+      "noColor": "No Color"
+    }
+  },
+  "article": {
+    "editor": {
+      "placeholder": {
+        "title": "Type your article title here...",
+        "content": "Start writing your content here..."
+      },
+      "title": {
+        "required": "Title cannot be empty",
+        "tooLong": "Title too long"
+      },
+      "content": {
+        "empty": "Content is empty",
+        "rootMustBeDocument": "Content structure not valid",
+        "tooShort": "Content is too short",
+        "tooLong": "Content is too long"
+      },
+      "publish": {
+        "success": "Article published successfully",
+        "failure": {
+          "invalidInput": "Not a valid input"
+        }
+      }
+    }
+  },
+  "content": {
+    "type": {
+      "article": "Article",
+      "comment": "Comment",
+      "post": "Post",
+      "image": "Image",
+      "user_space": "User Space"
     }
   }
 }

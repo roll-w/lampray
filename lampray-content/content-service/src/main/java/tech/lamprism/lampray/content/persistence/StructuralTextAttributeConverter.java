@@ -52,7 +52,7 @@ public class StructuralTextAttributeConverter implements AttributeConverter<Stru
 
     @Override
     public byte[] convertToDatabaseColumn(StructuralText attribute) {
-        if (attribute == null) {
+        if (attribute == null || StructuralText.EMPTY.equals(attribute)) {
             return null;
         }
         try {
@@ -67,7 +67,7 @@ public class StructuralTextAttributeConverter implements AttributeConverter<Stru
     @Override
     public StructuralText convertToEntityAttribute(byte[] dbData) {
         if (dbData == null || dbData.length == 0) {
-            return null;
+            return StructuralText.EMPTY;
         }
         try {
             byte[] header = ArrayUtils.subarray(dbData, 0, HEADER_LENGTH);
@@ -84,17 +84,31 @@ public class StructuralTextAttributeConverter implements AttributeConverter<Stru
             if (version == null) {
                 return new Text(new String(dbData, StandardCharsets.UTF_8));
             }
-            try {
-                byte[] compressedData = ArrayUtils.subarray(dbData, HEADER_LENGTH, dbData.length);
-                byte[] decompressedData = Zstd.decompress(compressedData);
-                return objectMapper.readValue(decompressedData, StructuralText.class);
-            } catch (ZstdException e) {
-                // With version header, but decompression failed, maybe corrupted data
-                logger.error("Failed to decompress StructuralText data, version: {}", version, e);
+            byte[] compressedData = ArrayUtils.subarray(dbData, HEADER_LENGTH, dbData.length);
+            byte[] decompressedData = decompress(compressedData, version);
+            if (decompressedData == null) {
                 return new Text(new String(dbData, StandardCharsets.UTF_8));
+            }
+            try {
+                return objectMapper.readValue(decompressedData, StructuralText.class);
+            } catch (JsonProcessingException e) {
+                // With version header, decompression succeeded, but JSON parsing failed
+                logger.error("Failed to parse StructuralText JSON data, version: {}, data in string: {}",
+                        version, new String(decompressedData, StandardCharsets.UTF_8), e);
+                return new Text(new String(decompressedData, StandardCharsets.UTF_8));
             }
         } catch (IOException e) {
             throw new RuntimeException("Error converting stored data to StructuralText", e);
+        }
+    }
+
+    private byte[] decompress(byte[] compressedData, Version version) {
+        try {
+            return Zstd.decompress(compressedData);
+        } catch (ZstdException e) {
+            // With version header, but decompression failed, maybe corrupted data
+            logger.error("Failed to decompress StructuralText data, version: {}", version, e);
+            return null;
         }
     }
 

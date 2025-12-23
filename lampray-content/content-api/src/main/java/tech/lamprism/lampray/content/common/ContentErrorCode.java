@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ public enum ContentErrorCode implements ErrorCode, ErrorCodeFinder, ErrorCodeMes
     ERROR_PASSWORD_REQUIRED("A2006", 401),
     ERROR_CONTENT_EXISTED("A2007", 400),
     ERROR_CONTENT_NOT_DELETED("A2008", 400),
-    ERROR_CONTENT_CANNOT_RESTORE("A2009", 400);
+    ERROR_CONTENT_CANNOT_RESTORE("A2009", 400),
+    ERROR_CONTENT_STRUCTURE_INVALID("A2010", 400);
 
 
     private final String value;
