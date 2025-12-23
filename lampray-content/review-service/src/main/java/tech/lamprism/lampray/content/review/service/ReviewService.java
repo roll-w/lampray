@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 
 package tech.lamprism.lampray.content.review.service;
 
-import com.google.common.base.Preconditions;
 import tech.lamprism.lampray.content.Content;
-import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.review.ReviewJobInfo;
 import tech.lamprism.lampray.content.review.ReviewerAllocator;
 import tech.lamprism.lampray.content.review.common.NotReviewedException;
@@ -40,18 +38,7 @@ public interface ReviewService {
      * @param allowAutoReview if false, disable {@link ReviewerAllocator#AUTO_REVIEWER
      *                        auto reviewer} and force to assign a staff reviewer.
      */
-    default ReviewJobInfo assignReviewer(Content content, boolean allowAutoReview)
-            throws NotReviewedException {
-        Preconditions.checkNotNull(content, "Content cannot be null");
-        return assignReviewer(
-                content.getContentId(),
-                content.getContentType(),
-                allowAutoReview
-        );
-    }
-
-
-    ReviewJobInfo assignReviewer(long contentId, ContentType contentType,
-                                 boolean allowAutoReview) throws NotReviewedException;
+    ReviewJobInfo assignReviewer(Content content, boolean allowAutoReview)
+            throws NotReviewedException;
 
 }

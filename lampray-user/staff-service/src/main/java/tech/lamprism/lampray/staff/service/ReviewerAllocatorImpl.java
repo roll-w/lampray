@@ -78,7 +78,7 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
             weights.clear();
             staffReviewingCount.clear();
 
-            // Accumulate weight from existing not-reviewed jobs
+            // Accumulate weight from existing pending review jobs
             List<ReviewJobDo> jobs = reviewJobRepository.findByStatus(ReviewStatus.PENDING);
             for (ReviewJobDo reviewJob : jobs) {
                 if (reviewJob == null) {

@@ -18,9 +18,13 @@ package tech.lamprism.lampray.content.review.service;
 
 import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
+import tech.lamprism.lampray.content.Content;
+import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentIdentity;
+import tech.lamprism.lampray.content.ContentProviderFactory;
 import tech.lamprism.lampray.content.ContentTrait;
 import tech.lamprism.lampray.content.ContentType;
+import tech.lamprism.lampray.content.review.AutoReviewService;
 import tech.lamprism.lampray.content.review.ReviewJobDetails;
 import tech.lamprism.lampray.content.review.ReviewJobInfo;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
@@ -45,23 +49,30 @@ import java.util.stream.Collectors;
 @Service
 public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
     private final ReviewJobRepository reviewJobRepository;
+    private final ContentProviderFactory contentProviderFactory;
     private final ReviewerAllocator reviewerAllocator;
+    private final AutoReviewService autoReviewService;
 
     public ReviewServiceImpl(ReviewJobRepository reviewJobRepository,
-                             ReviewerAllocator reviewerAllocator) {
+                             ContentProviderFactory contentProviderFactory,
+                             ReviewerAllocator reviewerAllocator,
+                             AutoReviewService autoReviewService) {
         this.reviewJobRepository = reviewJobRepository;
+        this.contentProviderFactory = contentProviderFactory;
         this.reviewerAllocator = reviewerAllocator;
+        this.autoReviewService = autoReviewService;
     }
 
     @Override
-    public ReviewJobInfo assignReviewer(long contentId,
-                                        ContentType contentType,
+    public ReviewJobInfo assignReviewer(Content content,
                                         boolean allowAutoReview) {
         OffsetDateTime assignedTime = OffsetDateTime.now();
+        long contentId = content.getContentId();
+        ContentType contentType = content.getContentType();
         List<ReviewJobDo> old = reviewJobRepository.findByContent(contentId, contentType);
         if (!old.isEmpty()) {
             ReviewJobDo notReviewedJob = old.stream()
-                    .filter(job -> job.getStatus() == ReviewStatus.NOT_REVIEWED)
+                    .filter(job -> job.getStatus() == ReviewStatus.PENDING)
                     .findFirst()
                     .orElse(null);
             if (notReviewedJob != null) {
@@ -90,7 +101,34 @@ public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
 
         ReviewJobDo reviewJob = builder.build();
         reviewJob = reviewJobRepository.save(reviewJob);
-        return ReviewJobInfo.of(reviewJob.lock());
+        ReviewJobInfo reviewJobInfo = ReviewJobInfo.of(reviewJob.lock());
+        try {
+            return reviewJobInfo;
+        } finally {
+            if (reviewerId == ReviewerAllocator.AUTO_REVIEWER) {
+                dispatchAutoReviewJob(reviewJobInfo, content, allowAutoReview);
+            }
+        }
+    }
+
+    private ContentDetails retrieveContentDetails(ContentIdentity contentIdentity) {
+        if (contentIdentity == null) {
+            throw new IllegalArgumentException("Content identity cannot be null");
+        }
+        if (contentIdentity instanceof ContentDetails contentDetails) {
+            return contentDetails;
+        }
+
+        return contentProviderFactory.getContentProvider(contentIdentity.getContentType())
+                .getContentDetails(contentIdentity);
+    }
+
+    private void dispatchAutoReviewJob(ReviewJobInfo reviewJobInfo, Content content, boolean autoReview) {
+        if (!autoReview) {
+            return;
+        }
+        ContentDetails contentDetails = retrieveContentDetails(content);
+        autoReviewService.joinAutoReviewQueue(reviewJobInfo, contentDetails);
     }
 
     @Override
