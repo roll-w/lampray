@@ -52,7 +52,7 @@ class LocalizedMessageResourceService(
             this.value = value
             this.locale = locale
         }
-        if (localizedMessageDo.id != null &&
+        if (localizedMessageDo.entityId != null &&
             localizedMessageDo.value == value
         ) {
             return

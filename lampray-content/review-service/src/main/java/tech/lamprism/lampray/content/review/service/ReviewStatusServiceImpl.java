@@ -25,12 +25,10 @@ import tech.lamprism.lampray.content.review.ReviewerAllocator;
 import tech.lamprism.lampray.content.review.common.ReviewErrorCode;
 import tech.lamprism.lampray.content.review.common.ReviewException;
 import tech.lamprism.lampray.content.review.event.OnReviewStateChangeEvent;
-import tech.lamprism.lampray.content.review.persistence.ReviewJobDo;
+import tech.lamprism.lampray.content.review.persistence.ReviewJobEntity;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository;
 import tech.rollw.common.web.CommonErrorCode;
 import tech.rollw.common.web.CommonRuntimeException;
-
-import java.time.OffsetDateTime;
 
 /**
  * @author RollW
@@ -51,16 +49,16 @@ public class ReviewStatusServiceImpl implements ReviewStatusService {
 
     @Override
     @Transactional(dontRollbackOn = CommonRuntimeException.class)
-    public ReviewJobInfo makeReview(long jobId, long operator,
+    public ReviewJobInfo makeReview(String jobId, long operator,
                                     boolean passed, String reason) throws ReviewException {
-        ReviewJobDo job = reviewJobRepository.findById(jobId).orElse(null);
+        ReviewJobEntity job = reviewJobRepository.findById(jobId).orElse(null);
         if (job == null) {
             throw new ReviewException(CommonErrorCode.ERROR_NOT_FOUND);
         }
         if (job.getStatus().isReviewed()) {
             throw new ReviewException(ReviewErrorCode.ERROR_REVIEWED, "Already reviewed, create new review job instead.");
         }
-        ReviewJobDo reviewed = switchStatus(job, operator, passed, reason);
+        ReviewJobEntity reviewed = switchStatus(job, operator, passed, reason);
         reviewed = reviewJobRepository.save(reviewed);
 
         ReviewJob reviewedJob = reviewed.lock();
@@ -71,13 +69,8 @@ public class ReviewStatusServiceImpl implements ReviewStatusService {
     }
 
 
-    private ReviewJobDo switchStatus(ReviewJobDo job, long operator,
-                                     boolean passed, String reason) {
-        OffsetDateTime time = OffsetDateTime.now();
-        reviewerAllocator.releaseReviewer(job.getReviewerId(), job.getAssociatedContent());
-        if (passed) {
-            return job.reviewPass(operator, time);
-        }
-        return job.reviewReject(operator, reason, time);
+    private ReviewJobEntity switchStatus(ReviewJobEntity job, long operator,
+                                         boolean passed, String reason) {
+        throw new UnsupportedOperationException("Not implemented yet.");
     }
 }

@@ -26,16 +26,13 @@ import java.time.OffsetDateTime
  * @author RollW
  */
 data class ReviewJobView(
-    val id: Long,
+    val id: String,
     val status: ReviewStatus,
-    val result: String,
-    val reviewer: Long,
-    val operator: Long?,
     val contentType: ContentType,
     val contentId: Long,
     val reviewMark: ReviewMark,
-    val assignedTime: OffsetDateTime,
-    val reviewTime: OffsetDateTime
+    val createTime: OffsetDateTime,
+    val updateTime: OffsetDateTime
 ) {
 
     companion object {
@@ -44,14 +41,11 @@ data class ReviewJobView(
             return ReviewJobView(
                 id = reviewJobDetails.jobId,
                 status = reviewJobDetails.status,
-                result = reviewJobDetails.result,
-                reviewer = reviewJobDetails.reviewer,
-                operator = reviewJobDetails.operator,
                 contentType = reviewJobDetails.associatedContent.contentType,
                 contentId = reviewJobDetails.associatedContent.contentId,
                 reviewMark = reviewJobDetails.reviewMark,
-                assignedTime = reviewJobDetails.assignedTime,
-                reviewTime = reviewJobDetails.reviewTime
+                createTime = reviewJobDetails.createTime,
+                updateTime = reviewJobDetails.updateTime
             )
         }
     }

@@ -71,7 +71,7 @@ public class OnReviewStateChangeListener implements ApplicationListener<OnReview
                         .build()
         );
         ContentStatusEvent<?> contentStatusEvent = new ContentStatusEvent<>(
-                content, reviewJob.getReviewTime(),
+                content, reviewJob.getUpdateTime(),
                 previousStatus, currentStatus);
         eventPublisher.publishEvent(contentStatusEvent);
     }

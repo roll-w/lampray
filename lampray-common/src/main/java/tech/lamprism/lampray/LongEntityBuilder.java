@@ -22,5 +22,5 @@ package tech.lamprism.lampray;
 public interface LongEntityBuilder<T> extends EntityBuilder<T, Long> {
     T build();
 
-    LongEntityBuilder<T> setId(Long id);
+    LongEntityBuilder<T> setEntityId(Long id);
 }

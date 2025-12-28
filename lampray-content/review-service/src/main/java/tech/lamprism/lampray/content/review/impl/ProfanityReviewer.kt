@@ -23,7 +23,6 @@ import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.review.AutoReviewContext
 import tech.lamprism.lampray.content.review.AutoReviewer
 import tech.lamprism.lampray.content.review.ReviewJobDetails
-import tech.lamprism.lampray.content.review.util.StructuralTextUtils
 
 /**
  * ProfanityReviewer scans title and content for simple forbidden words using structural traversal.
@@ -40,15 +39,15 @@ class ProfanityReviewer : AutoReviewer {
     private val denyList = listOf("test")
 
     override fun review(reviewJob: ReviewJobDetails, reviewResults: AutoReviewContext) {
-        val content = try { reviewResults.contentDetails.getContent() } catch (ex: Throwable) { null }
-        val flattened = if (content != null) StructuralTextUtils.flatten(content).texts.joinToString("\n") else (reviewJob.result ?: "")
-
-        for (word in denyList) {
-            if (flattened.contains(word, ignoreCase = true)) {
-                reviewResults.reject(this, "contains forbidden word: $word")
-                return
-            }
-        }
+//        val content = try { reviewResults.contentDetails.getContent() } catch (ex: Throwable) { null }
+//        val flattened = if (content != null) StructuralTextUtils.flatten(content).texts.joinToString("\n") else (reviewJob.result ?: "")
+//
+//        for (word in denyList) {
+//            if (flattened.contains(word, ignoreCase = true)) {
+//                reviewResults.reject(this, "contains forbidden word: $word")
+//                return
+//            }
+//        }
         reviewResults.approve(this)
     }
 }

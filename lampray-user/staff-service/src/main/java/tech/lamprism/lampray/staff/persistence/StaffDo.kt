@@ -76,7 +76,7 @@ class StaffDo(
     @Column(name = "deleted", nullable = false)
     var deleted: Boolean = false
 ) : DataEntity<Long>, AttributedStaff {
-    override fun getId(): Long? = id
+    override fun getEntityId(): Long? = id
     
     fun setId(id: Long?) {
         this.id = id
@@ -179,7 +179,7 @@ class StaffDo(
         @JvmStatic
         fun Staff.toDo(): StaffDo {
             return StaffDo(
-                id, userId, types, createTime, updateTime,
+                entityId, userId, types, createTime, updateTime,
                 isAsUser, isDeleted
             )
         }

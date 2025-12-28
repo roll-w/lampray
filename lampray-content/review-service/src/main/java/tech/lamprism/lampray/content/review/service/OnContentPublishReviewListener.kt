@@ -34,6 +34,7 @@ import tech.lamprism.lampray.content.review.common.NotReviewedException
 class OnContentPublishReviewListener(
     private val reviewService: ReviewService
 ) : ContentPublishListener {
+    // TODO
     override fun onPublish(contentDetails: ContentDetails): ContentStatus {
         try {
             val reviewInfo = tryAssignReviewer(contentDetails)
@@ -46,7 +47,7 @@ class OnContentPublishReviewListener(
         } catch (e: NotReviewedException) {
             logger.info {
                 "Already assigned reviewer for content: ${contentDetails.contentId}@${contentDetails.contentType}, " +
-                        "reviewer: ${e.reviewInfo.reviewer}"
+                        "reviewer: ${e.reviewInfo}"
             }
             return ContentStatus.REVIEWING
         }
@@ -56,7 +57,7 @@ class OnContentPublishReviewListener(
         val reviewInfo = reviewService.assignReviewer(contentDetails)
         logger.info {
             "Assign reviewer for content: ${contentDetails.contentId}@${contentDetails.contentType}, " +
-                    "reviewer: ${reviewInfo.reviewer}"
+                    "reviewer: ${reviewInfo}"
         }
         return reviewInfo
     }

@@ -56,7 +56,7 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
     }
 
     @Override
-    public Long getId() {
+    public Long getEntityId() {
         return id;
     }
 
@@ -135,7 +135,7 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
             this.deleted = favoriteitem.deleted;
         }
 
-        public Builder setId(Long id) {
+        public Builder setEntityId(Long id) {
             this.id = id;
             return this;
         }

@@ -70,7 +70,7 @@ class FavoriteItemDo(
     @Column(name = "deleted", nullable = false)
     var deleted: Boolean = false
 ) : DataEntity<Long> {
-    override fun getId(): Long = id!!
+    override fun getEntityId(): Long = id!!
 
     fun setId(id: Long) {
         this.id = id
@@ -168,7 +168,7 @@ class FavoriteItemDo(
     companion object {
         @JvmStatic
         fun FavoriteItem.toDo() = FavoriteItemDo(
-            id,
+            entityId,
             userId,
             groupId,
             contentId,

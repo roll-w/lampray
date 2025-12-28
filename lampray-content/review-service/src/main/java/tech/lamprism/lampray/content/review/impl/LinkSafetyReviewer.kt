@@ -23,8 +23,6 @@ import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.review.AutoReviewContext
 import tech.lamprism.lampray.content.review.AutoReviewer
 import tech.lamprism.lampray.content.review.ReviewJobDetails
-import tech.lamprism.lampray.content.review.util.StructuralTextUtils
-import java.net.URI
 
 /**
  * LinkSafetyReviewer validates URLs in the content against a small allowlist of hosts.
@@ -42,40 +40,40 @@ class LinkSafetyReviewer : AutoReviewer {
     private val allowedHosts = setOf("example.com")
 
     override fun review(reviewJob: ReviewJobDetails, reviewResults: AutoReviewContext) {
-        val content = try { reviewResults.contentDetails.getContent() } catch (ex: Throwable) { null }
-
-        val flatten = if (content != null) StructuralTextUtils.flatten(content) else null
-
-        // first, check explicit link hrefs collected during traversal
-        flatten?.links?.forEach { href ->
-            try {
-                val host = URI(href).host ?: return@forEach
-                if (!allowedHosts.any { host.endsWith(it) }) {
-                    reviewResults.reject(this, "external link to unsafe host: $host")
-                    return
-                }
-            } catch (_: Exception) {
-                // ignore malformed href
-            }
-        }
-
-        // fall back to scanning tokens in flattened text
-        val text = flatten?.texts?.joinToString("\n") ?: (reviewJob.result ?: "")
-        val tokens = text.split(Regex("\\s+"))
-        for (t in tokens) {
-            if (t.startsWith("http://") || t.startsWith("https://")) {
-                try {
-                    val uri = URI(t)
-                    val host = uri.host ?: continue
-                    if (!allowedHosts.any { host.endsWith(it) }) {
-                        reviewResults.reject(this, "external link to unsafe host: $host")
-                        return
-                    }
-                } catch (_: Exception) {
-                    // ignore malformed URLs
-                }
-            }
-        }
+//        val content = try { reviewResults.contentDetails.getContent() } catch (ex: Throwable) { null }
+//
+//        val flatten = if (content != null) StructuralTextUtils.flatten(content) else null
+//
+//        // first, check explicit link hrefs collected during traversal
+//        flatten?.links?.forEach { href ->
+//            try {
+//                val host = URI(href).host ?: return@forEach
+//                if (!allowedHosts.any { host.endsWith(it) }) {
+//                    reviewResults.reject(this, "external link to unsafe host: $host")
+//                    return
+//                }
+//            } catch (_: Exception) {
+//                // ignore malformed href
+//            }
+//        }
+//
+//        // fall back to scanning tokens in flattened text
+//        val text = flatten?.texts?.joinToString("\n") ?: (reviewJob.result ?: "")
+//        val tokens = text.split(Regex("\\s+"))
+//        for (t in tokens) {
+//            if (t.startsWith("http://") || t.startsWith("https://")) {
+//                try {
+//                    val uri = URI(t)
+//                    val host = uri.host ?: continue
+//                    if (!allowedHosts.any { host.endsWith(it) }) {
+//                        reviewResults.reject(this, "external link to unsafe host: $host")
+//                        return
+//                    }
+//                } catch (_: Exception) {
+//                    // ignore malformed URLs
+//                }
+//            }
+//        }
         reviewResults.approve(this)
     }
 }

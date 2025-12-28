@@ -36,13 +36,13 @@ public interface DataEntity<ID> extends Serializable,
      * @return the id of the entity.
      */
     @Nullable
-    ID getId();
+    ID getEntityId();
 
     @Override
     @NonNull
-    // Resource id must not be null, but use getId() provides a nullable value.
+    // Resource id must not be null, but use getEntityId() provides a nullable value.
     default ID getResourceId() {
-        return Objects.requireNonNull(getId(), "The id of the entity must not be null.");
+        return Objects.requireNonNull(getEntityId(), "The id of the entity must not be null.");
     }
 
 }

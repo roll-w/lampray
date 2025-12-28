@@ -66,7 +66,7 @@ public class ContentCollectionMetadata implements DataEntity<Long> {
     }
 
     @Nullable
-    public Long getId() {
+    public Long getEntityId() {
         return id;
     }
 
@@ -123,7 +123,7 @@ public class ContentCollectionMetadata implements DataEntity<Long> {
                                                       long collectionId,
                                                       ContentCollectionType type) {
         return builder()
-                .setId(-1L)
+                .setEntityId(-1L)
                 .setCollectionId(collectionId)
                 .setOrder(0)
                 .setContentId(content.getContentId())
@@ -162,7 +162,7 @@ public class ContentCollectionMetadata implements DataEntity<Long> {
         }
 
         @Override
-        public Builder setId(@Nullable Long id) {
+        public Builder setEntityId(@Nullable Long id) {
             this.id = id;
             return this;
         }

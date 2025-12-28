@@ -22,7 +22,7 @@ import tech.rollw.common.web.system.Operator
  * @author RollW
  */
 interface ReviewJobProvider {
-    fun getReviewJob(reviewJobId: Long): ReviewJobDetails
+    fun getReviewJob(reviewJobId: String): ReviewJobDetails
 
     val reviewJobs: List<ReviewJobDetails>
 

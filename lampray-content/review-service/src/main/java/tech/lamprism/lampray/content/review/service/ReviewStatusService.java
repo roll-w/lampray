@@ -24,6 +24,6 @@ import tech.lamprism.lampray.content.review.ReviewJobInfo;
  */
 public interface ReviewStatusService {
     // TODO: a temporary interface, need to be refactored
-    ReviewJobInfo makeReview(long jobId, long operator,
+    ReviewJobInfo makeReview(String jobId, long operator,
                              boolean passed, String reason) throws ReviewException;
 }

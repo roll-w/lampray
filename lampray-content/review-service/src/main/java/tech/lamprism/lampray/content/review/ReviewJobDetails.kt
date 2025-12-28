@@ -24,21 +24,15 @@ import java.time.OffsetDateTime
  * @author RollW
  */
 interface ReviewJobDetails : ContentAssociated {
-    val jobId: Long
+    val jobId: String
 
     val status: ReviewStatus
 
     val reviewMark: ReviewMark
 
-    val reviewer: Long
+    val createTime: OffsetDateTime
 
-    val operator: Long?
-
-    val assignedTime: OffsetDateTime
-
-    val reviewTime: OffsetDateTime
-
-    val result: String
+    val updateTime: OffsetDateTime
 
     override fun getAssociatedContent(): ContentIdentity
 }

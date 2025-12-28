@@ -64,7 +64,7 @@ public class ReviewManageController {
 
     @GetMapping("/reviews/{jobId}")
     public HttpResponseEntity<ReviewJobView> getReviewJob(
-            @PathVariable("jobId") Long jobId) {
+            @PathVariable("jobId") String jobId) {
         ReviewJobDetails reviewJobInfo = reviewJobProvider.getReviewJob(jobId);
         return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
     }
@@ -101,14 +101,14 @@ public class ReviewManageController {
 
     @GetMapping("/reviews/{jobId}/content")
     public HttpResponseEntity<ReviewJobContentView> getContentOfReviewJob(
-            @PathVariable("jobId") Long jobId) {
+            @PathVariable("jobId") String jobId) {
         ReviewJobContent reviewJobContent = reviewContentProvider.getReviewContent(jobId);
         return HttpResponseEntity.success(ReviewJobContentView.of(reviewJobContent));
     }
 
     @PostMapping("/reviews/{jobId}")
     public HttpResponseEntity<ReviewJobView> makeReview(
-            @PathVariable("jobId") Long jobId,
+            @PathVariable("jobId") String jobId,
             @RequestBody ReviewRequest reviewRequest
     ) {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();

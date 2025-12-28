@@ -70,7 +70,7 @@ public class ContentMetadata implements DataEntity<Long>, ContentTrait {
     }
 
     @Override
-    public Long getId() {
+    public Long getEntityId() {
         return id;
     }
 
@@ -156,7 +156,7 @@ public class ContentMetadata implements DataEntity<Long>, ContentTrait {
         }
 
         @Override
-        public Builder setId(Long id) {
+        public Builder setEntityId(Long id) {
             this.id = id;
             return this;
         }

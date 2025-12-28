@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.content.review.service;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.content.Content;
@@ -34,7 +35,7 @@ import tech.lamprism.lampray.content.review.ReviewStatus;
 import tech.lamprism.lampray.content.review.ReviewerAllocator;
 import tech.lamprism.lampray.content.review.common.NotReviewedException;
 import tech.lamprism.lampray.content.review.common.ReviewException;
-import tech.lamprism.lampray.content.review.persistence.ReviewJobDo;
+import tech.lamprism.lampray.content.review.persistence.ReviewJobEntity;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository;
 import tech.rollw.common.web.CommonErrorCode;
 import tech.rollw.common.web.system.Operator;
@@ -69,9 +70,9 @@ public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
         OffsetDateTime assignedTime = OffsetDateTime.now();
         long contentId = content.getContentId();
         ContentType contentType = content.getContentType();
-        List<ReviewJobDo> old = reviewJobRepository.findByContent(contentId, contentType);
+        List<ReviewJobEntity> old = reviewJobRepository.findByContent(contentId, contentType);
         if (!old.isEmpty()) {
-            ReviewJobDo notReviewedJob = old.stream()
+            ReviewJobEntity notReviewedJob = old.stream()
                     .filter(job -> job.getStatus() == ReviewStatus.PENDING)
                     .findFirst()
                     .orElse(null);
@@ -87,19 +88,19 @@ public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
                 allowAutoReview
         );
 
-        ReviewJobDo.Builder builder = ReviewJobDo.builder()
+        ReviewJobEntity.Builder builder = ReviewJobEntity.builder()
                 .setReviewContentId(contentId)
-                .setReviewerId(reviewerId)
+//                .setReviewerId(reviewerId)
                 .setReviewContentType(contentType)
                 .setStatus(ReviewStatus.PENDING)
-                .setAssignedTime(assignedTime)
+                .setCreateTime(assignedTime)
                 .setReviewMark(ReviewMark.NORMAL);
         if (!old.isEmpty()) {
             // TODO: could be content has been modified and needs to be re-reviewed
             builder.setReviewMark(ReviewMark.REPORT);
         }
 
-        ReviewJobDo reviewJob = builder.build();
+        ReviewJobEntity reviewJob = builder.build();
         reviewJob = reviewJobRepository.save(reviewJob);
         ReviewJobInfo reviewJobInfo = ReviewJobInfo.of(reviewJob.lock());
         try {
@@ -133,8 +134,8 @@ public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
 
     @Override
     @NonNull
-    public ReviewJobInfo getReviewJob(long reviewJobId) {
-        ReviewJobDo reviewJob = reviewJobRepository.findById(reviewJobId)
+    public ReviewJobInfo getReviewJob(@NotNull String reviewJobId) {
+        ReviewJobEntity reviewJob = reviewJobRepository.findById(reviewJobId)
                 .orElseThrow(() -> new ReviewException(CommonErrorCode.ERROR_NOT_FOUND));
         return ReviewJobInfo.of(reviewJob.lock());
     }
@@ -144,54 +145,54 @@ public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
     public List<ReviewJobDetails> getReviewJobs() {
         return reviewJobRepository.findAll()
                 .stream()
-                .map(ReviewJobDo::lock)
+                .map(ReviewJobEntity::lock)
                 .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     @NonNull
     public List<ReviewJobDetails> getReviewJobsByOperator(@NonNull Operator operator) {
-        List<ReviewJobDo> reviewJobDos = reviewJobRepository.findByOperator(operator.getOperatorId(), List.of());
-        return reviewJobDos.stream()
-                .map(ReviewJobDo::lock)
+        List<ReviewJobEntity> reviewJobEntities = reviewJobRepository.findByOperator(operator.getOperatorId(), List.of());
+        return reviewJobEntities.stream()
+                .map(ReviewJobEntity::lock)
                 .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     @NonNull
     public List<ReviewJobDetails> getReviewJobsByReviewer(@NonNull Operator reviewer) {
-        List<ReviewJobDo> reviewJobDos = reviewJobRepository.findByReviewer(reviewer.getOperatorId(), List.of());
-        return reviewJobDos.stream()
-                .map(ReviewJobDo::lock)
+        List<ReviewJobEntity> reviewJobEntities = reviewJobRepository.findByReviewer(reviewer.getOperatorId(), List.of());
+        return reviewJobEntities.stream()
+                .map(ReviewJobEntity::lock)
                 .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     @NonNull
     public List<ReviewJobDetails> getReviewJobs(@NonNull ContentTrait contentTrait) {
-        List<ReviewJobDo> reviewJobDos = reviewJobRepository.findByContent(
+        List<ReviewJobEntity> reviewJobEntities = reviewJobRepository.findByContent(
                 contentTrait.getContentId(), contentTrait.getContentType()
         );
-        return reviewJobDos.stream()
-                .map(ReviewJobDo::lock)
+        return reviewJobEntities.stream()
+                .map(ReviewJobEntity::lock)
                 .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     @NonNull
     public List<ReviewJobDetails> getReviewJobs(@NonNull ReviewStatus reviewStatus) {
-        List<ReviewJobDo> reviewJobDos = reviewJobRepository.findByStatus(reviewStatus);
-        return reviewJobDos.stream()
-                .map(ReviewJobDo::lock)
+        List<ReviewJobEntity> reviewJobEntities = reviewJobRepository.findByStatus(reviewStatus);
+        return reviewJobEntities.stream()
+                .map(ReviewJobEntity::lock)
                 .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     @NonNull
     public List<ReviewJobDetails> getReviewJobs(@NonNull ReviewStatues reviewStatues) {
-        List<ReviewJobDo> reviewJobDos = reviewJobRepository.findByStatuses(reviewStatues.getStatuses());
-        return reviewJobDos.stream()
-                .map(ReviewJobDo::lock)
+        List<ReviewJobEntity> reviewJobEntities = reviewJobRepository.findByStatuses(reviewStatues.getStatuses());
+        return reviewJobEntities.stream()
+                .map(ReviewJobEntity::lock)
                 .collect(Collectors.toUnmodifiableList());
     }
 
@@ -200,10 +201,10 @@ public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
     public List<ReviewJobDetails> getReviewJobs(
             @NonNull Operator reviewer,
             @NonNull ReviewStatus status) {
-        List<ReviewJobDo> reviewJobDos = reviewJobRepository
+        List<ReviewJobEntity> reviewJobEntities = reviewJobRepository
                 .findByReviewer(reviewer.getOperatorId(), List.of(status));
-        return reviewJobDos.stream()
-                .map(ReviewJobDo::lock)
+        return reviewJobEntities.stream()
+                .map(ReviewJobEntity::lock)
                 .collect(Collectors.toUnmodifiableList());
     }
 
@@ -212,12 +213,12 @@ public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
     public List<ReviewJobDetails> getReviewJobs(
             @NonNull Operator reviewer,
             @NonNull ReviewStatues statues) {
-        List<ReviewJobDo> reviewJobs = reviewJobRepository.findByReviewer(
+        List<ReviewJobEntity> reviewJobs = reviewJobRepository.findByReviewer(
                 reviewer.getOperatorId(),
                 statues.getStatuses()
         );
         return reviewJobs.stream()
-                .map(ReviewJobDo::lock)
+                .map(ReviewJobEntity::lock)
                 .collect(Collectors.toUnmodifiableList());
     }
 }

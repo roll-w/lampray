@@ -21,6 +21,7 @@ plugins {
 
 dependencies {
     api(project(":lampray-common"))
+    api("org.liquibase:liquibase-core")
     api("com.fasterxml.jackson.core:jackson-databind")
     api("com.fasterxml.jackson.module:jackson-module-kotlin")
 }

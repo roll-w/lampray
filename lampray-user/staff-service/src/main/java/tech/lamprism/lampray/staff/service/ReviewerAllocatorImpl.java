@@ -24,7 +24,7 @@ import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.review.ReviewStatus;
 import tech.lamprism.lampray.content.review.ReviewerAllocator;
-import tech.lamprism.lampray.content.review.persistence.ReviewJobDo;
+import tech.lamprism.lampray.content.review.persistence.ReviewJobEntity;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository;
 import tech.lamprism.lampray.staff.AttributedStaff;
 import tech.lamprism.lampray.staff.OnStaffEventListener;
@@ -79,15 +79,15 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
             staffReviewingCount.clear();
 
             // Accumulate weight from existing pending review jobs
-            List<ReviewJobDo> jobs = reviewJobRepository.findByStatus(ReviewStatus.PENDING);
-            for (ReviewJobDo reviewJob : jobs) {
+            List<ReviewJobEntity> jobs = reviewJobRepository.findByStatus(ReviewStatus.PENDING);
+            for (ReviewJobEntity reviewJob : jobs) {
                 if (reviewJob == null) {
                     continue;
                 }
-                long reviewerId = reviewJob.getReviewerId();
+                //long reviewerId = reviewJob.getReviewerId();
                 ContentType type = reviewJob.getReviewContentType();
                 int weight = type.getWeight();
-                weights.put(reviewerId, weights.getOrDefault(reviewerId, 0) + weight);
+                // weights.put(reviewerId, weights.getOrDefault(reviewerId, 0) + weight);
             }
 
             List<? extends AttributedStaff> staffs = loadStaffs();

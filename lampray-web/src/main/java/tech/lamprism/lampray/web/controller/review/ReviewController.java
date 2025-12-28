@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import tech.lamprism.lampray.LampException;
 import tech.lamprism.lampray.content.review.ReviewContentProvider;
 import tech.lamprism.lampray.content.review.ReviewJobContent;
 import tech.lamprism.lampray.content.review.ReviewJobDetails;
@@ -38,8 +37,6 @@ import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobContentView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewRequest;
-import tech.rollw.common.web.AuthErrorCode;
-import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.system.ContextThread;
 import tech.rollw.common.web.system.ContextThreadAware;
@@ -71,14 +68,14 @@ public class ReviewController {
 
     @GetMapping("/reviews/{jobId}")
     public HttpResponseEntity<ReviewJobView> getReviewInfo(
-            @PathVariable("jobId") Long jobId) {
+            @PathVariable("jobId") String jobId) {
         ReviewJobDetails reviewJobInfo = reviewJobProvider.getReviewJob(jobId);
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
-        if (reviewJobInfo.getReviewer() != user.getOperatorId()) {
-            throw new LampException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
-        }
+//        if (reviewJobInfo.getReviewer() != user.getOperatorId()) {
+//            throw new LampException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
+//        }
         return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
     }
 
@@ -105,15 +102,15 @@ public class ReviewController {
 
     @GetMapping("/reviews/{jobId}/content")
     public HttpResponseEntity<ReviewJobContentView> getReviewContent(
-            @PathVariable("jobId") Long jobId) {
+            @PathVariable("jobId") String jobId) {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
         ReviewJobContent reviewJobContent = reviewContentProvider.getReviewContent(jobId);
         ReviewJobInfo reviewJobInfo = reviewJobContent.getReviewJobInfo();
-        if (reviewJobInfo.reviewer() != user.getOperatorId()) {
-            throw new LampException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
-        }
+//        if (reviewJobInfo.reviewer() != user.getOperatorId()) {
+//            throw new LampException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
+//        }
         return HttpResponseEntity.success(
                 ReviewJobContentView.of(reviewJobContent)
         );
@@ -121,16 +118,16 @@ public class ReviewController {
 
     @PostMapping("/reviews/{jobId}")
     public HttpResponseEntity<ReviewJobView> makeReview(
-            @PathVariable("jobId") Long jobId,
+            @PathVariable("jobId") String jobId,
             @RequestBody ReviewRequest reviewRequest
     ) {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
         ReviewJobDetails reviewJobDetails = reviewJobProvider.getReviewJob(jobId);
-        if (reviewJobDetails.getReviewer() != user.getOperatorId()) {
-            throw new CommonRuntimeException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
-        }
+//        if (reviewJobDetails.getReviewer() != user.getOperatorId()) {
+//            throw new CommonRuntimeException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
+//        }
 
         ReviewJobInfo reviewJobInfo = reviewStatusService.makeReview(
                 jobId,

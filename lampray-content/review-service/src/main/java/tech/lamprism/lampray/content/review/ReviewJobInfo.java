@@ -17,7 +17,6 @@
 package tech.lamprism.lampray.content.review;
 
 import space.lingu.NonNull;
-import space.lingu.Nullable;
 import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
 
@@ -27,16 +26,13 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 public record ReviewJobInfo(
-        long id,
+        String jobId,
         ReviewStatus status,
         ContentType type,
-        String result,
         long contentId,
         ReviewMark reviewMark,
-        Long reviewer,
-        Long operator,
-        OffsetDateTime assignedTime,
-        OffsetDateTime reviewTime
+        OffsetDateTime createTime,
+        OffsetDateTime updateTime
 ) implements ReviewJobDetails {
     public static ReviewJobInfo of(ReviewJob job) {
         if (job == null) {
@@ -46,19 +42,17 @@ public record ReviewJobInfo(
                 job.getJobId(),
                 job.getStatus(),
                 job.getReviewContentType(),
-                job.getResult(),
                 job.getReviewContentId(),
                 job.getReviewMark(),
-                job.getReviewerId(),
-                job.getOperatorId(),
-                job.getAssignedTime(),
-                job.getReviewTime()
+                job.getCreateTime(),
+                job.getUpdateTime()
         );
     }
 
     @Override
-    public long getJobId() {
-        return id;
+    @NonNull
+    public String getJobId() {
+        return jobId;
     }
 
     @Override
@@ -73,34 +67,19 @@ public record ReviewJobInfo(
         return reviewMark;
     }
 
-    @Override
-    public long getReviewer() {
-        return reviewer;
-    }
 
     @Override
-    @Nullable
-    public Long getOperator() {
-        return operator;
+    @NonNull
+    public OffsetDateTime getCreateTime() {
+        return createTime;
     }
 
     @Override
     @NonNull
-    public OffsetDateTime getAssignedTime() {
-        return assignedTime;
+    public OffsetDateTime getUpdateTime() {
+        return updateTime;
     }
 
-    @Override
-    @NonNull
-    public OffsetDateTime getReviewTime() {
-        return reviewTime;
-    }
-
-    @Override
-    @NonNull
-    public String getResult() {
-        return result;
-    }
 
     @Override
     @NonNull
