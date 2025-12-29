@@ -26,12 +26,14 @@ import java.util.Objects;
 /**
  * Indicates a database entity.
  *
+ * @param <ID> see {@link #getEntityId()}
  * @author RollW
  */
 public interface DataEntity<ID> extends Serializable,
         SystemResource<ID>, TimeAttributed {
     /**
-     * Get the id of the entity.
+     * Gets the id of the entity. Could be a unique identifier or a composite identifier
+     * instead of the primary key (auto-increment id).
      *
      * @return the id of the entity.
      */

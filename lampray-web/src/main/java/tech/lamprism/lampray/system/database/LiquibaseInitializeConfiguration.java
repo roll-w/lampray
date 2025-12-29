@@ -45,16 +45,9 @@ import java.util.List;
 public class LiquibaseInitializeConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(LiquibaseInitializeConfiguration.class);
 
-    /**
-     * Changelog file path (system-controlled).
-     */
     private static final String CHANGELOG_PATH = "classpath:db/changelog.yaml";
 
-    /**
-     * Baseline context name for new installations.
-     */
     private static final String BASELINE_CONTEXT = "baseline";
-
     private static final String INCREMENTAL_CONTEXT = "incremental";
 
     /**
@@ -220,12 +213,12 @@ public class LiquibaseInitializeConfiguration {
     /**
      * Detect the current database status to determine the appropriate migration strategy.
      *
-     * @param ds DataSource to check
+     * @param dataSource DataSource to check
      * @return DatabaseStatus enum value
      * @throws SQLException if database access fails
      */
-    private DatabaseStatus detectDatabaseStatus(DataSource ds) throws SQLException {
-        try (Connection conn = ds.getConnection()) {
+    private DatabaseStatus detectDatabaseStatus(DataSource dataSource) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
             boolean hasLiquibaseTable = tableExists(conn, "DATABASECHANGELOG");
             boolean hasBusinessTables = hasAnyBusinessTable(conn);
 
