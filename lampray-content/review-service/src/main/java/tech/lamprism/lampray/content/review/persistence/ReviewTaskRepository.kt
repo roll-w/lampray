@@ -23,19 +23,28 @@ import tech.lamprism.lampray.common.data.CommonRepository
  * @author RollW
  */
 @Repository
-class ReviewJobTaskRepository(
-    private val reviewJobTaskDao: ReviewJobTaskDao
-) : CommonRepository<ReviewJobTaskEntity, String>(reviewJobTaskDao) {
+class ReviewTaskRepository(
+    private val reviewTaskDao: ReviewTaskDao
+) : CommonRepository<ReviewTaskEntity, String>(reviewTaskDao) {
 
-    fun findTasksByJobId(jobId: String): List<ReviewJobTaskEntity> {
+    fun findTasksByJobId(jobId: String): List<ReviewTaskEntity> {
         return findAll { root, _, builder ->
             builder.equal(root.get(ReviewJobTaskEntity_.reviewJobId), jobId)
         }
     }
 
-    fun findTasksByReviewerId(reviewerId: Long): List<ReviewJobTaskEntity> {
+    fun findTasksByReviewerId(reviewerId: Long): List<ReviewTaskEntity> {
         return findAll { root, _, builder ->
             builder.equal(root.get(ReviewJobTaskEntity_.reviewerId), reviewerId)
+        }
+    }
+
+    fun findTasksByJobId(jobId: String, reviewerId: Long): List<ReviewTaskEntity> {
+        return findAll { root, _, builder ->
+            builder.and(
+                builder.equal(root.get(ReviewJobTaskEntity_.reviewJobId), jobId),
+                builder.equal(root.get(ReviewJobTaskEntity_.reviewerId), reviewerId)
+            )
         }
     }
 

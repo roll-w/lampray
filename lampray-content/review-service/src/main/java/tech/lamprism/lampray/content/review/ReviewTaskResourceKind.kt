@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.content.review
 
-dependencies {
-    api(project(":lampray-common"))
-    api(project(":lampray-common-data"))
-    api(project(":lampray-content:content-api"))
-}
+import tech.rollw.common.web.system.SystemResourceKind
 
-description = "lampray-content-service"
+/**
+ * @author RollW
+ */
+object ReviewTaskResourceKind : SystemResourceKind {
+    override fun getName(): String = "REVIEW_TASK"
+
+    override fun getAliases(): List<String> = emptyList()
+}

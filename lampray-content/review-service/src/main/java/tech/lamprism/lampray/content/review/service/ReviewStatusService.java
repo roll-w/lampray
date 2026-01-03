@@ -16,14 +16,13 @@
 
 package tech.lamprism.lampray.content.review.service;
 
+import tech.lamprism.lampray.content.review.ReviewFeedback;
 import tech.lamprism.lampray.content.review.common.ReviewException;
-import tech.lamprism.lampray.content.review.ReviewJobInfo;
 
 /**
  * @author RollW
  */
 public interface ReviewStatusService {
-    // TODO: a temporary interface, need to be refactored
-    ReviewJobInfo makeReview(String jobId, long operator,
-                             boolean passed, String reason) throws ReviewException;
+    void makeReview(String jobId, String taskId,
+                    long operator, ReviewFeedback feedback) throws ReviewException;
 }

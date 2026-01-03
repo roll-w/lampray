@@ -24,6 +24,8 @@ dependencies {
     api("org.liquibase:liquibase-core")
     api("com.fasterxml.jackson.core:jackson-databind")
     api("com.fasterxml.jackson.module:jackson-module-kotlin")
+    api("com.github.luben:zstd-jni:1.5.7-6")
+    api("org.msgpack:jackson-dataformat-msgpack:0.9.10")
 }
 
 description = "lampray-common-data"

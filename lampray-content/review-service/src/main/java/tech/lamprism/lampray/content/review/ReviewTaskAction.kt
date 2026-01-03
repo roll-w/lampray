@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package tech.lamprism.lampray.content.review
 
-plugins {
-    id("buildlogic.jpa-conventions")
+/**
+ * Actions that can be performed on a review task.
+ *
+ * @author RollW
+ */
+enum class ReviewTaskAction {
+    /**
+     * Submit review feedback for the task.
+     */
+    SUBMIT,
+
+    /**
+     * Reassign the task to another reviewer.
+     */
+    REASSIGN,
+
+    /**
+     * Return the task for reassignment (reject the assignment).
+     */
+    RETURN_FOR_REASSIGNMENT,
+
+    /**
+     * Cancel the review task.
+     */
+    CANCEL,
+
+    /**
+     * Claim an unassigned task.
+     */
+    CLAIM
 }
 
-dependencies {
-    api(project(":lampray-common"))
-    api(project(":lampray-common-data"))
-    api(project(":lampray-content:content-api"))
-}
-
-description = "lampray-content-service"

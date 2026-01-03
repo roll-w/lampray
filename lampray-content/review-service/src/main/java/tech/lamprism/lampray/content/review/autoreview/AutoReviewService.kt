@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package tech.lamprism.lampray.content.review.autoreview
 
-plugins {
-    id("buildlogic.jpa-conventions")
+import tech.lamprism.lampray.content.ContentDetails
+import tech.lamprism.lampray.content.review.ReviewJobDetails
+import tech.lamprism.lampray.content.review.autoreview.reviewer.AutoReviewer
+
+/**
+ * @author RollW
+ */
+interface AutoReviewService {
+    fun joinAutoReviewQueue(reviewJob: ReviewJobDetails, contentDetails: ContentDetails)
+
+    val autoReviewers: List<AutoReviewer>
 }
-
-dependencies {
-    api(project(":lampray-common"))
-    api(project(":lampray-common-data"))
-    api(project(":lampray-content:content-api"))
-}
-
-description = "lampray-content-service"

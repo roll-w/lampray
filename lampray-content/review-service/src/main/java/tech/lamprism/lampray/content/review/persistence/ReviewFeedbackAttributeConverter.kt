@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package tech.lamprism.lampray.content.review.persistence
 
-package tech.lamprism.lampray.content.review.service;
-
-import tech.lamprism.lampray.content.Content;
-import tech.lamprism.lampray.content.review.ReviewJobInfo;
-import tech.lamprism.lampray.content.review.ReviewMark;
-import tech.lamprism.lampray.content.review.common.NotReviewedException;
+import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.persistence.Converter
+import tech.lamprism.lampray.common.data.BinaryObjectAttributeConverter
+import tech.lamprism.lampray.content.review.ReviewFeedback
 
 /**
  * @author RollW
  */
-public interface ReviewService {
-    // TODO: needs rename
+@Converter(autoApply = true)
+class ReviewFeedbackAttributeConverter(
+    objectMapper: ObjectMapper
+) : BinaryObjectAttributeConverter<ReviewFeedback>(objectMapper) {
 
-    ReviewJobInfo assignReviewer(Content content, ReviewMark reviewMark)
-            throws NotReviewedException;
+    override fun getValueType(): Class<ReviewFeedback> = ReviewFeedback::class.java
+
+    override fun getEmptyValue(): ReviewFeedback? = null
+
 }

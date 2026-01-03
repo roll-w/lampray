@@ -24,6 +24,7 @@ import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentStatus
 import tech.lamprism.lampray.content.publish.ContentPublishListener
 import tech.lamprism.lampray.content.review.ReviewJobInfo
+import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.ReviewStatus
 import tech.lamprism.lampray.content.review.common.NotReviewedException
 
@@ -47,17 +48,17 @@ class OnContentPublishReviewListener(
         } catch (e: NotReviewedException) {
             logger.info {
                 "Already assigned reviewer for content: ${contentDetails.contentId}@${contentDetails.contentType}, " +
-                        "reviewer: ${e.reviewInfo}"
+                        "reviewer: ${e.reviewInfo}"// TODO
             }
             return ContentStatus.REVIEWING
         }
     }
 
     private fun tryAssignReviewer(contentDetails: ContentDetails): ReviewJobInfo {
-        val reviewInfo = reviewService.assignReviewer(contentDetails)
+        val reviewInfo = reviewService.assignReviewer(contentDetails, ReviewMark.NORMAL)
         logger.info {
             "Assign reviewer for content: ${contentDetails.contentId}@${contentDetails.contentType}, " +
-                    "reviewer: ${reviewInfo}"
+                    "reviewer: $reviewInfo"
         }
         return reviewInfo
     }

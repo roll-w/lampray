@@ -15,13 +15,30 @@
  */
 package tech.lamprism.lampray.content.review
 
-import tech.lamprism.lampray.content.ContentDetails
-
 /**
+ * Severity level of review feedback.
+ *
  * @author RollW
  */
-interface AutoReviewService {
-    fun joinAutoReviewQueue(reviewJob: ReviewJobDetails, contentDetails: ContentDetails)
+enum class ReviewSeverity {
+    /**
+     * Critical issue that must be fixed before approval.
+     */
+    CRITICAL,
 
-    val autoReviewers: List<AutoReviewer>
+    /**
+     * Major issue that should be addressed.
+     */
+    MAJOR,
+
+    /**
+     * Minor issue or suggestion.
+     */
+    MINOR,
+
+    /**
+     * Informational comment only.
+     */
+    INFO
 }
+

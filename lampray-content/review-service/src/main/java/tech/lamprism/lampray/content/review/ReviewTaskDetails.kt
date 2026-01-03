@@ -14,19 +14,38 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.review.service;
+package tech.lamprism.lampray.content.review
 
-import tech.lamprism.lampray.content.Content;
-import tech.lamprism.lampray.content.review.ReviewJobInfo;
-import tech.lamprism.lampray.content.review.ReviewMark;
-import tech.lamprism.lampray.content.review.common.NotReviewedException;
+import tech.lamprism.lampray.TimeAttributed
 
 /**
+ * Details of a review job task.
+ *
  * @author RollW
  */
-public interface ReviewService {
-    // TODO: needs rename
+interface ReviewTaskDetails : TimeAttributed {
+    /**
+     * Unique identifier for this review task.
+     */
+    val taskId: String
 
-    ReviewJobInfo assignReviewer(Content content, ReviewMark reviewMark)
-            throws NotReviewedException;
+    /**
+     * ID of the parent review job.
+     */
+    val reviewJobId: String
+
+    /**
+     * Current status of the review task.
+     */
+    val status: ReviewStatus
+
+    /**
+     * ID of the assigned reviewer, null if unassigned.
+     */
+    val reviewerId: Long?
+
+    /**
+     * Structured feedback from the reviewer.
+     */
+    val feedback: ReviewFeedback?
 }

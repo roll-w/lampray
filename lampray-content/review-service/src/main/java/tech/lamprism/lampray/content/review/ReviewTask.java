@@ -24,28 +24,30 @@ import tech.rollw.common.web.system.SystemResourceKind;
 import java.time.OffsetDateTime;
 
 /**
+ * Immutable review job task value object that implements both DataEntity and ReviewJobTaskDetails.
+ *
  * @author RollW
  */
-public class ReviewJobTask implements DataEntity<String> {
+public class ReviewTask implements DataEntity<String>, ReviewTaskDetails {
     private final long id;
     private final String taskId;
     private final String reviewJobId;
     private final ReviewStatus taskStatus;
     private final Long reviewerId;
-    private final String detail;
+    private final ReviewFeedback feedback;
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
 
-    public ReviewJobTask(long id, String taskId, String reviewJobId,
-                         ReviewStatus taskStatus, Long reviewerId,
-                         String detail,
-                         OffsetDateTime createTime, OffsetDateTime updateTime) {
+    public ReviewTask(long id, String taskId, String reviewJobId,
+                      ReviewStatus taskStatus, Long reviewerId,
+                      ReviewFeedback feedback,
+                      OffsetDateTime createTime, OffsetDateTime updateTime) {
         this.id = id;
         this.taskId = taskId;
         this.reviewJobId = reviewJobId;
         this.taskStatus = taskStatus;
         this.reviewerId = reviewerId;
-        this.detail = detail;
+        this.feedback = feedback;
         this.createTime = createTime;
         this.updateTime = updateTime;
     }
@@ -60,24 +62,34 @@ public class ReviewJobTask implements DataEntity<String> {
         return getTaskId();
     }
 
+    @NonNull
+    @Override
     public String getTaskId() {
         return taskId;
     }
 
+    @NonNull
+    @Override
     public String getReviewJobId() {
         return reviewJobId;
     }
 
-    public ReviewStatus getTaskStatus() {
+    @NonNull
+    @Override
+    public ReviewStatus getStatus() {
         return taskStatus;
     }
 
+    @Nullable
+    @Override
     public Long getReviewerId() {
         return reviewerId;
     }
 
-    public String getDetail() {
-        return detail;
+    @Nullable
+    @Override
+    public ReviewFeedback getFeedback() {
+        return feedback;
     }
 
     @NonNull
@@ -95,6 +107,6 @@ public class ReviewJobTask implements DataEntity<String> {
     @NonNull
     @Override
     public SystemResourceKind getSystemResourceKind() {
-        return ReviewJobTaskResourceKind.INSTANCE;
+        return ReviewTaskResourceKind.INSTANCE;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package tech.lamprism.lampray.content.review
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+/**
+ * Individual review feedback item that describes a specific issue or comment.
+ *
+ * @author RollW
+ */
+data class ReviewFeedbackEntry(
+    val category: ReviewCategory,
+    val severity: ReviewSeverity,
+    val message: String,
+    val location: String? = null,
+    val suggestion: String? = null,
+    val autoDetected: Boolean = false
+)
 
-dependencies {
-    api(project(":lampray-common"))
-    api(project(":lampray-common-data"))
-    api(project(":lampray-content:content-api"))
-}
-
-description = "lampray-content-service"

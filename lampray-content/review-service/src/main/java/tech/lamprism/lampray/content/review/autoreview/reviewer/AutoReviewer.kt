@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tech.lamprism.lampray.content.review
+package tech.lamprism.lampray.content.review.autoreview.reviewer
+
+import tech.lamprism.lampray.content.review.ReviewJobDetails
+import tech.lamprism.lampray.content.review.autoreview.AutoReviewContext
 
 /**
  * @author RollW
  */
 interface AutoReviewer {
-    fun review(reviewJob: ReviewJobDetails, reviewResults: AutoReviewContext)
+    fun review(reviewJob: ReviewJobDetails, autoReviewContext: AutoReviewContext)
 
     val reviewerInfo: Info
 

@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * @author RollW
  */
+@Deprecated
 public enum ReviewStatues {
     FINISHED(ReviewStatus.APPROVED, ReviewStatus.REJECTED, ReviewStatus.CANCELED),
     PASSED(ReviewStatus.APPROVED),
