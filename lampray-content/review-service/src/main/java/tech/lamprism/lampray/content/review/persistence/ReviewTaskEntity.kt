@@ -155,7 +155,7 @@ class ReviewTaskEntity(
         private var resourceId: String? = null
         private var reviewJobId: String? = null
         private var taskStatus: ReviewStatus = ReviewStatus.PENDING
-        private var reviewerId: Long? = null
+        private var reviewerId: Long = -1
         private var feedback: ReviewFeedback? = null
         private var createTime: OffsetDateTime = OffsetDateTime.now()
         private var updateTime: OffsetDateTime = OffsetDateTime.now()
@@ -189,7 +189,7 @@ class ReviewTaskEntity(
             this.taskStatus = taskStatus
         }
 
-        fun setReviewerId(reviewerId: Long?) = apply {
+        fun setReviewerId(reviewerId: Long) = apply {
             this.reviewerId = reviewerId
         }
 

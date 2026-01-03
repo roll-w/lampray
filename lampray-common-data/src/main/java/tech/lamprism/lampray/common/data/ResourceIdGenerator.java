@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.java-conventions")
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.common.data;
 
-dependencies {
-    api(project(":lampray-common"))
-    api("org.liquibase:liquibase-core")
-    api("com.fasterxml.jackson.core:jackson-databind")
-    api("com.fasterxml.jackson.module:jackson-module-kotlin")
-    api("com.github.luben:zstd-jni:1.5.7-6")
-    api("org.msgpack:jackson-dataformat-msgpack:0.9.10")
-    api("com.github.f4b6a3:ulid-creator:5.2.3")
-}
+import tech.rollw.common.web.system.SystemResourceKind;
 
-description = "lampray-common-data"
+/**
+ * Generates unique resource IDs for different kinds of system resources.
+ *
+ * @author RollW
+ */
+public interface ResourceIdGenerator {
+
+    /**
+     * Generate the next id for the given system resource kind.
+     *
+     * @param systemResourceKind the system resource kind
+     * @return the next id
+     */
+    String nextId(SystemResourceKind systemResourceKind);
+}

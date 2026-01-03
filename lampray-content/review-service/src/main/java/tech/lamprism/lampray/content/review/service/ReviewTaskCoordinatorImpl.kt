@@ -16,25 +16,30 @@
 package tech.lamprism.lampray.content.review.service
 
 import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.slf4j.debug
+import org.slf4j.error
+import org.slf4j.info
+import org.slf4j.logger
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Component
 import tech.lamprism.lampray.common.data.ResourceIdGenerator
-import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
 import tech.lamprism.lampray.content.review.ReviewStatus
 import tech.lamprism.lampray.content.review.ReviewTaskAction
 import tech.lamprism.lampray.content.review.ReviewTaskCoordinator
 import tech.lamprism.lampray.content.review.ReviewTaskDetails
 import tech.lamprism.lampray.content.review.ReviewTaskResourceKind
-import tech.lamprism.lampray.content.review.feedback.ReviewVerdict
 import tech.lamprism.lampray.content.review.common.ReviewException
 import tech.lamprism.lampray.content.review.event.OnReviewStateChangeEvent
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
+import tech.lamprism.lampray.content.review.feedback.ReviewVerdict
 import tech.lamprism.lampray.content.review.persistence.ReviewJobEntity
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository
 import tech.lamprism.lampray.content.review.persistence.ReviewTaskEntity
 import tech.lamprism.lampray.content.review.persistence.ReviewTaskRepository
 import tech.rollw.common.web.CommonErrorCode
 import java.time.OffsetDateTime
+
+private val logger: Logger = logger<ReviewTaskCoordinatorImpl>()
 
 /**
  * Implementation of review task coordinator that manages task lifecycle,
@@ -56,8 +61,6 @@ class ReviewTaskCoordinatorImpl(
     private val eventPublisher: ApplicationEventPublisher
 ) : ReviewTaskCoordinator {
 
-    private val logger: Logger = LoggerFactory.getLogger(ReviewTaskCoordinatorImpl::class.java)
-
     override fun reassignTask(
         taskId: String,
         currentReviewerId: Long,
@@ -74,15 +77,20 @@ class ReviewTaskCoordinatorImpl(
         }
 
         // Cancel the current task
-        currentTask.status = ReviewStatus.CANCELED
-        currentTask.setUpdateTime(OffsetDateTime.now())
-        if (reason != null) {
-            // Store reason in feedback for audit trail
-            currentTask.feedback = ReviewFeedback(
-                verdict = ReviewVerdict.PENDING,
-                summary = "Task reassigned: $reason"
-            )
+        val now = OffsetDateTime.now()
+
+        currentTask.apply {
+            status = ReviewStatus.CANCELED
+            updateTime = now
+            if (reason != null) {
+                // Store reason in feedback for audit trail
+                feedback = ReviewFeedback(
+                    verdict = ReviewVerdict.PENDING,
+                    summary = "Task reassigned: $reason"
+                )
+            }
         }
+
         reviewTaskRepository.save(currentTask)
 
         // Create new task for the new reviewer
@@ -91,15 +99,15 @@ class ReviewTaskCoordinatorImpl(
             .setReviewJobId(currentTask.reviewJobId)
             .setTaskStatus(ReviewStatus.PENDING)
             .setReviewerId(newReviewerId)
-            .setCreateTime(OffsetDateTime.now())
-            .setUpdateTime(OffsetDateTime.now())
+            .setCreateTime(now)
+            .setUpdateTime(now)
             .build()
 
         val savedTask = reviewTaskRepository.save(newTask)
-        logger.info(
-            "Task {} reassigned from reviewer {} to {} as new task {} (reason: {})",
-            taskId, currentReviewerId, newReviewerId, savedTask.resourceId, reason ?: "none"
-        )
+        logger.info {
+            "Task $taskId reassigned from reviewer $currentReviewerId to $newReviewerId " +
+                    "as new task ${savedTask.resourceId} (reason: ${reason ?: "none"})"
+        }
 
         return savedTask.lock()
     }
@@ -147,12 +155,16 @@ class ReviewTaskCoordinatorImpl(
             "Only pending tasks can be claimed"
         }
 
-        taskEntity.reviewerId = reviewerId
-        taskEntity.setUpdateTime(OffsetDateTime.now())
+        // TODO: maybe create a new task instead
+        taskEntity.apply {
+            this.reviewerId = reviewerId
+            updateTime = OffsetDateTime.now()
+        }
 
         val updated = reviewTaskRepository.save(taskEntity)
-        logger.info("Task {} claimed by reviewer {}", taskId, reviewerId)
-
+        logger.info {
+            "Task $taskId claimed by reviewer $reviewerId"
+        }
         return updated.lock()
     }
 
@@ -169,11 +181,11 @@ class ReviewTaskCoordinatorImpl(
             ReviewException(CommonErrorCode.ERROR_NOT_FOUND, "Review job not found: $jobId")
         }
 
-        if (job.status.isFinished()) {
+        if (job.status.isFinished) {
             throw ReviewException(
                 CommonErrorCode.ERROR_NOT_FOUND,
                 "Cannot submit feedback: job $jobId is in terminal state ${job.status}. " +
-                "Create a new review job for appeals."
+                        "Create a new review job for appeals."
             )
         }
 
@@ -190,10 +202,9 @@ class ReviewTaskCoordinatorImpl(
         taskEntity.setUpdateTime(OffsetDateTime.now())
 
         val updated = reviewTaskRepository.save(taskEntity)
-        logger.info(
-            "Feedback submitted for task {} by reviewer {} with verdict {}",
-            taskId, reviewerId, feedback.verdict
-        )
+        logger.info {
+            "Feedback submitted for task ${taskEntity.resourceId} by reviewer $reviewerId with verdict ${feedback.verdict}"
+        }
 
         // Update the main job status based on all tasks
         updateJobStatusAfterTaskChange(job)
@@ -206,42 +217,38 @@ class ReviewTaskCoordinatorImpl(
      */
     private fun updateJobStatusAfterTaskChange(job: ReviewJobEntity) {
         // If job is already in terminal state, don't change it
-        if (job.status.isFinished()) {
-            logger.debug(
-                "Job {} is already in terminal state {}, skipping status update",
-                job.resourceId, job.status
-            )
+        if (job.status.isFinished) {
+            logger.debug {
+                "Job ${job.resourceId} is already in terminal state ${job.status}, skipping status update"
+            }
             return
         }
 
         val previousStatus = job.status
         val tasks = reviewTaskRepository.findTasksByJobId(job.resourceId)
-        val newStatus = determineJobStatus(tasks.map { it.lock() })
+        val newStatus = determineJobStatus(tasks)
 
-        if (newStatus != previousStatus) {
-            job.status = newStatus
-            job.updateTime = OffsetDateTime.now()
-            reviewJobRepository.save(job)
+        if (newStatus == previousStatus) {
+            return
+        }
+        job.status = newStatus
+        job.updateTime = OffsetDateTime.now()
+        reviewJobRepository.save(job)
 
-            logger.info(
-                "Job {} status updated from {} to {} based on {} tasks",
-                job.resourceId, previousStatus, newStatus, tasks.size
+        logger.info {
+            "Job ${job.resourceId} status changed: $previousStatus -> $newStatus based on ${tasks.size} tasks"
+        }
+
+        try {
+            val event = OnReviewStateChangeEvent(
+                job.lock(),
+                previousStatus,
+                newStatus
             )
-
-            // Publish state change event
-            try {
-                val event = OnReviewStateChangeEvent(
-                    job.lock(),
-                    previousStatus,
-                    newStatus
-                )
-                eventPublisher.publishEvent(event)
-                logger.debug("Published OnReviewStateChangeEvent for job {}", job.resourceId)
-            } catch (e: Exception) {
-                logger.error(
-                    "Failed to publish state change event for job {}: {}",
-                    job.resourceId, e.message, e
-                )
+            eventPublisher.publishEvent(event)
+        } catch (e: Exception) {
+            logger.error(e) {
+                "Failed to publish state change event for job ${job.resourceId}: ${e.message}"
             }
         }
     }
@@ -262,14 +269,14 @@ class ReviewTaskCoordinatorImpl(
 
         val activeTasks = tasks.filter { it.status != ReviewStatus.CANCELED }
         if (activeTasks.isEmpty()) {
-            // All tasks canceled - job should be canceled
+            // All tasks canceled, job should be canceled
             return ReviewStatus.CANCELED
         }
 
         // Check if any task is rejected
         val hasRejected = activeTasks.any { task ->
             task.status == ReviewStatus.REJECTED ||
-            task.feedback?.verdict == ReviewVerdict.REJECTED
+                    task.feedback?.verdict == ReviewVerdict.REJECTED
         }
 
         if (hasRejected) {
@@ -285,7 +292,7 @@ class ReviewTaskCoordinatorImpl(
         // All tasks approved
         val allApproved = activeTasks.all { task ->
             task.status == ReviewStatus.APPROVED ||
-            task.feedback?.verdict == ReviewVerdict.APPROVED
+                    task.feedback?.verdict == ReviewVerdict.APPROVED
         }
 
         return if (allApproved) {
@@ -301,13 +308,14 @@ class ReviewTaskCoordinatorImpl(
      */
     private fun validateCanCreateTask(jobId: String) {
         val job = reviewJobRepository.findById(jobId).orElse(null)
-        if (job != null && job.status.isFinished) {
-            throw ReviewException(
-                CommonErrorCode.ERROR_NOT_FOUND,
-                "Cannot create new task for job $jobId: job is in terminal state ${job.status}. " +
-                "Create a new review job for appeals or re-review."
-            )
+        if (job == null || !job.status.isFinished) {
+            return
         }
+        throw ReviewException(
+            CommonErrorCode.ERROR_NOT_FOUND,
+            "Cannot create new task for job $jobId: job is in terminal state ${job.status}. " +
+                    "Create a new review job for appeals or re-review."
+        )
     }
 
     override fun getTasksForReviewJob(reviewJobId: String): List<ReviewTaskDetails> {
@@ -362,10 +370,9 @@ class ReviewTaskCoordinatorImpl(
         }
 
         val savedTasks = reviewTaskRepository.saveAll(tasks)
-        logger.info(
-            "Created {} review tasks for job {} assigned to reviewers: {}",
-            savedTasks.size, reviewJobId, reviewerIds.joinToString()
-        )
+        logger.info {
+            "Created ${savedTasks.count()} review tasks for job $reviewJobId assigned to reviewers: ${reviewerIds.joinToString()}"
+        }
 
         return savedTasks.map { it.lock() }
     }
@@ -380,10 +387,9 @@ class ReviewTaskCoordinatorImpl(
         val taskEntity = createTaskEntity(reviewJobId, reviewerId)
         val savedTask = reviewTaskRepository.save(taskEntity)
 
-        logger.info(
-            "Created review task {} for job {} assigned to reviewer {}",
-            savedTask.resourceId, reviewJobId, reviewerId
-        )
+        logger.info {
+            "Created review task ${savedTask.resourceId} for job $reviewJobId assigned to reviewer $reviewerId"
+        }
 
         return savedTask.lock()
     }

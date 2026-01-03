@@ -43,7 +43,7 @@ interface ReviewTaskDetails : TimeAttributed {
     /**
      * ID of the assigned reviewer, null if unassigned.
      */
-    val reviewerId: Long?
+    val reviewerId: Long
 
     /**
      * Structured feedback from the reviewer.
