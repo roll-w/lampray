@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  */
 package tech.lamprism.lampray.content.review
 
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
+
 /**
- * Service for managing review task assignments and transfers.
+ * Coordinator for managing review task assignments, transfers, and lifecycle operations.
+ * Handles task distribution, reassignment, and feedback submission for review workflows.
  *
  * @author RollW
  */
-interface ReviewTaskAssignmentService {
+interface ReviewTaskCoordinator {
     /**
      * Reassigns a review task to another reviewer by creating a new task
      * and canceling the current one. This approach maintains audit trail
@@ -99,13 +102,37 @@ interface ReviewTaskAssignmentService {
      * @param taskId the task identifier
      * @param reviewerId the reviewer's ID
      * @param action the action to check
-     * @return true if the action is allowed
+     * @return true if the action is allowed, false otherwise
      */
     fun canPerformAction(
         taskId: String,
         reviewerId: Long,
         action: ReviewTaskAction
     ): Boolean
-}
 
+    /**
+     * Creates review tasks for multiple reviewers for a single review job.
+     * This is the primary method for distributing review work.
+     *
+     * @param reviewJobId the review job identifier
+     * @param reviewerIds list of reviewer IDs to assign tasks to
+     * @return list of created task details
+     */
+    fun createTasksForReviewers(
+        reviewJobId: String,
+        reviewerIds: List<Long>
+    ): List<ReviewTaskDetails>
+
+    /**
+     * Creates a single review task for a specific reviewer.
+     *
+     * @param reviewJobId the review job identifier
+     * @param reviewerId the reviewer ID, can be AUTO_REVIEWER constant for automated review
+     * @return created task details
+     */
+    fun createTask(
+        reviewJobId: String,
+        reviewerId: Long
+    ): ReviewTaskDetails
+}
 

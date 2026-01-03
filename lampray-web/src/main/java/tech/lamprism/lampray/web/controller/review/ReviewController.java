@@ -30,7 +30,6 @@ import tech.lamprism.lampray.content.review.ReviewJobDetails;
 import tech.lamprism.lampray.content.review.ReviewJobInfo;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
 import tech.lamprism.lampray.content.review.ReviewStatues;
-import tech.lamprism.lampray.content.review.service.ReviewStatusService;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.Api;
@@ -51,17 +50,14 @@ public class ReviewController {
     private static final Logger logger = LoggerFactory.getLogger(ReviewController.class);
 
     private final ReviewJobProvider reviewJobProvider;
-    private final ReviewStatusService reviewStatusService;
     private final ReviewContentProvider reviewContentProvider;
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
 
     public ReviewController(ReviewJobProvider reviewJobProvider,
-                            ReviewStatusService reviewStatusService,
                             ReviewContentProvider reviewContentProvider,
                             ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.reviewJobProvider = reviewJobProvider;
-        this.reviewStatusService = reviewStatusService;
         this.reviewContentProvider = reviewContentProvider;
         this.apiContextThreadAware = apiContextThreadAware;
     }
@@ -124,17 +120,8 @@ public class ReviewController {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
-        ReviewJobDetails reviewJobDetails = reviewJobProvider.getReviewJob(jobId);
-//        if (reviewJobDetails.getReviewer() != user.getOperatorId()) {
-//            throw new CommonRuntimeException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
-//        }
 
-        ReviewJobInfo reviewJobInfo = reviewStatusService.makeReview(
-                jobId,
-                user.getOperatorId(),
-                reviewRequest.getPass(),
-                reviewRequest.getResult()
-        );
-        return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
+        // TODO
+        return HttpResponseEntity.success();
     }
 }

@@ -16,33 +16,21 @@
 
 package tech.lamprism.lampray.content.review.service;
 
-import jakarta.transaction.Transactional;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
-import tech.lamprism.lampray.content.Content;
-import tech.lamprism.lampray.content.ContentDetails;
-import tech.lamprism.lampray.content.ContentIdentity;
-import tech.lamprism.lampray.content.ContentProviderFactory;
 import tech.lamprism.lampray.content.ContentTrait;
-import tech.lamprism.lampray.content.ContentType;
-import tech.lamprism.lampray.content.review.autoreview.AutoReviewService;
 import tech.lamprism.lampray.content.review.ReviewJobDetails;
 import tech.lamprism.lampray.content.review.ReviewJobInfo;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
-import tech.lamprism.lampray.content.review.ReviewMark;
 import tech.lamprism.lampray.content.review.ReviewStatues;
 import tech.lamprism.lampray.content.review.ReviewStatus;
-import tech.lamprism.lampray.content.review.ReviewerAllocator;
-import tech.lamprism.lampray.content.review.common.NotReviewedException;
 import tech.lamprism.lampray.content.review.common.ReviewException;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobEntity;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository;
 import tech.rollw.common.web.CommonErrorCode;
-import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.system.Operator;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,76 +38,11 @@ import java.util.stream.Collectors;
  * @author RollW
  */
 @Service
-public class ReviewServiceImpl implements ReviewService, ReviewJobProvider {
+public class ReviewJobProviderImpl implements ReviewJobProvider {
     private final ReviewJobRepository reviewJobRepository;
-    private final ContentProviderFactory contentProviderFactory;
-    private final ReviewerAllocator reviewerAllocator;
-    private final AutoReviewService autoReviewService;
 
-    public ReviewServiceImpl(ReviewJobRepository reviewJobRepository,
-                             ContentProviderFactory contentProviderFactory,
-                             ReviewerAllocator reviewerAllocator,
-                             AutoReviewService autoReviewService) {
+    public ReviewJobProviderImpl(ReviewJobRepository reviewJobRepository) {
         this.reviewJobRepository = reviewJobRepository;
-        this.contentProviderFactory = contentProviderFactory;
-        this.reviewerAllocator = reviewerAllocator;
-        this.autoReviewService = autoReviewService;
-    }
-
-    @Override
-    @Transactional(dontRollbackOn = CommonRuntimeException.class)
-    public ReviewJobInfo assignReviewer(Content content,
-                                        ReviewMark reviewMark) {
-        OffsetDateTime assignedTime = OffsetDateTime.now();
-        long contentId = content.getContentId();
-        ContentType contentType = content.getContentType();
-        List<ReviewJobEntity> old = reviewJobRepository.findByContent(contentId, contentType);
-        if (!old.isEmpty()) {
-            ReviewJobEntity notReviewedJob = old.stream()
-                    .filter(job -> job.getStatus() == ReviewStatus.PENDING)
-                    .findFirst()
-                    .orElse(null);
-            if (notReviewedJob != null) {
-                // If the old review job is still not reviewed, throw an exception.
-                // We don't want to assign a new reviewer to the same content
-                throw new NotReviewedException(ReviewJobInfo.of(notReviewedJob.lock()));
-            }
-        }
-        ReviewJobEntity.Builder builder = ReviewJobEntity.builder()
-                .setReviewContentId(contentId)
-                .setReviewContentType(contentType)
-                .setStatus(ReviewStatus.PENDING)
-                .setCreateTime(assignedTime)
-                .setReviewMark(reviewMark);
-        ReviewJobEntity reviewJob = builder.build();
-        reviewJob = reviewJobRepository.save(reviewJob);
-        long reviewerId = reviewerAllocator.allocateReviewer(
-                ContentIdentity.of(contentId, contentType),
-                true
-        );
-        ReviewJobInfo reviewJobInfo = ReviewJobInfo.of(reviewJob.lock());
-        try {
-            return reviewJobInfo;
-        } finally {
-            dispatchAutoReviewJob(reviewJobInfo, content);
-        }
-    }
-
-    private ContentDetails retrieveContentDetails(ContentIdentity contentIdentity) {
-        if (contentIdentity == null) {
-            throw new IllegalArgumentException("Content identity cannot be null");
-        }
-        if (contentIdentity instanceof ContentDetails contentDetails) {
-            return contentDetails;
-        }
-
-        return contentProviderFactory.getContentProvider(contentIdentity.getContentType())
-                .getContentDetails(contentIdentity);
-    }
-
-    private void dispatchAutoReviewJob(ReviewJobInfo reviewJobInfo, Content content) {
-        ContentDetails contentDetails = retrieveContentDetails(content);
-        autoReviewService.joinAutoReviewQueue(reviewJobInfo, contentDetails);
     }
 
     @Override

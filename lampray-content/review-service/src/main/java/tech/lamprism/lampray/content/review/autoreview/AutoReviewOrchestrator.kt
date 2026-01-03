@@ -20,10 +20,23 @@ import tech.lamprism.lampray.content.review.ReviewJobDetails
 import tech.lamprism.lampray.content.review.autoreview.reviewer.AutoReviewer
 
 /**
+ * Orchestrator for automated review processes.
+ * Coordinates multiple auto-reviewers to analyze content and produce feedback.
+ *
  * @author RollW
  */
-interface AutoReviewService {
-    fun joinAutoReviewQueue(reviewJob: ReviewJobDetails, contentDetails: ContentDetails)
+interface AutoReviewOrchestrator {
+    /**
+     * Start automated review process for the given review job and content.
+     * This will execute all registered auto-reviewers and collect their feedback.
+     *
+     * @param reviewJob the review job details
+     * @param contentDetails the content to be reviewed
+     */
+    fun executeAutoReview(reviewJob: ReviewJobDetails, contentDetails: ContentDetails)
 
+    /**
+     * Get all registered auto-reviewers.
+     */
     val autoReviewers: List<AutoReviewer>
 }

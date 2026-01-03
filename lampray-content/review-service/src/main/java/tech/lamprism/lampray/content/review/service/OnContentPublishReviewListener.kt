@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package tech.lamprism.lampray.content.review.service
 import org.slf4j.Logger
 import org.slf4j.info
 import org.slf4j.logger
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentStatus
 import tech.lamprism.lampray.content.publish.ContentPublishListener
@@ -29,16 +29,18 @@ import tech.lamprism.lampray.content.review.ReviewStatus
 import tech.lamprism.lampray.content.review.common.NotReviewedException
 
 /**
+ * Listener that creates review jobs when content is published.
+ *
  * @author RollW
  */
-@Service
+@Component
 class OnContentPublishReviewListener(
-    private val reviewService: ReviewService
+    private val reviewJobCreator: ReviewJobCreator
 ) : ContentPublishListener {
-    // TODO
+
     override fun onPublish(contentDetails: ContentDetails): ContentStatus {
         try {
-            val reviewInfo = tryAssignReviewer(contentDetails)
+            val reviewInfo = tryCreateReviewJob(contentDetails)
             return when (reviewInfo.status) {
                 ReviewStatus.PENDING -> ContentStatus.REVIEWING
                 ReviewStatus.APPROVED -> ContentStatus.PUBLISHED
@@ -47,18 +49,18 @@ class OnContentPublishReviewListener(
             }
         } catch (e: NotReviewedException) {
             logger.info {
-                "Already assigned reviewer for content: ${contentDetails.contentId}@${contentDetails.contentType}, " +
-                        "reviewer: ${e.reviewInfo}"// TODO
+                "Review job already exists for content: ${contentDetails.contentId}@${contentDetails.contentType}, " +
+                        "job: ${e.reviewInfo.jobId}"
             }
             return ContentStatus.REVIEWING
         }
     }
 
-    private fun tryAssignReviewer(contentDetails: ContentDetails): ReviewJobInfo {
-        val reviewInfo = reviewService.assignReviewer(contentDetails, ReviewMark.NORMAL)
+    private fun tryCreateReviewJob(contentDetails: ContentDetails): ReviewJobInfo {
+        val reviewInfo = reviewJobCreator.createReviewJob(contentDetails, ReviewMark.NORMAL)
         logger.info {
-            "Assign reviewer for content: ${contentDetails.contentId}@${contentDetails.contentType}, " +
-                    "reviewer: $reviewInfo"
+            "Created review job for content: ${contentDetails.contentId}@${contentDetails.contentType}, " +
+                    "job: ${reviewInfo.jobId}"
         }
         return reviewInfo
     }

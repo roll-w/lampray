@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,42 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.review;
+
+
+package tech.lamprism.lampray.content.review.feedback
+
+import tech.lamprism.lampray.content.review.ReviewStatus
 
 /**
+ * Review verdict indicating the overall result.
+ *
  * @author RollW
  */
-public enum ReviewStatus {
+enum class ReviewVerdict {
     /**
-     * Not reviewed.
+     * Review is pending or in progress.
      */
     PENDING,
+
     /**
-     * Reviewed and approved.
+     * Content needs revision before it can be approved.
      */
-    APPROVED,
+    NEEDS_REVISION,
+
     /**
-     * Rejected.
+     * Content is rejected and cannot be published.
      */
     REJECTED,
-    /**
-     * Review is canceled by the reviewer or the author.
-     */
-    CANCELED;
 
-    public boolean isFinished() {
-        return this != PENDING;
+    /**
+     * Content is approved and can be published.
+     */
+    APPROVED;
+
+    fun toReviewStatus() = when (this) {
+        PENDING -> ReviewStatus.PENDING
+        NEEDS_REVISION -> ReviewStatus.REJECTED
+        REJECTED -> ReviewStatus.REJECTED
+        APPROVED -> ReviewStatus.APPROVED
     }
 }

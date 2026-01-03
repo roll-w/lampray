@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tech.lamprism.lampray.content.review
+package tech.lamprism.lampray.content.review.feedback
 
 /**
  * Structured review feedback that provides detailed review opinions and results.

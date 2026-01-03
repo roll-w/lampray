@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.review;
 import space.lingu.NonNull;
 import space.lingu.Nullable;
 import tech.lamprism.lampray.DataEntity;
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedback;
 import tech.rollw.common.web.system.SystemResourceKind;
 
 import java.time.OffsetDateTime;

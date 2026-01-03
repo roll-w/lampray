@@ -31,7 +31,7 @@ import org.hibernate.generator.EventType
 import org.hibernate.proxy.HibernateProxy
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
-import tech.lamprism.lampray.content.review.ReviewFeedback
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
 import tech.lamprism.lampray.content.review.ReviewTask
 import tech.lamprism.lampray.content.review.ReviewTaskDetails
 import tech.lamprism.lampray.content.review.ReviewTaskResourceKind

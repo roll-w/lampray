@@ -13,41 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-
-package tech.lamprism.lampray.content.review
+package tech.lamprism.lampray.content.review.feedback
 
 /**
- * Review verdict indicating the overall result.
+ * Category of review feedback.
  *
  * @author RollW
  */
-enum class ReviewVerdict {
+enum class ReviewCategory {
     /**
-     * Review is pending or in progress.
+     * Content quality issues.
      */
-    PENDING,
+    CONTENT_QUALITY,
 
     /**
-     * Content needs revision before it can be approved.
+     * Grammar or spelling issues.
      */
-    NEEDS_REVISION,
+    GRAMMAR,
 
     /**
-     * Content is rejected and cannot be published.
+     * Formatting or structure issues.
      */
-    REJECTED,
+    FORMAT,
 
     /**
-     * Content is approved and can be published.
+     * Policy or guideline violations.
      */
-    APPROVED;
+    POLICY_VIOLATION,
 
-    fun toReviewStatus() = when (this) {
-        PENDING -> ReviewStatus.PENDING
-        NEEDS_REVISION -> ReviewStatus.REJECTED
-        REJECTED -> ReviewStatus.REJECTED
-        APPROVED -> ReviewStatus.APPROVED
-    }
+    /**
+     * Sensitive or inappropriate content.
+     */
+    SENSITIVE_CONTENT,
+
+    /**
+     * Copyright or plagiarism issues.
+     */
+    COPYRIGHT,
+
+    /**
+     * Technical or implementation issues.
+     */
+    TECHNICAL,
+
+    /**
+     * Other unclassified issues.
+     */
+    OTHER
 }
+

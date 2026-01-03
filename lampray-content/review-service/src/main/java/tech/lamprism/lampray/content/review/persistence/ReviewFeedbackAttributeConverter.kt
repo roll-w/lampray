@@ -18,7 +18,7 @@ package tech.lamprism.lampray.content.review.persistence
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.Converter
 import tech.lamprism.lampray.common.data.BinaryObjectAttributeConverter
-import tech.lamprism.lampray.content.review.ReviewFeedback
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
 
 /**
  * @author RollW

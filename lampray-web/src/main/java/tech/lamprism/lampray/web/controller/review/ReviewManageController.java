@@ -25,10 +25,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import tech.lamprism.lampray.content.review.ReviewContentProvider;
 import tech.lamprism.lampray.content.review.ReviewJobContent;
 import tech.lamprism.lampray.content.review.ReviewJobDetails;
-import tech.lamprism.lampray.content.review.ReviewJobInfo;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
 import tech.lamprism.lampray.content.review.ReviewStatues;
-import tech.lamprism.lampray.content.review.service.ReviewStatusService;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.user.UserTrait;
 import tech.lamprism.lampray.web.common.ApiContext;
@@ -49,16 +47,13 @@ import java.util.List;
 public class ReviewManageController {
     private final ReviewJobProvider reviewJobProvider;
     private final ReviewContentProvider reviewContentProvider;
-    private final ReviewStatusService reviewStatusService;
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
     public ReviewManageController(ReviewJobProvider reviewJobProvider,
                                   ReviewContentProvider reviewContentProvider,
-                                  ReviewStatusService reviewStatusService,
                                   ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.reviewJobProvider = reviewJobProvider;
         this.reviewContentProvider = reviewContentProvider;
-        this.reviewStatusService = reviewStatusService;
         this.apiContextThreadAware = apiContextThreadAware;
     }
 
@@ -114,12 +109,7 @@ public class ReviewManageController {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
-        ReviewJobInfo reviewJobInfo = reviewStatusService.makeReview(
-                jobId,
-                user.getOperatorId(),
-                reviewRequest.getPass(),
-                reviewRequest.getResult()
-        );
-        return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
+        // TODO
+        return HttpResponseEntity.success();
     }
 }

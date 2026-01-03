@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.content.review
 
 import tech.lamprism.lampray.TimeAttributed
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
 
 /**
  * Details of a review job task.
