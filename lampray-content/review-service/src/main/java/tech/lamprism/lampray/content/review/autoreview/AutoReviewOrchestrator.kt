@@ -16,7 +16,7 @@
 package tech.lamprism.lampray.content.review.autoreview
 
 import tech.lamprism.lampray.content.ContentDetails
-import tech.lamprism.lampray.content.review.ReviewJobDetails
+import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.autoreview.reviewer.AutoReviewer
 
 /**
@@ -30,10 +30,10 @@ interface AutoReviewOrchestrator {
      * Start automated review process for the given review job and content.
      * This will execute all registered auto-reviewers and collect their feedback.
      *
-     * @param reviewJob the review job details
+     * @param reviewJob the review job summary
      * @param contentDetails the content to be reviewed
      */
-    fun executeAutoReview(reviewJob: ReviewJobDetails, contentDetails: ContentDetails)
+    fun executeAutoReview(reviewJob: ReviewJobSummary, contentDetails: ContentDetails)
 
     /**
      * Get all registered auto-reviewers.

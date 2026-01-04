@@ -16,13 +16,13 @@
 package tech.lamprism.lampray.content.review.autoreview
 
 import tech.lamprism.lampray.content.ContentDetails
+import tech.lamprism.lampray.content.review.ReviewJobSummary
+import tech.lamprism.lampray.content.review.ReviewTaskDetails
+import tech.lamprism.lampray.content.review.autoreview.reviewer.AutoReviewer
 import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
 import tech.lamprism.lampray.content.review.feedback.ReviewFeedbackEntry
-import tech.lamprism.lampray.content.review.ReviewJobDetails
 import tech.lamprism.lampray.content.review.feedback.ReviewSeverity
-import tech.lamprism.lampray.content.review.ReviewTaskDetails
 import tech.lamprism.lampray.content.review.feedback.ReviewVerdict
-import tech.lamprism.lampray.content.review.autoreview.reviewer.AutoReviewer
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -34,7 +34,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * @author RollW
  */
 class AutoReviewContext(
-    val reviewJob: ReviewJobDetails,
+    val reviewJob: ReviewJobSummary,
     val reviewTask: ReviewTaskDetails,
     val contentDetails: ContentDetails
 ) {

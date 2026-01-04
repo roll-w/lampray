@@ -18,21 +18,12 @@ package tech.lamprism.lampray.content.review
 
 import tech.lamprism.lampray.content.ContentAssociated
 import tech.lamprism.lampray.content.ContentIdentity
-import java.time.OffsetDateTime
 
 /**
  * @author RollW
  */
-interface ReviewJobDetails : ContentAssociated {
-    val jobId: String
-
-    val status: ReviewStatus
-
-    val reviewMark: ReviewMark
-
-    val createTime: OffsetDateTime
-
-    val updateTime: OffsetDateTime
+interface ReviewJobDetails : ReviewJobSummary, ContentAssociated {
+    val tasks: List<ReviewTaskDetails>
 
     override fun getAssociatedContent(): ContentIdentity
 }

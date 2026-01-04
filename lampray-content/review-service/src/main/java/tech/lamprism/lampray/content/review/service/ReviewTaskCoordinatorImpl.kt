@@ -225,7 +225,7 @@ class ReviewTaskCoordinatorImpl(
         }
 
         val previousStatus = job.status
-        val tasks = reviewTaskRepository.findTasksByJobId(job.resourceId)
+        val tasks = reviewTaskRepository.findByJobId(job.resourceId)
         val newStatus = determineJobStatus(tasks)
 
         if (newStatus == previousStatus) {
@@ -319,7 +319,7 @@ class ReviewTaskCoordinatorImpl(
     }
 
     override fun getTasksForReviewJob(reviewJobId: String): List<ReviewTaskDetails> {
-        return reviewTaskRepository.findTasksByJobId(reviewJobId)
+        return reviewTaskRepository.findByJobId(reviewJobId)
             .map { it.lock() }
     }
 

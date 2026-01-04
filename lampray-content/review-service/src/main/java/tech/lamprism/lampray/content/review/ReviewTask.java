@@ -25,12 +25,10 @@ import tech.rollw.common.web.system.SystemResourceKind;
 import java.time.OffsetDateTime;
 
 /**
- * Immutable review job task value object that implements both DataEntity and ReviewJobTaskDetails.
- *
  * @author RollW
  */
 public class ReviewTask implements DataEntity<String>, ReviewTaskDetails {
-    private final long id;
+    private final Long id;
     private final String taskId;
     private final String reviewJobId;
     private final ReviewStatus taskStatus;
@@ -39,7 +37,7 @@ public class ReviewTask implements DataEntity<String>, ReviewTaskDetails {
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
 
-    public ReviewTask(long id, String taskId, String reviewJobId,
+    public ReviewTask(Long id, String taskId, String reviewJobId,
                       ReviewStatus taskStatus, long reviewerId,
                       ReviewFeedback feedback,
                       OffsetDateTime createTime, OffsetDateTime updateTime) {
@@ -53,7 +51,8 @@ public class ReviewTask implements DataEntity<String>, ReviewTaskDetails {
         this.updateTime = updateTime;
     }
 
-    public long getId() {
+    @Nullable
+    public Long getId() {
         return id;
     }
 
@@ -81,7 +80,6 @@ public class ReviewTask implements DataEntity<String>, ReviewTaskDetails {
         return taskStatus;
     }
 
-    @NonNull
     @Override
     public long getReviewerId() {
         return reviewerId;

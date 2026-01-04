@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import tech.lamprism.lampray.content.review.ReviewContentProvider;
 import tech.lamprism.lampray.content.review.ReviewJobContent;
 import tech.lamprism.lampray.content.review.ReviewJobDetails;
-import tech.lamprism.lampray.content.review.ReviewJobInfo;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
+import tech.lamprism.lampray.content.review.ReviewJobSummary;
 import tech.lamprism.lampray.content.review.ReviewStatues;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.web.common.ApiContext;
@@ -65,7 +65,7 @@ public class ReviewController {
     @GetMapping("/reviews/{jobId}")
     public HttpResponseEntity<ReviewJobView> getReviewInfo(
             @PathVariable("jobId") String jobId) {
-        ReviewJobDetails reviewJobInfo = reviewJobProvider.getReviewJob(jobId);
+        ReviewJobDetails reviewJobInfo = reviewJobProvider.getReviewJobDetails(jobId);
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
@@ -87,7 +87,7 @@ public class ReviewController {
         ApiContext apiContext = apiContextThread.getContext();
         UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
 
-        List<ReviewJobDetails> reviewJobInfos = reviewJobProvider
+        List<ReviewJobSummary> reviewJobInfos = reviewJobProvider
                 .getReviewJobs(user, statues);
         return HttpResponseEntity.success(reviewJobInfos
                 .stream()
@@ -103,7 +103,7 @@ public class ReviewController {
         ApiContext apiContext = apiContextThread.getContext();
         UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
         ReviewJobContent reviewJobContent = reviewContentProvider.getReviewContent(jobId);
-        ReviewJobInfo reviewJobInfo = reviewJobContent.getReviewJobInfo();
+        ReviewJobSummary reviewJobInfo = reviewJobContent.getReviewJobSummary();
 //        if (reviewJobInfo.reviewer() != user.getOperatorId()) {
 //            throw new LampException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
 //        }

@@ -26,6 +26,7 @@ import tech.lamprism.lampray.content.review.ReviewContentProvider;
 import tech.lamprism.lampray.content.review.ReviewJobContent;
 import tech.lamprism.lampray.content.review.ReviewJobDetails;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
+import tech.lamprism.lampray.content.review.ReviewJobSummary;
 import tech.lamprism.lampray.content.review.ReviewStatues;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.user.UserTrait;
@@ -60,7 +61,7 @@ public class ReviewManageController {
     @GetMapping("/reviews/{jobId}")
     public HttpResponseEntity<ReviewJobView> getReviewJob(
             @PathVariable("jobId") String jobId) {
-        ReviewJobDetails reviewJobInfo = reviewJobProvider.getReviewJob(jobId);
+        ReviewJobDetails reviewJobInfo = reviewJobProvider.getReviewJobDetails(jobId);
         return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
     }
 
@@ -69,7 +70,7 @@ public class ReviewManageController {
             @RequestParam(value = "status", required = false,
                     defaultValue = "ALL")
             ReviewStatues statues) {
-        List<ReviewJobDetails> reviewJobInfos = reviewJobProvider.getReviewJobs(statues);
+        List<ReviewJobSummary> reviewJobInfos = reviewJobProvider.getReviewJobs(statues);
         return HttpResponseEntity.success(reviewJobInfos
                 .stream()
                 .map(ReviewJobView::from)
@@ -83,7 +84,7 @@ public class ReviewManageController {
             @RequestParam(value = "status", required = false,
                     defaultValue = "ALL")
             ReviewStatues statues) {
-        List<ReviewJobDetails> reviewJobInfos = reviewJobProvider.getReviewJobs(
+        List<ReviewJobSummary> reviewJobInfos = reviewJobProvider.getReviewJobs(
                 UserTrait.of(userId),
                 statues
         );

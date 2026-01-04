@@ -47,25 +47,6 @@ class ReviewJobRepository(
             )
         }
 
-    fun findByReviewer(
-        reviewerId: Long,
-        statuses: List<ReviewStatus>,
-    ): List<ReviewJobEntity> {
-        return findAll()
-    }
-
-    fun findByOperator(
-        operatorId: Long,
-        statuses: List<ReviewStatus>,
-    ): List<ReviewJobEntity> {
-        return findAll()
-    }
-
-    /**
-     * Find by operator or reviewer.
-     *
-     * @param reviewer if true, find by reviewer, otherwise find by operator.
-     */
 //    private fun createReviewerSpecification(
 //        userId: Long,
 //        statuses: List<ReviewStatus>,

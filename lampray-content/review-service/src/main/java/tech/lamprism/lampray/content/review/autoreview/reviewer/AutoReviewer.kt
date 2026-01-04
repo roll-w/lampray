@@ -15,14 +15,14 @@
  */
 package tech.lamprism.lampray.content.review.autoreview.reviewer
 
-import tech.lamprism.lampray.content.review.ReviewJobDetails
+import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.autoreview.AutoReviewContext
 
 /**
  * @author RollW
  */
 interface AutoReviewer {
-    fun review(reviewJob: ReviewJobDetails, autoReviewContext: AutoReviewContext)
+    fun review(reviewJob: ReviewJobSummary, autoReviewContext: AutoReviewContext)
 
     val reviewerInfo: Info
 

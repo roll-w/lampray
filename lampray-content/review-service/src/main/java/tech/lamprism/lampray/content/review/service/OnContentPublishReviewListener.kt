@@ -23,7 +23,6 @@ import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentStatus
 import tech.lamprism.lampray.content.publish.ContentPublishListener
-import tech.lamprism.lampray.content.review.ReviewJobInfo
 import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.ReviewStatus
 import tech.lamprism.lampray.content.review.common.NotReviewedException
@@ -40,7 +39,7 @@ class OnContentPublishReviewListener(
 
     override fun onPublish(contentDetails: ContentDetails): ContentStatus {
         try {
-            val reviewInfo = tryCreateReviewJob(contentDetails)
+            val reviewInfo = reviewJobCreator.createReviewJob(contentDetails, ReviewMark.NORMAL)
             return when (reviewInfo.status) {
                 ReviewStatus.PENDING -> ContentStatus.REVIEWING
                 ReviewStatus.APPROVED -> ContentStatus.PUBLISHED
@@ -54,15 +53,6 @@ class OnContentPublishReviewListener(
             }
             return ContentStatus.REVIEWING
         }
-    }
-
-    private fun tryCreateReviewJob(contentDetails: ContentDetails): ReviewJobInfo {
-        val reviewInfo = reviewJobCreator.createReviewJob(contentDetails, ReviewMark.NORMAL)
-        logger.info {
-            "Created review job for content: ${contentDetails.contentId}@${contentDetails.contentType}, " +
-                    "job: ${reviewInfo.jobId}"
-        }
-        return reviewInfo
     }
 
     companion object {

@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.review.feedback.ContentLocationRange
 import tech.lamprism.lampray.content.review.feedback.ReviewCategory
 import tech.lamprism.lampray.content.review.feedback.ReviewFeedbackEntry
-import tech.lamprism.lampray.content.review.ReviewJobDetails
+import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.feedback.ReviewSeverity
 import tech.lamprism.lampray.content.review.autoreview.AutoReviewContext
 import tech.lamprism.lampray.content.structuraltext.StructuralText
@@ -46,7 +46,7 @@ class SpamDetectionAutoReviewer : AutoReviewer {
         className = SpamDetectionAutoReviewer::class.java.name
     )
 
-    override fun review(reviewJob: ReviewJobDetails, autoReviewContext: AutoReviewContext) {
+    override fun review(reviewJob: ReviewJobSummary, autoReviewContext: AutoReviewContext) {
         val content = autoReviewContext.contentDetails
         val structuralText = content.content ?: run {
             autoReviewContext.markReviewerCompleted(this)

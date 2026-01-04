@@ -17,14 +17,14 @@
 package tech.lamprism.lampray.content.review.service
 
 import org.slf4j.LoggerFactory
-import org.slf4j.info
+import org.slf4j.debug
 import org.slf4j.warn
 import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.Content
 import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentIdentity
 import tech.lamprism.lampray.content.ContentProviderFactory
-import tech.lamprism.lampray.content.review.ReviewJobInfo
+import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.ReviewStatus
 import tech.lamprism.lampray.content.review.ReviewTaskCoordinator
@@ -52,14 +52,14 @@ class ReviewJobCreatorImpl(
 
     private val logger = LoggerFactory.getLogger(ReviewJobCreatorImpl::class.java)
 
-    override fun createReviewJob(content: Content, reviewMark: ReviewMark): ReviewJobInfo {
+    override fun createReviewJob(content: Content, reviewMark: ReviewMark): ReviewJobSummary {
         val contentId = content.contentId
         val contentType = content.contentType
 
         val existingJobs = reviewJobRepository.findByContent(contentId, contentType)
         val pendingJob = existingJobs.firstOrNull { it.status == ReviewStatus.PENDING }
         if (pendingJob != null) {
-            throw NotReviewedException(ReviewJobInfo.of(pendingJob.lock()))
+            throw NotReviewedException(pendingJob.lock())
         }
 
         val assignedTime = OffsetDateTime.now()
@@ -72,7 +72,7 @@ class ReviewJobCreatorImpl(
             .build()
 
         val savedJob = reviewJobRepository.save(reviewJob)
-        val reviewJobInfo = ReviewJobInfo.of(savedJob.lock())
+        val reviewJobInfo = savedJob.lock()
 
         logger.info(
             "Created review job {} for content {}@{}",
@@ -90,7 +90,7 @@ class ReviewJobCreatorImpl(
     }
 
     private fun allocateReviewersAndCreateTasks(
-        reviewJobInfo: ReviewJobInfo,
+        reviewJobInfo: ReviewJobSummary,
         content: Content
     ) {
         val contentIdentity = ContentIdentity.of(content.contentId, content.contentType)
@@ -112,11 +112,11 @@ class ReviewJobCreatorImpl(
                 reviewJobInfo.jobId,
                 humanReviewers
             )
-            logger.info {
+            logger.debug {
                 "Created ${tasks.size} human review tasks for job ${reviewJobInfo.jobId}"
             }
         } else {
-            logger.info {
+            logger.warn {
                 "No human reviewers allocated for job ${reviewJobInfo.jobId}, auto-review will be primary"
             }
         }

@@ -17,7 +17,7 @@
 package tech.lamprism.lampray.web.controller.review.model
 
 import tech.lamprism.lampray.content.ContentType
-import tech.lamprism.lampray.content.review.ReviewJobDetails
+import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.ReviewStatus
 import java.time.OffsetDateTime
@@ -37,15 +37,15 @@ data class ReviewJobView(
 
     companion object {
         @JvmStatic
-        fun from(reviewJobDetails: ReviewJobDetails): ReviewJobView {
+        fun from(reviewJobSummary: ReviewJobSummary): ReviewJobView {
             return ReviewJobView(
-                id = reviewJobDetails.jobId,
-                status = reviewJobDetails.status,
-                contentType = reviewJobDetails.associatedContent.contentType,
-                contentId = reviewJobDetails.associatedContent.contentId,
-                reviewMark = reviewJobDetails.reviewMark,
-                createTime = reviewJobDetails.createTime,
-                updateTime = reviewJobDetails.updateTime
+                id = reviewJobSummary.jobId,
+                status = reviewJobSummary.status,
+                contentType = reviewJobSummary.associatedContent.contentType,
+                contentId = reviewJobSummary.associatedContent.contentId,
+                reviewMark = reviewJobSummary.reviewMark,
+                createTime = reviewJobSummary.createTime,
+                updateTime = reviewJobSummary.updateTime
             )
         }
     }

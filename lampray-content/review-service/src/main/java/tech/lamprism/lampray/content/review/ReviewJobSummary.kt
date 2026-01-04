@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.review.common;
+package tech.lamprism.lampray.content.review
 
-import tech.lamprism.lampray.content.review.ReviewJobSummary;
+import tech.lamprism.lampray.content.ContentAssociated
+import tech.lamprism.lampray.content.ContentIdentity
+import java.time.OffsetDateTime
 
 /**
  * @author RollW
  */
-public class NotReviewedException extends ReviewException {
-    private final ReviewJobSummary reviewJobSummary;
+interface ReviewJobSummary : ContentAssociated {
+    val jobId: String
 
-    public NotReviewedException(ReviewJobSummary reviewJobSummary) {
-        super(ReviewErrorCode.ERROR_NOT_REVIEWED);
-        this.reviewJobSummary = reviewJobSummary;
-    }
+    val status: ReviewStatus
 
-    public ReviewJobSummary getReviewInfo() {
-        return reviewJobSummary;
-    }
+    val reviewMark: ReviewMark
+
+    val createTime: OffsetDateTime
+
+    val updateTime: OffsetDateTime
+
+    override fun getAssociatedContent(): ContentIdentity
 }

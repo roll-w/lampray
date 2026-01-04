@@ -22,27 +22,27 @@ import tech.rollw.common.web.system.Operator
  * @author RollW
  */
 interface ReviewJobProvider {
-    fun getReviewJob(reviewJobId: String): ReviewJobDetails
+    fun getReviewJobDetails(reviewJobId: String): ReviewJobDetails
 
-    val reviewJobs: List<ReviewJobDetails>
+    val reviewJobs: List<ReviewJobSummary>
 
-    fun getReviewJobsByOperator(operator: Operator): List<ReviewJobDetails>
+    fun getReviewJobsByOperator(operator: Operator): List<ReviewJobSummary>
 
-    fun getReviewJobsByReviewer(reviewer: Operator): List<ReviewJobDetails>
+    fun getReviewJobsByReviewer(reviewer: Operator): List<ReviewJobSummary>
 
     fun getReviewJobs(
         reviewer: Operator,
         status: ReviewStatus
-    ): List<ReviewJobDetails>
+    ): List<ReviewJobSummary>
 
     fun getReviewJobs(
         reviewer: Operator,
         statues: ReviewStatues = ReviewStatues.ALL
-    ): List<ReviewJobDetails>
+    ): List<ReviewJobSummary>
 
-    fun getReviewJobs(contentTrait: ContentTrait): List<ReviewJobDetails>
+    fun getReviewJobs(contentTrait: ContentTrait): List<ReviewJobSummary>
 
-    fun getReviewJobs(reviewStatus: ReviewStatus): List<ReviewJobDetails>
+    fun getReviewJobs(reviewStatus: ReviewStatus): List<ReviewJobSummary>
 
-    fun getReviewJobs(reviewStatues: ReviewStatues): List<ReviewJobDetails>
+    fun getReviewJobs(reviewStatues: ReviewStatues): List<ReviewJobSummary>
 }

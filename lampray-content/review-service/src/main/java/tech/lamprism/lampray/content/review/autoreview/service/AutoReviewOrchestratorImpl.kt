@@ -24,7 +24,7 @@ import org.slf4j.warn
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.ContentDetails
-import tech.lamprism.lampray.content.review.ReviewJobDetails
+import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.ReviewTaskCoordinator
 import tech.lamprism.lampray.content.review.ReviewerAllocator
 import tech.lamprism.lampray.content.review.autoreview.AutoReviewContext
@@ -48,7 +48,7 @@ class AutoReviewOrchestratorImpl(
     private val executor: Executor
 ) : AutoReviewOrchestrator {
 
-    override fun executeAutoReview(reviewJob: ReviewJobDetails, contentDetails: ContentDetails) {
+    override fun executeAutoReview(reviewJob: ReviewJobSummary, contentDetails: ContentDetails) {
         if (autoReviewers.isEmpty()) {
             logger.warn { "No auto-reviewers registered, skipping auto-review for job ${reviewJob.jobId}" }
             return

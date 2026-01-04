@@ -32,7 +32,7 @@ import java.util.Objects;
 /**
  * @author RollW
  */
-public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJobDetails {
+public class ReviewJob implements DataEntity<String>, ContentAssociated, ReviewJobSummary {
     private final Long id;
     private final String jobId;
     private final long reviewContentId;
@@ -65,8 +65,8 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJob
     }
 
     @Override
-    public Long getEntityId() {
-        return getId();
+    public String getEntityId() {
+        return getJobId();
     }
 
     public long getId() {
@@ -105,22 +105,6 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJob
     @Override
     public ContentIdentity getAssociatedContent() {
         return associatedContent;
-    }
-
-    public ReviewJob reviewPass(long operatorId, OffsetDateTime reviewTime) {
-        return new ReviewJob(
-                id, jobId, reviewContentId,
-                reviewContentType,
-                ReviewStatus.APPROVED, createTime,
-                reviewTime, reviewMark);
-    }
-
-    public ReviewJob reviewReject(long operatorId, String result, OffsetDateTime reviewTime) {
-        return new ReviewJob(
-                id, jobId, reviewContentId,
-                reviewContentType,
-                ReviewStatus.REJECTED, createTime,
-                reviewTime, reviewMark);
     }
 
     public Builder toBuilder() {

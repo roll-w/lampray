@@ -27,19 +27,19 @@ class ReviewTaskRepository(
     private val reviewTaskDao: ReviewTaskDao
 ) : CommonRepository<ReviewTaskEntity, String>(reviewTaskDao) {
 
-    fun findTasksByJobId(jobId: String): List<ReviewTaskEntity> {
+    fun findByJobId(jobId: String): List<ReviewTaskEntity> {
         return findAll { root, _, builder ->
             builder.equal(root.get(ReviewJobTaskEntity_.reviewJobId), jobId)
         }
     }
 
-    fun findTasksByReviewerId(reviewerId: Long): List<ReviewTaskEntity> {
+    fun findByReviewerId(reviewerId: Long): List<ReviewTaskEntity> {
         return findAll { root, _, builder ->
             builder.equal(root.get(ReviewJobTaskEntity_.reviewerId), reviewerId)
         }
     }
 
-    fun findTasksByJobId(jobId: String, reviewerId: Long): List<ReviewTaskEntity> {
+    fun findByJobIdAndReviewerId(jobId: String, reviewerId: Long): List<ReviewTaskEntity> {
         return findAll { root, _, builder ->
             builder.and(
                 builder.equal(root.get(ReviewJobTaskEntity_.reviewJobId), jobId),

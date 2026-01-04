@@ -21,14 +21,14 @@ import tech.lamprism.lampray.content.ContentDetails
  * @author RollW
  */
 data class ReviewJobContent(
-    val reviewJobInfo: ReviewJobInfo,
+    val reviewJobSummary: ReviewJobSummary,
     val contentDetails: ContentDetails
 ) {
     companion object {
         @JvmStatic
-        fun of(job: ReviewJob, contentDetails: ContentDetails): ReviewJobContent {
+        fun of(reviewJobSummary: ReviewJobSummary, contentDetails: ContentDetails): ReviewJobContent {
             return ReviewJobContent(
-                ReviewJobInfo.of(job),
+                reviewJobSummary,
                 contentDetails
             )
         }

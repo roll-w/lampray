@@ -34,6 +34,7 @@ import tech.lamprism.lampray.content.ContentIdentity
 import tech.lamprism.lampray.content.ContentType
 import tech.lamprism.lampray.content.review.ReviewJob
 import tech.lamprism.lampray.content.review.ReviewJobResourceKind
+import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.ReviewStatus
 import tech.rollw.common.web.system.SystemResourceKind
@@ -65,21 +66,21 @@ class ReviewJobEntity(
     @Column(name = "status", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    var status: ReviewStatus = ReviewStatus.PENDING,
+    override var status: ReviewStatus = ReviewStatus.PENDING,
 
     @Column(name = "create_time", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    private var createTime: OffsetDateTime = OffsetDateTime.now(),
+    override var createTime: OffsetDateTime = OffsetDateTime.now(),
 
     @Column(name = "update_time", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    private var updateTime: OffsetDateTime = OffsetDateTime.now(),
+    override var updateTime: OffsetDateTime = OffsetDateTime.now(),
 
     @Column(name = "review_mark", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    var reviewMark: ReviewMark = ReviewMark.NORMAL
-) : DataEntity<String>, ContentAssociated {
+    override var reviewMark: ReviewMark = ReviewMark.NORMAL
+) : DataEntity<String>, ContentAssociated, ReviewJobSummary {
     override fun getSystemResourceKind(): SystemResourceKind =
         ReviewJobResourceKind
 
@@ -97,9 +98,8 @@ class ReviewJobEntity(
     
     override fun getEntityId(): String? = resourceId
 
-    fun setId(id: Long) {
-        this.id = id
-    }
+    override val jobId: String
+        get() = resourceId
 
     override fun getAssociatedContent(): ContentIdentity =
         ContentIdentity.of(reviewContentId, reviewContentType)

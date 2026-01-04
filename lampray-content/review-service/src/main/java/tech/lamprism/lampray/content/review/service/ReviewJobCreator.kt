@@ -17,7 +17,7 @@
 package tech.lamprism.lampray.content.review.service
 
 import tech.lamprism.lampray.content.Content
-import tech.lamprism.lampray.content.review.ReviewJobInfo
+import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.common.NotReviewedException
 
@@ -40,6 +40,6 @@ interface ReviewJobCreator {
      * @return the created review job information
      * @throws NotReviewedException if a pending review job already exists for this content
      */
-    fun createReviewJob(content: Content, reviewMark: ReviewMark): ReviewJobInfo
+    fun createReviewJob(content: Content, reviewMark: ReviewMark): ReviewJobSummary
 }
 
