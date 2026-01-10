@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentStatus
 import tech.lamprism.lampray.content.publish.ContentPublishListener
+import tech.lamprism.lampray.content.review.ReviewJobCreator
 import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.ReviewStatus
 import tech.lamprism.lampray.content.review.common.NotReviewedException

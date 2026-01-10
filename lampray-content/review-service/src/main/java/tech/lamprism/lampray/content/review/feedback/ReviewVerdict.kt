@@ -18,7 +18,7 @@
 
 package tech.lamprism.lampray.content.review.feedback
 
-import tech.lamprism.lampray.content.review.ReviewStatus
+import tech.lamprism.lampray.content.review.ReviewTaskStatus
 
 /**
  * Review verdict indicating the overall result.
@@ -46,10 +46,10 @@ enum class ReviewVerdict {
      */
     APPROVED;
 
-    fun toReviewStatus() = when (this) {
-        PENDING -> ReviewStatus.PENDING
-        NEEDS_REVISION -> ReviewStatus.REJECTED
-        REJECTED -> ReviewStatus.REJECTED
-        APPROVED -> ReviewStatus.APPROVED
+    fun toReviewTaskStatus() = when (this) {
+        PENDING -> ReviewTaskStatus.PENDING
+        NEEDS_REVISION -> ReviewTaskStatus.REJECTED
+        REJECTED -> ReviewTaskStatus.REJECTED
+        APPROVED -> ReviewTaskStatus.APPROVED
     }
 }

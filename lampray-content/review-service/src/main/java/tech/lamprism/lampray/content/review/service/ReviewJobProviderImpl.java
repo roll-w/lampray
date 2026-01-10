@@ -22,7 +22,6 @@ import tech.lamprism.lampray.content.ContentTrait;
 import tech.lamprism.lampray.content.review.ReviewJobDetails;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
 import tech.lamprism.lampray.content.review.ReviewJobSummary;
-import tech.lamprism.lampray.content.review.ReviewStatues;
 import tech.lamprism.lampray.content.review.ReviewStatus;
 import tech.lamprism.lampray.content.review.ReviewTaskDetails;
 import tech.lamprism.lampray.content.review.SimpleReviewJobDetails;
@@ -73,18 +72,19 @@ public class ReviewJobProviderImpl implements ReviewJobProvider {
                 .collect(Collectors.toUnmodifiableList());
     }
 
+    @NonNull
     @Override
-    public @NonNull List<ReviewJobSummary> getReviewJobsByOperator(@NonNull Operator operator) {
-        return List.of();
+    public List<ReviewJobSummary> getReviewJobsByReviewer(@NonNull Operator reviewer) {
+        long reviewerId = reviewer.getOperatorId();
+        List<ReviewJobEntity> reviewJobEntities = reviewJobRepository.findByReviewer(reviewerId, List.of());
+        return reviewJobEntities.stream()
+                .map(ReviewJobEntity::lock)
+                .collect(Collectors.toUnmodifiableList());
     }
 
+    @NonNull
     @Override
-    public @NonNull List<ReviewJobSummary> getReviewJobsByReviewer(@NonNull Operator reviewer) {
-        return List.of();
-    }
-
-    @Override
-    public @NonNull List<ReviewJobSummary> getReviewJobs(@NonNull ContentTrait contentTrait) {
+    public List<ReviewJobSummary> getReviewJobs(@NonNull ContentTrait contentTrait) {
         List<ReviewJobEntity> reviewJobEntities = reviewJobRepository.findByContent(
                 contentTrait.getContentId(), contentTrait.getContentType()
         );
@@ -93,30 +93,23 @@ public class ReviewJobProviderImpl implements ReviewJobProvider {
                 .collect(Collectors.toUnmodifiableList());
     }
 
+    @NonNull
     @Override
-    public @NonNull List<ReviewJobSummary> getReviewJobs(@NonNull ReviewStatus reviewStatus) {
-        List<ReviewJobEntity> reviewJobEntities = reviewJobRepository.findByStatus(reviewStatus);
+    public List<ReviewJobSummary> getReviewJobs(@NonNull Operator reviewer,
+                                                @NonNull List<? extends ReviewStatus> reviewStatuses) {
+        long reviewerId = reviewer.getOperatorId();
+        List<ReviewJobEntity> reviewJobEntities = reviewJobRepository.findByReviewer(reviewerId, reviewStatuses);
         return reviewJobEntities.stream()
                 .map(ReviewJobEntity::lock)
                 .collect(Collectors.toUnmodifiableList());
     }
 
+    @NonNull
     @Override
-    public @NonNull List<ReviewJobSummary> getReviewJobs(@NonNull ReviewStatues reviewStatues) {
-        return List.of();
-    }
-
-    @Override
-    public @NonNull List<ReviewJobSummary> getReviewJobs(
-            @NonNull Operator reviewer,
-            @NonNull ReviewStatus status) {
-        return List.of();
-    }
-
-    @Override
-    public @NonNull List<ReviewJobSummary> getReviewJobs(
-            @NonNull Operator reviewer,
-            @NonNull ReviewStatues statues) {
-        return List.of();
+    public List<ReviewJobSummary> getReviewJobs(@NonNull List<? extends ReviewStatus> reviewStatues) {
+        List<ReviewJobEntity> reviewJobEntities = reviewJobRepository.findByStatuses(reviewStatues);
+        return reviewJobEntities.stream()
+                .map(ReviewJobEntity::lock)
+                .collect(Collectors.toUnmodifiableList());
     }
 }

@@ -28,6 +28,7 @@ import tech.lamprism.lampray.content.review.ReviewTaskAction
 import tech.lamprism.lampray.content.review.ReviewTaskCoordinator
 import tech.lamprism.lampray.content.review.ReviewTaskDetails
 import tech.lamprism.lampray.content.review.ReviewTaskResourceKind
+import tech.lamprism.lampray.content.review.ReviewTaskStatus
 import tech.lamprism.lampray.content.review.common.ReviewException
 import tech.lamprism.lampray.content.review.event.OnReviewStateChangeEvent
 import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
@@ -72,7 +73,7 @@ class ReviewTaskCoordinatorImpl(
         require(currentTask.reviewerId == currentReviewerId) {
             "Task is not assigned to reviewer $currentReviewerId"
         }
-        require(currentTask.status == ReviewStatus.PENDING) {
+        require(currentTask.status == ReviewTaskStatus.PENDING) {
             "Only pending tasks can be reassigned"
         }
 
@@ -80,7 +81,7 @@ class ReviewTaskCoordinatorImpl(
         val now = OffsetDateTime.now()
 
         currentTask.apply {
-            status = ReviewStatus.CANCELED
+            status = ReviewTaskStatus.CANCELED
             updateTime = now
             if (reason != null) {
                 // Store reason in feedback for audit trail
@@ -97,7 +98,7 @@ class ReviewTaskCoordinatorImpl(
         val newTask = ReviewTaskEntity.builder()
             .setResourceId(resourceIdGenerator.nextId(ReviewTaskResourceKind))
             .setReviewJobId(currentTask.reviewJobId)
-            .setTaskStatus(ReviewStatus.PENDING)
+            .setTaskStatus(ReviewTaskStatus.PENDING)
             .setReviewerId(newReviewerId)
             .setCreateTime(now)
             .setUpdateTime(now)
@@ -112,35 +113,29 @@ class ReviewTaskCoordinatorImpl(
         return savedTask.lock()
     }
 
-    override fun returnTaskForReassignment(
+    override fun returnTask(
         taskId: String,
-        reviewerId: Long,
-        reason: String
+        reviewerId: Long
     ): ReviewTaskDetails {
         val taskEntity = findReviewTask(taskId)
 
         require(taskEntity.reviewerId == reviewerId) {
             "Task is not assigned to reviewer $reviewerId"
         }
-        require(taskEntity.status == ReviewStatus.PENDING) {
+        require(taskEntity.status == ReviewTaskStatus.PENDING) {
             "Only pending tasks can be returned"
         }
 
         // Cancel the task and store reason
         taskEntity.apply {
-            status = ReviewStatus.CANCELED
-            feedback = ReviewFeedback(
-                verdict = ReviewVerdict.PENDING,
-                summary = "Task returned for reassignment: $reason"
-            )
+            status = ReviewTaskStatus.RETURNED
             updateTime = OffsetDateTime.now()
         }
 
         val updated = reviewTaskRepository.save(taskEntity)
-        logger.info(
-            "Task {} returned by reviewer {} for reassignment (reason: {})",
-            taskId, reviewerId, reason
-        )
+        logger.info {
+            "Task $taskId returned by reviewer $reviewerId for reassignment"
+        }
 
         return updated.lock()
     }
@@ -151,21 +146,34 @@ class ReviewTaskCoordinatorImpl(
     ): ReviewTaskDetails {
         val taskEntity = findReviewTask(taskId)
 
-        require(taskEntity.status == ReviewStatus.PENDING) {
+        require(taskEntity.status == ReviewTaskStatus.PENDING) {
             "Only pending tasks can be claimed"
         }
 
-        // TODO: maybe create a new task instead
+        val now = OffsetDateTime.now()
+
         taskEntity.apply {
-            this.reviewerId = reviewerId
-            updateTime = OffsetDateTime.now()
+            this.status = ReviewTaskStatus.RETURNED
+            this.updateTime = now
+            this.feedback = null
         }
 
-        val updated = reviewTaskRepository.save(taskEntity)
+        reviewTaskRepository.save(taskEntity)
+
+        val newTask = ReviewTaskEntity.builder()
+            .setResourceId(resourceIdGenerator.nextId(ReviewTaskResourceKind))
+            .setReviewJobId(taskEntity.reviewJobId)
+            .setTaskStatus(ReviewTaskStatus.PENDING)
+            .setReviewerId(reviewerId)
+            .setCreateTime(now)
+            .setUpdateTime(now)
+            .build()
+
+        val savedTask = reviewTaskRepository.save(newTask)
         logger.info {
-            "Task $taskId claimed by reviewer $reviewerId"
+            "Task $taskId claimed by reviewer $reviewerId as new task ${savedTask.resourceId}"
         }
-        return updated.lock()
+        return savedTask.lock()
     }
 
     override fun submitFeedback(
@@ -192,13 +200,13 @@ class ReviewTaskCoordinatorImpl(
         require(taskEntity.reviewerId == reviewerId) {
             "Task is not assigned to reviewer $reviewerId"
         }
-        require(taskEntity.status == ReviewStatus.PENDING) {
+        require(taskEntity.status == ReviewTaskStatus.PENDING) {
             "Task is already reviewed"
         }
 
         // Update task with feedback
         taskEntity.feedback = feedback
-        taskEntity.status = feedback.verdict.toReviewStatus()
+        taskEntity.status = feedback.verdict.toReviewTaskStatus()
         taskEntity.setUpdateTime(OffsetDateTime.now())
 
         val updated = reviewTaskRepository.save(taskEntity)
@@ -267,7 +275,7 @@ class ReviewTaskCoordinatorImpl(
             return ReviewStatus.PENDING
         }
 
-        val activeTasks = tasks.filter { it.status != ReviewStatus.CANCELED }
+        val activeTasks = tasks.filter { it.status != ReviewTaskStatus.CANCELED }
         if (activeTasks.isEmpty()) {
             // All tasks canceled, job should be canceled
             return ReviewStatus.CANCELED
@@ -275,7 +283,7 @@ class ReviewTaskCoordinatorImpl(
 
         // Check if any task is rejected
         val hasRejected = activeTasks.any { task ->
-            task.status == ReviewStatus.REJECTED ||
+            task.status == ReviewTaskStatus.REJECTED ||
                     task.feedback?.verdict == ReviewVerdict.REJECTED
         }
 
@@ -284,14 +292,13 @@ class ReviewTaskCoordinatorImpl(
         }
 
         // Check if any task still pending
-        val hasPending = activeTasks.any { it.status == ReviewStatus.PENDING }
+        val hasPending = activeTasks.any { it.status == ReviewTaskStatus.PENDING }
         if (hasPending) {
             return ReviewStatus.PENDING
         }
 
-        // All tasks approved
         val allApproved = activeTasks.all { task ->
-            task.status == ReviewStatus.APPROVED ||
+            task.status == ReviewTaskStatus.APPROVED ||
                     task.feedback?.verdict == ReviewVerdict.APPROVED
         }
 
@@ -333,26 +340,26 @@ class ReviewTaskCoordinatorImpl(
         return when (action) {
             ReviewTaskAction.SUBMIT -> {
                 taskEntity.reviewerId == reviewerId &&
-                        taskEntity.status == ReviewStatus.PENDING
+                        taskEntity.status == ReviewTaskStatus.PENDING
             }
 
             ReviewTaskAction.REASSIGN -> {
                 taskEntity.reviewerId == reviewerId &&
-                        taskEntity.status == ReviewStatus.PENDING
+                        taskEntity.status == ReviewTaskStatus.PENDING
             }
 
             ReviewTaskAction.RETURN_FOR_REASSIGNMENT -> {
                 taskEntity.reviewerId == reviewerId &&
-                        taskEntity.status == ReviewStatus.PENDING
+                        taskEntity.status == ReviewTaskStatus.PENDING
             }
 
             ReviewTaskAction.CLAIM -> {
-                taskEntity.status == ReviewStatus.PENDING
+                taskEntity.status == ReviewTaskStatus.PENDING
             }
 
             ReviewTaskAction.CANCEL -> {
                 taskEntity.reviewerId == reviewerId &&
-                        taskEntity.status == ReviewStatus.PENDING
+                        taskEntity.status == ReviewTaskStatus.PENDING
             }
         }
     }
@@ -381,7 +388,6 @@ class ReviewTaskCoordinatorImpl(
         reviewJobId: String,
         reviewerId: Long
     ): ReviewTaskDetails {
-        // Validate job can accept new tasks
         validateCanCreateTask(reviewJobId)
 
         val taskEntity = createTaskEntity(reviewJobId, reviewerId)
@@ -399,7 +405,7 @@ class ReviewTaskCoordinatorImpl(
         return ReviewTaskEntity.builder()
             .setResourceId(resourceIdGenerator.nextId(ReviewTaskResourceKind))
             .setReviewJobId(reviewJobId)
-            .setTaskStatus(ReviewStatus.PENDING)
+            .setTaskStatus(ReviewTaskStatus.PENDING)
             .setReviewerId(reviewerId)
             .setCreateTime(now)
             .setUpdateTime(now)

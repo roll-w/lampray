@@ -31,14 +31,14 @@ public class ReviewTask implements DataEntity<String>, ReviewTaskDetails {
     private final Long id;
     private final String taskId;
     private final String reviewJobId;
-    private final ReviewStatus taskStatus;
+    private final ReviewTaskStatus taskStatus;
     private final long reviewerId;
     private final ReviewFeedback feedback;
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
 
     public ReviewTask(Long id, String taskId, String reviewJobId,
-                      ReviewStatus taskStatus, long reviewerId,
+                      ReviewTaskStatus taskStatus, long reviewerId,
                       ReviewFeedback feedback,
                       OffsetDateTime createTime, OffsetDateTime updateTime) {
         this.id = id;
@@ -76,7 +76,7 @@ public class ReviewTask implements DataEntity<String>, ReviewTaskDetails {
 
     @NonNull
     @Override
-    public ReviewStatus getStatus() {
+    public ReviewTaskStatus getStatus() {
         return taskStatus;
     }
 

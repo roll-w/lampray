@@ -70,11 +70,11 @@ class ReviewJobEntity(
 
     @Column(name = "create_time", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    override var createTime: OffsetDateTime = OffsetDateTime.now(),
+    private var createTime: OffsetDateTime = OffsetDateTime.now(),
 
     @Column(name = "update_time", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    override var updateTime: OffsetDateTime = OffsetDateTime.now(),
+    private var updateTime: OffsetDateTime = OffsetDateTime.now(),
 
     @Column(name = "review_mark", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)

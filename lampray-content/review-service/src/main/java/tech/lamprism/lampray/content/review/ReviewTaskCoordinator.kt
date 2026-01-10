@@ -49,14 +49,12 @@ interface ReviewTaskCoordinator {
      *
      * @param taskId the task identifier
      * @param reviewerId the current reviewer's ID
-     * @param reason reason for returning the task
      * @return the updated task details with canceled status
      * @throws IllegalStateException if the task cannot be returned
      */
-    fun returnTaskForReassignment(
+    fun returnTask(
         taskId: String,
-        reviewerId: Long,
-        reason: String
+        reviewerId: Long
     ): ReviewTaskDetails
 
     /**

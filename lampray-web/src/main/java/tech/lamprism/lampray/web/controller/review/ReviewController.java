@@ -29,7 +29,7 @@ import tech.lamprism.lampray.content.review.ReviewJobContent;
 import tech.lamprism.lampray.content.review.ReviewJobDetails;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
 import tech.lamprism.lampray.content.review.ReviewJobSummary;
-import tech.lamprism.lampray.content.review.ReviewStatues;
+import tech.lamprism.lampray.content.review.ReviewStatus;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.Api;
@@ -80,9 +80,8 @@ public class ReviewController {
      */
     @GetMapping({"/reviews"})
     public HttpResponseEntity<List<ReviewJobView>> getReviewInfo(
-            @RequestParam(value = "status", required = false,
-                    defaultValue = "ALL")
-            ReviewStatues statues) {
+            @RequestParam(value = "statues", required = false)
+            List<ReviewStatus> statues) {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         UserIdentity user = Verify.verifyNotNull(apiContext.getUser());

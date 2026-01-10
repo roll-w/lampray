@@ -16,7 +16,6 @@
 
 package tech.lamprism.lampray.content.review.persistence
 
-import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
 import tech.lamprism.lampray.content.ContentType
@@ -32,62 +31,73 @@ class ReviewJobRepository(
     fun findByContent(
         contentId: Long,
         contentType: ContentType,
-    ): List<ReviewJobEntity> {
-        return findAll(createContentSpecification(contentId, contentType))
+    ): List<ReviewJobEntity> = findAll { root, _, criteriaBuilder ->
+        criteriaBuilder.and(
+            criteriaBuilder.equal(root.get(ReviewJobEntity_.reviewContentId), contentId),
+            criteriaBuilder.equal(root.get(ReviewJobEntity_.reviewContentType), contentType)
+        )
     }
 
-    private fun createContentSpecification(
+    fun findByContentAndStatus(
         contentId: Long,
-        contentType: ContentType
-    ): Specification<ReviewJobEntity> =
-        Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.and(
-                criteriaBuilder.equal(root.get(ReviewJobEntity_.reviewContentId), contentId),
-                criteriaBuilder.equal(root.get(ReviewJobEntity_.reviewContentType), contentType)
-            )
-        }
-
-//    private fun createReviewerSpecification(
-//        userId: Long,
-//        statuses: List<ReviewStatus>,
-//        reviewer: Boolean
-//    ): Specification<ReviewJobEntity> =
-//        Specification { root, _, criteriaBuilder ->
-//            val reviewer = if (reviewer) {
-//                criteriaBuilder.equal(root.get(ReviewJobEntity_.reviewerId), userId)
-//            } else {
-//                criteriaBuilder.equal(root.get(ReviewJobEntity_.operatorId), userId)
-//            }
-//            if (statuses.isEmpty() || statuses.containsAll(ReviewStatus.entries)) {
-//                // If no statuses are provided or all statuses are included,
-//                // return the reviewer specification without filtering by status.
-//                return@Specification reviewer
-//            }
-//            if (statuses.size == 1) {
-//                // More efficient way than using `in` for a single value.
-//                return@Specification criteriaBuilder.and(
-//                    reviewer,
-//                    criteriaBuilder.equal(root.get(ReviewJobEntity_.status), statuses[0])
-//                )
-//            }
-//
-//            criteriaBuilder.and(
-//                reviewer,
-//                root.get(ReviewJobEntity_.status).`in`(statuses)
-//            )
-//        }
-
-    fun findByStatus(reviewStatus: ReviewStatus): List<ReviewJobEntity> {
-        return findAll { root, _, criteriaBuilder ->
+        contentType: ContentType,
+        reviewStatus: ReviewStatus
+    ): List<ReviewJobEntity> = findAll { root, _, criteriaBuilder ->
+        criteriaBuilder.and(
+            criteriaBuilder.equal(root.get(ReviewJobEntity_.reviewContentId), contentId),
+            criteriaBuilder.equal(root.get(ReviewJobEntity_.reviewContentType), contentType),
             criteriaBuilder.equal(root.get(ReviewJobEntity_.status), reviewStatus)
-        }
+        )
     }
 
-    fun findByStatuses(reviewStatus: List<ReviewStatus>): List<ReviewJobEntity> {
-        return findAll { root, _, criteriaBuilder ->
+
+    fun findByStatus(reviewStatus: ReviewStatus): List<ReviewJobEntity> = findAll { root, _, criteriaBuilder ->
+        criteriaBuilder.equal(root.get(ReviewJobEntity_.status), reviewStatus)
+    }
+
+    fun findByStatuses(reviewStatuses: List<ReviewStatus>): List<ReviewJobEntity> =
+        findAll { root, _, criteriaBuilder ->
+            if (reviewStatuses.isEmpty() || reviewStatuses.containsAll(ReviewStatus.entries)) {
+                // If no statuses are provided or all statuses are included,
+                // return the reviewer specification without filtering by status.
+                return@findAll null
+            }
+            if (reviewStatuses.size == 1) {
+                // More efficient way than using `in` for a single value.
+                return@findAll criteriaBuilder.and(
+                    criteriaBuilder.equal(root.get(ReviewJobEntity_.status), reviewStatuses[0])
+                )
+            }
             criteriaBuilder.and(
-                root.get(ReviewJobEntity_.status).`in`(reviewStatus)
+                root.get(ReviewJobEntity_.status).`in`(reviewStatuses)
             )
         }
-    }
+
+    fun findByReviewer(reviewerId: Long, statuses: List<ReviewStatus>): List<ReviewJobEntity> =
+        findAll { root, query, criteriaBuilder ->
+            // Build subquery: select 1 from review_job_task t where t.review_job_id = review_job.resource_id and t.reviewer_id = :reviewerId
+            val subquery = query?.subquery(String::class.java) ?: return@findAll null
+            val taskRoot = subquery.from(ReviewTaskEntity::class.java)
+            subquery.select(taskRoot.get(ReviewTaskEntity_.reviewJobId))
+            val predicates = mutableListOf(
+                criteriaBuilder.equal(taskRoot.get(ReviewTaskEntity_.reviewJobId), root.get(ReviewJobEntity_.resourceId)),
+                criteriaBuilder.equal(taskRoot.get(ReviewTaskEntity_.reviewerId), reviewerId)
+            )
+            subquery.where(*predicates.toTypedArray())
+
+            // If statuses provided, combine with job status predicate
+            val jobPredicate = when {
+                statuses.isEmpty() || statuses.containsAll(ReviewStatus.entries) -> null
+                statuses.size == 1 -> criteriaBuilder.equal(root.get(ReviewJobEntity_.status), statuses[0])
+                else -> root.get(ReviewJobEntity_.status).`in`(statuses)
+            }
+
+            if (jobPredicate == null) {
+                return@findAll criteriaBuilder.exists(subquery)
+            }
+            criteriaBuilder.and(
+                criteriaBuilder.exists(subquery),
+                jobPredicate
+            )
+        }
 }

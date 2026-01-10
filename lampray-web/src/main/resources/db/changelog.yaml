@@ -3,6 +3,6 @@ databaseChangeLog:
       file: db/baseline/baseline-0.1.0-alpha1.yaml
       context: baseline
   - include:
-      file: db/changelog/0.1.0-alpha1/0.1.0-alpha1-01-changelog.yaml
+      file: db/changelog/0.1.0/0.1.0-alpha1-01-changelog.yaml
       context: incremental
 

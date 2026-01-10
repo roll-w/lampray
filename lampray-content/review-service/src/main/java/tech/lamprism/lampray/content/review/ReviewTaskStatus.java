@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,34 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.review
-
-import tech.lamprism.lampray.TimeAttributed
-import tech.lamprism.lampray.content.ContentAssociated
-import tech.lamprism.lampray.content.ContentIdentity
+package tech.lamprism.lampray.content.review;
 
 /**
  * @author RollW
  */
-interface ReviewJobSummary : ContentAssociated, TimeAttributed {
-    val jobId: String
+public enum ReviewTaskStatus {
+    /**
+     * Not reviewed.
+     */
+    PENDING,
+    /**
+     * Reviewed and approved.
+     */
+    APPROVED,
+    /**
+     * Rejected.
+     */
+    REJECTED,
+    /**
+     * Returned by a reviewer when creating a new claim (original task kept as returned).
+     */
+    RETURNED,
+    /**
+     * Review is canceled by the reviewer or the author.
+     */
+    CANCELED;
 
-    val status: ReviewStatus
-
-    val reviewMark: ReviewMark
-
-    override fun getAssociatedContent(): ContentIdentity
+    public boolean isFinished() {
+        return this != PENDING;
+    }
 }

@@ -31,11 +31,12 @@ import org.hibernate.generator.EventType
 import org.hibernate.proxy.HibernateProxy
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
-import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
+import tech.lamprism.lampray.content.review.ReviewStatus
 import tech.lamprism.lampray.content.review.ReviewTask
 import tech.lamprism.lampray.content.review.ReviewTaskDetails
 import tech.lamprism.lampray.content.review.ReviewTaskResourceKind
-import tech.lamprism.lampray.content.review.ReviewStatus
+import tech.lamprism.lampray.content.review.ReviewTaskStatus
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
 import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 
@@ -76,7 +77,7 @@ class ReviewTaskEntity(
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 40)
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    override var status: ReviewStatus = ReviewStatus.PENDING,
+    override var status: ReviewTaskStatus = ReviewTaskStatus.PENDING,
 
     /**
      * ID of the reviewer assigned to this task.
@@ -154,7 +155,7 @@ class ReviewTaskEntity(
         private var id: Long? = null
         private var resourceId: String? = null
         private var reviewJobId: String? = null
-        private var taskStatus: ReviewStatus = ReviewStatus.PENDING
+        private var taskStatus: ReviewTaskStatus = ReviewTaskStatus.PENDING
         private var reviewerId: Long = -1
         private var feedback: ReviewFeedback? = null
         private var createTime: OffsetDateTime = OffsetDateTime.now()
@@ -185,7 +186,7 @@ class ReviewTaskEntity(
             this.reviewJobId = reviewJobId
         }
 
-        fun setTaskStatus(taskStatus: ReviewStatus) = apply {
+        fun setTaskStatus(taskStatus: ReviewTaskStatus) = apply {
             this.taskStatus = taskStatus
         }
 

@@ -35,9 +35,6 @@ import java.util.concurrent.Executor
 private val logger = logger<AutoReviewOrchestratorImpl>()
 
 /**
- * Implementation of AutoReviewOrchestrator that coordinates automated content review.
- * Creates auto-review task, executes all registered reviewers, and submits consolidated feedback.
- *
  * @author RollW
  */
 @Component
@@ -76,7 +73,6 @@ class AutoReviewOrchestratorImpl(
                 "Starting auto-review process for job ${autoReviewContext.reviewJob.jobId} with ${autoReviewers.size} reviewers"
             }
 
-            // Execute all auto-reviewers
             autoReviewers.forEach { reviewer ->
                 try {
                     reviewer.review(autoReviewContext.reviewJob, autoReviewContext)
@@ -90,7 +86,6 @@ class AutoReviewOrchestratorImpl(
                 }
             }
 
-            // Build and submit feedback
             val feedback = autoReviewContext.buildFeedback()
             if (feedback != null) {
                 try {

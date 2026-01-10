@@ -26,23 +26,14 @@ interface ReviewJobProvider {
 
     val reviewJobs: List<ReviewJobSummary>
 
-    fun getReviewJobsByOperator(operator: Operator): List<ReviewJobSummary>
-
     fun getReviewJobsByReviewer(reviewer: Operator): List<ReviewJobSummary>
 
     fun getReviewJobs(
         reviewer: Operator,
-        status: ReviewStatus
-    ): List<ReviewJobSummary>
-
-    fun getReviewJobs(
-        reviewer: Operator,
-        statues: ReviewStatues = ReviewStatues.ALL
+        reviewStatuses: List<ReviewStatus>
     ): List<ReviewJobSummary>
 
     fun getReviewJobs(contentTrait: ContentTrait): List<ReviewJobSummary>
 
-    fun getReviewJobs(reviewStatus: ReviewStatus): List<ReviewJobSummary>
-
-    fun getReviewJobs(reviewStatues: ReviewStatues): List<ReviewJobSummary>
+    fun getReviewJobs(reviewStatues: List<ReviewStatus>): List<ReviewJobSummary>
 }

@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.review.service
+package tech.lamprism.lampray.content.review
 
 import tech.lamprism.lampray.content.Content
-import tech.lamprism.lampray.content.review.ReviewJobSummary
-import tech.lamprism.lampray.content.review.ReviewMark
-import tech.lamprism.lampray.content.review.common.NotReviewedException
 
 /**
  * Creator for review jobs that handles job creation and reviewer allocation.
@@ -38,8 +35,7 @@ interface ReviewJobCreator {
      * @param content the content to be reviewed
      * @param reviewMark the review mark/priority
      * @return the created review job information
-     * @throws NotReviewedException if a pending review job already exists for this content
+     * @throws tech.lamprism.lampray.content.review.common.NotReviewedException if a pending review job already exists for this content
      */
     fun createReviewJob(content: Content, reviewMark: ReviewMark): ReviewJobSummary
 }
-

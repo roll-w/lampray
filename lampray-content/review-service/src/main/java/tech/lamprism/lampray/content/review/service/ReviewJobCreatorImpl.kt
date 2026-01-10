@@ -16,14 +16,16 @@
 
 package tech.lamprism.lampray.content.review.service
 
-import org.slf4j.LoggerFactory
 import org.slf4j.debug
+import org.slf4j.info
+import org.slf4j.logger
 import org.slf4j.warn
 import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.Content
 import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentIdentity
 import tech.lamprism.lampray.content.ContentProviderFactory
+import tech.lamprism.lampray.content.review.ReviewJobCreator
 import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.ReviewStatus
@@ -35,10 +37,9 @@ import tech.lamprism.lampray.content.review.persistence.ReviewJobEntity
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository
 import java.time.OffsetDateTime
 
+private val logger = logger<ReviewJobCreatorImpl>()
+
 /**
- * Implementation of ReviewJobCreator that handles review job creation,
- * reviewer allocation, and task distribution.
- *
  * @author RollW
  */
 @Component
@@ -50,16 +51,13 @@ class ReviewJobCreatorImpl(
     private val autoReviewOrchestrator: AutoReviewOrchestrator
 ) : ReviewJobCreator {
 
-    private val logger = LoggerFactory.getLogger(ReviewJobCreatorImpl::class.java)
-
     override fun createReviewJob(content: Content, reviewMark: ReviewMark): ReviewJobSummary {
         val contentId = content.contentId
         val contentType = content.contentType
 
-        val existingJobs = reviewJobRepository.findByContent(contentId, contentType)
-        val pendingJob = existingJobs.firstOrNull { it.status == ReviewStatus.PENDING }
-        if (pendingJob != null) {
-            throw NotReviewedException(pendingJob.lock())
+        val existingJobs = reviewJobRepository.findByContentAndStatus(contentId, contentType, ReviewStatus.PENDING)
+        if (existingJobs.isNotEmpty()) {
+            throw NotReviewedException(existingJobs[0].lock())
         }
 
         val assignedTime = OffsetDateTime.now()
@@ -74,10 +72,9 @@ class ReviewJobCreatorImpl(
         val savedJob = reviewJobRepository.save(reviewJob)
         val reviewJobInfo = savedJob.lock()
 
-        logger.info(
-            "Created review job {} for content {}@{}",
-            reviewJobInfo.jobId, contentId, contentType
-        )
+        logger.info {
+            "Created review job ${reviewJobInfo.jobId}, for content $contentId@$contentType"
+        }
 
         // Allocate reviewers and create tasks
         allocateReviewersAndCreateTasks(reviewJobInfo, content)

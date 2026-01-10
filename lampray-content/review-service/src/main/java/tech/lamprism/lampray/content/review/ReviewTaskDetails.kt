@@ -38,7 +38,7 @@ interface ReviewTaskDetails : TimeAttributed {
     /**
      * Current status of the review task.
      */
-    val status: ReviewStatus
+    val status: ReviewTaskStatus
 
     /**
      * ID of the assigned reviewer, null if unassigned.

@@ -26,14 +26,16 @@ data class SimpleReviewJobDetails(
     override val jobId: String,
     override val status: ReviewStatus,
     override val reviewMark: ReviewMark,
-    val associatedContent: ContentIdentity,
-    override val createTime: OffsetDateTime,
-    override val updateTime: OffsetDateTime,
+    private val associatedContent: ContentIdentity,
+    private val createTime: OffsetDateTime,
+    private val updateTime: OffsetDateTime,
     override val tasks: List<ReviewTaskDetails>
 ) : ReviewJobDetails {
     override fun getAssociatedContent(): ContentIdentity = associatedContent
 
+    override fun getCreateTime(): OffsetDateTime = createTime
 
+    override fun getUpdateTime(): OffsetDateTime = updateTime
 
     companion object {
         @JvmStatic

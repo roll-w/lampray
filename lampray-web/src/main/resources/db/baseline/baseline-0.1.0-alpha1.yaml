@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: baseline-0.1.0-alpha1
+      id: baseline
       author: RollW
       objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
       rollback:
@@ -389,10 +389,10 @@ databaseChangeLog:
                   type: VARCHAR(40)
               - column:
                   name: reviewer_id
-                  type: VARCHAR(64)
+                  type: BIGINT
               - column:
-                  name: detail
-                  type: TEXT
+                  name: feedback
+                  type: BLOB
               - column:
                   constraints:
                     nullable: false

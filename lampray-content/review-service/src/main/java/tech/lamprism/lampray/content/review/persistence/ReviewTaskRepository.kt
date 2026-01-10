@@ -29,21 +29,21 @@ class ReviewTaskRepository(
 
     fun findByJobId(jobId: String): List<ReviewTaskEntity> {
         return findAll { root, _, builder ->
-            builder.equal(root.get(ReviewJobTaskEntity_.reviewJobId), jobId)
+            builder.equal(root.get(ReviewTaskEntity_.reviewJobId), jobId)
         }
     }
 
     fun findByReviewerId(reviewerId: Long): List<ReviewTaskEntity> {
         return findAll { root, _, builder ->
-            builder.equal(root.get(ReviewJobTaskEntity_.reviewerId), reviewerId)
+            builder.equal(root.get(ReviewTaskEntity_.reviewerId), reviewerId)
         }
     }
 
     fun findByJobIdAndReviewerId(jobId: String, reviewerId: Long): List<ReviewTaskEntity> {
         return findAll { root, _, builder ->
             builder.and(
-                builder.equal(root.get(ReviewJobTaskEntity_.reviewJobId), jobId),
-                builder.equal(root.get(ReviewJobTaskEntity_.reviewerId), reviewerId)
+                builder.equal(root.get(ReviewTaskEntity_.reviewJobId), jobId),
+                builder.equal(root.get(ReviewTaskEntity_.reviewerId), reviewerId)
             )
         }
     }

@@ -1,15 +1,11 @@
 databaseChangeLog:
   - changeSet:
-      id: 0.1.0-alpha1-01
+      id: 0.1.0-alpha1-01-article
       author: RollW
       objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
-#      preConditions:
-#        - onFail: MARK_RAN
-#        - not:
-#            - tableExists:
-#                tableName: user
       changes:
         - createTable:
+            tableName: article
             columns:
               - column:
                   autoIncrement: true
@@ -49,8 +45,13 @@ databaseChangeLog:
                     nullable: false
                   name: update_time
                   type: DATETIME
-            tableName: article
+  - changeSet:
+      id: 0.1.0-alpha1-02-comment
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: comment
             columns:
               - column:
                   autoIncrement: true
@@ -100,8 +101,13 @@ databaseChangeLog:
                     nullable: false
                   name: comment_status
                   type: VARCHAR(40)
-            tableName: comment
+  - changeSet:
+      id: 0.1.0-alpha1-03-content_metadata
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: content_metadata
             columns:
               - column:
                   autoIncrement: true
@@ -136,8 +142,17 @@ databaseChangeLog:
                     nullable: false
                   name: auth_type
                   type: VARCHAR(40)
+        - addUniqueConstraint:
             tableName: content_metadata
+            columnNames: content_id, type
+            constraintName: index__content_id_type
+  - changeSet:
+      id: 0.1.0-alpha1-04-favorite_group
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: favorite_group
             columns:
               - column:
                   autoIncrement: true
@@ -192,8 +207,13 @@ databaseChangeLog:
                     nullable: false
                   name: deleted
                   type: BOOLEAN
-            tableName: favorite_group
+  - changeSet:
+      id: 0.1.0-alpha1-05-favorite_item
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: favorite_item
             columns:
               - column:
                   autoIncrement: true
@@ -238,8 +258,13 @@ databaseChangeLog:
                     nullable: false
                   name: deleted
                   type: BOOLEAN
-            tableName: favorite_item
+  - changeSet:
+      id: 0.1.0-alpha1-06-localized_message
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: localized_message
             columns:
               - column:
                   autoIncrement: true
@@ -269,8 +294,17 @@ databaseChangeLog:
                     nullable: false
                   name: update_time
                   type: DATETIME
+        - addUniqueConstraint:
             tableName: localized_message
+            columnNames: key, locale
+            constraintName: index__key_locale
+  - changeSet:
+      id: 0.1.0-alpha1-07-register_verification_token
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: register_verification_token
             columns:
               - column:
                   autoIncrement: true
@@ -292,8 +326,17 @@ databaseChangeLog:
               - column:
                   name: used
                   type: BOOLEAN
+        - addUniqueConstraint:
             tableName: register_verification_token
+            columnNames: token
+            constraintName: index__token
+  - changeSet:
+      id: 0.1.0-alpha1-08-review_job
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: review_job
             columns:
               - column:
                   constraints:
@@ -337,8 +380,13 @@ databaseChangeLog:
                     nullable: false
                   name: review_mark
                   type: VARCHAR(40)
-            tableName: review_job
+  - changeSet:
+      id: 0.1.0-alpha1-09-review_job_task
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: review_job_task
             columns:
               - column:
                   autoIncrement: true
@@ -365,10 +413,10 @@ databaseChangeLog:
                   type: VARCHAR(40)
               - column:
                   name: reviewer_id
-                  type: VARCHAR(64)
+                  type: BIGINT
               - column:
-                  name: detail
-                  type: TEXT
+                  name: feedback
+                  type: BLOB
               - column:
                   constraints:
                     nullable: false
@@ -379,8 +427,17 @@ databaseChangeLog:
                     nullable: false
                   name: update_time
                   type: DATETIME
+        - addUniqueConstraint:
             tableName: review_job_task
+            columnNames: resource_id
+            constraintName: uc_review_job_task_resource
+  - changeSet:
+      id: 0.1.0-alpha1-10-staff
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: staff
             columns:
               - column:
                   autoIncrement: true
@@ -415,12 +472,19 @@ databaseChangeLog:
                     nullable: false
                   name: deleted
                   type: BOOLEAN
-            tableName: staff
+  - changeSet:
+      id: 0.1.0-alpha1-11-staff_types
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: staff_types
             columns:
               - column:
                   constraints:
                     nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_staff_types
                   name: id
                   type: BIGINT
               - column:
@@ -428,8 +492,13 @@ databaseChangeLog:
                     nullable: false
                   name: type
                   type: VARCHAR(20)
-            tableName: staff_types
+  - changeSet:
+      id: 0.1.0-alpha1-12-system_setting
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: system_setting
             columns:
               - column:
                   autoIncrement: true
@@ -450,8 +519,17 @@ databaseChangeLog:
                     nullable: false
                   name: update_time
                   type: DATETIME
+        - addUniqueConstraint:
             tableName: system_setting
+            columnNames: key
+            constraintName: index__key
+  - changeSet:
+      id: 0.1.0-alpha1-13-user
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: user
             columns:
               - column:
                   autoIncrement: true
@@ -511,8 +589,17 @@ databaseChangeLog:
                     nullable: false
                   name: account_canceled
                   type: BOOLEAN
+        - addUniqueConstraint:
             tableName: user
+            columnNames: username
+            constraintName: index__username
+  - changeSet:
+      id: 0.1.0-alpha1-14-user_personal_data
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
         - createTable:
+            tableName: user_personal_data
             columns:
               - column:
                   constraints:
@@ -560,28 +647,3 @@ databaseChangeLog:
                     nullable: false
                   name: update_time
                   type: DATETIME
-            tableName: user_personal_data
-        - addUniqueConstraint:
-            columnNames: content_id, type
-            constraintName: index__content_id_type
-            tableName: content_metadata
-        - addUniqueConstraint:
-            columnNames: key
-            constraintName: index__key
-            tableName: system_setting
-        - addUniqueConstraint:
-            columnNames: key, locale
-            constraintName: index__key_locale
-            tableName: localized_message
-        - addUniqueConstraint:
-            columnNames: token
-            constraintName: index__token
-            tableName: register_verification_token
-        - addUniqueConstraint:
-            columnNames: username
-            constraintName: index__username
-            tableName: user
-        - addUniqueConstraint:
-            columnNames: resource_id
-            constraintName: uc_review_job_task_resource
-            tableName: review_job_task

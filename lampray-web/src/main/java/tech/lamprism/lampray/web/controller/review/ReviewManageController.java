@@ -27,7 +27,7 @@ import tech.lamprism.lampray.content.review.ReviewJobContent;
 import tech.lamprism.lampray.content.review.ReviewJobDetails;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
 import tech.lamprism.lampray.content.review.ReviewJobSummary;
-import tech.lamprism.lampray.content.review.ReviewStatues;
+import tech.lamprism.lampray.content.review.ReviewStatus;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.user.UserTrait;
 import tech.lamprism.lampray.web.common.ApiContext;
@@ -67,9 +67,8 @@ public class ReviewManageController {
 
     @GetMapping("/reviews")
     public HttpResponseEntity<List<ReviewJobView>> getReviewJobs(
-            @RequestParam(value = "status", required = false,
-                    defaultValue = "ALL")
-            ReviewStatues statues) {
+            @RequestParam(value = "statues", required = false)
+            List<ReviewStatus> statues) {
         List<ReviewJobSummary> reviewJobInfos = reviewJobProvider.getReviewJobs(statues);
         return HttpResponseEntity.success(reviewJobInfos
                 .stream()
@@ -80,10 +79,9 @@ public class ReviewManageController {
 
     @GetMapping("/users/{userId}/reviews")
     public HttpResponseEntity<List<ReviewJobView>> getReviewJobsByUser(
-            @PathVariable(value = "userId") Long userId,
-            @RequestParam(value = "status", required = false,
-                    defaultValue = "ALL")
-            ReviewStatues statues) {
+            @PathVariable("userId") Long userId,
+            @RequestParam(value = "statues", required = false)
+            List<ReviewStatus> statues) {
         List<ReviewJobSummary> reviewJobInfos = reviewJobProvider.getReviewJobs(
                 UserTrait.of(userId),
                 statues

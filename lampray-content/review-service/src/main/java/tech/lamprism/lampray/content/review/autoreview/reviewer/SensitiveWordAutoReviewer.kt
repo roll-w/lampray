@@ -36,18 +36,9 @@ class SensitiveWordAutoReviewer : AutoReviewer {
         // Common sensitive word patterns - should be configurable in production
         private val SENSITIVE_PATTERNS = listOf(
             // Political sensitive words
-            "政治敏感词1", "政治敏感词2",
-            // Violence and illegal content
-            "暴力", "血腥", "杀人", "自杀",
-            // Adult content
-            "色情", "裸露", "性暗示",
-            // Discrimination
-            "种族歧视", "性别歧视", "宗教歧视",
-            // Spam and scam
-            "诈骗", "钓鱼", "病毒",
-            // Prohibited substances
-            "毒品", "赌博"
+            "test", "test2"
         )
+        // TODO: load from configuration
 
         // Maximum window size for cross-node detection
         private const val MAX_CROSS_NODE_WINDOW = 50
