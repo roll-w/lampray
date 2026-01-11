@@ -63,6 +63,7 @@ class ReviewTaskCoordinatorImpl(
 ) : ReviewTaskCoordinator {
 
     override fun reassignTask(
+        jobId: String,
         taskId: String,
         currentReviewerId: Long,
         newReviewerId: Long,
@@ -70,11 +71,25 @@ class ReviewTaskCoordinatorImpl(
     ): ReviewTaskDetails {
         val currentTask = findReviewTask(taskId)
 
+        require(currentTask.reviewJobId == jobId) {
+            "Task $taskId does not belong to job $jobId"
+        }
         require(currentTask.reviewerId == currentReviewerId) {
             "Task is not assigned to reviewer $currentReviewerId"
         }
         require(currentTask.status == ReviewTaskStatus.PENDING) {
             "Only pending tasks can be reassigned"
+        }
+
+        val reviewJob = reviewJobRepository.findById(jobId).orElseThrow {
+            ReviewException(CommonErrorCode.ERROR_NOT_FOUND, "Review job not found: $jobId")
+        }
+        if (reviewJob.status.isFinished) {
+            throw ReviewException(
+                CommonErrorCode.ERROR_NOT_FOUND,
+                "Cannot reassign task: job $jobId is in terminal state ${reviewJob.status}. " +
+                        "Create a new review job for appeals."
+            )
         }
 
         // Cancel the current task
@@ -114,16 +129,31 @@ class ReviewTaskCoordinatorImpl(
     }
 
     override fun returnTask(
+        jobId: String,
         taskId: String,
         reviewerId: Long
     ): ReviewTaskDetails {
         val taskEntity = findReviewTask(taskId)
 
+        require(taskEntity.reviewJobId == jobId) {
+            "Task $taskId does not belong to job $jobId"
+        }
         require(taskEntity.reviewerId == reviewerId) {
             "Task is not assigned to reviewer $reviewerId"
         }
         require(taskEntity.status == ReviewTaskStatus.PENDING) {
             "Only pending tasks can be returned"
+        }
+
+        val reviewJob = reviewJobRepository.findById(jobId).orElseThrow {
+            ReviewException(CommonErrorCode.ERROR_NOT_FOUND, "Review job not found: $jobId")
+        }
+        if (reviewJob.status.isFinished) {
+            throw ReviewException(
+                CommonErrorCode.ERROR_NOT_FOUND,
+                "Cannot return task: job $jobId is in terminal state ${reviewJob.status}. " +
+                        "Create a new review job for appeals."
+            )
         }
 
         // Cancel the task and store reason
@@ -141,13 +171,28 @@ class ReviewTaskCoordinatorImpl(
     }
 
     override fun claimTask(
+        jobId: String,
         taskId: String,
         reviewerId: Long
     ): ReviewTaskDetails {
         val taskEntity = findReviewTask(taskId)
 
+        require(taskEntity.reviewJobId == jobId) {
+            "Task $taskId does not belong to job $jobId"
+        }
         require(taskEntity.status == ReviewTaskStatus.PENDING) {
             "Only pending tasks can be claimed"
+        }
+
+        val reviewJob = reviewJobRepository.findById(jobId).orElseThrow {
+            ReviewException(CommonErrorCode.ERROR_NOT_FOUND, "Review job not found: $jobId")
+        }
+        if (reviewJob.status.isFinished) {
+            throw ReviewException(
+                CommonErrorCode.ERROR_NOT_FOUND,
+                "Cannot claim task: job $jobId is in terminal state ${reviewJob.status}. " +
+                        "Create a new review job for appeals."
+            )
         }
 
         val now = OffsetDateTime.now()
@@ -177,12 +222,16 @@ class ReviewTaskCoordinatorImpl(
     }
 
     override fun submitFeedback(
+        jobId: String,
         taskId: String,
         reviewerId: Long,
         feedback: ReviewFeedback
     ): ReviewTaskDetails {
         val taskEntity = findReviewTask(taskId)
-        val jobId = taskEntity.reviewJobId
+
+        require(taskEntity.reviewJobId == jobId) {
+            "Task $taskId does not belong to job $jobId"
+        }
 
         // Check if job is still in valid state
         val job = reviewJobRepository.findById(jobId).orElseThrow {
@@ -368,6 +417,8 @@ class ReviewTaskCoordinatorImpl(
         reviewJobId: String,
         reviewerIds: List<Long>
     ): List<ReviewTaskDetails> {
+        validateCanCreateTask(reviewJobId)
+
         if (reviewerIds.isEmpty()) {
             return emptyList()
         }
@@ -391,7 +442,7 @@ class ReviewTaskCoordinatorImpl(
         validateCanCreateTask(reviewJobId)
 
         val taskEntity = createTaskEntity(reviewJobId, reviewerId)
-        val savedTask = reviewTaskRepository.save(taskEntity)
+        val savedTask = reviewTaskRepository.saveAndFlush(taskEntity)
 
         logger.info {
             "Created review task ${savedTask.resourceId} for job $reviewJobId assigned to reviewer $reviewerId"

@@ -28,13 +28,18 @@ import tech.lamprism.lampray.content.review.ReviewJobDetails;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
 import tech.lamprism.lampray.content.review.ReviewJobSummary;
 import tech.lamprism.lampray.content.review.ReviewStatus;
+import tech.lamprism.lampray.content.review.ReviewTaskCoordinator;
+import tech.lamprism.lampray.content.review.ReviewTaskDetails;
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedback;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.user.UserTrait;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.AdminApi;
+import tech.lamprism.lampray.web.controller.review.model.ReassignTaskRequest;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobContentView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewRequest;
+import tech.lamprism.lampray.web.controller.review.model.ReviewTaskView;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.system.ContextThread;
 import tech.rollw.common.web.system.ContextThreadAware;
@@ -48,14 +53,23 @@ import java.util.List;
 public class ReviewManageController {
     private final ReviewJobProvider reviewJobProvider;
     private final ReviewContentProvider reviewContentProvider;
+    private final ReviewTaskCoordinator reviewTaskCoordinator;
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
     public ReviewManageController(ReviewJobProvider reviewJobProvider,
                                   ReviewContentProvider reviewContentProvider,
+                                  ReviewTaskCoordinator reviewTaskCoordinator,
                                   ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.reviewJobProvider = reviewJobProvider;
         this.reviewContentProvider = reviewContentProvider;
+        this.reviewTaskCoordinator = reviewTaskCoordinator;
         this.apiContextThreadAware = apiContextThreadAware;
+    }
+
+    private UserIdentity getCurrentUser() {
+        ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
+        ApiContext apiContext = apiContextThread.getContext();
+        return Verify.verifyNotNull(apiContext.getUser());
     }
 
     @GetMapping("/reviews/{jobId}")
@@ -80,7 +94,7 @@ public class ReviewManageController {
     @GetMapping("/users/{userId}/reviews")
     public HttpResponseEntity<List<ReviewJobView>> getReviewJobsByUser(
             @PathVariable("userId") Long userId,
-            @RequestParam(value = "statues", required = false)
+            @RequestParam(value = "statues", required = false, defaultValue = "")
             List<ReviewStatus> statues) {
         List<ReviewJobSummary> reviewJobInfos = reviewJobProvider.getReviewJobs(
                 UserTrait.of(userId),
@@ -105,10 +119,88 @@ public class ReviewManageController {
             @PathVariable("jobId") String jobId,
             @RequestBody ReviewRequest reviewRequest
     ) {
-        ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
-        ApiContext apiContext = apiContextThread.getContext();
-        UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
-        // TODO
-        return HttpResponseEntity.success();
+        UserIdentity user = getCurrentUser();
+        ReviewJobDetails reviewJobDetails = reviewJobProvider.getReviewJobDetails(jobId);
+        List<ReviewTaskDetails> tasks = reviewJobDetails.getTasks();
+
+        // Admin can review any task - find or create task for current user
+        ReviewTaskDetails userTask = tasks.stream()
+                .filter(task -> task.getReviewerId() == user.getOperatorId())
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "No task assigned to current user"
+                ));
+
+        // Convert request to feedback using the new structure
+        ReviewFeedback feedback = reviewRequest.toFeedback();
+
+        reviewTaskCoordinator.submitFeedback(
+                jobId,
+                userTask.getTaskId(),
+                user.getOperatorId(),
+                feedback
+        );
+
+        ReviewJobDetails updatedJob = reviewJobProvider.getReviewJobDetails(jobId);
+        return HttpResponseEntity.success(ReviewJobView.from(updatedJob));
+    }
+
+    @GetMapping("/reviews/{jobId}/tasks")
+    public HttpResponseEntity<List<ReviewTaskView>> getReviewTasks(
+            @PathVariable("jobId") String jobId) {
+        List<ReviewTaskDetails> tasks = reviewTaskCoordinator.getTasksForReviewJob(jobId);
+        List<ReviewTaskView> taskViews = tasks.stream()
+                .map(ReviewTaskView::from)
+                .toList();
+        return HttpResponseEntity.success(taskViews);
+    }
+
+    @PostMapping("/reviews/{jobId}/tasks/{taskId}/reassign")
+    public HttpResponseEntity<ReviewTaskView> reassignTask(
+            @PathVariable("jobId") String jobId,
+            @PathVariable("taskId") String taskId,
+            @RequestBody ReassignTaskRequest request
+    ) {
+        UserIdentity user = getCurrentUser();
+
+        ReviewTaskDetails taskDetails = reviewTaskCoordinator.reassignTask(
+                jobId,
+                taskId,
+                user.getOperatorId(),
+                request.getNewReviewerId(),
+                request.getReason()
+        );
+
+        return HttpResponseEntity.success(ReviewTaskView.from(taskDetails));
+    }
+
+    @PostMapping("/reviews/{jobId}/tasks/{taskId}/claim")
+    public HttpResponseEntity<ReviewTaskView> claimTask(
+            @PathVariable("jobId") String jobId,
+            @PathVariable("taskId") String taskId) {
+        UserIdentity user = getCurrentUser();
+
+        ReviewTaskDetails taskDetails = reviewTaskCoordinator.claimTask(
+                jobId,
+                taskId,
+                user.getOperatorId()
+        );
+
+        return HttpResponseEntity.success(ReviewTaskView.from(taskDetails));
+    }
+
+    @PostMapping("/reviews/{jobId}/tasks/{taskId}/return")
+    public HttpResponseEntity<ReviewTaskView> returnTask(
+            @PathVariable("jobId") String jobId,
+            @PathVariable("taskId") String taskId) {
+        UserIdentity user = getCurrentUser();
+
+        ReviewTaskDetails taskDetails = reviewTaskCoordinator.returnTask(
+                jobId,
+                taskId,
+                user.getOperatorId()
+        );
+
+        return HttpResponseEntity.success(ReviewTaskView.from(taskDetails));
     }
 }

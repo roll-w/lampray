@@ -21,7 +21,6 @@ import org.slf4j.error
 import org.slf4j.info
 import org.slf4j.logger
 import org.slf4j.warn
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.review.ReviewJobSummary
@@ -30,7 +29,6 @@ import tech.lamprism.lampray.content.review.ReviewerAllocator
 import tech.lamprism.lampray.content.review.autoreview.AutoReviewContext
 import tech.lamprism.lampray.content.review.autoreview.AutoReviewOrchestrator
 import tech.lamprism.lampray.content.review.autoreview.reviewer.AutoReviewer
-import java.util.concurrent.Executor
 
 private val logger = logger<AutoReviewOrchestratorImpl>()
 
@@ -40,9 +38,7 @@ private val logger = logger<AutoReviewOrchestratorImpl>()
 @Component
 class AutoReviewOrchestratorImpl(
     private val reviewTaskCoordinator: ReviewTaskCoordinator,
-    override val autoReviewers: List<AutoReviewer>,
-    @Qualifier("mainScheduledExecutorService")
-    private val executor: Executor
+    override val autoReviewers: List<AutoReviewer>
 ) : AutoReviewOrchestrator {
 
     override fun executeAutoReview(reviewJob: ReviewJobSummary, contentDetails: ContentDetails) {
@@ -52,16 +48,13 @@ class AutoReviewOrchestratorImpl(
         }
 
         try {
-            // Create a task for the auto-reviewer (validation is done inside)
             val autoReviewTask = reviewTaskCoordinator.createTask(
                 reviewJob.jobId,
                 ReviewerAllocator.AUTO_REVIEWER
             )
 
             val autoReviewContext = AutoReviewContext(reviewJob, autoReviewTask, contentDetails)
-            executor.execute {
-                executeAutoReviewProcess(autoReviewContext)
-            }
+            executeAutoReviewProcess(autoReviewContext)
         } catch (e: IllegalArgumentException) {
             logger.error(e) { "Failed to create auto-review task for job ${reviewJob.jobId}: ${e.message}" }
         }
@@ -90,6 +83,7 @@ class AutoReviewOrchestratorImpl(
             if (feedback != null) {
                 try {
                     reviewTaskCoordinator.submitFeedback(
+                        autoReviewContext.reviewJob.jobId,
                         autoReviewContext.reviewTask.taskId,
                         ReviewerAllocator.AUTO_REVIEWER,
                         feedback

@@ -15,6 +15,8 @@
  */
 package tech.lamprism.lampray.content.review.feedback
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 /**
  * Structured review feedback that provides detailed review opinions and results.
  *
@@ -28,18 +30,14 @@ data class ReviewFeedback(
     /**
      * Checks if the feedback indicates approval.
      */
+    @JsonIgnore
     fun isApproved(): Boolean = verdict == ReviewVerdict.APPROVED
 
     /**
      * Checks if the feedback has any critical issues.
      */
+    @JsonIgnore
     fun hasCriticalIssues(): Boolean = entries.any { it.severity == ReviewSeverity.CRITICAL }
-
-    /**
-     * Gets all issues grouped by severity.
-     */
-    fun getIssuesBySeverity(): Map<ReviewSeverity, List<ReviewFeedbackEntry>> =
-        entries.groupBy { it.severity }
 
     companion object {
         /**

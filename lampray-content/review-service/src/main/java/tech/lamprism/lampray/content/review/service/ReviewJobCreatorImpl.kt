@@ -16,16 +16,23 @@
 
 package tech.lamprism.lampray.content.review.service
 
+import jakarta.transaction.Transactional
 import org.slf4j.debug
 import org.slf4j.info
 import org.slf4j.logger
 import org.slf4j.warn
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
+import tech.lamprism.lampray.common.data.ResourceIdGenerator
 import tech.lamprism.lampray.content.Content
 import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentIdentity
 import tech.lamprism.lampray.content.ContentProviderFactory
 import tech.lamprism.lampray.content.review.ReviewJobCreator
+import tech.lamprism.lampray.content.review.ReviewJobResourceKind
 import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.ReviewStatus
@@ -35,6 +42,7 @@ import tech.lamprism.lampray.content.review.autoreview.AutoReviewOrchestrator
 import tech.lamprism.lampray.content.review.common.NotReviewedException
 import tech.lamprism.lampray.content.review.persistence.ReviewJobEntity
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository
+import tech.rollw.common.web.CommonRuntimeException
 import java.time.OffsetDateTime
 
 private val logger = logger<ReviewJobCreatorImpl>()
@@ -45,10 +53,12 @@ private val logger = logger<ReviewJobCreatorImpl>()
 @Component
 class ReviewJobCreatorImpl(
     private val reviewJobRepository: ReviewJobRepository,
+    private val resourceIdGenerator: ResourceIdGenerator,
     private val contentProviderFactory: ContentProviderFactory,
     private val reviewerAllocator: ReviewerAllocator,
     private val reviewTaskCoordinator: ReviewTaskCoordinator,
-    private val autoReviewOrchestrator: AutoReviewOrchestrator
+    private val autoReviewOrchestrator: AutoReviewOrchestrator,
+    private val applicationEventPublisher: ApplicationEventPublisher
 ) : ReviewJobCreator {
 
     override fun createReviewJob(content: Content, reviewMark: ReviewMark): ReviewJobSummary {
@@ -62,6 +72,7 @@ class ReviewJobCreatorImpl(
 
         val assignedTime = OffsetDateTime.now()
         val reviewJob = ReviewJobEntity.builder()
+            .setResourceId(resourceIdGenerator.nextId(ReviewJobResourceKind))
             .setReviewContentId(contentId)
             .setReviewContentType(contentType)
             .setStatus(ReviewStatus.PENDING)
@@ -79,11 +90,17 @@ class ReviewJobCreatorImpl(
         // Allocate reviewers and create tasks
         allocateReviewersAndCreateTasks(reviewJobInfo, content)
 
-        // Trigger auto-review
-        val contentDetails = retrieveContentDetails(content)
-        autoReviewOrchestrator.executeAutoReview(reviewJobInfo, contentDetails)
+        applicationEventPublisher.publishEvent(AfterCommitAutoReviewHook(reviewJobInfo, content))
 
         return reviewJobInfo
+    }
+
+    @Async
+    @Transactional(dontRollbackOn = [CommonRuntimeException::class], rollbackOn = [Exception::class])
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun executeAutoReview(hook: AfterCommitAutoReviewHook) {
+        val contentDetails = retrieveContentDetails(hook.content)
+        autoReviewOrchestrator.executeAutoReview(hook.reviewJob, contentDetails)
     }
 
     private fun allocateReviewersAndCreateTasks(

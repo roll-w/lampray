@@ -28,6 +28,10 @@ import tech.lamprism.lampray.content.review.ReviewStatus
 class ReviewJobRepository(
     private val reviewJobDao: ReviewJobDao
 ) : CommonRepository<ReviewJobEntity, String>(reviewJobDao) {
+    override fun <S : ReviewJobEntity> save(entity: S): S {
+        return reviewJobDao.saveAndFlush(entity)
+    }
+
     fun findByContent(
         contentId: Long,
         contentType: ContentType,

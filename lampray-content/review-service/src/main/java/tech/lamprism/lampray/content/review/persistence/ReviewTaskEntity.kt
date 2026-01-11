@@ -51,9 +51,8 @@ class ReviewTaskEntity(
     /**
      * Auto-generated primary key for database.
      */
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
     @Generated(event = [EventType.INSERT])
-    @JdbcTypeCode(SqlTypes.BIGINT)
     var id: Long? = null,
 
     /**
@@ -129,9 +128,6 @@ class ReviewTaskEntity(
         return Builder(this)
     }
 
-    /**
-     * Locks the entity into an immutable [tech.lamprism.lampray.content.review.ReviewTask] value object.
-     */
     fun lock(): ReviewTask {
         return ReviewTask(
             id!!,

@@ -320,17 +320,19 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
+                  autoIncrement: true
                   constraints:
                     nullable: false
                     primaryKey: true
                     primaryKeyName: pk_review_job
-                  name: resource_id
-                  type: VARCHAR(64)
+                  name: id
+                  type: BIGINT
               - column:
                   constraints:
                     nullable: false
-                  name: id
-                  type: BIGINT
+                    unique: true
+                  name: resource_id
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -375,6 +377,7 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                    unique: true
                   name: resource_id
                   type: VARCHAR(64)
               - column:

@@ -26,6 +26,9 @@ import tech.lamprism.lampray.common.data.CommonRepository
 class ReviewTaskRepository(
     private val reviewTaskDao: ReviewTaskDao
 ) : CommonRepository<ReviewTaskEntity, String>(reviewTaskDao) {
+    override fun <S : ReviewTaskEntity> save(entity: S): S {
+        return reviewTaskDao.saveAndFlush(entity)
+    }
 
     fun findByJobId(jobId: String): List<ReviewTaskEntity> {
         return findAll { root, _, builder ->

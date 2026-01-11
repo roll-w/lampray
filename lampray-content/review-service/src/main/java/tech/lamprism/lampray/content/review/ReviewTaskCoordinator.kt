@@ -29,6 +29,7 @@ interface ReviewTaskCoordinator {
      * and canceling the current one. This approach maintains audit trail
      * and avoids performance issues with tracking assignment history.
      *
+     * @param jobId the review job identifier for validation
      * @param taskId the current task identifier
      * @param currentReviewerId the current reviewer's ID
      * @param newReviewerId the new reviewer's ID to assign to
@@ -37,6 +38,7 @@ interface ReviewTaskCoordinator {
      * @throws IllegalStateException if the task cannot be reassigned
      */
     fun reassignTask(
+        jobId: String,
         taskId: String,
         currentReviewerId: Long,
         newReviewerId: Long,
@@ -47,12 +49,14 @@ interface ReviewTaskCoordinator {
      * Returns a task for reassignment by canceling it, making it available
      * for another reviewer to claim or be reassigned.
      *
+     * @param jobId the review job identifier for validation
      * @param taskId the task identifier
      * @param reviewerId the current reviewer's ID
      * @return the updated task details with canceled status
      * @throws IllegalStateException if the task cannot be returned
      */
     fun returnTask(
+        jobId: String,
         taskId: String,
         reviewerId: Long
     ): ReviewTaskDetails
@@ -60,12 +64,14 @@ interface ReviewTaskCoordinator {
     /**
      * Claims an unassigned review task.
      *
+     * @param jobId the review job identifier for validation
      * @param taskId the task identifier
      * @param reviewerId the reviewer's ID who is claiming the task
      * @return the updated task details
      * @throws IllegalStateException if the task cannot be claimed
      */
     fun claimTask(
+        jobId: String,
         taskId: String,
         reviewerId: Long
     ): ReviewTaskDetails
@@ -73,6 +79,7 @@ interface ReviewTaskCoordinator {
     /**
      * Submits review feedback for a task.
      *
+     * @param jobId the review job identifier for validation
      * @param taskId the task identifier
      * @param reviewerId the reviewer's ID
      * @param feedback the structured review feedback
@@ -80,6 +87,7 @@ interface ReviewTaskCoordinator {
      * @throws IllegalStateException if the feedback cannot be submitted
      */
     fun submitFeedback(
+        jobId: String,
         taskId: String,
         reviewerId: Long,
         feedback: ReviewFeedback

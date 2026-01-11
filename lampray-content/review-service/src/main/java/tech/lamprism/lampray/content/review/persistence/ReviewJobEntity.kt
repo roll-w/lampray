@@ -47,7 +47,7 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = "review_job")
 class ReviewJobEntity(
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
     @Generated(event = [EventType.INSERT])
     var id: Long? = null,
 
@@ -122,7 +122,7 @@ class ReviewJobEntity(
 
     class Builder {
         private var id: Long? = null
-        private var jobId: String? = null
+        private var resourceId: String? = null
         private var reviewContentId: Long = 0
         private var reviewContentType: ContentType = ContentType.ARTICLE
         private var status: ReviewStatus = ReviewStatus.PENDING
@@ -134,7 +134,7 @@ class ReviewJobEntity(
 
         constructor(other: ReviewJobEntity) {
             this.id = other.id
-            this.jobId = other.resourceId
+            this.resourceId = other.resourceId
             this.reviewContentId = other.reviewContentId
             this.reviewContentType = other.reviewContentType
             this.status = other.status
@@ -147,8 +147,8 @@ class ReviewJobEntity(
             this.id = id
         }
 
-        fun setJobId(jobId: String) = apply {
-            this.jobId = jobId
+        fun setResourceId(resourceId: String) = apply {
+            this.resourceId = resourceId
         }
 
         fun setReviewContentId(reviewContentId: Long) = apply {
@@ -178,7 +178,7 @@ class ReviewJobEntity(
         fun build(): ReviewJobEntity {
             return ReviewJobEntity(
                 id,
-                resourceId = jobId!!,
+                resourceId = resourceId!!,
                 reviewContentId = reviewContentId,
                 reviewContentType = reviewContentType,
                 status = status,

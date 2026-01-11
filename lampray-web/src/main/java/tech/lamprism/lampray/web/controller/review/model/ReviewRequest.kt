@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,28 @@
  */
 package tech.lamprism.lampray.web.controller.review.model
 
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedback
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedbackEntry
+import tech.lamprism.lampray.content.review.feedback.ReviewVerdict
+
 /**
+ * Request model for submitting review feedback.
+ *
  * @author RollW
  */
 data class ReviewRequest(
-    val pass: Boolean,
-    val reason: String?
+    val verdict: ReviewVerdict,
+    val entries: List<ReviewFeedbackEntry> = emptyList(),
+    val summary: String? = null
 ) {
     /**
-     * Get the final result reason, ignored reason if pass is true.
+     * Converts this request to a ReviewFeedback domain object.
      */
-    val result: String?
-        get() = if (pass) null else reason
+    fun toFeedback(): ReviewFeedback = ReviewFeedback(
+        verdict = verdict,
+        entries = entries,
+        summary = summary
+    )
 }
+
+
