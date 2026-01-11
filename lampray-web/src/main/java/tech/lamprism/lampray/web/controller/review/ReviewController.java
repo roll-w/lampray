@@ -37,6 +37,7 @@ import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobContentView;
+import tech.lamprism.lampray.web.controller.review.model.ReviewJobDetailsView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewRequest;
 import tech.lamprism.lampray.web.controller.review.model.ReviewTaskView;
@@ -77,25 +78,25 @@ public class ReviewController {
     }
 
     @GetMapping("/reviews/{jobId}")
-    public HttpResponseEntity<ReviewJobView> getReviewInfo(
+    public HttpResponseEntity<ReviewJobDetailsView> getReviewJobDetail(
             @PathVariable("jobId") String jobId) {
-        ReviewJobDetails reviewJobInfo = reviewJobProvider.getReviewJobDetails(jobId);
+        ReviewJobDetails reviewJobDetails = reviewJobProvider.getReviewJobDetails(jobId);
         UserIdentity user = getCurrentUser();
-        boolean assigned = reviewJobInfo.getTasks().stream()
+        boolean assigned = reviewJobDetails.getTasks().stream()
                 .anyMatch(task -> task.getReviewerId() == user.getOperatorId());
         if (!assigned) {
             return HttpResponseEntity.of(AuthErrorCode.ERROR_PERMISSION_DENIED);
         }
 
-        return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
+        return HttpResponseEntity.success(ReviewJobDetailsView.from(reviewJobDetails));
     }
 
     /**
      * Get current user's review infos.
      */
     @GetMapping({"/reviews"})
-    public HttpResponseEntity<List<ReviewJobView>> getReviewInfo(
-            @RequestParam(value = "statues", required = false)
+    public HttpResponseEntity<List<ReviewJobView>> getReviewInfos(
+            @RequestParam(value = "statues", required = false, defaultValue = "")
             List<ReviewStatus> statues) {
         UserIdentity user = getCurrentUser();
         List<ReviewJobSummary> reviewJobInfos = reviewJobProvider
@@ -142,23 +143,6 @@ public class ReviewController {
 
         ReviewJobDetails updatedJob = reviewJobProvider.getReviewJobDetails(jobId);
         return HttpResponseEntity.success(ReviewJobView.from(updatedJob));
-    }
-
-    @GetMapping("/reviews/{jobId}/tasks")
-    public HttpResponseEntity<List<ReviewTaskView>> getReviewTasks(
-            @PathVariable("jobId") String jobId) {
-        UserIdentity user = getCurrentUser();
-        List<ReviewTaskDetails> tasks = reviewTaskCoordinator.getTasksForReviewJob(jobId);
-        if (tasks.stream().noneMatch(task -> task.getReviewerId() == user.getOperatorId())) {
-            return HttpResponseEntity.of(AuthErrorCode.ERROR_PERMISSION_DENIED);
-        }
-
-
-        List<ReviewTaskView> userTasks = tasks.stream()
-                .map(ReviewTaskView::from)
-                .toList();
-
-        return HttpResponseEntity.success(userTasks);
     }
 
     @PostMapping("/reviews/{jobId}/tasks/{taskId}/claim")

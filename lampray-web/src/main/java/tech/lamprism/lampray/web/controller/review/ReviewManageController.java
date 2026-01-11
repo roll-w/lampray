@@ -37,6 +37,7 @@ import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.AdminApi;
 import tech.lamprism.lampray.web.controller.review.model.ReassignTaskRequest;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobContentView;
+import tech.lamprism.lampray.web.controller.review.model.ReviewJobDetailsView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewRequest;
 import tech.lamprism.lampray.web.controller.review.model.ReviewTaskView;
@@ -73,15 +74,15 @@ public class ReviewManageController {
     }
 
     @GetMapping("/reviews/{jobId}")
-    public HttpResponseEntity<ReviewJobView> getReviewJob(
+    public HttpResponseEntity<ReviewJobDetailsView> getReviewJobDetail(
             @PathVariable("jobId") String jobId) {
         ReviewJobDetails reviewJobInfo = reviewJobProvider.getReviewJobDetails(jobId);
-        return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
+        return HttpResponseEntity.success(ReviewJobDetailsView.from(reviewJobInfo));
     }
 
     @GetMapping("/reviews")
     public HttpResponseEntity<List<ReviewJobView>> getReviewJobs(
-            @RequestParam(value = "statues", required = false)
+            @RequestParam(value = "statues", required = false, defaultValue = "")
             List<ReviewStatus> statues) {
         List<ReviewJobSummary> reviewJobInfos = reviewJobProvider.getReviewJobs(statues);
         return HttpResponseEntity.success(reviewJobInfos
@@ -143,16 +144,6 @@ public class ReviewManageController {
 
         ReviewJobDetails updatedJob = reviewJobProvider.getReviewJobDetails(jobId);
         return HttpResponseEntity.success(ReviewJobView.from(updatedJob));
-    }
-
-    @GetMapping("/reviews/{jobId}/tasks")
-    public HttpResponseEntity<List<ReviewTaskView>> getReviewTasks(
-            @PathVariable("jobId") String jobId) {
-        List<ReviewTaskDetails> tasks = reviewTaskCoordinator.getTasksForReviewJob(jobId);
-        List<ReviewTaskView> taskViews = tasks.stream()
-                .map(ReviewTaskView::from)
-                .toList();
-        return HttpResponseEntity.success(taskViews);
     }
 
     @PostMapping("/reviews/{jobId}/tasks/{taskId}/reassign")
