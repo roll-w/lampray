@@ -66,6 +66,7 @@ public class ContentCollectionMetadata implements DataEntity<Long> {
     }
 
     @Nullable
+    @Override
     public Long getEntityId() {
         return id;
     }

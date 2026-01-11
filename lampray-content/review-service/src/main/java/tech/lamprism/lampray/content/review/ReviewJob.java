@@ -78,6 +78,7 @@ public class ReviewJob implements DataEntity<String>, ContentAssociated, ReviewJ
     }
 
     @NonNull
+    @Override
     public ReviewStatus getStatus() {
         return status;
     }
@@ -87,16 +88,19 @@ public class ReviewJob implements DataEntity<String>, ContentAssociated, ReviewJ
     }
 
     @NonNull
+    @Override
     public OffsetDateTime getCreateTime() {
         return createTime;
     }
 
     @NonNull
+    @Override
     public OffsetDateTime getUpdateTime() {
         return updateTime;
     }
 
     @NonNull
+    @Override
     public ReviewMark getReviewMark() {
         return reviewMark;
     }

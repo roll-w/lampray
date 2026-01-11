@@ -78,6 +78,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
         this.commentDetailsMetadata = new CommentDetailsMetadata(commentOnType, commentOnId, parentId);
     }
 
+    @Override
     public Long getEntityId() {
         return id;
     }

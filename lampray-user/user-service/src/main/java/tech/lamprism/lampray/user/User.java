@@ -57,6 +57,7 @@ public class User implements AttributedUserDetails, DataEntity<Long> {
         this.canceled = canceled;
     }
 
+    @Override
     public Long getEntityId() {
         return id;
     }

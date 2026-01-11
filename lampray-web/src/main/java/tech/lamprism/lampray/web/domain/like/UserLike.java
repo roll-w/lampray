@@ -53,6 +53,7 @@ public final class UserLike implements DataEntity<Long> {
     }
 
     @Nullable
+    @Override
     public Long getEntityId() {
         return id;
     }
@@ -123,6 +124,7 @@ public final class UserLike implements DataEntity<Long> {
             this.likeType = userLike.likeType;
         }
 
+        @Override
         public Builder setEntityId(Long id) {
             this.id = id;
             return this;
