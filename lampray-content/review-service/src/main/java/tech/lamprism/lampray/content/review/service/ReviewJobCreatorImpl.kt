@@ -90,7 +90,7 @@ class ReviewJobCreatorImpl(
         // Allocate reviewers and create tasks
         allocateReviewersAndCreateTasks(reviewJobInfo, content)
 
-        applicationEventPublisher.publishEvent(AfterCommitAutoReviewHook(reviewJobInfo, content))
+        applicationEventPublisher.publishEvent(CreateTaskAfterCommitHook(reviewJobInfo, content))
 
         return reviewJobInfo
     }
@@ -98,7 +98,7 @@ class ReviewJobCreatorImpl(
     @Async
     @Transactional(dontRollbackOn = [CommonRuntimeException::class], rollbackOn = [Exception::class])
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    fun executeAutoReview(hook: AfterCommitAutoReviewHook) {
+    fun executeAutoReview(hook: CreateTaskAfterCommitHook) {
         val contentDetails = retrieveContentDetails(hook.content)
         autoReviewOrchestrator.executeAutoReview(hook.reviewJob, contentDetails)
     }
