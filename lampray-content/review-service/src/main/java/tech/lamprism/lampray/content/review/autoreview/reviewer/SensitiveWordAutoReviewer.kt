@@ -70,7 +70,10 @@ class SensitiveWordAutoReviewer(
                 logger.warn("Sensitive words file not found: {}", path)
                 emptySet()
             } else {
-                Files.readAllLines(resolvedPath).toSet()
+                Files.readAllLines(resolvedPath)
+                    .filter { it.isNotBlank() }
+                    .filter { it.startsWith("#").not() }
+                    .toSet()
             }
         } catch (e: Exception) {
             logger.error("Failed to load sensitive words from file: {}", path, e)
