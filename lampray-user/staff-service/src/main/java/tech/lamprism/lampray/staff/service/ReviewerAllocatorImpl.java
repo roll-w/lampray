@@ -22,10 +22,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
-import tech.lamprism.lampray.content.review.ReviewStatus;
 import tech.lamprism.lampray.content.review.ReviewerAllocator;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobEntity;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository;
+import tech.lamprism.lampray.content.review.persistence.ReviewTaskEntity;
+import tech.lamprism.lampray.content.review.persistence.ReviewTaskRepository;
 import tech.lamprism.lampray.staff.AttributedStaff;
 import tech.lamprism.lampray.staff.OnStaffEventListener;
 import tech.lamprism.lampray.staff.Staff;
@@ -50,6 +51,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventListener {
     private static final Logger logger = LoggerFactory.getLogger(ReviewerAllocatorImpl.class);
 
+    private final ReviewTaskRepository reviewTaskRepository;
     private final ReviewJobRepository reviewJobRepository;
     private final StaffRepository staffRepository;
 
@@ -58,9 +60,11 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Executor executor;
 
-    public ReviewerAllocatorImpl(ReviewJobRepository reviewJobRepository,
+    public ReviewerAllocatorImpl(ReviewTaskRepository reviewTaskRepository,
+                                 ReviewJobRepository reviewJobRepository,
                                  StaffRepository staffRepository,
                                  @Qualifier("mainScheduledExecutorService") Executor executor) {
+        this.reviewTaskRepository = reviewTaskRepository;
         this.reviewJobRepository = reviewJobRepository;
         this.staffRepository = staffRepository;
         this.executor = executor;
@@ -78,34 +82,52 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
             weights.clear();
             staffReviewingCount.clear();
 
-            // Accumulate weight from existing pending review jobs
-            List<ReviewJobEntity> jobs = reviewJobRepository.findByStatus(ReviewStatus.PENDING);
-            for (ReviewJobEntity reviewJob : jobs) {
-                if (reviewJob == null) {
-                    continue;
+            final int batchSize = 200;
+            int offset = 0;
+            long totalTasks = reviewTaskRepository.countPendingTasks();
+
+            while (offset < totalTasks) {
+                List<ReviewTaskEntity> pendingTasks = reviewTaskRepository.findPendingTasksBatch(offset, batchSize);
+                if (pendingTasks.isEmpty()) {
+                    break;
                 }
-                //long reviewerId = reviewJob.getReviewerId();
-                ContentType type = reviewJob.getReviewContentType();
-                int weight = type.getWeight();
-                // weights.put(reviewerId, weights.getOrDefault(reviewerId, 0) + weight);
+
+                List<String> jobIds = pendingTasks.stream()
+                        .map(ReviewTaskEntity::getReviewJobId)
+                        .distinct()
+                        .toList();
+
+                List<ReviewJobEntity> jobs = reviewJobRepository.findAllById(jobIds);
+                Map<String, ReviewJobEntity> jobMap = new HashMap<>();
+                for (ReviewJobEntity job : jobs) {
+                    jobMap.put(job.getResourceId(), job);
+                }
+
+                for (ReviewTaskEntity task : pendingTasks) {
+                    ReviewJobEntity job = jobMap.get(task.getReviewJobId());
+                    if (job != null) {
+                        long reviewerId = task.getReviewerId();
+                        int weight = job.getReviewContentType().getWeight();
+                        weights.put(reviewerId, weights.getOrDefault(reviewerId, 0) + weight);
+                    }
+                }
+
+                offset += batchSize;
             }
 
             List<? extends AttributedStaff> staffs = loadStaffs();
-            staffs.forEach(staff -> {
-                if (staff == null) {
-                    return;
+            for (AttributedStaff staff : staffs) {
+                if (staff != null) {
+                    weights.putIfAbsent(staff.getUserId(), 0);
                 }
-                weights.putIfAbsent(staff.getUserId(), 0);
-            });
+            }
 
-            // Build buckets
-            weights.forEach((staffId, weight) -> {
-                Deque<Long> deque = staffReviewingCount.getOrDefault(weight, new ArrayDeque<>());
-                if (!deque.contains(staffId)) {
-                    deque.addLast(staffId);
-                }
-                staffReviewingCount.put(weight, deque);
-            });
+            for (Map.Entry<Long, Integer> entry : weights.entrySet()) {
+                long staffId = entry.getKey();
+                int weight = entry.getValue();
+                Deque<Long> deque = staffReviewingCount.computeIfAbsent(weight, k -> new ArrayDeque<>());
+                deque.addLast(staffId);
+            }
 
             logger.info("Load ReviewerAllocator staffs: {}, weights: {}",
                     weights.size(), staffReviewingCount.size());
@@ -125,14 +147,12 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
 
             Deque<Long> originalDeque = staffReviewingCount.get(original);
             if (originalDeque != null) {
-                // Safe removal
                 originalDeque.removeFirstOccurrence(reviewer);
                 if (originalDeque.isEmpty()) {
                     staffReviewingCount.remove(original);
                 }
             }
 
-            // Add to new bucket
             Deque<Long> newDeque = staffReviewingCount.getOrDefault(newWeight, new ArrayDeque<>());
             if (!newDeque.contains(reviewer)) {
                 newDeque.addLast(reviewer);
@@ -162,7 +182,6 @@ public class ReviewerAllocatorImpl implements ReviewerAllocator, OnStaffEventLis
 
             Deque<Long> ids = entry.getValue();
             if (ids == null || ids.isEmpty()) {
-                // Clean empty bucket then retry
                 staffReviewingCount.remove(entry.getKey());
                 Map.Entry<Integer, Deque<Long>> next = staffReviewingCount.firstEntry();
                 if (next == null) {

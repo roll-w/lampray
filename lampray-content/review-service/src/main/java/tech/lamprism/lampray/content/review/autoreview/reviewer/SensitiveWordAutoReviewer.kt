@@ -15,33 +15,67 @@
  */
 package tech.lamprism.lampray.content.review.autoreview.reviewer
 
+import jakarta.annotation.PostConstruct
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.autoreview.AutoReviewContext
+import tech.lamprism.lampray.content.review.autoreview.config.SensitiveWordConfigKeys
+import tech.lamprism.lampray.content.review.feedback.ContentLocationRange
 import tech.lamprism.lampray.content.review.feedback.ReviewCategory
 import tech.lamprism.lampray.content.review.feedback.ReviewFeedbackEntry
 import tech.lamprism.lampray.content.review.feedback.ReviewSeverity
 import tech.lamprism.lampray.content.structuraltext.StructuralText
+import tech.lamprism.lampray.setting.ConfigReader
+import java.nio.file.Files
+import java.nio.file.Paths
 
 /**
- * Enhanced auto reviewer that detects sensitive words by traversing structural text nodes.
- * Supports cross-node sensitive word detection (e.g., "sen" in node1 + "sitive" in node2 = "sensitive").
- *
  * @author RollW
  */
 @Component
-class SensitiveWordAutoReviewer : AutoReviewer {
+class SensitiveWordAutoReviewer(
+    private val configReader: ConfigReader
+) : AutoReviewer {
 
-    companion object {
-        // Common sensitive word patterns - should be configurable in production
-        private val SENSITIVE_PATTERNS = listOf(
-            // Political sensitive words
-            "test", "test2"
-        )
-        // TODO: load from configuration
+    private val logger = LoggerFactory.getLogger(SensitiveWordAutoReviewer::class.java)
 
-        // Maximum window size for cross-node detection
-        private const val MAX_CROSS_NODE_WINDOW = 50
+    private var sensitivePatterns: List<String> = emptyList()
+    private var maxCrossNodeWindow: Int = 50
+
+    @PostConstruct
+    fun init() {
+        sensitivePatterns = loadSensitiveWords()
+        maxCrossNodeWindow = configReader[SensitiveWordConfigKeys.MAX_WINDOW_SIZE, 50]
+        logger.info("Loaded {} sensitive word patterns, max cross-node window: {}",
+            sensitivePatterns.size, maxCrossNodeWindow)
+    }
+
+    private fun loadSensitiveWords(): List<String> {
+        val filePath = configReader[SensitiveWordConfigKeys.SENSITIVE_WORD_FILE_PATH]
+        val loadedWords = if (!filePath.isNullOrBlank()) {
+            loadFromFile(filePath)
+        } else {
+            configReader[SensitiveWordConfigKeys.SENSITIVE_WORD_LIST] ?: emptySet()
+        }
+        return loadedWords
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+    }
+
+    private fun loadFromFile(path: String): Set<String> {
+        return try {
+            val resolvedPath = Paths.get(path)
+            if (!Files.exists(resolvedPath)) {
+                logger.warn("Sensitive words file not found: {}", path)
+                emptySet()
+            } else {
+                Files.readAllLines(resolvedPath).toSet()
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to load sensitive words from file: {}", path, e)
+            emptySet()
+        }
     }
 
     override val reviewerInfo: AutoReviewer.Info = AutoReviewer.Info(
@@ -54,16 +88,17 @@ class SensitiveWordAutoReviewer : AutoReviewer {
         val content = autoReviewContext.contentDetails
         val title = content.title ?: ""
 
-        // Check title - simplified for now
-        val foundInTitle = detectSensitiveWords(title)
-        if (foundInTitle.isNotEmpty()) {
-            // Just add to context for now - TODO: enhance with location tracking
+        // Check title
+        val foundInTitle = detectSensitiveWordsWithLocation(title, "title")
+        for ((location, maskedWord, context) in foundInTitle) {
             autoReviewContext.addFeedbackEntry(
-                ReviewFeedbackEntry(
+                ReviewFeedbackEntry.fromAutoReviewer(
+                    reviewerName = reviewerInfo.name,
                     category = ReviewCategory.SENSITIVE_CONTENT,
                     severity = ReviewSeverity.CRITICAL,
-                    message = "Sensitive words detected in title: ${foundInTitle.joinToString(", ")}",
-                    suggestion = "Please remove or replace sensitive words"
+                    message = "Sensitive word detected: $maskedWord",
+                    locationRange = location,
+                    suggestion = "Please remove or replace the sensitive content. Context: $context"
                 )
             )
         }
@@ -72,13 +107,15 @@ class SensitiveWordAutoReviewer : AutoReviewer {
         val structuralText = content.content
         if (structuralText != null) {
             val foundInContent = detectSensitiveWordsInStructure(structuralText)
-            if (foundInContent.isNotEmpty()) {
+            for ((location, maskedWord, context) in foundInContent) {
                 autoReviewContext.addFeedbackEntry(
-                    ReviewFeedbackEntry(
+                    ReviewFeedbackEntry.fromAutoReviewer(
+                        reviewerName = reviewerInfo.name,
                         category = ReviewCategory.SENSITIVE_CONTENT,
                         severity = ReviewSeverity.CRITICAL,
-                        message = "Sensitive words detected in content: ${foundInContent.joinToString(", ")}",
-                        suggestion = "Please remove or replace sensitive words"
+                        message = "Sensitive word detected: $maskedWord",
+                        locationRange = location,
+                        suggestion = "Please remove or replace the sensitive content. Context: $context"
                     )
                 )
             }
@@ -88,45 +125,130 @@ class SensitiveWordAutoReviewer : AutoReviewer {
         autoReviewContext.markReviewerCompleted(this)
     }
 
-    private fun detectSensitiveWordsInStructure(node: StructuralText): List<String> {
-        // Collect all text segments in order
-        val textSegments = mutableListOf<String>()
-        collectTextSegments(node, textSegments)
+    private data class SensitiveWordDetection(
+        val location: ContentLocationRange,
+        val maskedWord: String,
+        val context: String
+    )
+
+    private fun detectSensitiveWordsInStructure(node: StructuralText): List<SensitiveWordDetection> {
+        val detections = mutableListOf<SensitiveWordDetection>()
+
+        // Collect all text segments with their node paths
+        val textSegments = mutableListOf<Pair<String, String>>() // (nodePath, text)
+        collectTextSegmentsWithPath(node, "", textSegments)
 
         // Build a sliding window buffer for cross-node detection
-        val found = mutableSetOf<String>()
         val buffer = StringBuilder()
+        val segmentOffsets = mutableListOf<Int>() // Track where each segment starts in buffer
 
-        for (segment in textSegments) {
+        for ((nodePath, segment) in textSegments) {
+            val startOffset = buffer.length
+            segmentOffsets.add(startOffset)
             buffer.append(segment)
 
             // Keep buffer size limited
-            if (buffer.length > MAX_CROSS_NODE_WINDOW * 2) {
-                buffer.delete(0, buffer.length - MAX_CROSS_NODE_WINDOW)
+            if (buffer.length > maxCrossNodeWindow * 2) {
+                val removeLength = buffer.length - maxCrossNodeWindow
+                buffer.delete(0, removeLength)
+                // Adjust offsets
+                segmentOffsets.replaceAll { it - removeLength }
+                segmentOffsets.removeIf { it < 0 }
             }
 
             // Check for sensitive words in current buffer
-            found.addAll(detectSensitiveWords(buffer.toString()))
+            val bufferDetections = detectSensitiveWordsWithLocation(buffer.toString(), nodePath)
+            detections.addAll(bufferDetections)
         }
 
-        return found.toList()
+        // Deduplicate detections based on position and content
+        return detections.distinctBy { "${it.location.context}-${it.location.startOffset}-${it.location.endOffset}" }
     }
 
-    private fun collectTextSegments(node: StructuralText, segments: MutableList<String>) {
+    private fun collectTextSegmentsWithPath(
+        node: StructuralText,
+        currentPath: String,
+        segments: MutableList<Pair<String, String>>
+    ) {
+        val nodePath = if (currentPath.isEmpty()) {
+            node.type.name
+        } else {
+            "$currentPath.${node.type}"
+        }
+
         if (node.content.isNotEmpty()) {
-            segments.add(node.content)
+            segments.add(nodePath to node.content)
         }
 
-        for (child in node.children) {
-            collectTextSegments(child, segments)
+        node.children.forEachIndexed { index, child ->
+            collectTextSegmentsWithPath(child, "$nodePath[$index]", segments)
         }
     }
 
-    private fun detectSensitiveWords(text: String): List<String> {
-        val lowerText = text.lowercase()
-        return SENSITIVE_PATTERNS.filter { pattern ->
-            lowerText.contains(pattern.lowercase())
+    private fun detectSensitiveWordsWithLocation(
+        text: String,
+        nodePath: String
+    ): List<SensitiveWordDetection> {
+        if (sensitivePatterns.isEmpty()) {
+            return emptyList()
         }
+
+        val lowerText = text.lowercase()
+        val detections = mutableListOf<SensitiveWordDetection>()
+
+        for (pattern in sensitivePatterns) {
+            val lowerPattern = pattern.lowercase()
+            var startIndex = 0
+
+            while (true) {
+                val index = lowerText.indexOf(lowerPattern, startIndex)
+                if (index == -1) break
+
+                val endIndex = index + pattern.length
+                val maskedWord = maskWord(pattern)
+                val context = extractContext(text, index, endIndex, maskedWord)
+
+                val location = ContentLocationRange.at(
+                    startOffset = index,
+                    endOffset = endIndex,
+                    context = nodePath
+                )
+
+                detections.add(SensitiveWordDetection(location, maskedWord, context))
+
+                startIndex = index + 1 // Continue searching for overlapping matches
+            }
+        }
+
+        return detections
+    }
+
+    /**
+     * Mask a sensitive word for display purposes.
+     * Shows first character, masks middle characters, shows last character if word is long enough.
+     */
+    private fun maskWord(word: String): String {
+        return when {
+            word.length <= 1 -> "*"
+            word.length == 2 -> "${word[0]}*"
+            else -> "${word[0]}${"*".repeat(word.length - 2)}${word.last()}"
+        }
+    }
+
+    /**
+     * Extract context around a match position with the sensitive word masked.
+     */
+    private fun extractContext(text: String, startPos: Int, endPos: Int, maskedWord: String, contextLength: Int = 20): String {
+        val beforeStart = maxOf(0, startPos - contextLength)
+        val afterEnd = minOf(text.length, endPos + contextLength)
+
+        val before = text.substring(beforeStart, startPos)
+        val after = text.substring(endPos, afterEnd)
+
+        val prefix = if (beforeStart > 0) "..." else ""
+        val suffix = if (afterEnd < text.length) "..." else ""
+
+        return "$prefix$before$maskedWord$after$suffix"
     }
 }
 

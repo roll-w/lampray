@@ -106,7 +106,7 @@ class AutoReviewContext(
      * Build final ReviewFeedback based on all collected entries.
      * Returns null if no issues were found (implying approval).
      */
-    fun buildFeedback(): ReviewFeedback? {
+    fun buildFeedback(): ReviewFeedback {
         if (feedbackEntries.isEmpty()) {
             return ReviewFeedback.approved("Auto-review completed with no issues detected")
         }

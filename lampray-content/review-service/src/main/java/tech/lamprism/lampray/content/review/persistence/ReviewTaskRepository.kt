@@ -16,8 +16,10 @@
 
 package tech.lamprism.lampray.content.review.persistence
 
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
+import tech.lamprism.lampray.content.review.ReviewTaskStatus
 
 /**
  * @author RollW
@@ -51,4 +53,33 @@ class ReviewTaskRepository(
         }
     }
 
+    /**
+     * Find all pending tasks in batches.
+     *
+     * @param offset the offset to start from
+     * @param limit the maximum number of tasks to return
+     * @return a list of pending review tasks
+     * @author RollW
+     */
+    fun findPendingTasksBatch(offset: Int, limit: Int): List<ReviewTaskEntity> {
+        val pageable = PageRequest.of(offset / limit, limit)
+        return findAll(
+            { root, _, builder ->
+                builder.equal(root.get(ReviewTaskEntity_.status), ReviewTaskStatus.PENDING)
+            },
+            pageable
+        ).content
+    }
+
+    /**
+     * Count all pending tasks.
+     *
+     * @return the count of pending review tasks
+     * @author RollW
+     */
+    fun countPendingTasks(): Long {
+        return count { root, _, builder ->
+            builder.equal(root.get(ReviewTaskEntity_.status), ReviewTaskStatus.PENDING)
+        }
+    }
 }
