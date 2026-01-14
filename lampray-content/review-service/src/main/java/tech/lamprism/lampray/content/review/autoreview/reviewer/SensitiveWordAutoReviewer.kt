@@ -16,7 +16,8 @@
 package tech.lamprism.lampray.content.review.autoreview.reviewer
 
 import jakarta.annotation.PostConstruct
-import org.slf4j.LoggerFactory
+import org.slf4j.info
+import org.slf4j.logger
 import org.springframework.stereotype.Component
 import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.autoreview.AutoReviewContext
@@ -38,7 +39,9 @@ class SensitiveWordAutoReviewer(
     private val configReader: ConfigReader
 ) : AutoReviewer {
 
-    private val logger = LoggerFactory.getLogger(SensitiveWordAutoReviewer::class.java)
+    companion object {
+        private val logger = logger<SensitiveWordAutoReviewer>()
+    }
 
     private var sensitivePatterns: List<String> = emptyList()
     private var maxCrossNodeWindow: Int = 50
@@ -47,8 +50,9 @@ class SensitiveWordAutoReviewer(
     fun init() {
         sensitivePatterns = loadSensitiveWords()
         maxCrossNodeWindow = configReader[SensitiveWordConfigKeys.MAX_WINDOW_SIZE, 50]
-        logger.info("Loaded {} sensitive word patterns, max cross-node window: {}",
-            sensitivePatterns.size, maxCrossNodeWindow)
+        logger.info {
+            "Loaded ${sensitivePatterns.size} sensitive word patterns, max cross-node window: ${maxCrossNodeWindow}"
+        }
     }
 
     private fun loadSensitiveWords(): List<String> {
@@ -72,6 +76,7 @@ class SensitiveWordAutoReviewer(
             } else {
                 Files.readAllLines(resolvedPath)
                     .filter { it.isNotBlank() }
+                    .map { it.trim() }
                     .filter { it.startsWith("#").not() }
                     .toSet()
             }
@@ -241,7 +246,13 @@ class SensitiveWordAutoReviewer(
     /**
      * Extract context around a match position with the sensitive word masked.
      */
-    private fun extractContext(text: String, startPos: Int, endPos: Int, maskedWord: String, contextLength: Int = 20): String {
+    private fun extractContext(
+        text: String,
+        startPos: Int,
+        endPos: Int,
+        maskedWord: String,
+        contextLength: Int = 20
+    ): String {
         val beforeStart = maxOf(0, startPos - contextLength)
         val afterEnd = minOf(text.length, endPos + contextLength)
 

@@ -30,8 +30,6 @@ import tech.lamprism.lampray.content.review.autoreview.AutoReviewContext
 import tech.lamprism.lampray.content.review.autoreview.AutoReviewOrchestrator
 import tech.lamprism.lampray.content.review.autoreview.reviewer.AutoReviewer
 
-private val logger = logger<AutoReviewOrchestratorImpl>()
-
 /**
  * @author RollW
  */
@@ -40,6 +38,9 @@ class AutoReviewOrchestratorImpl(
     private val reviewTaskCoordinator: ReviewTaskCoordinator,
     override val autoReviewers: List<AutoReviewer>
 ) : AutoReviewOrchestrator {
+    companion object {
+        private val logger = logger<AutoReviewOrchestratorImpl>()
+    }
 
     override fun executeAutoReview(reviewJob: ReviewJobSummary, contentDetails: ContentDetails) {
         if (autoReviewers.isEmpty()) {
@@ -61,49 +62,37 @@ class AutoReviewOrchestratorImpl(
     }
 
     private fun executeAutoReviewProcess(autoReviewContext: AutoReviewContext) {
+        logger.info {
+            "Starting auto-review process for job ${autoReviewContext.reviewJob.jobId} with ${autoReviewers.size} reviewers"
+        }
+
+        autoReviewers.forEach { reviewer ->
+            try {
+                reviewer.review(autoReviewContext.reviewJob, autoReviewContext)
+                logger.debug {
+                    "Auto-reviewer '${reviewer.reviewerInfo.name}' completed for job ${autoReviewContext.reviewJob.jobId}"
+                }
+            } catch (e: Exception) {
+                logger.error(e) {
+                    "Auto-reviewer '${reviewer.reviewerInfo.name}' failed for job ${autoReviewContext.reviewJob.jobId}: ${e.message}"
+                }
+            }
+        }
+
+        val feedback = autoReviewContext.buildFeedback()
         try {
+            reviewTaskCoordinator.submitFeedback(
+                autoReviewContext.reviewJob.jobId,
+                autoReviewContext.reviewTask.taskId,
+                ReviewerAllocator.AUTO_REVIEWER,
+                feedback
+            )
             logger.info {
-                "Starting auto-review process for job ${autoReviewContext.reviewJob.jobId} with ${autoReviewers.size} reviewers"
-            }
-
-            autoReviewers.forEach { reviewer ->
-                try {
-                    reviewer.review(autoReviewContext.reviewJob, autoReviewContext)
-                    logger.debug {
-                        "Auto-reviewer '${reviewer.reviewerInfo.name}' completed for job ${autoReviewContext.reviewJob.jobId}"
-                    }
-                } catch (e: Exception) {
-                    logger.error(e) {
-                        "Auto-reviewer '${reviewer.reviewerInfo.name}' failed for job ${autoReviewContext.reviewJob.jobId}: ${e.message}"
-                    }
-                }
-            }
-
-            val feedback = autoReviewContext.buildFeedback()
-            if (feedback != null) {
-                try {
-                    reviewTaskCoordinator.submitFeedback(
-                        autoReviewContext.reviewJob.jobId,
-                        autoReviewContext.reviewTask.taskId,
-                        ReviewerAllocator.AUTO_REVIEWER,
-                        feedback
-                    )
-                    logger.info {
-                        "Auto-review completed for job ${autoReviewContext.reviewJob.jobId} with verdict: ${feedback.verdict}"
-                    }
-                } catch (e: Exception) {
-                    logger.error(e) {
-                        "Failed to submit auto-review feedback for job ${autoReviewContext.reviewJob.jobId}: ${e.message}"
-                    }
-                }
-            } else {
-                logger.warn {
-                    "Auto-review completed for job ${autoReviewContext.reviewJob.jobId} but no feedback was generated"
-                }
+                "Auto-review completed for job ${autoReviewContext.reviewJob.jobId} with verdict: ${feedback.verdict}"
             }
         } catch (e: Exception) {
             logger.error(e) {
-                "Auto-review process failed for job ${autoReviewContext.reviewJob.jobId}: ${e.message}"
+                "Failed to submit auto-review feedback for job ${autoReviewContext.reviewJob.jobId}: ${e.message}"
             }
         }
     }

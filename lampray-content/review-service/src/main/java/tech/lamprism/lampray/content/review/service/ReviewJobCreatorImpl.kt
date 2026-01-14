@@ -45,8 +45,6 @@ import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository
 import tech.rollw.common.web.CommonRuntimeException
 import java.time.OffsetDateTime
 
-private val logger = logger<ReviewJobCreatorImpl>()
-
 /**
  * @author RollW
  */
@@ -60,6 +58,9 @@ class ReviewJobCreatorImpl(
     private val autoReviewOrchestrator: AutoReviewOrchestrator,
     private val applicationEventPublisher: ApplicationEventPublisher
 ) : ReviewJobCreator {
+    companion object {
+        private val logger = logger<ReviewJobCreatorImpl>()
+    }
 
     override fun createReviewJob(content: Content, reviewMark: ReviewMark): ReviewJobSummary {
         val contentId = content.contentId
@@ -121,18 +122,18 @@ class ReviewJobCreatorImpl(
             }
         }
 
-        if (humanReviewers.isNotEmpty()) {
-            val tasks = reviewTaskCoordinator.createTasksForReviewers(
-                reviewJobInfo.jobId,
-                humanReviewers
-            )
-            logger.debug {
-                "Created ${tasks.size} human review tasks for job ${reviewJobInfo.jobId}"
-            }
-        } else {
+        if (humanReviewers.isEmpty()) {
             logger.warn {
                 "No human reviewers allocated for job ${reviewJobInfo.jobId}, auto-review will be primary"
             }
+            return
+        }
+        val tasks = reviewTaskCoordinator.createTasksForReviewers(
+            reviewJobInfo.jobId,
+            humanReviewers
+        )
+        logger.debug {
+            "Created ${tasks.size} human review tasks for job ${reviewJobInfo.jobId}"
         }
     }
 
