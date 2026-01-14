@@ -78,7 +78,8 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
         this.commentDetailsMetadata = new CommentDetailsMetadata(commentOnType, commentOnId, parentId);
     }
 
-    public Long getId() {
+    @Override
+    public Long getEntityId() {
         return id;
     }
 
@@ -199,7 +200,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
         }
 
         @Override
-        public Builder setId(Long id) {
+        public Builder setEntityId(Long id) {
             this.id = id;
             return this;
         }

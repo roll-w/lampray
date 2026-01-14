@@ -43,7 +43,7 @@ public record ArticleMetaVo(
         }
         StructuralText content = article.getContent();
         return new ArticleMetaVo(
-                article.getId(),
+                article.getEntityId(),
                 article.getTitle(),
                 content,
                 article.getUserId(),

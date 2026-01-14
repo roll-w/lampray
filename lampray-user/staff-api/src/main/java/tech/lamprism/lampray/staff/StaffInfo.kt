@@ -45,7 +45,7 @@ data class StaffInfo(
         @JvmStatic
         fun from(staff: Staff, userIdentity: UserIdentity): StaffInfo {
             return StaffInfo(
-                staff.id,
+                staff.entityId,
                 userIdentity,
                 staff.types,
                 staff.createTime,

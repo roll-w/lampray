@@ -23,5 +23,5 @@ import space.lingu.NonNull;
  */
 public interface ReviewContentProvider {
     @NonNull
-    ReviewJobContent getReviewContent(long jobId);
+    ReviewJobContent getReviewContent(String jobId);
 }

@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.content.service;
 
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,7 @@ import tech.lamprism.lampray.content.persistence.ContentMetadataDo;
 import tech.lamprism.lampray.content.persistence.ContentMetadataRepository;
 import tech.lamprism.lampray.content.publish.ContentPublishListener;
 import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.ErrorCode;
 import tech.rollw.common.web.system.UnsupportedKindException;
 
@@ -170,6 +172,7 @@ public class ContentService implements ContentAccessService,
     }
 
     @Override
+    @Transactional(dontRollbackOn = CommonRuntimeException.class)
     public ContentDetails publishContent(UncreatedContent uncreatedContent) throws ContentException {
         OffsetDateTime timestamp = OffsetDateTime.now();
         ContentSupportableUtils.findAllSupportable(uncreatedContentPreCheckers,

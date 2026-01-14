@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
+import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.generator.EventType
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.content.ContentAssociated
@@ -34,6 +34,7 @@ import tech.lamprism.lampray.content.ContentIdentity
 import tech.lamprism.lampray.content.ContentType
 import tech.lamprism.lampray.content.review.ReviewJob
 import tech.lamprism.lampray.content.review.ReviewJobResourceKind
+import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.ReviewStatus
 import tech.rollw.common.web.system.SystemResourceKind
@@ -45,11 +46,14 @@ import java.time.OffsetDateTime
  */
 @Entity
 @Table(name = "review_job")
-class ReviewJobDo(
+class ReviewJobEntity(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
+    var id: Long? = null,
+
     @Id
-    @Column(name = "id", nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null,
+    @Column(name = "resource_id", nullable = false, length = 64, unique = true)
+    var resourceId: String = "",
 
     @Column(name = "content_id", nullable = false)
     var reviewContentId: Long = 0,
@@ -59,45 +63,43 @@ class ReviewJobDo(
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var reviewContentType: ContentType = ContentType.ARTICLE,
 
-    @Column(name = "reviewer_id", nullable = false)
-    var reviewerId: Long = 0,
-
-    @Column(name = "operator_id")
-    var operatorId: Long? = null,
-
     @Column(name = "status", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    var status: ReviewStatus = ReviewStatus.NOT_REVIEWED,
+    override var status: ReviewStatus = ReviewStatus.PENDING,
 
-    @Column(name = "result", nullable = false)
-    var result: String = "",
-
-    @Column(name = "assigned_time", nullable = false)
+    @Column(name = "create_time", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    var assignedTime: OffsetDateTime = OffsetDateTime.now(),
+    private var createTime: OffsetDateTime = OffsetDateTime.now(),
 
-    @Column(name = "review_time", nullable = false)
+    @Column(name = "update_time", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    var reviewTime: OffsetDateTime = OffsetDateTime.now(),
+    private var updateTime: OffsetDateTime = OffsetDateTime.now(),
 
     @Column(name = "review_mark", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    var reviewMark: ReviewMark = ReviewMark.NORMAL
-) : DataEntity<Long>, ContentAssociated {
+    override var reviewMark: ReviewMark = ReviewMark.NORMAL
+) : DataEntity<String>, ContentAssociated, ReviewJobSummary {
     override fun getSystemResourceKind(): SystemResourceKind =
         ReviewJobResourceKind
 
-    override fun getCreateTime(): OffsetDateTime = assignedTime
+    override fun getCreateTime(): OffsetDateTime = createTime
 
-    override fun getUpdateTime(): OffsetDateTime = reviewTime
-
-    override fun getId(): Long? = id
-
-    fun setId(id: Long) {
-        this.id = id
+    override fun getUpdateTime(): OffsetDateTime = updateTime
+    
+    fun setCreateTime(createTime: OffsetDateTime) {
+        this.createTime = createTime
     }
+    
+    fun setUpdateTime(updateTime: OffsetDateTime) {
+        this.updateTime = updateTime
+    }
+    
+    override fun getEntityId(): String? = resourceId
+
+    override val jobId: String
+        get() = resourceId
 
     override fun getAssociatedContent(): ContentIdentity =
         ContentIdentity.of(reviewContentId, reviewContentType)
@@ -108,62 +110,45 @@ class ReviewJobDo(
 
     fun lock(): ReviewJob {
         return ReviewJob(
-            id,
+            id, resourceId,
             reviewContentId,
             reviewContentType,
-            reviewerId,
-            operatorId,
             status,
-            result,
-            assignedTime,
-            reviewTime,
+            createTime,
+            updateTime,
             reviewMark
         )
     }
 
-    fun reviewPass(operator: Long, time: OffsetDateTime) = apply {
-        this.operatorId = operator
-        this.status = ReviewStatus.REVIEWED
-        this.reviewTime = time
-    }
-
-    fun reviewReject(operator: Long, reason: String, time: OffsetDateTime) = apply {
-        this.operatorId = operator
-        this.status = ReviewStatus.REJECTED
-        this.result = reason
-        this.reviewTime = time
-    }
-
     class Builder {
         private var id: Long? = null
+        private var resourceId: String? = null
         private var reviewContentId: Long = 0
         private var reviewContentType: ContentType = ContentType.ARTICLE
-        private var reviewerId: Long = 0
-        private var operatorId: Long? = null
-        private var status: ReviewStatus = ReviewStatus.NOT_REVIEWED
-        private var result: String = ""
-        private var assignedTime: OffsetDateTime = OffsetDateTime.now()
-        private var reviewTime: OffsetDateTime = OffsetDateTime.now()
+        private var status: ReviewStatus = ReviewStatus.PENDING
+        private var createTime: OffsetDateTime = OffsetDateTime.now()
+        private var updateTime: OffsetDateTime = OffsetDateTime.now()
         private var reviewMark: ReviewMark = ReviewMark.NORMAL
 
         constructor()
 
-        constructor(other: ReviewJobDo) {
+        constructor(other: ReviewJobEntity) {
             this.id = other.id
+            this.resourceId = other.resourceId
             this.reviewContentId = other.reviewContentId
             this.reviewContentType = other.reviewContentType
-            this.reviewerId = other.reviewerId
-            this.operatorId = other.operatorId
             this.status = other.status
-            this.result = other.result
-            this.assignedTime = other.assignedTime
-            this.reviewTime = other.reviewTime
+            this.createTime = other.createTime
+            this.updateTime = other.updateTime
             this.reviewMark = other.reviewMark
         }
 
-        fun setId(id: Long?): Builder {
+        fun setId(id: Long?) = apply {
             this.id = id
-            return this
+        }
+
+        fun setResourceId(resourceId: String) = apply {
+            this.resourceId = resourceId
         }
 
         fun setReviewContentId(reviewContentId: Long) = apply {
@@ -172,66 +157,48 @@ class ReviewJobDo(
 
         fun setReviewContentType(reviewContentType: ContentType) = apply {
             this.reviewContentType = reviewContentType
-            return this
-        }
-
-        fun setReviewerId(reviewerId: Long) = apply {
-            this.reviewerId = reviewerId
-        }
-
-        fun setOperatorId(operatorId: Long?) = apply {
-            this.operatorId = operatorId
         }
 
         fun setStatus(status: ReviewStatus) = apply {
             this.status = status
         }
 
-        fun setResult(result: String) = apply {
-            this.result = result
+        fun setCreateTime(createTime: OffsetDateTime) = apply {
+            this.createTime = createTime
         }
 
-        fun setAssignedTime(assignedTime: OffsetDateTime) = apply {
-            this.assignedTime = assignedTime
-        }
-
-        fun setReviewTime(reviewTime: OffsetDateTime) = apply {
-            this.reviewTime = reviewTime
+        fun setUpdateTime(updateTime: OffsetDateTime) = apply {
+            this.updateTime = updateTime
         }
 
         fun setReviewMark(reviewMark: ReviewMark) = apply {
             this.reviewMark = reviewMark
         }
 
-        fun build(): ReviewJobDo {
-            return ReviewJobDo(
+        fun build(): ReviewJobEntity {
+            return ReviewJobEntity(
                 id,
-                reviewContentId,
-                reviewContentType,
-                reviewerId,
-                operatorId,
-                status,
-                result,
-                assignedTime,
-                reviewTime,
-                reviewMark
+                resourceId = resourceId!!,
+                reviewContentId = reviewContentId,
+                reviewContentType = reviewContentType,
+                status = status,
+                createTime = createTime,
+                updateTime = updateTime,
+                reviewMark = reviewMark
             )
         }
     }
 
     companion object {
         @JvmStatic
-        fun ReviewJob.toDo(): ReviewJobDo = ReviewJobDo(
-            id,
-            reviewContentId,
-            reviewContentType,
-            reviewerId,
-            operatorId,
-            status,
-            result,
-            assignedTime,
-            reviewTime,
-            reviewMark
+        fun ReviewJob.toDo(): ReviewJobEntity = ReviewJobEntity(
+            id, jobId,
+            reviewContentId = reviewContentId,
+            reviewContentType = reviewContentType,
+            status = status,
+            createTime = createTime,
+            updateTime = updateTime,
+            reviewMark = reviewMark
         )
 
         @JvmStatic

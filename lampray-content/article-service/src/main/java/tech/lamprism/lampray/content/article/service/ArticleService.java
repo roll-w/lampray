@@ -79,7 +79,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
                 .build();
         ArticleDo created = articleRepository.save(article);
         logger.trace("Article({}) title={} created by user({})",
-                created.getId(), created.getTitle(), created.getUserId());
+                created.getEntityId(), created.getTitle(), created.getUserId());
         return created;
     }
 

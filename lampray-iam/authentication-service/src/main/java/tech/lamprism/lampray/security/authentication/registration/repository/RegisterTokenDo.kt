@@ -79,7 +79,7 @@ class RegisterTokenDo(
         this.id = id
     }
 
-    override fun getId(): Long? {
+    override fun getEntityId(): Long? {
         return id
     }
 
@@ -110,7 +110,7 @@ class RegisterTokenDo(
     companion object {
         @JvmStatic
         fun RegisterVerificationToken.toDo(): RegisterTokenDo = RegisterTokenDo(
-            id, token, userId, expiryTime, used
+            entityId, token, userId, expiryTime, used
         )
 
         @JvmStatic

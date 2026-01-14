@@ -80,7 +80,7 @@ class CommentDo(
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var commentStatus: CommentStatus = CommentStatus.NONE
 ) : DataEntity<Long>, ContentDetails, ContentAssociated {
-    override fun getId(): Long? = id
+    override fun getEntityId(): Long? = id
 
     fun setId(id: Long) {
         this.id = id
@@ -233,7 +233,7 @@ class CommentDo(
         @JvmStatic
         fun Comment.toDo(): CommentDo {
             return CommentDo(
-                id, userId, parentId, content,
+                entityId, userId, parentId, content,
                 createTime, updateTime,
                 commentOnType, commentOnId, commentStatus
             )

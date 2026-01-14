@@ -67,7 +67,7 @@ class LocalizedMessageDo(
     @Column(name = "update_time", nullable = false)
     private var updateTime: OffsetDateTime = OffsetDateTime.now()
 ) : LocalizedMessageResource, DataEntity<Long> {
-    override fun getId(): Long? {
+    override fun getEntityId(): Long? {
         return id
     }
 
@@ -93,7 +93,7 @@ class LocalizedMessageDo(
 
     companion object {
         fun LocalizedMessage.toDo(): LocalizedMessageDo {
-            return LocalizedMessageDo(id, key, value, locale, updateTime)
+            return LocalizedMessageDo(entityId, key, value, locale, updateTime)
         }
     }
 }

@@ -54,7 +54,7 @@ class SystemSettingDo(
     @Column(name = "update_time", nullable = false)
     private var updateTime: OffsetDateTime = OffsetDateTime.now()
 ) : DataEntity<Long> {
-    override fun getId(): Long? = id
+    override fun getEntityId(): Long? = id
 
     fun setId(id: Long?) {
         this.id = id

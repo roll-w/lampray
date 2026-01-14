@@ -43,7 +43,7 @@ class ArticleDo(
     @Column(name = "id", nullable = false)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null,
+    var id: Long? = null,
 
     @Column(name = "user_id", nullable = false)
     private var userId: Long = 0,
@@ -66,11 +66,7 @@ class ArticleDo(
     @Column(name = "update_time", nullable = false)
     private var updateTime: OffsetDateTime = OffsetDateTime.now()
 ) : DataEntity<Long>, ContentDetails {
-    override fun getId(): Long? = id
-
-    fun setId(id: Long?) {
-        this.id = id
-    }
+    override fun getEntityId(): Long? = id
 
     override fun getResourceId(): Long = id!!
 
@@ -190,7 +186,7 @@ class ArticleDo(
         @JvmStatic
         fun Article.toDo(): ArticleDo {
             return ArticleDo(
-                id, userId, title, cover, content,
+                entityId, userId, title, cover, content,
                 createTime, updateTime
             )
         }

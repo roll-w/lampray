@@ -59,7 +59,7 @@ public record RegisterVerificationToken(
     }
 
     @Override
-    public Long getId() {
+    public Long getEntityId() {
         return id;
     }
 
@@ -122,7 +122,7 @@ public record RegisterVerificationToken(
         }
 
         @Override
-        public Builder setId(Long id) {
+        public Builder setEntityId(Long id) {
             this.id = id;
             return this;
         }

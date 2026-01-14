@@ -57,7 +57,8 @@ public class User implements AttributedUserDetails, DataEntity<Long> {
         this.canceled = canceled;
     }
 
-    public Long getId() {
+    @Override
+    public Long getEntityId() {
         return id;
     }
 
@@ -205,7 +206,7 @@ public class User implements AttributedUserDetails, DataEntity<Long> {
         }
 
         @Override
-        public Builder setId(Long id) {
+        public Builder setEntityId(Long id) {
             this.id = id;
             return this;
         }

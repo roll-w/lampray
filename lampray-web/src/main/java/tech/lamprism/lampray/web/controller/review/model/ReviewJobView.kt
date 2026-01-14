@@ -17,7 +17,7 @@
 package tech.lamprism.lampray.web.controller.review.model
 
 import tech.lamprism.lampray.content.ContentType
-import tech.lamprism.lampray.content.review.ReviewJobDetails
+import tech.lamprism.lampray.content.review.ReviewJobSummary
 import tech.lamprism.lampray.content.review.ReviewMark
 import tech.lamprism.lampray.content.review.ReviewStatus
 import java.time.OffsetDateTime
@@ -26,32 +26,26 @@ import java.time.OffsetDateTime
  * @author RollW
  */
 data class ReviewJobView(
-    val id: Long,
+    val id: String,
     val status: ReviewStatus,
-    val result: String,
-    val reviewer: Long,
-    val operator: Long?,
     val contentType: ContentType,
     val contentId: Long,
     val reviewMark: ReviewMark,
-    val assignedTime: OffsetDateTime,
-    val reviewTime: OffsetDateTime
+    val createTime: OffsetDateTime,
+    val updateTime: OffsetDateTime
 ) {
 
     companion object {
         @JvmStatic
-        fun from(reviewJobDetails: ReviewJobDetails): ReviewJobView {
+        fun from(reviewJobSummary: ReviewJobSummary): ReviewJobView {
             return ReviewJobView(
-                id = reviewJobDetails.jobId,
-                status = reviewJobDetails.status,
-                result = reviewJobDetails.result,
-                reviewer = reviewJobDetails.reviewer,
-                operator = reviewJobDetails.operator,
-                contentType = reviewJobDetails.associatedContent.contentType,
-                contentId = reviewJobDetails.associatedContent.contentId,
-                reviewMark = reviewJobDetails.reviewMark,
-                assignedTime = reviewJobDetails.assignedTime,
-                reviewTime = reviewJobDetails.reviewTime
+                id = reviewJobSummary.jobId,
+                status = reviewJobSummary.status,
+                contentType = reviewJobSummary.associatedContent.contentType,
+                contentId = reviewJobSummary.associatedContent.contentId,
+                reviewMark = reviewJobSummary.reviewMark,
+                createTime = reviewJobSummary.createTime,
+                updateTime = reviewJobSummary.updateTime
             )
         }
     }

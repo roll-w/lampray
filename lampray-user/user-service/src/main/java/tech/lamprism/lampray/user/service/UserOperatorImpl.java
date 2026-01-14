@@ -269,7 +269,7 @@ public class UserOperatorImpl implements UserOperator {
     }
 
     public Long getId() {
-        return user.getId();
+        return user.getEntityId();
     }
 
     @Override

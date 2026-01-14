@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.review.service;
+package tech.lamprism.lampray.content.review.persistence
 
-import tech.lamprism.lampray.content.review.common.ReviewException;
-import tech.lamprism.lampray.content.review.ReviewJobInfo;
+import tech.lamprism.lampray.common.data.CommonDao
+import tech.lamprism.lampray.common.data.Dao
 
 /**
  * @author RollW
  */
-public interface ReviewStatusService {
-    // TODO: a temporary interface, need to be refactored
-    ReviewJobInfo makeReview(long jobId, long operator,
-                             boolean passed, String reason) throws ReviewException;
+@Dao
+interface ReviewTaskDao : CommonDao<ReviewTaskEntity, String> {
 }

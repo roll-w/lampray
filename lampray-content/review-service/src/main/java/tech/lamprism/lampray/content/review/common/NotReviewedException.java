@@ -16,20 +16,20 @@
 
 package tech.lamprism.lampray.content.review.common;
 
-import tech.lamprism.lampray.content.review.ReviewJobInfo;
+import tech.lamprism.lampray.content.review.ReviewJobSummary;
 
 /**
  * @author RollW
  */
 public class NotReviewedException extends ReviewException {
-    private final ReviewJobInfo reviewJobInfo;
+    private final ReviewJobSummary reviewJobSummary;
 
-    public NotReviewedException(ReviewJobInfo reviewJobInfo) {
+    public NotReviewedException(ReviewJobSummary reviewJobSummary) {
         super(ReviewErrorCode.ERROR_NOT_REVIEWED);
-        this.reviewJobInfo = reviewJobInfo;
+        this.reviewJobSummary = reviewJobSummary;
     }
 
-    public ReviewJobInfo getReviewInfo() {
-        return reviewJobInfo;
+    public ReviewJobSummary getReviewInfo() {
+        return reviewJobSummary;
     }
 }

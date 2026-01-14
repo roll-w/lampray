@@ -18,9 +18,8 @@ package tech.lamprism.lampray.content.review;
 
 import com.google.common.base.Preconditions;
 import space.lingu.NonNull;
-import space.lingu.Nullable;
 import tech.lamprism.lampray.DataEntity;
-import tech.lamprism.lampray.LongEntityBuilder;
+import tech.lamprism.lampray.EntityBuilder;
 import tech.lamprism.lampray.content.ContentAssociated;
 import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
@@ -33,84 +32,53 @@ import java.util.Objects;
 /**
  * @author RollW
  */
-public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJobDetails {
-    private final Long jobId;
-
-    // TODO: may add serial number to replace job id in the future
-    // private String serialNumber;
+public class ReviewJob implements DataEntity<String>, ContentAssociated, ReviewJobSummary {
+    private final Long id;
+    private final String jobId;
     private final long reviewContentId;
     private final ContentType reviewContentType;
 
-    // TODO: may change to reviewer ids in the future
-    private final Long reviewerId;
-    @Nullable
-    private final Long operatorId;
     private final ReviewStatus status;
-    private final String result;
-    private final OffsetDateTime assignedTime;
-    private final OffsetDateTime reviewTime;
+    private final OffsetDateTime createTime;
+    private final OffsetDateTime updateTime;
     private final ReviewMark reviewMark;
     private final ContentIdentity associatedContent;
 
-    public ReviewJob(Long jobId, long reviewContentId,
-                     ContentType reviewContentType, Long reviewerId,
-                     @Nullable Long operatorId,
-                     ReviewStatus status,
-                     String result, OffsetDateTime assignedTime,
-                     OffsetDateTime reviewTime,
+    public ReviewJob(Long id, String jobId, long reviewContentId,
+                     ContentType reviewContentType,
+                     ReviewStatus status, OffsetDateTime createTime,
+                     OffsetDateTime updateTime,
                      ReviewMark reviewMark) {
         Preconditions.checkNotNull(status);
         Preconditions.checkNotNull(reviewContentType);
         Preconditions.checkNotNull(reviewMark);
 
+        this.id = id;
         this.jobId = jobId;
         this.reviewContentId = reviewContentId;
-        this.reviewerId = reviewerId;
-        this.operatorId = operatorId;
         this.status = status;
         this.reviewContentType = reviewContentType;
-        this.assignedTime = assignedTime;
-        this.result = result;
-        this.reviewTime = reviewTime;
+        this.createTime = createTime;
+        this.updateTime = updateTime;
         this.reviewMark = reviewMark;
         this.associatedContent = new SimpleContentIdentity(reviewContentId, reviewContentType);
     }
 
     @Override
-    public Long getId() {
+    public String getEntityId() {
         return getJobId();
     }
 
-    @NonNull
-    @Override
-    public OffsetDateTime getCreateTime() {
-        return getAssignedTime();
-    }
-
-    @NonNull
-    @Override
-    public OffsetDateTime getUpdateTime() {
-        return getReviewTime();
-    }
-
-    public long getJobId() {
-        return jobId;
+    public long getId() {
+        return id;
     }
 
     public long getReviewContentId() {
         return reviewContentId;
     }
 
-    public Long getReviewerId() {
-        return reviewerId;
-    }
-
-    @Nullable
-    public Long getOperatorId() {
-        return operatorId;
-    }
-
     @NonNull
+    @Override
     public ReviewStatus getStatus() {
         return status;
     }
@@ -120,21 +88,19 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJob
     }
 
     @NonNull
-    public OffsetDateTime getAssignedTime() {
-        return assignedTime;
+    @Override
+    public OffsetDateTime getCreateTime() {
+        return createTime;
     }
 
     @NonNull
-    public String getResult() {
-        return result;
+    @Override
+    public OffsetDateTime getUpdateTime() {
+        return updateTime;
     }
 
     @NonNull
-    public OffsetDateTime getReviewTime() {
-        return reviewTime;
-    }
-
-    @NonNull
+    @Override
     public ReviewMark getReviewMark() {
         return reviewMark;
     }
@@ -143,22 +109,6 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJob
     @Override
     public ContentIdentity getAssociatedContent() {
         return associatedContent;
-    }
-
-    public ReviewJob reviewPass(long operatorId, OffsetDateTime reviewTime) {
-        return new ReviewJob(
-                jobId, reviewContentId, reviewContentType,
-                reviewerId, operatorId,
-                ReviewStatus.REVIEWED, null, assignedTime, reviewTime,
-                reviewMark);
-    }
-
-    public ReviewJob reviewReject(long operatorId, String result, OffsetDateTime reviewTime) {
-        return new ReviewJob(
-                jobId, reviewContentId, reviewContentType,
-                reviewerId, operatorId,
-                ReviewStatus.REJECTED, result, assignedTime, reviewTime,
-                reviewMark);
     }
 
     public Builder toBuilder() {
@@ -170,40 +120,30 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJob
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ReviewJob job = (ReviewJob) o;
-        return Objects.equals(reviewerId, job.reviewerId) && Objects.equals(operatorId, job.operatorId) && assignedTime == job.assignedTime && reviewTime == job.reviewTime && Objects.equals(jobId, job.jobId) && Objects.equals(reviewContentId, job.reviewContentId) && status == job.status && reviewContentType == job.reviewContentType && Objects.equals(result, job.result) && reviewMark == job.reviewMark;
+        return Objects.equals(jobId, job.jobId)  && createTime == job.createTime && updateTime == job.updateTime && Objects.equals(id, job.id) && Objects.equals(reviewContentId, job.reviewContentId) && status == job.status && reviewContentType == job.reviewContentType && reviewMark == job.reviewMark;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(jobId, reviewContentId, reviewerId, operatorId, status, reviewContentType, assignedTime, result, reviewTime, reviewMark);
+        return Objects.hash(id, jobId, reviewContentId, status, reviewContentType, createTime, updateTime, reviewMark);
     }
 
     @Override
     public String toString() {
         return "ReviewJob{" +
-                "jobId=" + jobId +
+                "id=" + id +
+                ", jobId='" + jobId + '\'' +
                 ", reviewContentId='" + reviewContentId + '\'' +
-                ", reviewerId=" + reviewerId +
-                ", operatorId=" + operatorId +
                 ", status=" + status +
                 ", type=" + reviewContentType +
-                ", assignedTime=" + assignedTime +
-                ", result='" + result + '\'' +
-                ", reviewTime=" + reviewTime +
+                ", createTime=" + createTime +
+                ", updateTime=" + updateTime +
                 ", reviewMark=" + reviewMark +
                 '}';
     }
 
     public static Builder builder() {
         return new Builder();
-    }
-
-    public ReviewJob fork(long id) {
-        return new ReviewJob(
-                id, reviewContentId, reviewContentType,
-                reviewerId, operatorId, status, result, assignedTime,
-                reviewTime,
-                reviewMark);
     }
 
     @Override
@@ -213,26 +153,18 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJob
     }
 
     @Override
-    public long getReviewer() {
-        return reviewerId;
+    @NonNull
+    public String getJobId() {
+        return jobId;
     }
 
-    @Override
-    @Nullable
-    public Long getOperator() {
-        return operatorId;
-    }
-
-
-    public final static class Builder implements LongEntityBuilder<ReviewJob> {
-        private Long jobId = null;
+    public final static class Builder implements EntityBuilder<ReviewJob, String> {
+        private Long id = null;
+        private String jobId;
         private long reviewContentId;
-        private Long reviewerId;
-        private Long operatorId;
         private ReviewStatus status;
         private ContentType reviewContentType;
         private OffsetDateTime assignedTime;
-        private String result;
         private OffsetDateTime reviewTime;
         private ReviewMark reviewMark;
 
@@ -240,40 +172,32 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJob
         }
 
         public Builder(ReviewJob job) {
-            this.jobId = job.jobId;
+            this.id = job.id;
             this.reviewContentId = job.reviewContentId;
-            this.reviewerId = job.reviewerId;
-            this.operatorId = job.operatorId;
             this.status = job.status;
             this.reviewContentType = job.reviewContentType;
-            this.assignedTime = job.assignedTime;
-            this.result = job.result;
-            this.reviewTime = job.reviewTime;
+            this.assignedTime = job.createTime;
+            this.reviewTime = job.updateTime;
             this.reviewMark = job.reviewMark;
         }
 
         @Override
-        public LongEntityBuilder<ReviewJob> setId(Long id) {
+        public Builder setEntityId(String id) {
             return setJobId(id);
         }
 
-        public Builder setJobId(Long jobId) {
+        public Builder setId(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder setJobId(String jobId) {
             this.jobId = jobId;
             return this;
         }
 
         public Builder setReviewContentId(long reviewContentId) {
             this.reviewContentId = reviewContentId;
-            return this;
-        }
-
-        public Builder setReviewerId(Long reviewerId) {
-            this.reviewerId = reviewerId;
-            return this;
-        }
-
-        public Builder setOperatorId(Long operatorId) {
-            this.operatorId = operatorId;
             return this;
         }
 
@@ -292,11 +216,6 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJob
             return this;
         }
 
-        public Builder setResult(String result) {
-            this.result = result;
-            return this;
-        }
-
         public Builder setReviewTime(OffsetDateTime reviewTime) {
             this.reviewTime = reviewTime;
             return this;
@@ -310,10 +229,10 @@ public class ReviewJob implements DataEntity<Long>, ContentAssociated, ReviewJob
         @Override
         public ReviewJob build() {
             return new ReviewJob(
-                    jobId, reviewContentId,
-                    reviewContentType, reviewerId, operatorId, status,
-                    result, assignedTime, reviewTime,
-                    reviewMark);
+                    id, jobId,
+                    reviewContentId, reviewContentType,
+                    status, assignedTime,
+                    reviewTime, reviewMark);
         }
 
     }

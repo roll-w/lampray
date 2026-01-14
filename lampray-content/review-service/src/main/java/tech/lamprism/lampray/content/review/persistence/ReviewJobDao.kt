@@ -23,5 +23,5 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface ReviewJobDao : CommonDao<ReviewJobDo, Long> {
+interface ReviewJobDao : CommonDao<ReviewJobEntity, String> {
 }

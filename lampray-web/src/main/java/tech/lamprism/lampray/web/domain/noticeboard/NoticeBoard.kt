@@ -38,7 +38,7 @@ data class NoticeBoard(
     private val createTime: OffsetDateTime,
     private val updateTime: OffsetDateTime
 ) : DataEntity<Long> {
-    override fun getId(): Long? {
+    override fun getEntityId(): Long? {
         return id
     }
 
@@ -72,7 +72,7 @@ data class NoticeBoard(
             this.updateTime = noticeboard.updateTime
         }
 
-        override fun setId(id: Long?): Builder {
+        override fun setEntityId(id: Long?): Builder {
             this.id = id
             return this
         }

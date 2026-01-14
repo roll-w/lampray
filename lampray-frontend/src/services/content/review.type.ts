@@ -29,8 +29,8 @@ export enum ReviewStatuses {
 
 
 export enum ReviewStatus {
-    NOT_REVIEWED = "NOT_REVIEWED",
-    REVIEWED = "REVIEWED",
+    PENDING = "PENDING",
+    APPROVED = "APPROVED",
     REJECTED = "REJECTED",
     CANCELED = "CANCELED"
 }

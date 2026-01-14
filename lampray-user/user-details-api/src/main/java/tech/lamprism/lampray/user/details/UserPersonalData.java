@@ -99,7 +99,7 @@ public final class UserPersonalData implements Serializable, DataEntity<Long> {
     }
 
     @Override
-    public Long getId() {
+    public Long getEntityId() {
         return getUserId();
     }
 
@@ -190,7 +190,7 @@ public final class UserPersonalData implements Serializable, DataEntity<Long> {
         }
 
         @Override
-        public Builder setId(Long id) {
+        public Builder setEntityId(Long id) {
             return this;
         }
 

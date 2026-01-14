@@ -222,7 +222,7 @@ public abstract class AbstractApplicationContextCommandRunner implements Command
         properties.put("spring.jmx.enabled", false);
         //properties.put("spring.jpa.show-sql", true);
         properties.put("spring.jpa.properties.hibernate.globally_quoted_identifiers", "true");
-        properties.put("spring.jpa.hibernate.ddl-auto", "update");
+        properties.put("spring.jpa.hibernate.ddl-auto", "none");
 
         // Disable all actuator endpoints
         properties.put("management.endpoints.web.exposure.exclude", "*");

@@ -57,7 +57,7 @@ public interface FavoriteGroupOperator extends SystemResourceOperator<Long>, Sys
 
     @Override
     default Long getResourceId() {
-        return getFavoriteGroup().getId();
+        return getFavoriteGroup().getEntityId();
     }
 
     @NonNull

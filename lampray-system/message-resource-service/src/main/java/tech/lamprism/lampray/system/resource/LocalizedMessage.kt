@@ -37,7 +37,7 @@ data class LocalizedMessage(
     override val locale: Locale,
     private val updateTime: OffsetDateTime
 ) : LocalizedMessageResource, DataEntity<Long> {
-    override fun getId(): Long? = id
+    override fun getEntityId(): Long? = id
 
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
 

@@ -1,0 +1,614 @@
+databaseChangeLog:
+  - changeSet:
+      id: baseline
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      rollback:
+        - dropTable:
+            tableName: article
+        - dropTable:
+            tableName: comment
+        - dropTable:
+            tableName: content_metadata
+        - dropTable:
+            tableName: favorite_group
+        - dropTable:
+            tableName: favorite_item
+        - dropTable:
+            tableName: localized_message
+        - dropTable:
+            tableName: register_verification_token
+        - dropTable:
+            tableName: review_job
+        - dropTable:
+            tableName: review_job_task
+        - dropTable:
+            tableName: staff
+        - dropTable:
+            tableName: staff_types
+        - dropTable:
+            tableName: system_setting
+        - dropTable:
+            tableName: user
+        - dropTable:
+            tableName: user_personal_data
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_article
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: title
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: cover
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: content
+                  type: BLOB
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+            tableName: article
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_comment
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: parent_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: content
+                  type: BLOB
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: comment_on_type
+                  type: VARCHAR(40)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: comment_on_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: comment_status
+                  type: VARCHAR(40)
+            tableName: comment
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_content_metadata
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: content_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: type
+                  type: VARCHAR(40)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(40)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: auth_type
+                  type: VARCHAR(40)
+            tableName: content_metadata
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_favorite_group
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: type
+                  type: VARCHAR(40)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: public
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                  name: description
+                  type: CLOB
+              - column:
+                  constraints:
+                    nullable: false
+                  name: icon
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: deleted
+                  type: BOOLEAN
+            tableName: favorite_group
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_favorite_item
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: group_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: content_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: content_type
+                  type: VARCHAR(40)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: deleted
+                  type: BOOLEAN
+            tableName: favorite_item
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_localized_message
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: key
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: value
+                  type: CLOB
+              - column:
+                  constraints:
+                    nullable: false
+                  name: locale
+                  type: VARCHAR(20)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+            tableName: localized_message
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_register_verification_token
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: token
+                  type: VARCHAR(255)
+              - column:
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  name: expiry_time
+                  type: BIGINT
+              - column:
+                  name: used
+                  type: BOOLEAN
+            tableName: register_verification_token
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_review_job
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    unique: true
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: content_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: content_type
+                  type: VARCHAR(40)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(40)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: review_mark
+                  type: VARCHAR(40)
+            tableName: review_job
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_review_job_task
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    unique: true
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: review_job_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(40)
+              - column:
+                  name: reviewer_id
+                  type: BIGINT
+              - column:
+                  name: feedback
+                  type: BLOB
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+            tableName: review_job_task
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_staff
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: as_user
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                  name: deleted
+                  type: BOOLEAN
+            tableName: staff
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: type
+                  type: VARCHAR(20)
+            tableName: staff_types
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_system_setting
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: key
+                  type: VARCHAR(255)
+              - column:
+                  name: value
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+            tableName: system_setting
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_user
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: username
+                  type: VARCHAR(120)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: password
+                  type: VARCHAR(120)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: role
+                  type: VARCHAR(20)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: register_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: email
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: phone
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: enabled
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                  name: locked
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                  name: account_canceled
+                  type: BOOLEAN
+            tableName: user
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_user_personal_data
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: nickname
+                  type: VARCHAR(120)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: avatar
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: cover
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: birthday
+                  type: VARCHAR(12)
+              - column:
+                  name: introduction
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: gender
+                  type: VARCHAR(24)
+              - column:
+                  name: location
+                  type: VARCHAR(120)
+              - column:
+                  name: website
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+            tableName: user_personal_data
+        - addUniqueConstraint:
+            columnNames: content_id, type
+            constraintName: index__content_id_type
+            tableName: content_metadata
+        - addUniqueConstraint:
+            columnNames: key
+            constraintName: index__key
+            tableName: system_setting
+        - addUniqueConstraint:
+            columnNames: key, locale
+            constraintName: index__key_locale
+            tableName: localized_message
+        - addUniqueConstraint:
+            columnNames: token
+            constraintName: index__token
+            tableName: register_verification_token
+        - addUniqueConstraint:
+            columnNames: username
+            constraintName: index__username
+            tableName: user
+        - addUniqueConstraint:
+            columnNames: resource_id
+            constraintName: uc_review_job_task_resource
+            tableName: review_job_task

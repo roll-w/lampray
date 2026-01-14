@@ -88,7 +88,7 @@ class UserDo(
     @Column(name = "account_canceled", nullable = false)
     private var canceled: Boolean = false
 ) : Serializable, DataEntity<Long>, AttributedUserDetails {
-    override fun getId(): Long? {
+    override fun getEntityId(): Long? {
         return id
     }
 
@@ -289,7 +289,7 @@ class UserDo(
         @JvmStatic
         fun User.toDo(): UserDo {
             return UserDo(
-                id, username, password, role,
+                entityId, username, password, role,
                 registerTime, updateTime, email, phone,
                 isEnabled, isLocked, isCanceled
             )
