@@ -51,7 +51,7 @@ class SensitiveWordAutoReviewer(
         sensitivePatterns = loadSensitiveWords()
         maxCrossNodeWindow = configReader[SensitiveWordConfigKeys.MAX_WINDOW_SIZE, 50]
         logger.info {
-            "Loaded ${sensitivePatterns.size} sensitive word patterns, max cross-node window: ${maxCrossNodeWindow}"
+            "Loaded ${sensitivePatterns.size} sensitive word patterns, max cross-node window: $maxCrossNodeWindow"
         }
     }
 
@@ -93,142 +93,147 @@ class SensitiveWordAutoReviewer(
     )
 
     override fun review(reviewJob: ReviewJobSummary, autoReviewContext: AutoReviewContext) {
-        val content = autoReviewContext.contentDetails
-        val title = content.title ?: ""
+        val details = autoReviewContext.contentDetails
+        val title = details.title ?: ""
+        val bodyNode: StructuralText = details.content ?: StructuralText.EMPTY
 
-        // Check title
-        val foundInTitle = detectSensitiveWordsWithLocation(title, "title")
-        for ((location, maskedWord, context) in foundInTitle) {
-            autoReviewContext.addFeedbackEntry(
+        val detections = mutableListOf<SensitiveWordDetection>()
+
+        // detect in title
+        if (title.isNotBlank()) {
+            detections += detectSensitiveWordsWithLocation(title, "$.title")
+        }
+
+        // detect in structural content
+        detections += detectSensitiveWordsInStructure(bodyNode)
+
+        if (detections.isNotEmpty()) {
+            val entries = detections.map { d ->
+                val msg = "Detected sensitive content: '${d.maskedWord}' in context: ${d.context}"
                 ReviewFeedbackEntry.fromAutoReviewer(
                     reviewerName = reviewerInfo.name,
                     category = ReviewCategory.SENSITIVE_CONTENT,
                     severity = ReviewSeverity.CRITICAL,
-                    message = "Sensitive word detected: $maskedWord",
-                    locationRange = location,
-                    suggestion = "Please remove or replace the sensitive content. Context: $context"
-                )
-            )
-        }
-
-        // Check content
-        val structuralText = content.content
-        if (structuralText != null) {
-            val foundInContent = detectSensitiveWordsInStructure(structuralText)
-            for ((location, maskedWord, context) in foundInContent) {
-                autoReviewContext.addFeedbackEntry(
-                    ReviewFeedbackEntry.fromAutoReviewer(
-                        reviewerName = reviewerInfo.name,
-                        category = ReviewCategory.SENSITIVE_CONTENT,
-                        severity = ReviewSeverity.CRITICAL,
-                        message = "Sensitive word detected: $maskedWord",
-                        locationRange = location,
-                        suggestion = "Please remove or replace the sensitive content. Context: $context"
-                    )
+                    message = msg,
+                    locationRange = d.location,
+                    suggestion = "Remove or modify the sensitive content"
                 )
             }
+            autoReviewContext.addFeedbackEntries(entries)
         }
 
         // Mark as completed
         autoReviewContext.markReviewerCompleted(this)
     }
 
-    private data class SensitiveWordDetection(
-        val location: ContentLocationRange,
-        val maskedWord: String,
-        val context: String
-    )
-
     private fun detectSensitiveWordsInStructure(node: StructuralText): List<SensitiveWordDetection> {
-        val detections = mutableListOf<SensitiveWordDetection>()
+        val segments = mutableListOf<String>()
+        val jsonPaths = mutableListOf<String>()
+        collectTextSegmentsWithPath(node, "$", segments, jsonPaths)
 
-        // Collect all text segments with their node paths
-        val textSegments = mutableListOf<Pair<String, String>>() // (nodePath, text)
-        collectTextSegmentsWithPath(node, "", textSegments)
+        if (segments.isEmpty() || sensitivePatterns.isEmpty()) return emptyList()
 
-        // Build a sliding window buffer for cross-node detection
-        val buffer = StringBuilder()
-        val segmentOffsets = mutableListOf<Int>() // Track where each segment starts in buffer
+        // build concatenated text and mapping
+        val sb = StringBuilder()
+        val charToNode = mutableListOf<Pair<Int, Int>>() // pair(nodeIndex, posInNode)
 
-        for ((nodePath, segment) in textSegments) {
-            val startOffset = buffer.length
-            segmentOffsets.add(startOffset)
-            buffer.append(segment)
-
-            // Keep buffer size limited
-            if (buffer.length > maxCrossNodeWindow * 2) {
-                val removeLength = buffer.length - maxCrossNodeWindow
-                buffer.delete(0, removeLength)
-                // Adjust offsets
-                segmentOffsets.replaceAll { it - removeLength }
-                segmentOffsets.removeIf { it < 0 }
+        segments.forEachIndexed { idx, text ->
+            for (i in text.indices) {
+                sb.append(text[i])
+                charToNode.add(Pair(idx, i))
             }
-
-            // Check for sensitive words in current buffer
-            val bufferDetections = detectSensitiveWordsWithLocation(buffer.toString(), nodePath)
-            detections.addAll(bufferDetections)
         }
 
-        // Deduplicate detections based on position and content
-        return detections.distinctBy { "${it.location.context}-${it.location.startOffset}-${it.location.endOffset}" }
+        val combined = sb.toString()
+        if (combined.isEmpty()) return emptyList()
+
+        val lowerCombined = combined.lowercase()
+        val results = mutableListOf<SensitiveWordDetection>()
+
+        sensitivePatterns.forEach { patternRaw ->
+            val pattern = patternRaw.trim()
+            if (pattern.isEmpty()) return@forEach
+            val lowerPattern = pattern.lowercase()
+
+            var idx = lowerCombined.indexOf(lowerPattern)
+            while (idx >= 0) {
+                val start = idx
+                val end = idx + lowerPattern.length // exclusive
+
+                val startMap = charToNode[start]
+                val endMap = charToNode[end - 1]
+
+                val path = jsonPaths[startMap.first]
+                val endPath = jsonPaths[endMap.first]
+                val startInNode = startMap.second
+                val endInNode = endMap.second + 1
+
+                val location = ContentLocationRange(
+                    startInNode,
+                    endInNode,
+                    path,
+                    endPath
+                )
+
+                val masked = maskWord(combined.substring(start, end))
+                val context = extractContext(combined, start, end, masked, 20)
+
+                results.add(SensitiveWordDetection(location, masked, context))
+
+                idx = lowerCombined.indexOf(lowerPattern, idx + 1)
+            }
+        }
+
+        return results
     }
 
     private fun collectTextSegmentsWithPath(
         node: StructuralText,
-        currentPath: String,
-        segments: MutableList<Pair<String, String>>
+        currentJsonPath: String,
+        segments: MutableList<String>,
+        jsonPaths: MutableList<String>
     ) {
-        val nodePath = if (currentPath.isEmpty()) {
-            node.type.name
-        } else {
-            "$currentPath.${node.type}"
+        // If node has content and it's non-empty, record it
+        if (node.content.isNotBlank()) {
+            segments.add(node.content)
+            jsonPaths.add("$currentJsonPath.content")
         }
-
-        if (node.content.isNotEmpty()) {
-            segments.add(nodePath to node.content)
-        }
-
-        node.children.forEachIndexed { index, child ->
-            collectTextSegmentsWithPath(child, "$nodePath[$index]", segments)
+        if (node.hasChildren()) {
+            node.children.forEachIndexed { idx, child ->
+                val childJsonPath = "$currentJsonPath.children[$idx]"
+                collectTextSegmentsWithPath(child, childJsonPath, segments, jsonPaths)
+            }
         }
     }
 
-    private fun detectSensitiveWordsWithLocation(
-        text: String,
-        nodePath: String
-    ): List<SensitiveWordDetection> {
-        if (sensitivePatterns.isEmpty()) {
-            return emptyList()
-        }
-
+    private fun detectSensitiveWordsWithLocation(text: String, jsonPath: String? = null): List<SensitiveWordDetection> {
+        if (text.isBlank() || sensitivePatterns.isEmpty()) return emptyList()
         val lowerText = text.lowercase()
-        val detections = mutableListOf<SensitiveWordDetection>()
+        val results = mutableListOf<SensitiveWordDetection>()
 
-        for (pattern in sensitivePatterns) {
+        sensitivePatterns.forEach { patternRaw ->
+            val pattern = patternRaw.trim()
+            if (pattern.isEmpty()) return@forEach
             val lowerPattern = pattern.lowercase()
-            var startIndex = 0
 
-            while (true) {
-                val index = lowerText.indexOf(lowerPattern, startIndex)
-                if (index == -1) break
-
-                val endIndex = index + pattern.length
-                val maskedWord = maskWord(pattern)
-                val context = extractContext(text, index, endIndex, maskedWord)
-
-                val location = ContentLocationRange.at(
-                    startOffset = index,
-                    endOffset = endIndex,
-                    context = nodePath
+            var idx = lowerText.indexOf(lowerPattern)
+            while (idx >= 0) {
+                val start = idx
+                val end = idx + lowerPattern.length
+                val location = ContentLocationRange(
+                    start,
+                    end,
+                    jsonPath?.let { "$it.content" },
+                    jsonPath?.let { "$it.content" }
                 )
-
-                detections.add(SensitiveWordDetection(location, maskedWord, context))
-
-                startIndex = index + 1 // Continue searching for overlapping matches
+                val masked = maskWord(text.substring(start, end))
+                val context = extractContext(text, start, end, masked, 20)
+                results.add(SensitiveWordDetection(location, masked, context))
+                idx = lowerText.indexOf(lowerPattern, idx + 1)
             }
         }
 
-        return detections
+        return results
     }
 
     /**
@@ -236,33 +241,26 @@ class SensitiveWordAutoReviewer(
      * Shows first character, masks middle characters, shows last character if word is long enough.
      */
     private fun maskWord(word: String): String {
-        return when {
-            word.length <= 1 -> "*"
-            word.length == 2 -> "${word[0]}*"
-            else -> "${word[0]}${"*".repeat(word.length - 2)}${word.last()}"
-        }
+        if (word.length <= 1) return "*"
+        if (word.length == 2) return "${word[0]}*"
+        val middle = "*".repeat(word.length - 2)
+        return "${word.first()}$middle${word.last()}"
     }
 
     /**
      * Extract context around a match position with the sensitive word masked.
      */
-    private fun extractContext(
-        text: String,
-        startPos: Int,
-        endPos: Int,
-        maskedWord: String,
-        contextLength: Int = 20
-    ): String {
-        val beforeStart = maxOf(0, startPos - contextLength)
-        val afterEnd = minOf(text.length, endPos + contextLength)
-
-        val before = text.substring(beforeStart, startPos)
-        val after = text.substring(endPos, afterEnd)
-
-        val prefix = if (beforeStart > 0) "..." else ""
-        val suffix = if (afterEnd < text.length) "..." else ""
-
-        return "$prefix$before$maskedWord$after$suffix"
+    private fun extractContext(text: String, startPos: Int, endPos: Int, maskedWord: String, contextLength: Int): String {
+        val from = maxOf(0, startPos - contextLength)
+        val to = minOf(text.length, endPos + contextLength)
+        val before = text.substring(from, startPos)
+        val after = text.substring(endPos, to)
+        return before + maskedWord + after
     }
-}
 
+    data class SensitiveWordDetection(
+        val location: ContentLocationRange,
+        val maskedWord: String,
+        val context: String
+    )
+}

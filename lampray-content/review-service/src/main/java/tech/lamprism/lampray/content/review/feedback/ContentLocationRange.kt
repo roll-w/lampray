@@ -17,36 +17,23 @@
 package tech.lamprism.lampray.content.review.feedback
 
 /**
- * Represents a range in content where an issue was detected.
- *
- * @property startOffset start position in content (character offset)
- * @property endOffset end position in content (character offset)
- * @property context contextual information about the location (e.g., "paragraph 3", "title")
+ * @author RollW
  */
 data class ContentLocationRange(
-    val startOffset: Int,
-    val endOffset: Int,
-    val context: String? = null
+    val startInNode: Int,
+    val endInNode: Int,
+    /**
+     * Could be a JSONPath-like expression to locate the node in the content structure.
+     * Example: "$.children[0].children[2].content". These fields are optional and may be null when not available.
+     */
+    val startPath: String? = null,
+    val endPath: String? = null
 ) {
     init {
-        require(startOffset >= 0) { "Start offset must be non-negative" }
-        require(endOffset >= startOffset) { "End offset must be >= start offset" }
+        require(startInNode >= 0) { "startInNode must be non-negative" }
+        require(endInNode >= 0) { "endInNode must be non-negative" }
+        require(startPath?.isNotBlank() ?: true) { "path if provided must be non-blank" }
+        require(endPath?.isNotBlank() ?: true) { "endPath if provided must be non-blank" }
     }
 
-    fun length(): Int = endOffset - startOffset
-
-    companion object {
-        /**
-         * Creates a location range for the entire content.
-         */
-        @JvmStatic
-        fun wholeContent(): ContentLocationRange = ContentLocationRange(0, Int.MAX_VALUE, "entire content")
-
-        /**
-         * Creates a location range with context description.
-         */
-        @JvmStatic
-        fun at(startOffset: Int, endOffset: Int, context: String): ContentLocationRange =
-            ContentLocationRange(startOffset, endOffset, context)
-    }
 }
