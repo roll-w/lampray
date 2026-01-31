@@ -109,14 +109,13 @@ class SensitiveWordAutoReviewer(
 
         if (detections.isNotEmpty()) {
             val entries = detections.map { d ->
-                val msg = "Detected sensitive content: '${d.maskedWord}' in context: ${d.context}"
                 ReviewFeedbackEntry.fromAutoReviewer(
                     reviewerName = reviewerInfo.name,
                     category = ReviewCategory.SENSITIVE_CONTENT,
                     severity = ReviewSeverity.CRITICAL,
-                    message = msg,
+                    // TODO: i18n message
+                    message = d.maskedWord,
                     locationRange = d.location,
-                    suggestion = "Remove or modify the sensitive content"
                 )
             }
             autoReviewContext.addFeedbackEntries(entries)
@@ -145,7 +144,9 @@ class SensitiveWordAutoReviewer(
         }
 
         val combined = sb.toString()
-        if (combined.isEmpty()) return emptyList()
+        if (combined.isEmpty()) {
+            return emptyList()
+        }
 
         val lowerCombined = combined.lowercase()
         val results = mutableListOf<SensitiveWordDetection>()
@@ -207,7 +208,9 @@ class SensitiveWordAutoReviewer(
     }
 
     private fun detectSensitiveWordsWithLocation(text: String, jsonPath: String? = null): List<SensitiveWordDetection> {
-        if (text.isBlank() || sensitivePatterns.isEmpty()) return emptyList()
+        if (text.isBlank() || sensitivePatterns.isEmpty()) {
+            return emptyList()
+        }
         val lowerText = text.lowercase()
         val results = mutableListOf<SensitiveWordDetection>()
 
@@ -223,8 +226,8 @@ class SensitiveWordAutoReviewer(
                 val location = ContentLocationRange(
                     start,
                     end,
-                    jsonPath?.let { "$it.content" },
-                    jsonPath?.let { "$it.content" }
+                    jsonPath,
+                    jsonPath
                 )
                 val masked = maskWord(text.substring(start, end))
                 val context = extractContext(text, start, end, masked, 20)
