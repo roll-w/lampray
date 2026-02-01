@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2025 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import tech.lamprism.lampray.content.ContentMetadata;
 import tech.lamprism.lampray.content.ContentStatus;
 import tech.lamprism.lampray.content.SimpleContentInfo;
 import tech.lamprism.lampray.content.event.ContentStatusEvent;
-import tech.lamprism.lampray.content.service.ContentMetadataService;
 import tech.lamprism.lampray.content.review.ReviewJob;
 import tech.lamprism.lampray.content.review.ReviewStatus;
 import tech.lamprism.lampray.content.review.event.OnReviewStateChangeEvent;
+import tech.lamprism.lampray.content.service.ContentMetadataService;
 
 /**
  * Converts {@link OnReviewStateChangeEvent} to {@link ContentStatusEvent}.
@@ -71,7 +71,7 @@ public class OnReviewStateChangeListener implements ApplicationListener<OnReview
                         .build()
         );
         ContentStatusEvent<?> contentStatusEvent = new ContentStatusEvent<>(
-                content, reviewJob.getReviewTime(),
+                content, reviewJob.getUpdateTime(),
                 previousStatus, currentStatus);
         eventPublisher.publishEvent(contentStatusEvent);
     }
@@ -81,8 +81,8 @@ public class OnReviewStateChangeListener implements ApplicationListener<OnReview
             return null;
         }
         return switch (status) {
-            case NOT_REVIEWED -> ContentStatus.REVIEWING;
-            case REVIEWED -> ContentStatus.PUBLISHED;
+            case PENDING -> ContentStatus.REVIEWING;
+            case APPROVED -> ContentStatus.PUBLISHED;
             case REJECTED -> ContentStatus.REVIEW_REJECTED;
             case CANCELED -> ContentStatus.HIDE;
         };

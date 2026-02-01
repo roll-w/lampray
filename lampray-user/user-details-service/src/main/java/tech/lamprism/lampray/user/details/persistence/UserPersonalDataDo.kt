@@ -78,7 +78,7 @@ class UserPersonalDataDo(
     @Temporal(TemporalType.TIMESTAMP)
     private var updateTime: OffsetDateTime = OffsetDateTime.now()
 ) : DataEntity<Long> {
-    override fun getId(): Long = id
+    override fun getEntityId(): Long = id
 
     override fun getSystemResourceKind(): SystemResourceKind =
         UserResourceKind
@@ -190,7 +190,7 @@ class UserPersonalDataDo(
     companion object {
         @JvmStatic
         fun UserPersonalData.toDo() = UserPersonalDataDo(
-            id, nickname, avatar, cover, birthday, introduction,
+            entityId, nickname, avatar, cover, birthday, introduction,
             gender, location, website, updateTime
         )
 

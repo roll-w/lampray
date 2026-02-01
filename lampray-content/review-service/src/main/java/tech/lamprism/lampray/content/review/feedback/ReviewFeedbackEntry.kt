@@ -1,0 +1,59 @@
+/*
+ * Copyright (C) 2023-2026 RollW
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package tech.lamprism.lampray.content.review.feedback
+
+/**
+ * Individual review feedback item that describes a specific issue or comment.
+ *
+ * @property category the issue category
+ * @property severity the severity level
+ * @property message descriptive message about the issue
+ * @property locationRange specific location in content where issue was found
+ * @property suggestion optional suggestion for fixing the issue
+ * @property reviewerSource identifies which reviewer (auto or human) generated this feedback
+ * @author RollW
+ */
+data class ReviewFeedbackEntry(
+    val category: ReviewCategory,
+    val severity: ReviewSeverity,
+    val message: String,
+    val locationRange: ContentLocationRange? = null,
+    val suggestion: String? = null,
+    val reviewerSource: ReviewerSource = ReviewerSource.manual()
+) {
+    companion object {
+        /**
+         * Creates a feedback entry from an auto-reviewer.
+         */
+        @JvmStatic
+        fun fromAutoReviewer(
+            reviewerName: String,
+            category: ReviewCategory,
+            severity: ReviewSeverity,
+            message: String,
+            locationRange: ContentLocationRange? = null,
+            suggestion: String? = null
+        ): ReviewFeedbackEntry = ReviewFeedbackEntry(
+            category = category,
+            severity = severity,
+            message = message,
+            locationRange = locationRange,
+            suggestion = suggestion,
+            reviewerSource = ReviewerSource.automatic(reviewerName)
+        )
+    }
+}
+

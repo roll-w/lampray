@@ -22,5 +22,5 @@ package tech.lamprism.lampray;
 public interface EntityBuilder<T, ID> {
     T build();
 
-    EntityBuilder<T, ID> setId(ID id);
+    EntityBuilder<T, ID> setEntityId(ID id);
 }

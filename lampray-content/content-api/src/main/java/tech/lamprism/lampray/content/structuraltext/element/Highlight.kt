@@ -25,7 +25,7 @@ import tech.lamprism.lampray.content.structuraltext.validation.StructuralTextVal
  * @author RollW
  */
 data class Highlight @JvmOverloads constructor(
-    override val content: String,
+    override val content: String = "",
     override val children: List<StructuralText> = emptyList(),
     val color: AttributeColor? = null
 ) : StructuralText {

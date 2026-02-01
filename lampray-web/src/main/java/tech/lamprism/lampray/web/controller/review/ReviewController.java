@@ -24,22 +24,24 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import tech.lamprism.lampray.LampException;
 import tech.lamprism.lampray.content.review.ReviewContentProvider;
 import tech.lamprism.lampray.content.review.ReviewJobContent;
 import tech.lamprism.lampray.content.review.ReviewJobDetails;
-import tech.lamprism.lampray.content.review.ReviewJobInfo;
 import tech.lamprism.lampray.content.review.ReviewJobProvider;
-import tech.lamprism.lampray.content.review.ReviewStatues;
-import tech.lamprism.lampray.content.review.service.ReviewStatusService;
+import tech.lamprism.lampray.content.review.ReviewJobSummary;
+import tech.lamprism.lampray.content.review.ReviewStatus;
+import tech.lamprism.lampray.content.review.ReviewTaskCoordinator;
+import tech.lamprism.lampray.content.review.ReviewTaskDetails;
+import tech.lamprism.lampray.content.review.feedback.ReviewFeedback;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobContentView;
+import tech.lamprism.lampray.web.controller.review.model.ReviewJobDetailsView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewJobView;
 import tech.lamprism.lampray.web.controller.review.model.ReviewRequest;
+import tech.lamprism.lampray.web.controller.review.model.ReviewTaskView;
 import tech.rollw.common.web.AuthErrorCode;
-import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.system.ContextThread;
 import tech.rollw.common.web.system.ContextThreadAware;
@@ -54,47 +56,50 @@ public class ReviewController {
     private static final Logger logger = LoggerFactory.getLogger(ReviewController.class);
 
     private final ReviewJobProvider reviewJobProvider;
-    private final ReviewStatusService reviewStatusService;
     private final ReviewContentProvider reviewContentProvider;
+    private final ReviewTaskCoordinator reviewTaskCoordinator;
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
 
     public ReviewController(ReviewJobProvider reviewJobProvider,
-                            ReviewStatusService reviewStatusService,
                             ReviewContentProvider reviewContentProvider,
+                            ReviewTaskCoordinator reviewTaskCoordinator,
                             ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.reviewJobProvider = reviewJobProvider;
-        this.reviewStatusService = reviewStatusService;
         this.reviewContentProvider = reviewContentProvider;
+        this.reviewTaskCoordinator = reviewTaskCoordinator;
         this.apiContextThreadAware = apiContextThreadAware;
     }
 
-    @GetMapping("/reviews/{jobId}")
-    public HttpResponseEntity<ReviewJobView> getReviewInfo(
-            @PathVariable("jobId") Long jobId) {
-        ReviewJobDetails reviewJobInfo = reviewJobProvider.getReviewJob(jobId);
+    private UserIdentity getCurrentUser() {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
-        UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
-        if (reviewJobInfo.getReviewer() != user.getOperatorId()) {
-            throw new LampException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
+        return Verify.verifyNotNull(apiContext.getUser());
+    }
+
+    @GetMapping("/reviews/{jobId}")
+    public HttpResponseEntity<ReviewJobDetailsView> getReviewJobDetail(
+            @PathVariable("jobId") String jobId) {
+        ReviewJobDetails reviewJobDetails = reviewJobProvider.getReviewJobDetails(jobId);
+        UserIdentity user = getCurrentUser();
+        boolean assigned = reviewJobDetails.getTasks().stream()
+                .anyMatch(task -> task.getReviewerId() == user.getOperatorId());
+        if (!assigned) {
+            return HttpResponseEntity.of(AuthErrorCode.ERROR_PERMISSION_DENIED);
         }
-        return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
+
+        return HttpResponseEntity.success(ReviewJobDetailsView.from(reviewJobDetails));
     }
 
     /**
      * Get current user's review infos.
      */
     @GetMapping({"/reviews"})
-    public HttpResponseEntity<List<ReviewJobView>> getReviewInfo(
-            @RequestParam(value = "status", required = false,
-                    defaultValue = "ALL")
-            ReviewStatues statues) {
-        ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
-        ApiContext apiContext = apiContextThread.getContext();
-        UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
-
-        List<ReviewJobDetails> reviewJobInfos = reviewJobProvider
+    public HttpResponseEntity<List<ReviewJobView>> getReviewInfos(
+            @RequestParam(value = "statues", required = false, defaultValue = "")
+            List<ReviewStatus> statues) {
+        UserIdentity user = getCurrentUser();
+        List<ReviewJobSummary> reviewJobInfos = reviewJobProvider
                 .getReviewJobs(user, statues);
         return HttpResponseEntity.success(reviewJobInfos
                 .stream()
@@ -105,39 +110,68 @@ public class ReviewController {
 
     @GetMapping("/reviews/{jobId}/content")
     public HttpResponseEntity<ReviewJobContentView> getReviewContent(
-            @PathVariable("jobId") Long jobId) {
-        ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
-        ApiContext apiContext = apiContextThread.getContext();
-        UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
-        ReviewJobContent reviewJobContent = reviewContentProvider.getReviewContent(jobId);
-        ReviewJobInfo reviewJobInfo = reviewJobContent.getReviewJobInfo();
-        if (reviewJobInfo.reviewer() != user.getOperatorId()) {
-            throw new LampException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
+            @PathVariable("jobId") String jobId) {
+        UserIdentity user = getCurrentUser();
+        ReviewJobDetails jobDetails = reviewJobProvider.getReviewJobDetails(jobId);
+
+        boolean assignedContent = jobDetails.getTasks().stream()
+                .anyMatch(task -> task.getReviewerId() ==  user.getOperatorId());
+        if (!assignedContent) {
+            return HttpResponseEntity.of(AuthErrorCode.ERROR_PERMISSION_DENIED);
         }
+
+        ReviewJobContent reviewJobContent = reviewContentProvider.getReviewContent(jobId);
         return HttpResponseEntity.success(
                 ReviewJobContentView.of(reviewJobContent)
         );
     }
 
-    @PostMapping("/reviews/{jobId}")
+    @PostMapping("/reviews/{jobId}/tasks/{taskId}/review")
     public HttpResponseEntity<ReviewJobView> makeReview(
-            @PathVariable("jobId") Long jobId,
+            @PathVariable("jobId") String jobId,
+            @PathVariable("taskId") String taskId,
             @RequestBody ReviewRequest reviewRequest
     ) {
-        ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
-        ApiContext apiContext = apiContextThread.getContext();
-        UserIdentity user = Verify.verifyNotNull(apiContext.getUser());
-        ReviewJobDetails reviewJobDetails = reviewJobProvider.getReviewJob(jobId);
-        if (reviewJobDetails.getReviewer() != user.getOperatorId()) {
-            throw new CommonRuntimeException(AuthErrorCode.ERROR_NOT_HAS_ROLE);
-        }
-
-        ReviewJobInfo reviewJobInfo = reviewStatusService.makeReview(
+        UserIdentity user = getCurrentUser();
+        ReviewFeedback feedback = reviewRequest.toFeedback();
+        reviewTaskCoordinator.submitFeedback(
                 jobId,
+                taskId,
                 user.getOperatorId(),
-                reviewRequest.getPass(),
-                reviewRequest.getResult()
+                feedback
         );
-        return HttpResponseEntity.success(ReviewJobView.from(reviewJobInfo));
+
+        ReviewJobDetails updatedJob = reviewJobProvider.getReviewJobDetails(jobId);
+        return HttpResponseEntity.success(ReviewJobView.from(updatedJob));
+    }
+
+    @PostMapping("/reviews/{jobId}/tasks/{taskId}/claim")
+    public HttpResponseEntity<ReviewTaskView> claimTask(
+            @PathVariable("jobId") String jobId,
+            @PathVariable("taskId") String taskId) {
+        UserIdentity user = getCurrentUser();
+
+        ReviewTaskDetails taskDetails = reviewTaskCoordinator.claimTask(
+                jobId,
+                taskId,
+                user.getOperatorId()
+        );
+
+        return HttpResponseEntity.success(ReviewTaskView.from(taskDetails));
+    }
+
+    @PostMapping("/reviews/{jobId}/tasks/{taskId}/return")
+    public HttpResponseEntity<ReviewTaskView> returnTask(
+            @PathVariable("jobId") String jobId,
+            @PathVariable("taskId") String taskId) {
+        UserIdentity user = getCurrentUser();
+
+        ReviewTaskDetails taskDetails = reviewTaskCoordinator.returnTask(
+                jobId,
+                taskId,
+                user.getOperatorId()
+        );
+
+        return HttpResponseEntity.success(ReviewTaskView.from(taskDetails));
     }
 }

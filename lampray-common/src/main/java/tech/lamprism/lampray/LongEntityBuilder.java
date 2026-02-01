@@ -20,7 +20,9 @@ package tech.lamprism.lampray;
  * @author RollW
  */
 public interface LongEntityBuilder<T> extends EntityBuilder<T, Long> {
+    @Override
     T build();
 
-    LongEntityBuilder<T> setId(Long id);
+    @Override
+    LongEntityBuilder<T> setEntityId(Long id);
 }

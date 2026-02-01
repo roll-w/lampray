@@ -55,7 +55,7 @@ public class FileStorage implements DataEntity<String> {
     }
 
     @Override
-    public String getId() {
+    public String getEntityId() {
         return fileId;
     }
 
@@ -133,7 +133,7 @@ public class FileStorage implements DataEntity<String> {
         }
 
         @Override
-        public Builder setId(String string) {
+        public Builder setEntityId(String string) {
             return setFileId(string);
         }
 

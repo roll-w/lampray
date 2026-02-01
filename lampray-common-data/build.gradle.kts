@@ -21,8 +21,12 @@ plugins {
 
 dependencies {
     api(project(":lampray-common"))
+    api("org.liquibase:liquibase-core")
     api("com.fasterxml.jackson.core:jackson-databind")
     api("com.fasterxml.jackson.module:jackson-module-kotlin")
+    api("com.github.luben:zstd-jni:1.5.7-6")
+    api("org.msgpack:jackson-dataformat-msgpack:0.9.10")
+    api("com.github.f4b6a3:ulid-creator:5.2.3")
 }
 
 description = "lampray-common-data"

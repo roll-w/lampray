@@ -23,7 +23,7 @@ import tech.lamprism.lampray.content.ContentAssociationProvider;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.review.ReviewContentProvider;
 import tech.lamprism.lampray.content.review.ReviewJobContent;
-import tech.lamprism.lampray.content.review.persistence.ReviewJobDo;
+import tech.lamprism.lampray.content.review.persistence.ReviewJobEntity;
 import tech.lamprism.lampray.content.review.persistence.ReviewJobRepository;
 
 /**
@@ -42,8 +42,8 @@ public class ReviewContentProviderImpl implements ReviewContentProvider {
 
     @NonNull
     @Override
-    public ReviewJobContent getReviewContent(long jobId) {
-        ReviewJobDo job = reviewJobRepository.findById(jobId).orElse(null);
+    public ReviewJobContent getReviewContent(String jobId) {
+        ReviewJobEntity job = reviewJobRepository.findById(jobId).orElse(null);
         Verify.verifyNotNull(job, "Review job not found");
         ContentDetails details = contentAssociationProvider.getAssociatedContentDetails(job);
         return ReviewJobContent.of(job.lock(), details);

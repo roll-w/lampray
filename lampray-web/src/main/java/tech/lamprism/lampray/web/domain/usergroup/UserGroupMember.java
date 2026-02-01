@@ -48,7 +48,7 @@ public class UserGroupMember implements DataEntity<Long> {
     }
 
     @Override
-    public Long getId() {
+    public Long getEntityId() {
         return id;
     }
 
@@ -112,7 +112,7 @@ public class UserGroupMember implements DataEntity<Long> {
         }
 
         @Override
-        public Builder setId(Long id) {
+        public Builder setEntityId(Long id) {
             this.id = id;
             return this;
         }

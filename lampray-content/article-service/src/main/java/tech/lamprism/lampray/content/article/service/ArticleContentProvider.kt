@@ -43,7 +43,7 @@ class ArticleContentProvider(
     }
 
     override fun getContentDetails(@NonNull contentTrait: ContentTrait): ContentDetails {
-        return articleRepository.findById(contentTrait.contentId).orElse(null)
+        return articleRepository.findById(contentTrait.contentId).orElse(null)?.lock()
             ?: throw ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND)
     }
 

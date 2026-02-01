@@ -74,7 +74,7 @@ class ContentMetadataDo(
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var contentAccessAuthType: ContentAccessAuthType = ContentAccessAuthType.PUBLIC
 ) : DataEntity<Long>, ContentTrait {
-    override fun getId(): Long? = id
+    override fun getEntityId(): Long? = id
 
     fun setId(id: Long?) {
         this.id = id
@@ -114,7 +114,7 @@ class ContentMetadataDo(
         @JvmStatic
         fun ContentMetadata.toDo() =
             ContentMetadataDo(
-                id, userId, contentId, contentType,
+                entityId, userId, contentId, contentType,
                 contentStatus, contentAccessAuthType
             )
 
@@ -131,7 +131,7 @@ class ContentMetadataDo(
         constructor()
 
         constructor(other: ContentMetadataDo) {
-            this.id = other.getId()
+            this.id = other.getEntityId()
             this.userId = other.userId
             this.contentId = other.getContentId()
             this.contentType = other.getContentType()

@@ -50,15 +50,19 @@ public class Article implements DataEntity<Long>, ContentDetails {
         this.updateTime = updateTime;
     }
 
-    @Override
     public Long getId() {
         return id;
     }
 
-    @NonNull
     @Override
+    public Long getEntityId() {
+        return id;
+    }
+
+    @Override
+    @NonNull
     public Long getResourceId() {
-        return getId();
+        return DataEntity.super.getResourceId();
     }
 
     @Override
@@ -115,7 +119,7 @@ public class Article implements DataEntity<Long>, ContentDetails {
 
     @Override
     public long getContentId() {
-        return getId();
+        return getEntityId();
     }
 
     @NonNull
@@ -148,7 +152,7 @@ public class Article implements DataEntity<Long>, ContentDetails {
         }
 
         @Override
-        public Builder setId(Long id) {
+        public Builder setEntityId(Long id) {
             this.id = id;
             return this;
         }
