@@ -186,6 +186,7 @@ const editor = useEditor({
     }
 })
 
+
 watch(() => props.editable, (newVal) => {
     if (editor.value) {
         editor.value.setEditable(newVal)

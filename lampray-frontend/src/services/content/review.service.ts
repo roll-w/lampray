@@ -16,8 +16,7 @@
 
 import type {AxiosInstance, AxiosResponse, RawAxiosRequestConfig} from "axios";
 import type {HttpResponseBody} from "@/services/common.type.ts";
-import type {ReviewJobContentView, ReviewJobView, ReviewRequest} from "@/services/content/review.type.ts";
-import {ReviewStatuses} from "@/services/content/review.type.ts";
+import type {ReviewJobContentView, ReviewJobDetailsView, ReviewJobView, ReviewRequest, ReviewStatus} from "@/services/content/review.type.ts";
 
 export const reviewService = (axios: AxiosInstance) => {
     return {
@@ -25,16 +24,17 @@ export const reviewService = (axios: AxiosInstance) => {
          * Get review jobs for current user
          */
         async getReviewJobs(
-            status: ReviewStatuses = ReviewStatuses.UNFINISHED,
+            statuses: ReviewStatus[] = [ReviewStatus.PENDING],
             options: RawAxiosRequestConfig = {}
         ): Promise<AxiosResponse<HttpResponseBody<ReviewJobView[]>>> {
+            const mergedOptions = {...options};
             return await axios.get<HttpResponseBody<ReviewJobView[]>>(
                 "/api/v1/reviews",
                 {
-                    ...options,
+                    ...mergedOptions,
                     params: {
-                        status,
-                        ...options.params
+                        statues: statuses,
+                        ...mergedOptions.params
                     }
                 }
             );
@@ -46,8 +46,8 @@ export const reviewService = (axios: AxiosInstance) => {
         async getReviewJob(
             jobId: number | string,
             options: RawAxiosRequestConfig = {}
-        ): Promise<AxiosResponse<HttpResponseBody<ReviewJobView>>> {
-            return await axios.get<HttpResponseBody<ReviewJobView>>(
+        ): Promise<AxiosResponse<HttpResponseBody<ReviewJobDetailsView>>> {
+            return await axios.get<HttpResponseBody<ReviewJobDetailsView>>(
                 `/api/v1/reviews/${jobId}`,
                 options
             );
@@ -71,6 +71,7 @@ export const reviewService = (axios: AxiosInstance) => {
          */
         async makeReview(
             jobId: number | string,
+            taskId: number | string,
             request: ReviewRequest,
             options: RawAxiosRequestConfig = {}
         ): Promise<AxiosResponse<HttpResponseBody<ReviewJobView>>> {
@@ -83,7 +84,7 @@ export const reviewService = (axios: AxiosInstance) => {
                 };
             }
             return await axios.post<HttpResponseBody<ReviewJobView>>(
-                `/api/v1/reviews/${jobId}`,
+                `/api/v1/reviews/${jobId}/tasks/${taskId}/review`,
                 request,
                 mergedOptions
             );

@@ -17,17 +17,6 @@
 import type {ContentType} from "./content.type";
 import type {StructuralText} from "@/components/structuraltext/types.ts";
 
-export enum ReviewStatuses {
-    FINISHED = "FINISHED",
-    PASSED = "PASSED",
-    REVIEWED = "REVIEWED",
-    UNFINISHED = "UNFINISHED",
-    REJECTED = "REJECTED",
-    CANCELED = "CANCELED",
-    ALL = "ALL",
-}
-
-
 export enum ReviewStatus {
     PENDING = "PENDING",
     APPROVED = "APPROVED",
@@ -35,14 +24,101 @@ export enum ReviewStatus {
     CANCELED = "CANCELED"
 }
 
+export enum ReviewVerdict {
+    PENDING = "PENDING",
+    NEEDS_REVISION = "NEEDS_REVISION",
+    REJECTED = "REJECTED",
+    APPROVED = "APPROVED"
+}
+
+export enum ReviewCategory {
+    CONTENT_QUALITY = "CONTENT_QUALITY",
+    GRAMMAR = "GRAMMAR",
+    FORMAT = "FORMAT",
+    POLICY_VIOLATION = "POLICY_VIOLATION",
+    SENSITIVE_CONTENT = "SENSITIVE_CONTENT",
+    COPYRIGHT = "COPYRIGHT",
+    TECHNICAL = "TECHNICAL",
+    OTHER = "OTHER"
+}
+
+export enum ReviewSeverity {
+    CRITICAL = "CRITICAL",
+    MAJOR = "MAJOR",
+    MINOR = "MINOR",
+    INFO = "INFO"
+}
+
+export enum ReviewTaskStatus {
+    PENDING = "PENDING",
+    APPROVED = "APPROVED",
+    REJECTED = "REJECTED",
+    RETURNED = "RETURNED",
+    CANCELED = "CANCELED"
+}
+
+export enum ReviewMark {
+    NORMAL = "NORMAL",
+    UPDATE = "UPDATE",
+    REPORT = "REPORT"
+}
+
+export interface ContentLocationRange {
+    startInNode: number;
+    endInNode: number;
+    startPath?: string;
+    endPath?: string;
+}
+
+export interface ReviewerSource {
+    isAutomatic: boolean;
+    reviewerName: string;
+}
+
+export interface ReviewFeedbackEntry {
+    category: ReviewCategory;
+    severity: ReviewSeverity;
+    message: string;
+    locationRange?: ContentLocationRange;
+    suggestion?: string;
+    reviewerSource: ReviewerSource;
+}
+
+export interface ReviewFeedback {
+    verdict: ReviewVerdict;
+    entries: ReviewFeedbackEntry[];
+    summary?: string;
+}
+
+export interface ReviewTaskView {
+    taskId: string;
+    reviewJobId: string;
+    status: ReviewTaskStatus;
+    reviewerId: number;
+    feedback?: ReviewFeedback;
+    createTime: string;
+    updateTime: string;
+}
+
 export interface ReviewJobView {
     id: number | string;
-    contentId: number | string;
-    contentType: ContentType;
-    reviewer: number;
     status: ReviewStatus;
-    assignedTime: string;
-    reviewTime: string;
+    contentType: ContentType;
+    contentId: number | string;
+    reviewMark: ReviewMark;
+    createTime: string;
+    updateTime: string;
+}
+
+export interface ReviewJobDetailsView {
+    id: number | string;
+    status: ReviewStatus;
+    contentType: ContentType;
+    contentId: number | string;
+    reviewMark: ReviewMark;
+    createTime: string;
+    updateTime: string;
+    tasks: ReviewTaskView[];
 }
 
 export interface ReviewJobContentView {
@@ -56,7 +132,7 @@ export interface ReviewJobContentView {
 }
 
 export interface ReviewRequest {
-    pass: boolean;
-    reason: string;
+    verdict: ReviewVerdict;
+    entries: ReviewFeedbackEntry[];
+    summary?: string;
 }
-
