@@ -15,8 +15,8 @@
   -->
 
 <script lang="ts" setup>
-import type { ReviewFeedbackEntry } from "@/services/content/review.type";
-import { useI18n } from "vue-i18n";
+import type {ReviewFeedbackEntry} from "@/services/content/review.type";
+import {useI18n} from "vue-i18n";
 import {computed} from "vue";
 
 /**
@@ -32,14 +32,18 @@ const emit = defineEmits<{
     (e: 'locate', entry: ReviewFeedbackEntry): void;
 }>();
 
-const { t } = useI18n();
+const {t} = useI18n();
 
 const getSeverityColor = (severity: string) => {
     switch (severity) {
-        case 'CRITICAL': return 'error';
-        case 'MAJOR': return 'warning';
-        case 'MINOR': return 'primary';
-        default: return 'neutral';
+        case 'CRITICAL':
+            return 'error';
+        case 'MAJOR':
+            return 'warning';
+        case 'MINOR':
+            return 'primary';
+        default:
+            return 'neutral';
     }
 };
 
@@ -57,23 +61,25 @@ const items = computed(() => props.entries.map((entry, index) => ({
             <h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 uppercase tracking-widest">
                 {{ t('views.adminfaced.review.reviewEntries') }}
             </h3>
-            <UBadge variant="subtle" color="neutral" size="sm" class="rounded-full px-2">
+            <UBadge class="rounded-full px-2" color="neutral" size="sm" variant="subtle">
                 {{ entries.length }}
             </UBadge>
         </div>
 
-        <div v-if="entries.length === 0" class="border border-dashed border-neutral-200 dark:border-neutral-800 rounded-lg py-12 flex flex-col items-center justify-center gap-2">
-            <UIcon name="i-lucide-message-square-off" class="size-6 text-neutral-300" />
+        <slot name="default"/>
+
+        <div v-if="entries.length === 0"
+             class="border border-dashed border-neutral-200 dark:border-neutral-800 rounded-lg py-12 flex flex-col items-center justify-center gap-2">
+            <UIcon class="size-6 text-neutral-300" name="i-lucide-message-square-off"/>
             <span class="text-xs text-neutral-400 font-medium italic">
                 {{ t('views.adminfaced.review.reviewEntriesEmpty') }}
             </span>
         </div>
 
         <UAccordion
-            v-else
-            :items="items"
-            multiple
-            :ui="{
+                v-else
+                :items="items"
+                :ui="{
                 root: 'space-y-2',
                 item: 'border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-neutral-900 overflow-hidden transition-all duration-200',
                 header: 'px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer select-none',
@@ -81,32 +87,33 @@ const items = computed(() => props.entries.map((entry, index) => ({
                 content: 'px-4 pb-4 border-t border-neutral-100 dark:border-neutral-800 pt-4',
                 label: 'text-sm font-medium text-neutral-700 dark:text-neutral-200 truncate pr-4'
             }"
+                multiple
         >
             <template #leading="{ item }">
-                <UBadge 
-                    :color="getSeverityColor(item.entry.severity)" 
-                    size="xs" 
-                    variant="solid" 
-                    class="rounded-full size-2 p-0 min-w-0" 
+                <UBadge
+                        :color="getSeverityColor(item.entry.severity)"
+                        class="rounded-full size-2 p-0 min-w-0"
+                        size="xs"
+                        variant="solid"
                 />
             </template>
-
             <template v-for="(entry, index) in entries" :key="index" #[`entry-${index}`]>
                 <div class="space-y-4">
                     <div class="flex flex-wrap gap-2">
-                        <UBadge variant="subtle" size="xs" color="neutral" class="font-mono">
+                        <UBadge class="font-mono" color="neutral" size="xs" variant="subtle">
                             {{ entry.category }}
                         </UBadge>
-                        <UBadge v-if="entry.reviewerSource.isAutomatic" variant="subtle" size="xs" color="info">
+                        <UBadge v-if="entry.reviewerSource.isAutomatic" color="info" size="xs" variant="subtle">
                             {{ t('views.adminfaced.review.auto') }}
                         </UBadge>
                     </div>
-                    
+
                     <p class="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed wrap-break-word whitespace-pre-wrap">
                         {{ entry.message }}
                     </p>
 
-                    <div v-if="entry.suggestion" class="bg-primary-50 dark:bg-primary-900/10 p-3 rounded border-l-2 border-primary-500">
+                    <div v-if="entry.suggestion"
+                         class="bg-primary-50 dark:bg-primary-900/10 p-3 rounded border-l-2 border-primary-500">
                         <div class="text-[10px] uppercase font-bold text-primary-600 dark:text-primary-400 mb-1 tracking-tighter">
                             {{ t('views.adminfaced.review.suggestion') }}
                         </div>
@@ -121,19 +128,19 @@ const items = computed(() => props.entries.map((entry, index) => ({
                         </span>
                         <div class="flex items-center gap-1">
                             <UButton
-                                icon="i-lucide-locate"
-                                size="xs"
-                                variant="ghost"
-                                color="neutral"
-                                @click="emit('locate', entry)"
+                                    color="neutral"
+                                    icon="i-lucide-locate"
+                                    size="xs"
+                                    variant="ghost"
+                                    @click="emit('locate', entry)"
                             />
                             <UButton
-                                v-if="!entry.reviewerSource.isAutomatic"
-                                icon="i-lucide-trash-2"
-                                size="xs"
-                                variant="ghost"
-                                color="error"
-                                @click="emit('remove', index)"
+                                    v-if="!entry.reviewerSource.isAutomatic"
+                                    color="error"
+                                    icon="i-lucide-trash-2"
+                                    size="xs"
+                                    variant="ghost"
+                                    @click="emit('remove', index)"
                             />
                         </div>
                     </div>

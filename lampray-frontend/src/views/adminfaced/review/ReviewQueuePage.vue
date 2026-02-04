@@ -15,15 +15,13 @@
   -->
 
 <script lang="ts" setup>
-import {computed, nextTick, onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import {reviewService} from "@/services/content/review.service";
 import {
-    ReviewCategory,
     type ReviewFeedbackEntry,
     type ReviewJobContentView,
     type ReviewJobDetailsView,
     type ReviewJobView,
-    ReviewSeverity,
     ReviewStatus,
     type ReviewTaskView,
     ReviewVerdict
@@ -32,7 +30,6 @@ import {useAxios} from "@/composables/useAxios.ts";
 import DashboardPanel from "@/views/adminfaced/DashboardPanel.vue";
 import {useI18n} from "vue-i18n";
 import {newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
-import {getContentTypeI18nKey} from "@/services/content/content.type.ts";
 import {useUserStore} from "@/stores/user.ts";
 
 import ReviewContent from "./ReviewContent.vue";
@@ -78,11 +75,6 @@ const queueProgress = computed(() => {
     return ((currentIndex.value + 1) / reviewQueue.value.length) * 100;
 });
 
-const contentTypeDisplay = computed(() => {
-    if (!currentJob.value) return "";
-    return t(getContentTypeI18nKey(currentJob.value.contentType));
-});
-
 const reviewTask = computed<ReviewTaskView | null>(() => {
     if (!currentJobDetails.value) return null;
     const tasks = currentJobDetails.value.tasks || [];
@@ -121,7 +113,7 @@ const handleReviewSubmit = async (verdictValue: ReviewVerdict) => {
 const scrollToEntry = (entry: ReviewFeedbackEntry) => {
     const location = entry.locationRange;
     if (!location?.startPath) return;
-    
+
     if (contentRef.value?.scrollToPath) {
         contentRef.value.scrollToPath(location.startPath);
     }
@@ -299,15 +291,47 @@ onMounted(() => {
                         </span>
                     </div>
                 </template>
+                <template #default>
+                    <!--TODO: fix width-->
+                    <div class="w-full flex items-center gap-4">
+                        <div class="w-full flex items-center gap-2">
+                            <div class="w-full h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                                <div :style="{ width: `${queueProgress}%` }"
+                                     class="h-full bg-primary-500 transition-all duration-500"/>
+                            </div>
+                            <span class="text-[10px] font-mono text-neutral-500">{{ Math.round(queueProgress) }}%</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <UButton
+                                    :disabled="currentIndex === 0"
+                                    color="neutral"
+                                    icon="i-lucide-chevron-left"
+                                    size="xs"
+                                    variant="ghost"
+                                    @click="prevJob"
+                            />
+                            <UButton
+                                    :disabled="currentIndex >= reviewQueue.length - 1"
+                                    color="neutral"
+                                    icon="i-lucide-chevron-right"
+                                    size="xs"
+                                    variant="ghost"
+                                    @click="nextJob"
+                            />
+                        </div>
+                    </div>
+                </template>
                 <template #right>
                     <UButton
                             :loading="loading"
-                            color="primary"
-                            icon="i-lucide-refresh-cw"
-                            variant="outline"
+                            color="neutral"
+                            variant="soft"
                             @click="refreshQueue"
                     >
                         {{ t("views.adminfaced.review.refresh") }}
+                        <template #leading>
+                            <UIcon name="i-lucide-refresh-cw"/>
+                        </template>
                     </UButton>
                 </template>
             </UDashboardNavbar>
@@ -317,7 +341,7 @@ onMounted(() => {
             <div v-if="loading" class="flex items-center justify-center py-24">
                 <div class="flex flex-col items-center gap-4">
                     <UIcon class="w-10 h-10 animate-spin text-primary-500" name="i-lucide-loader-2"/>
-                    <p class="text-neutral-500 font-medium tracking-wide">
+                    <p class="text-neutral-500 ">
                         {{ t("views.adminfaced.review.loading") }}
                     </p>
                 </div>
@@ -325,12 +349,12 @@ onMounted(() => {
 
             <div v-else-if="!hasCurrentJob" class="flex flex-col items-center justify-center py-24">
                 <UEmpty
-                    :title="t('views.adminfaced.review.noPendingReviews')"
-                    :description="t('views.adminfaced.review.allCompleted')"
-                    icon="i-lucide-check-circle"
+                        :description="t('views.adminfaced.review.allCompleted')"
+                        :title="t('views.adminfaced.review.noPendingReviews')"
+                        icon="i-lucide-check-circle"
                 >
                     <template #actions>
-                        <UButton color="primary" variant="solid" size="lg" @click="refreshQueue">
+                        <UButton color="primary" size="lg" variant="solid" @click="refreshQueue">
                             {{ t("views.adminfaced.review.checkForNew") }}
                         </UButton>
                     </template>
@@ -340,93 +364,59 @@ onMounted(() => {
             <div v-else class="h-[calc(100vh-var(--ui-header-height))] overflow-hidden">
                 <div class="h-full grid grid-cols-1 xl:grid-cols-[1fr_400px]">
                     <!-- Left: Content Area -->
-                    <main class="h-full overflow-y-auto bg-neutral-50/50 dark:bg-neutral-900/20 custom-scrollbar p-6 lg:p-10">
-                        <div class="max-w-4xl mx-auto space-y-8">
-                            <div class="flex items-center justify-between px-2">
-                                <div class="flex flex-col gap-1">
-                                    <span class="text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-bold">
-                                        {{ contentTypeDisplay }} • {{ currentJob?.id }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center gap-4">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-32 h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
-                                            <div class="h-full bg-primary-500 transition-all duration-500" :style="{ width: `${queueProgress}%` }" />
-                                        </div>
-                                        <span class="text-[10px] font-mono text-neutral-500">{{ Math.round(queueProgress) }}%</span>
-                                    </div>
-                                    <div class="flex items-center gap-1">
-                                        <UButton
-                                            icon="i-lucide-chevron-left"
-                                            size="xs"
-                                            variant="ghost"
-                                            color="neutral"
-                                            :disabled="currentIndex === 0"
-                                            @click="prevJob"
-                                        />
-                                        <UButton
-                                            icon="i-lucide-chevron-right"
-                                            size="xs"
-                                            variant="ghost"
-                                            color="neutral"
-                                            :disabled="currentIndex >= reviewQueue.length - 1"
-                                            @click="nextJob"
-                                        />
-                                    </div>
-                                </div>
+                    <main class="h-full">
+                        <div class="mx-auto space-y-8">
+                            <span class="text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-bold px-6">
+                                {{ currentJob?.id }}
+                            </span>
+                            <div class="w-full p-6">
+                                <ReviewContent
+                                        ref="contentRef"
+                                        :job="currentJobView!"
+                                        :loading="loadingContent"
+                                        @submit="handleEntrySubmit"
+                                />
                             </div>
-
-                            <ReviewContent 
-                                ref="contentRef"
-                                :job="currentJobView!" 
-                                :loading="loadingContent"
-                                @submit="handleEntrySubmit"
-                            />
                         </div>
                     </main>
 
                     <!-- Right: Sidebar -->
-                    <aside class="h-full flex flex-col border-l border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 overflow-hidden">
-                        <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+                    <aside class="flex flex-col border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 rounded-xl">
+                        <div class="flex-1 p-6 space-y-8">
                             <!-- Action Panel -->
                             <section>
-                                <ReviewActionPanel 
-                                    v-model:summary="reviewSummary"
-                                    :loading="isSubmitting"
-                                    :disabled="reviewActionDisabled"
-                                    @submit="handleReviewSubmit"
+                                <ReviewActionPanel
+                                        v-model:summary="reviewSummary"
+                                        :disabled="reviewActionDisabled"
+                                        :loading="isSubmitting"
+                                        @submit="handleReviewSubmit"
                                 />
                             </section>
 
                             <!-- Feedback Entries -->
                             <section class="border-t border-neutral-100 dark:border-neutral-800 pt-8">
-                                <ReviewFeedbackEntries 
-                                    :entries="reviewEntries"
-                                    @remove="removeEntryAtIndex"
-                                    @locate="scrollToEntry"
-                                />
-                                
+                                <ReviewFeedbackEntries
+                                        :entries="reviewEntries"
+                                        @locate="scrollToEntry"
+                                        @remove="removeEntryAtIndex">
+                                    <template v-if="showEntryForm" #default>
+                                        <ReviewEntryForm
+                                                @cancel="showEntryForm = false"
+                                                @submit="e => { handleEntrySubmit(e); showEntryForm = false; }"
+                                        />
+                                    </template>
+                                </ReviewFeedbackEntries>
                                 <div class="mt-6">
-                                    <UPopover :popper="{ placement: 'bottom-end' }">
-                                        <UButton 
-                                            block 
-                                            variant="soft" 
-                                            color="neutral" 
+                                    <UButton
+                                            block
+                                            class="rounded-xl py-3"
+                                            color="neutral"
                                             icon="i-lucide-plus"
-                                            class="rounded-xl py-3 border border-dashed border-neutral-200 dark:border-neutral-800 hover:border-primary-300 transition-colors"
-                                        >
-                                            {{ t('views.adminfaced.review.reviewEntryAdd') }}
-                                        </UButton>
-
-                                        <template #content="{ close }">
-                                            <div class="w-80">
-                                                <ReviewEntryForm 
-                                                    @submit="e => { handleEntrySubmit(e); close(); }"
-                                                    @cancel="close"
-                                                />
-                                            </div>
-                                        </template>
-                                    </UPopover>
+                                            variant="soft"
+                                            @click="showEntryForm = true"
+                                    >
+                                        {{ t('views.adminfaced.review.reviewEntryAdd') }}
+                                    </UButton>
                                 </div>
                             </section>
                         </div>

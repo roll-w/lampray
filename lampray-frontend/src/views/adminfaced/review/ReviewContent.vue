@@ -15,13 +15,14 @@
   -->
 
 <script lang="ts" setup>
-import { nextTick, ref, onMounted, watch } from "vue";
-import { autoUpdate, offset, shift, useFloating } from "@floating-ui/vue";
-import type { ReviewJobContentView } from "@/services/content/review.type";
+import {computed, nextTick, ref, watch} from "vue";
+import {autoUpdate, offset, shift, useFloating} from "@floating-ui/vue";
+import type {ReviewJobContentView} from "@/services/content/review.type";
 import StructuralTextEditor from "@/components/structuraltext/StructuralTextEditor.vue";
-import type { StructuralText } from "@/components/structuraltext/types.ts";
+import type {StructuralText} from "@/components/structuraltext/types.ts";
 import ReviewEntryForm from "./ReviewEntryForm.vue";
-import { useI18n } from "vue-i18n";
+import {useI18n} from "vue-i18n";
+import {getContentTypeI18nKey} from "@/services/content/content.type.ts";
 
 /**
  * @author RollW
@@ -36,16 +37,16 @@ const emit = defineEmits<{
     (e: 'submit', entry: any): void;
 }>();
 
-const { t } = useI18n();
+const {t} = useI18n();
 const contentRef = ref<HTMLElement | null>(null);
 const floatingReference = ref<{ getBoundingClientRect: () => DOMRect } | null>(null);
 const showSelectionPopover = ref(false);
 const selectedText = ref("");
 const currentLocation = ref<any>(null);
 
-const { floatingStyles, update: updateFloating } = useFloating(floatingReference, ref(null), {
+const {floatingStyles, update: updateFloating} = useFloating(floatingReference, ref(null), {
     placement: "top",
-    middleware: [offset(8), shift({ padding: 12 })],
+    middleware: [offset(8), shift({padding: 12})],
     whileElementsMounted: (referenceEl, floatingEl, update) => autoUpdate(referenceEl, floatingEl, update)
 });
 
@@ -56,7 +57,7 @@ type TextSegment = {
 
 const buildTextSegments = (node: StructuralText, currentPath: string, segments: TextSegment[]) => {
     if (node.content.length > 0) {
-        segments.push({ path: `${currentPath}.content`, length: node.content.length });
+        segments.push({path: `${currentPath}.content`, length: node.content.length});
     }
     if (node.children && node.children.length > 0) {
         node.children.forEach((child, index) => {
@@ -72,7 +73,7 @@ const mergeTextSegments = (segments: TextSegment[]) => {
         if (last && last.path === segment.path) {
             last.length += segment.length;
         } else {
-            merged.push({ ...segment });
+            merged.push({...segment});
         }
     });
     return merged;
@@ -127,6 +128,11 @@ const normalizeEditorPaths = () => {
     }
 };
 
+const contentTypeDisplay = computed(() => {
+    if (!props.job) return "";
+    return t(getContentTypeI18nKey(props.job.contentType));
+});
+
 const handleSelection = async () => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
@@ -165,7 +171,7 @@ const handleSelection = async () => {
     };
 
     selectedText.value = text;
-    floatingReference.value = { getBoundingClientRect: () => range.getBoundingClientRect() };
+    floatingReference.value = {getBoundingClientRect: () => range.getBoundingClientRect()};
     showSelectionPopover.value = true;
 
     // Store current location for confirmSelection
@@ -197,38 +203,42 @@ const scrollToPath = (path: string) => {
     if (!contentRef.value) return;
     const target = contentRef.value.querySelector(`[data-review-path="${path}"]`) as HTMLElement;
     if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.scrollIntoView({behavior: "smooth", block: "center"});
         target.classList.add("review-highlight");
         setTimeout(() => target.classList.remove("review-highlight"), 2000);
     }
 };
 
-defineExpose({ scrollToPath });
+defineExpose({scrollToPath});
 
 watch(() => props.job, async () => {
     await nextTick();
     normalizeEditorPaths();
-}, { immediate: true });
+}, {immediate: true});
 </script>
 
 <template>
     <div class="relative bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden transition-colors duration-200">
         <div class="px-8 py-6 border-b border-neutral-100 dark:border-neutral-800">
             <div class="flex items-center gap-2 mb-4">
-                <UBadge color="neutral" variant="subtle" size="sm" class="font-mono tracking-tight">
+                <UBadge class="font-mono tracking-tight" color="info" size="sm" variant="subtle">
+                    {{ contentTypeDisplay }}
+                </UBadge>
+                <UBadge class="font-mono tracking-tight" color="neutral" size="sm" variant="subtle">
                     #{{ job.contentId }}
                 </UBadge>
                 <span class="text-xs text-neutral-400 font-medium uppercase tracking-widest">
                     {{ new Date(job.createTime).toLocaleDateString() }}
                 </span>
             </div>
-            <h1 v-if="job.title" class="text-3xl font-bold text-neutral-900 dark:text-white tracking-tight leading-tight">
+            <h1 v-if="job.title"
+                class="text-3xl font-bold text-neutral-900 dark:text-white tracking-tight leading-tight">
                 {{ job.title }}
             </h1>
         </div>
 
         <div v-if="loading" class="flex flex-col items-center justify-center py-20 gap-3">
-            <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-neutral-300" />
+            <UIcon class="size-8 animate-spin text-neutral-300" name="i-lucide-loader-2"/>
             <span class="text-sm text-neutral-400 animate-pulse font-medium tracking-wide">
                 {{ t('views.adminfaced.review.loadingContent') }}
             </span>
@@ -236,14 +246,14 @@ watch(() => props.job, async () => {
 
         <div v-else ref="contentRef"
              class="px-8 py-10 min-h-[400px] selection:bg-primary-100 selection:text-primary-900 dark:selection:bg-primary-900/30 dark:selection:text-primary-100"
-             @mouseup="handleSelection"
-             @keyup="handleSelection">
+             @keyup="handleSelection"
+             @mouseup="handleSelection">
             <StructuralTextEditor
-                :editable="false"
-                :model-value="job.content"
-                :show-outline="false"
-                :show-toolbar="false"
-                :ui="{ content: { root: 'prose prose-neutral dark:prose-invert max-w-none' } }"
+                    :editable="false"
+                    :model-value="job.content"
+                    :show-outline="false"
+                    :show-toolbar="false"
+                    :ui="{ content: { root: 'prose prose-neutral dark:prose-invert max-w-none' } }"
             />
         </div>
 
@@ -251,52 +261,40 @@ watch(() => props.job, async () => {
         <div v-if="showSelectionPopover"
              :style="floatingStyles"
              class="z-50">
-             <UPopover v-model:open="showEntryForm" :popper="{ placement: 'bottom', offset: 12 }">
+            <UPopover v-model:open="showEntryForm" :popper="{ placement: 'bottom', offset: 12 }">
                 <div class="bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-1 py-1 rounded-full shadow-xl flex items-center gap-1">
                     <UButton
-                        icon="i-lucide-plus"
-                        size="xs"
-                        variant="ghost"
-                        color="neutral"
-                        class="rounded-full hover:bg-neutral-800 dark:hover:bg-neutral-100"
-                        @click="confirmSelection"
+                            class="rounded-full hover:bg-neutral-800 dark:hover:bg-neutral-100"
+                            color="neutral"
+                            icon="i-lucide-plus"
+                            size="xs"
+                            variant="ghost"
+                            @click="confirmSelection"
                     >
                         {{ t('views.adminfaced.review.addFeedback') }}
                     </UButton>
-                    <div class="w-px h-4 bg-neutral-700 dark:bg-neutral-200 mx-1" />
+                    <div class="w-px h-4 bg-neutral-700 dark:bg-neutral-200 mx-1"/>
                     <UButton
-                        icon="i-lucide-x"
-                        size="xs"
-                        variant="ghost"
-                        color="neutral"
-                        class="rounded-full hover:bg-neutral-800 dark:hover:bg-neutral-100"
-                        @click="showSelectionPopover = false"
+                            class="rounded-full hover:bg-neutral-800 dark:hover:bg-neutral-100"
+                            color="neutral"
+                            icon="i-lucide-x"
+                            size="xs"
+                            variant="ghost"
+                            @click="showSelectionPopover = false"
                     />
                 </div>
 
-                <template #panel>
+                <template #content>
                     <div class="w-80 shadow-2xl rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white dark:bg-neutral-950">
                         <ReviewEntryForm
-                            :initial-message="selectedText"
-                            :location="currentLocation"
-                            @submit="handleEntrySubmit"
-                            @cancel="handleCancel"
+                                :initial-message="selectedText"
+                                :location="currentLocation"
+                                @cancel="handleCancel"
+                                @submit="handleEntrySubmit"
                         />
                     </div>
                 </template>
-             </UPopover>
+            </UPopover>
         </div>
     </div>
 </template>
-
-<style scoped>
-:deep(.prose) {
-    --tw-prose-body: var(--neutral-700);
-    --tw-prose-headings: var(--neutral-900);
-}
-
-.dark :deep(.prose) {
-    --tw-prose-body: var(--neutral-300);
-    --tw-prose-headings: var(--neutral-50);
-}
-</style>
