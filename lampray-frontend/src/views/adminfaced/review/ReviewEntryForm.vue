@@ -19,10 +19,6 @@ import {ref} from "vue";
 import {ReviewCategory, type ReviewFeedbackEntry, ReviewSeverity} from "@/services/content/review.type";
 import {useI18n} from "vue-i18n";
 
-/**
- * @author RollW
- */
-
 const props = defineProps<{
     initialMessage?: string;
     location?: any;
@@ -141,7 +137,7 @@ const handleSubmit = () => {
                     color="primary"
                     @click="handleSubmit"
             >
-                {{ t('views.adminfaced.review.submitEntry') }}
+                {{ t('views.adminfaced.review.reviewEntryAdd') }}
             </UButton>
             <UButton
                     block

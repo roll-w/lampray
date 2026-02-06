@@ -222,7 +222,11 @@ onBeforeUnmount(() => {
         <div class="flex relative">
             <div class="w-full mx-auto ">
                 <slot name="before-content"/>
-                <EditorBubbleMenu v-if="editor" :editor="editor" :editable="editable"/>
+                <EditorBubbleMenu v-if="editor" :editor="editor" :editable="editable">
+                    <template #end>
+                        <slot name="bubble-menu-end"/>
+                    </template>
+                </EditorBubbleMenu>
                 <EditorDragHandle v-if="editor" :editor="editor"/>
                 <EditorContextMenu v-if="editor" :editor="editor" :editable="editable">
                     <div :class="{[ui?.content?.root || '']: ui && ui!.content && ui!.content.root}">

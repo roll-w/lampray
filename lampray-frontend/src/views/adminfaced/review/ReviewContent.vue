@@ -24,10 +24,6 @@ import ReviewEntryForm from "./ReviewEntryForm.vue";
 import {useI18n} from "vue-i18n";
 import {getContentTypeI18nKey} from "@/services/content/content.type.ts";
 
-/**
- * @author RollW
- */
-
 const props = defineProps<{
     job: ReviewJobContentView;
     loading?: boolean;

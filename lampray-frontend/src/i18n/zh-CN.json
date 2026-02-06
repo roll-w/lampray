@@ -165,6 +165,7 @@
           "NEEDS_REVISION": "需修改",
           "REJECTED": "拒绝"
         },
+        "submitReview": "提交审核",
         "reviewMarks": {
           "NORMAL": "普通",
           "UPDATE": "更新",

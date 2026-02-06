@@ -37,10 +37,6 @@ import ReviewFeedbackEntries from "./ReviewFeedbackEntries.vue";
 import ReviewActionPanel from "./ReviewActionPanel.vue";
 import ReviewEntryForm from "./ReviewEntryForm.vue";
 
-/**
- * @author RollW
- */
-
 const axios = useAxios();
 const reviewApi = reviewService(axios);
 const toast = useToast();

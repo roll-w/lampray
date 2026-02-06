@@ -164,6 +164,7 @@
           "NEEDS_REVISION": "Needs Revision",
           "REJECTED": "Reject"
         },
+        "submitReview": "Submit Review",
         "reviewMarks": {
           "NORMAL": "Normal",
           "UPDATE": "Update",

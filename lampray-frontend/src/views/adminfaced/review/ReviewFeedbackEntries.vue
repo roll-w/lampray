@@ -19,10 +19,6 @@ import type {ReviewFeedbackEntry} from "@/services/content/review.type";
 import {useI18n} from "vue-i18n";
 import {computed} from "vue";
 
-/**
- * @author RollW
- */
-
 const props = defineProps<{
     entries: ReviewFeedbackEntry[];
 }>();
@@ -80,12 +76,12 @@ const items = computed(() => props.entries.map((entry, index) => ({
                 v-else
                 :items="items"
                 :ui="{
-                root: 'space-y-2',
-                item: 'border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-neutral-900 overflow-hidden transition-all duration-200',
-                header: 'px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer select-none',
+                root: 'space-y-3',
+                item: 'border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 overflow-hidden transition-all duration-200 shadow-none',
+                header: 'px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer select-none',
                 trigger: 'flex items-center gap-3 w-full text-left',
                 content: 'px-4 pb-4 border-t border-neutral-100 dark:border-neutral-800 pt-4',
-                label: 'text-sm font-medium text-neutral-700 dark:text-neutral-200 truncate pr-4'
+                label: 'text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate pr-4'
             }"
                 multiple
         >

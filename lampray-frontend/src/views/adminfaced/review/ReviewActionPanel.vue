@@ -18,10 +18,6 @@
 import { ReviewVerdict } from "@/services/content/review.type";
 import { useI18n } from "vue-i18n";
 
-/**
- * @author RollW
- */
-
 const props = defineProps<{
     summary: string;
     loading?: boolean;
