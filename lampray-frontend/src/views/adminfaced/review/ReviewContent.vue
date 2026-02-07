@@ -15,16 +15,18 @@
   -->
 
 <script lang="ts" setup>
-import {computed, nextTick, ref, watch} from "vue";
+import {computed, ref} from "vue";
 import type {ContentLocationRange, ReviewJobContentView} from "@/services/content/review.type";
 import StructuralTextEditor from "@/components/structuraltext/StructuralTextEditor.vue";
-import type {StructuralText} from "@/components/structuraltext/types.ts";
 import {useI18n} from "vue-i18n";
 import {getContentTypeI18nKey} from "@/services/content/content.type.ts";
 import type {Editor} from "@tiptap/vue-3";
+import type {ReviewFeedbackEntry} from "@/services/content/review.type";
+import {ReviewSeverity} from "@/services/content/review.type";
 
 const props = defineProps<{
     job: ReviewJobContentView;
+    entries?: ReviewFeedbackEntry[];
 }>();
 
 const emit = defineEmits<{
@@ -32,88 +34,10 @@ const emit = defineEmits<{
 }>();
 
 const {t} = useI18n();
-const contentRef = ref<HTMLElement | null>(null);
-const showFloatingButton = ref(false); // Can keep for v-if if needed, or rely on slot behavior? StructuralTextEditor slot visibility is usually handled by parent or editor state.
+const contentRef = ref<any>(null);
+const showFloatingButton = ref(false); 
 const selectedText = ref("");
 const currentLocation = ref<ContentLocationRange | null>(null);
-
-type TextSegment = {
-    path: string;
-    length: number;
-}
-
-const buildTextSegments = (node: StructuralText, currentPath: string, segments: TextSegment[]) => {
-    if (node.content.length > 0) {
-        segments.push({path: `${currentPath}.content`, length: node.content.length});
-    }
-    if (node.children && node.children.length > 0) {
-        node.children.forEach((child, index) => {
-            buildTextSegments(child as StructuralText, `${currentPath}.children[${index}]`, segments);
-        });
-    }
-};
-
-const mergeTextSegments = (segments: TextSegment[]) => {
-    const merged: TextSegment[] = [];
-    segments.forEach(segment => {
-        const last = merged[merged.length - 1];
-        if (last && last.path === segment.path) {
-            last.length += segment.length;
-        } else {
-            merged.push({...segment});
-        }
-    });
-    return merged;
-};
-
-const normalizeEditorPaths = () => {
-    const container = contentRef.value;
-    if (!container || !props.job) return;
-
-    const editorRoot = container.querySelector(".ProseMirror");
-    if (!editorRoot) return;
-
-    // Clear existing
-    editorRoot.querySelectorAll("[data-review-path]").forEach((node: HTMLElement) => {
-        node.removeAttribute("data-review-path");
-    });
-
-    const segments: TextSegment[] = [];
-    buildTextSegments(props.job.content, "$.content", segments);
-    const mergedSegments = mergeTextSegments(segments);
-    if (mergedSegments.length === 0) return;
-
-    const walker = document.createTreeWalker(editorRoot, NodeFilter.SHOW_TEXT, {
-        acceptNode: node => {
-            if (!node.textContent || node.textContent.length === 0) return NodeFilter.FILTER_REJECT;
-            return NodeFilter.FILTER_ACCEPT;
-        }
-    });
-
-    let segmentIndex = 0;
-    let remaining = mergedSegments[segmentIndex]?.length ?? 0;
-    let currentNode: Node | null = walker.nextNode();
-
-    while (currentNode && segmentIndex < mergedSegments.length) {
-        const textNode = currentNode as Text;
-        const textLength = textNode.textContent?.length ?? 0;
-
-        const segment = mergedSegments[segmentIndex];
-        if (!segment) break;
-
-        const element = textNode.parentElement;
-        if (element && !element.hasAttribute("data-review-path")) {
-            element.setAttribute("data-review-path", segment.path);
-        }
-
-        remaining -= textLength;
-        if (remaining <= 0 && segmentIndex < mergedSegments.length - 1) {
-            segmentIndex += 1;
-            remaining = mergedSegments[segmentIndex]?.length ?? 0;
-        }
-        currentNode = walker.nextNode();
-    }
-};
 
 const contentTypeDisplay = computed(() => {
     if (!props.job) return "";
@@ -121,73 +45,74 @@ const contentTypeDisplay = computed(() => {
 });
 
 const handleSelection = (editor: Editor) => {
-    const {state, view} = editor;
+    const {state} = editor;
     const {selection} = state;
+    
     if (selection.empty) {
         showFloatingButton.value = false;
         return;
     }
 
-    const text = state.doc.textBetween(selection.from, selection.to, " ");
+    const doc = state.doc;
+    const text = doc.textBetween(selection.from, selection.to, " ");
     if (!text || !text.trim()) {
         showFloatingButton.value = false;
         return;
     }
 
-    const domSelection = window.getSelection();
-    if (!domSelection || domSelection.rangeCount === 0) return;
+    if (!contentRef.value) return;
 
-    const range = domSelection.getRangeAt(0);
-    const startNode = range.startContainer;
-    const endNode = range.endContainer;
+    const location = contentRef.value.getLocationFromSelection(selection);
 
-    const startElement = (startNode.nodeType === Node.TEXT_NODE ? startNode.parentElement : startNode) as HTMLElement;
-    const endElement = (endNode.nodeType === Node.TEXT_NODE ? endNode.parentElement : endNode) as HTMLElement;
-
-    const startPath = startElement?.closest('[data-review-path]')?.getAttribute('data-review-path');
-    const endPath = endElement?.closest('[data-review-path]')?.getAttribute('data-review-path');
-
-    const location: ContentLocationRange = {
-        startInNode: range.startOffset,
-        endInNode: range.endOffset,
-        startPath: startPath || undefined,
-        endPath: endPath || undefined
-    };
-
-    selectedText.value = text;
-    currentLocation.value = location;
+    if (location) {
+        selectedText.value = text;
+        currentLocation.value = location;
+        showFloatingButton.value = true;
+    } else {
+        showFloatingButton.value = false;
+    }
 };
 
 const confirmSelection = () => {
     console.log("Confirming selection:", currentLocation.value, selectedText.value);
     if (currentLocation.value) {
         emit("select-range", currentLocation.value, selectedText.value);
-        // Do NOT clear selection here, so the user can see what they selected while filling the form.
-        // The form in sidebar will show the context.
     }
 };
 
 const scrollToPath = (path: string) => {
-    if (!contentRef.value) {
-        console.warn("ReviewContent: contentRef is null");
-        return;
-    }
-    const target = contentRef.value.querySelector(`[data-review-path="${path}"]`) as HTMLElement;
-    if (target) {
-        target.scrollIntoView({behavior: "smooth", block: "center"});
-        target.classList.add("review-highlight");
-        setTimeout(() => target.classList.remove("review-highlight"), 2000);
-    } else {
-        console.warn(`ReviewContent: Path not found: ${path}`);
+    if (contentRef.value) {
+        contentRef.value.scrollToLocation({
+            startPath: path,
+            startInNode: 0,
+            endInNode: 0 // Placeholder
+        });
     }
 };
 
+const severityToHighlightSeverity = (severity: ReviewSeverity) => {
+    switch (severity) {
+        case ReviewSeverity.CRITICAL: return 'critical';
+        case ReviewSeverity.MAJOR: return 'major';
+        case ReviewSeverity.MINOR: return 'minor';
+        case ReviewSeverity.INFO: return 'info';
+        default: return 'info';
+    }
+};
+
+const highlights = computed(() => {
+    if (!props.entries) return [];
+    return props.entries
+        .filter(e => !!e.locationRange)
+        .map(entry => ({
+            location: entry.locationRange!,
+            info: entry.message,
+            severity: severityToHighlightSeverity(entry.severity)
+        }));
+});
+
 defineExpose({scrollToPath});
 
-watch(() => props.job, async () => {
-    await nextTick();
-    normalizeEditorPaths();
-}, {immediate: true});
 </script>
 
 <template>
@@ -208,14 +133,16 @@ watch(() => props.job, async () => {
             </h1>
         </div>
 
-        <div ref="contentRef" class="min-h-[400px]">
+        <div class="min-h-[400px]">
             <StructuralTextEditor
+                    ref="contentRef"
                     :editable="false"
                     :model-value="job.content"
                     :show-outline="false"
                     :show-toolbar="false"
+                    :highlights="highlights"
                     :ui="{ content: { root: 'prose prose-neutral dark:prose-invert max-w-none' } }"
-                    @selection-range="handleSelection"
+                    @select-range="handleSelection"
             >
                 <template #bubble-menu-end>
                     <UButton

@@ -311,3 +311,13 @@ export type StructuralTextElement =
     | MathElement
     | MentionElement
 
+
+/**
+ * Represents a range within structural text.
+ */
+export interface ContentLocationRange {
+    startInNode: number;
+    endInNode: number;
+    startPath?: string;
+    endPath?: string;
+}

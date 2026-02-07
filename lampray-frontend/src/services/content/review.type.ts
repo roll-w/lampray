@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type {ContentType} from "./content.type";
-import type {StructuralText} from "@/components/structuraltext/types.ts";
+import type { ContentType } from "./content.type";
+import type { ContentLocationRange, StructuralText } from "@/components/structuraltext/types.ts";
 
 export enum ReviewStatus {
     PENDING = "PENDING",
@@ -63,12 +63,7 @@ export enum ReviewMark {
     REPORT = "REPORT"
 }
 
-export interface ContentLocationRange {
-    startInNode: number;
-    endInNode: number;
-    startPath?: string;
-    endPath?: string;
-}
+
 
 export interface ReviewerSource {
     isAutomatic: boolean;

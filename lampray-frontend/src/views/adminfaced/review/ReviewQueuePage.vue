@@ -51,6 +51,7 @@ const loadingContent = ref(false);
 
 // New State for Sidebar Form
 const currentDraft = ref<ReviewEntryDraft | null>(null);
+const currentEntries = ref<ReviewFeedbackEntry[]>([]);
 
 const contentRef = ref<any>(null);
 
@@ -188,6 +189,7 @@ const loadJobContent = async (index: number) => {
 
         // Clean up
         currentDraft.value = null;
+        currentEntries.value = [];
     } catch (error: any) {
         toast.add(newErrorToastFromError(error, t("request.error.title")));
     } finally {
@@ -318,6 +320,7 @@ onMounted(() => {
                             <ReviewContent
                                     ref="contentRef"
                                     :job="currentJobView!"
+                                    :entries="currentEntries"
                                     @select-range="handleSelectionRange"
                             />
                         </div>
@@ -332,6 +335,7 @@ onMounted(() => {
                                     v-if="reviewTask"
                                     v-model:draft="currentDraft"
                                     v-model:summary="reviewSummary"
+                                    v-model:entries="currentEntries"
                                     :disabled="reviewActionDisabled"
                                     :job="currentJob!"
                                     :progress="queueProgress"

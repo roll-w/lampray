@@ -15,7 +15,7 @@
   -->
 
 <script lang="ts" setup>
-import {onMounted, ref, watch} from "vue";
+import {computed, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import type {ContentLocationRange, ReviewFeedbackEntry, ReviewJobView} from "@/services/content/review.type";
 import {ReviewCategory, ReviewSeverity, ReviewVerdict} from "@/services/content/review.type";
@@ -37,11 +37,13 @@ const props = defineProps<{
     disabled?: boolean;
     draft?: ReviewEntryDraft | null;
     progress?: number;
+    entries?: ReviewFeedbackEntry[];
 }>();
 
 const emit = defineEmits<{
     (e: 'update:summary', value: string): void;
     (e: 'update:draft', value: ReviewEntryDraft | null): void;
+    (e: 'update:entries', value: ReviewFeedbackEntry[]): void;
     (e: 'submit-success'): void;
     (e: 'locate-entry', entry: ReviewFeedbackEntry): void;
 }>();
@@ -51,7 +53,14 @@ const axios = useAxios();
 const reviewApi = reviewService(axios);
 const toast = useToast();
 
-const entries = ref<ReviewFeedbackEntry[]>([]);
+const localEntries = ref<ReviewFeedbackEntry[]>([]);
+const entries = computed({
+    get: () => props.entries ?? localEntries.value,
+    set: (val) => {
+        localEntries.value = val;
+        emit('update:entries', val);
+    }
+});
 const loading = ref(false);
 const submitting = ref(false);
 
@@ -83,7 +92,7 @@ const loadEntries = async () => {
         if (jobDetails && jobDetails.tasks) {
             const task = jobDetails.tasks.find(t => t.taskId === props.taskId);
             if (task && task.feedback && task.feedback.entries) {
-                entries.value = task.feedback.entries;
+                entries.value = [...task.feedback.entries];
             } else {
                 entries.value = [];
             }
@@ -221,15 +230,12 @@ const handleSubmitReview = async (verdict: ReviewVerdict) => {
 
                     <div v-if="draft.text"
                          class="rounded-md p-3 border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
-                        <div class="text-[10px] uppercase font-bold text-neutral-400 mb-1 tracking-wider flex justify-between">
+                        <div class="text-xs uppercase font-bold text-neutral-400 mb-1 tracking-wider flex justify-between">
                             <span>{{ t('views.adminfaced.review.reviewEntryContextLabel') }}</span>
-                            <span v-if="draft.location" class="font-mono text-neutral-400">
-                                {{ draft.location.startInNode }}:{{ draft.location.endInNode }}
-                            </span>
                         </div>
-                        <p class="text-xs text-neutral-600 dark:text-neutral-400 italic line-clamp-3 font-serif">
+                        <div class="max-w-40 text-xs text-neutral-600 dark:text-neutral-400 italic font-mono whitespace-pre-wrap break-words">
                             "{{ draft.text }}"
-                        </p>
+                        </div>
                     </div>
 
                     <UFormField :label="t('views.adminfaced.review.category')">
