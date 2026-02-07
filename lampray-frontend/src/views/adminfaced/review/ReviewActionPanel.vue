@@ -46,7 +46,7 @@ const {t} = useI18n();
             />
         </UFormField>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-2">
             <UButton
                     :disabled="disabled"
                     :loading="loading"

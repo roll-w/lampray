@@ -159,6 +159,7 @@ const handleSelection = (editor: Editor) => {
 };
 
 const confirmSelection = () => {
+    console.log("Confirming selection:", currentLocation.value, selectedText.value);
     if (currentLocation.value) {
         emit("select-range", currentLocation.value, selectedText.value);
         // Do NOT clear selection here, so the user can see what they selected while filling the form.
@@ -193,11 +194,11 @@ watch(() => props.job, async () => {
     <div class="relative bg-white dark:bg-neutral-900 rounded-none overflow-visible">
         <div class="mb-8 border-b border-neutral-100 dark:border-neutral-800 pb-6">
             <div class="flex items-center gap-3 mb-4">
-                <UBadge class="font-mono tracking-tight" color="primary" size="xs" variant="soft">
+                <UBadge class="font-mono tracking-tight" color="primary" size="md" variant="soft">
                     {{ contentTypeDisplay }}
                 </UBadge>
                 <div class="w-px h-3 bg-neutral-200 dark:bg-neutral-800"/>
-                <span class="text-xs text-neutral-400 font-medium uppercase tracking-widest">
+                <span class="text-sm text-neutral-400 font-medium uppercase tracking-widest">
                     {{ new Date(job.createTime).toLocaleDateString() }}
                 </span>
             </div>
@@ -214,14 +215,15 @@ watch(() => props.job, async () => {
                     :show-outline="false"
                     :show-toolbar="false"
                     :ui="{ content: { root: 'prose prose-neutral dark:prose-invert max-w-none' } }"
-                    @selection-update="handleSelection"
+                    @selection-range="handleSelection"
             >
                 <template #bubble-menu-end>
                     <UButton
                             color="neutral"
                             size="xs"
                             variant="ghost"
-                            @click="confirmSelection"
+                            @mousedown.prevent
+                            @click.stop="confirmSelection"
                     >
                         <template #leading>
                             <UIcon class="size-3" name="i-lucide-message-square-plus"/>
