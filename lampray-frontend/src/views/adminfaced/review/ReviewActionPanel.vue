@@ -15,8 +15,8 @@
   -->
 
 <script lang="ts" setup>
-import { ReviewVerdict } from "@/services/content/review.type";
-import { useI18n } from "vue-i18n";
+import {ReviewVerdict} from "@/services/content/review.type";
+import {useI18n} from "vue-i18n";
 
 const props = defineProps<{
     summary: string;
@@ -29,51 +29,51 @@ const emit = defineEmits<{
     (e: 'submit', verdict: ReviewVerdict): void;
 }>();
 
-const { t } = useI18n();
+const {t} = useI18n();
 </script>
 
 <template>
     <div class="space-y-6">
         <UFormField :label="t('views.adminfaced.review.reviewSummary')">
             <UTextarea
-                :model-value="summary"
-                @update:model-value="val => emit('update:summary', val)"
-                :disabled="loading"
-                :rows="4"
-                :placeholder="t('views.adminfaced.review.reviewSummaryPlaceholder')"
-                class="w-full"
-                :ui="{ rounded: 'rounded-xl', base: 'bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 focus:ring-primary-500' }"
+                    :disabled="loading"
+                    :model-value="summary"
+                    :placeholder="t('views.adminfaced.review.reviewSummaryPlaceholder')"
+                    :rows="4"
+                    :ui="{ rounded: 'rounded-md', base: 'border-neutral-200 dark:border-neutral-800 focus:ring-primary-500 shadow-none' }"
+                    class="w-full"
+                    @update:model-value="val => emit('update:summary', val)"
             />
         </UFormField>
 
         <div class="grid grid-cols-2 gap-4">
             <UButton
-                :loading="loading"
-                :disabled="disabled"
-                block
-                size="lg"
-                color="primary"
-                class="rounded-xl font-bold shadow-none"
-                @click="emit('submit', ReviewVerdict.APPROVED)"
+                    :disabled="disabled"
+                    :loading="loading"
+                    block
+                    class="rounded-lg font-bold shadow-none"
+                    color="primary"
+                    size="lg"
+                    @click="emit('submit', ReviewVerdict.APPROVED)"
             >
                 <template #leading>
-                    <UIcon name="i-lucide-check-circle-2" />
+                    <UIcon name="i-lucide-check-circle-2"/>
                 </template>
                 {{ t('views.adminfaced.review.reviewVerdicts.APPROVED') }}
             </UButton>
-            
+
             <UButton
-                :loading="loading"
-                :disabled="disabled"
-                block
-                size="lg"
-                color="error"
-                variant="soft"
-                class="rounded-xl font-bold shadow-none"
-                @click="emit('submit', ReviewVerdict.REJECTED)"
+                    :disabled="disabled"
+                    :loading="loading"
+                    block
+                    class="rounded-lg font-bold shadow-none"
+                    color="error"
+                    size="lg"
+                    variant="soft"
+                    @click="emit('submit', ReviewVerdict.REJECTED)"
             >
                 <template #leading>
-                    <UIcon name="i-lucide-x-circle" />
+                    <UIcon name="i-lucide-x-circle"/>
                 </template>
                 {{ t('views.adminfaced.review.reviewVerdicts.REJECTED') }}
             </UButton>

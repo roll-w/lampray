@@ -121,7 +121,6 @@
         "reviewDecision": "审核结论",
         "reviewSummary": "总结",
         "reviewSummaryPlaceholder": "简要说明关键问题或通过原因",
-        "reviewEntries": "反馈条目",
         "reviewEntriesHint": "在内容中选择文本以创建带定位的条目。",
         "reviewEntriesEmpty": "暂无反馈条目。",
         "reviewEntryAdd": "添加条目",
@@ -144,6 +143,16 @@
         "reviewEntryNoLocation": "无定位",
         "reviewEntryAutoImported": "已导入自动审核",
         "reviewEntryRangeLabel": "{start}-{end}",
+        "reviewEntryContextLabel": "选中内容",
+        "reviewEntryContextLocation": "位置: {path}",
+        "addGeneralEntry": "添加总体评论",
+        "reviewEntries": "反馈列表",
+        "entryUntitled": "无评论内容",
+        "reviewJobInfo": "任务信息",
+        "reviewJobId": "任务 ID",
+        "reviewContentId": "内容 ID",
+        "reviewContentType": "类型",
+        "reviewCreatedTime": "创建时间",
         "reviewCategories": {
           "CONTENT_QUALITY": "内容质量",
           "GRAMMAR": "语法",
@@ -154,7 +163,7 @@
           "TECHNICAL": "技术问题",
           "OTHER": "其他"
         },
-        "reviewSeverities": {
+        "severity": {
           "CRITICAL": "严重",
           "MAJOR": "主要",
           "MINOR": "轻微",

@@ -54,7 +54,7 @@ const items = computed(() => props.entries.map((entry, index) => ({
 <template>
     <div class="space-y-4">
         <div class="flex items-center justify-between px-2">
-            <h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 uppercase tracking-widest">
+            <h3 class="text-xs font-semibold uppercase tracking-widest">
                 {{ t('views.adminfaced.review.reviewEntries') }}
             </h3>
             <UBadge class="rounded-full px-2" color="neutral" size="sm" variant="subtle">
@@ -63,81 +63,89 @@ const items = computed(() => props.entries.map((entry, index) => ({
         </div>
 
         <slot name="default"/>
-
-        <div v-if="entries.length === 0"
-             class="border border-dashed border-neutral-200 dark:border-neutral-800 rounded-lg py-12 flex flex-col items-center justify-center gap-2">
-            <UIcon class="size-6 text-neutral-300" name="i-lucide-message-square-off"/>
-            <span class="text-xs text-neutral-400 font-medium italic">
-                {{ t('views.adminfaced.review.reviewEntriesEmpty') }}
-            </span>
-        </div>
-
+        <UEmpty v-if="entries.length === 0"
+                :description="t('views.adminfaced.review.reviewEntriesEmpty')"
+                :ui="{
+                    'root': 'border border-dashed border-neutral-200 dark:border-neutral-800 rounded-lg py-12 flex flex-col items-center justify-center gap-2 bg-neutral-50/50 dark:bg-neutral-900/20',
+                }"
+                icon="i-lucide-file"
+                variant="naked"
+        />
         <UAccordion
                 v-else
                 :items="items"
                 :ui="{
-                root: 'space-y-3',
-                item: 'border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 overflow-hidden transition-all duration-200 shadow-none',
-                header: 'px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer select-none',
-                trigger: 'flex items-center gap-3 w-full text-left',
-                content: 'px-4 pb-4 border-t border-neutral-100 dark:border-neutral-800 pt-4',
-                label: 'text-sm font-semibold text-neutral-800 dark:text-neutral-200 truncate pr-4'
-            }"
+                    root: 'space-y-2',
+                    item: 'border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden shadow-none transition-colors',
+                    header: 'px-3 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer select-none flex items-center gap-2',
+                    trigger: 'flex items-center gap-3 w-full text-left',
+                    default: 'text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate flex-1',
+                    content: 'px-3 pb-3 border-t border-neutral-100 dark:border-neutral-800 pt-3'
+                }"
                 multiple
         >
             <template #leading="{ item }">
-                <UBadge
-                        :color="getSeverityColor(item.entry.severity)"
-                        class="rounded-full size-2 p-0 min-w-0"
-                        size="xs"
-                        variant="solid"
-                />
+                <div :class="`bg-${getSeverityColor(item.entry.severity)}-500`" class="size-2 rounded-full shrink-0"/>
             </template>
+
+            <template #default="{ item }">
+                <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate flex-1 pr-4">
+                    {{ item.label || t('views.adminfaced.review.entryUntitled') }}
+                </div>
+            </template>
+
             <template v-for="(entry, index) in entries" :key="index" #[`entry-${index}`]>
-                <div class="space-y-4">
+                <div class="space-y-3">
                     <div class="flex flex-wrap gap-2">
-                        <UBadge class="font-mono" color="neutral" size="xs" variant="subtle">
+                        <UBadge class="font-mono rounded-md" color="neutral" size="xs" variant="soft">
                             {{ entry.category }}
                         </UBadge>
-                        <UBadge v-if="entry.reviewerSource.isAutomatic" color="info" size="xs" variant="subtle">
-                            {{ t('views.adminfaced.review.auto') }}
+                        <UBadge v-if="entry.reviewerSource.isAutomatic" class="rounded-md" color="info" size="xs"
+                                variant="soft">
+                            {{ t('views.adminfaced.review.reviewEntrySourceAuto') }}
                         </UBadge>
                     </div>
 
-                    <p class="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed wrap-break-word whitespace-pre-wrap">
+                    <p class="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed wrap-break-word whitespace-pre-wrap font-sans">
                         {{ entry.message }}
                     </p>
 
                     <div v-if="entry.suggestion"
-                         class="bg-primary-50 dark:bg-primary-900/10 p-3 rounded border-l-2 border-primary-500">
-                        <div class="text-[10px] uppercase font-bold text-primary-600 dark:text-primary-400 mb-1 tracking-tighter">
-                            {{ t('views.adminfaced.review.suggestion') }}
+                         class="bg-neutral-50 dark:bg-neutral-800/50 p-3 rounded-md border border-neutral-200 dark:border-neutral-700/50">
+                        <div class="text-[10px] uppercase font-bold text-neutral-500 mb-1 tracking-wider">
+                            {{ t('views.adminfaced.review.reviewEntrySuggestion') }}
                         </div>
-                        <p class="text-sm text-neutral-700 dark:text-neutral-300 italic">
+                        <p class="text-xs text-neutral-800 dark:text-neutral-200 font-mono">
                             {{ entry.suggestion }}
                         </p>
                     </div>
 
-                    <div class="flex items-center justify-between pt-2 border-t border-neutral-50 dark:border-neutral-800/50">
+                    <div class="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800">
                         <span class="text-[10px] text-neutral-400 font-mono uppercase">
                             LOC: {{ entry.locationRange?.startInNode ?? 'N/A' }}
                         </span>
                         <div class="flex items-center gap-1">
-                            <UButton
-                                    color="neutral"
-                                    icon="i-lucide-locate"
-                                    size="xs"
-                                    variant="ghost"
-                                    @click="emit('locate', entry)"
-                            />
-                            <UButton
-                                    v-if="!entry.reviewerSource.isAutomatic"
-                                    color="error"
-                                    icon="i-lucide-trash-2"
-                                    size="xs"
-                                    variant="ghost"
-                                    @click="emit('remove', index)"
-                            />
+                            <UTooltip :text="t('views.adminfaced.review.reviewEntryGoTo')">
+                                <UButton
+                                        :ui="{ rounded: 'rounded-md' }"
+                                        color="neutral"
+                                        icon="i-lucide-locate-fixed"
+                                        size="xs"
+                                        variant="ghost"
+                                        @click="emit('locate', entry)"
+                                />
+                            </UTooltip>
+                            <UTooltip :text="t('views.adminfaced.review.reviewEntryRemove')">
+                                <UButton
+                                        v-if="!entry.reviewerSource.isAutomatic"
+                                        :ui="{ rounded: 'rounded-md' }"
+                                        color="error"
+                                        icon="i-lucide-trash-2"
+                                        size="xs"
+                                        variant="ghost"
+                                        @click="emit('remove', index)"
+                                />
+                            </UTooltip>
                         </div>
                     </div>
                 </div>
