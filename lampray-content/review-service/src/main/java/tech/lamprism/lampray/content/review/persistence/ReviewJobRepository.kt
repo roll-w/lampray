@@ -32,6 +32,10 @@ class ReviewJobRepository(
         return reviewJobDao.saveAndFlush(entity)
     }
 
+    override fun <S : ReviewJobEntity> saveAll(entities: Iterable<S>): List<S> {
+        return reviewJobDao.saveAllAndFlush(entities)
+    }
+
     fun findByContent(
         contentId: Long,
         contentType: ContentType,
@@ -84,7 +88,10 @@ class ReviewJobRepository(
             val taskRoot = subquery.from(ReviewTaskEntity::class.java)
             subquery.select(taskRoot.get(ReviewTaskEntity_.reviewJobId))
             val predicates = mutableListOf(
-                criteriaBuilder.equal(taskRoot.get(ReviewTaskEntity_.reviewJobId), root.get(ReviewJobEntity_.resourceId)),
+                criteriaBuilder.equal(
+                    taskRoot.get(ReviewTaskEntity_.reviewJobId),
+                    root.get(ReviewJobEntity_.resourceId)
+                ),
                 criteriaBuilder.equal(taskRoot.get(ReviewTaskEntity_.reviewerId), reviewerId)
             )
             subquery.where(*predicates.toTypedArray())
