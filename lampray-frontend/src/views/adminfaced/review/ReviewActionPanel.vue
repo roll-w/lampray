@@ -34,7 +34,10 @@ const {t} = useI18n();
 
 <template>
     <div class="space-y-6">
-        <UFormField :label="t('views.adminfaced.review.reviewSummary')">
+        <div>
+            <h3 class="text-xs font-semibold uppercase tracking-widest pb-4">
+                {{ t('views.adminfaced.review.reviewSummary') }}
+            </h3>
             <UTextarea
                     :disabled="loading"
                     :model-value="summary"
@@ -44,7 +47,7 @@ const {t} = useI18n();
                     class="w-full"
                     @update:model-value="val => emit('update:summary', val)"
             />
-        </UFormField>
+        </div>
 
         <div class="grid grid-cols-2 gap-2">
             <UButton

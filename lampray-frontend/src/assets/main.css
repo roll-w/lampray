@@ -41,6 +41,10 @@
     --ui-primary: var(--color-amber-500);
 }
 
+@utility scrollbar-hidden {
+    @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
+
 .fade-move,
 .fade-enter-active,
 .fade-leave-active {

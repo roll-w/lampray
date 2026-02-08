@@ -21,11 +21,13 @@ import {computed} from "vue";
 
 const props = defineProps<{
     entries: ReviewFeedbackEntry[];
+    selectedEntry?: ReviewFeedbackEntry | null;
 }>();
 
 const emit = defineEmits<{
     (e: 'remove', index: number): void;
     (e: 'locate', entry: ReviewFeedbackEntry): void;
+    (e: 'select', entry: ReviewFeedbackEntry): void;
 }>();
 
 const {t} = useI18n();
@@ -53,11 +55,11 @@ const items = computed(() => props.entries.map((entry, index) => ({
 
 <template>
     <div class="space-y-4">
-        <div class="flex items-center justify-between px-2">
+        <div class="flex items-center justify-between">
             <h3 class="text-xs font-semibold uppercase tracking-widest">
                 {{ t('views.adminfaced.review.reviewEntries') }}
             </h3>
-            <UBadge class="rounded-full px-2" color="neutral" size="sm" variant="subtle">
+            <UBadge class="rounded-full" color="neutral" size="sm" variant="subtle">
                 {{ entries.length }}
             </UBadge>
         </div>
@@ -89,7 +91,10 @@ const items = computed(() => props.entries.map((entry, index) => ({
             </template>
 
             <template #default="{ item }">
-                <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate flex-1 pr-4">
+                <div
+                    class="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate flex-1 pr-4"
+                    @click="emit('select', item.entry)"
+                >
                     {{ item.label || t('views.adminfaced.review.entryUntitled') }}
                 </div>
             </template>
@@ -131,13 +136,13 @@ const items = computed(() => props.entries.map((entry, index) => ({
                         </div>
 
                         <div class="flex items-center gap-1">
-                            <UTooltip :text="t('views.adminfaced.review.reviewEntryGoTo')">
+                            <UTooltip :text="entry === props.selectedEntry ? t('views.adminfaced.review.reviewEntrySelected') : t('views.adminfaced.review.reviewEntryGoTo')">
                                 <UButton
                                         :ui="{ rounded: 'rounded-md' }"
-                                        color="neutral"
+                                        :color="entry === props.selectedEntry ? 'primary' : 'neutral'"
+                                        :variant="entry === props.selectedEntry ? 'solid' : 'ghost'"
                                         icon="i-lucide-locate-fixed"
                                         size="xs"
-                                        variant="ghost"
                                         @click="emit('locate', entry)"
                                 />
                             </UTooltip>

@@ -41,6 +41,7 @@ const props = defineProps<{
     entries?: LocalReviewEntry[];
     isFirst?: boolean;
     isLast?: boolean;
+    selectedEntry?: ReviewFeedbackEntry | null;
 }>();
 
 const emit = defineEmits<{
@@ -48,7 +49,7 @@ const emit = defineEmits<{
     (e: 'update:draft', value: ReviewEntryDraft | null): void;
     (e: 'update:entries', value: any[]): void;
     (e: 'submit', verdict: ReviewVerdict): void;
-    (e: 'locate-entry', entry: any): void;
+    (e: 'locate-entry', entry: ReviewFeedbackEntry | null): void;
     (e: 'prev-job'): void;
     (e: 'next-job'): void;
 }>();
@@ -134,15 +135,24 @@ const handleRemoveEntry = (index: number) => {
     entries.value.splice(index, 1);
 };
 
+const handleSelectEntry = (entry: ReviewFeedbackEntry) => {
+    // Toggle: if already selected, deselect (emit null)
+    if (props.selectedEntry === entry) {
+        emit("locate-entry", null);
+    } else {
+        emit("locate-entry", entry);
+    }
+};
+
 const handleSubmitReview = (verdict: ReviewVerdict) => {
-    emit('submit', verdict);
+    emit("submit", verdict);
 };
 
 </script>
 
 <template>
     <div class="h-full max-h-[calc(100vh-64px)] flex flex-col border border-neutral-200 dark:border-neutral-800 rounded-xl">
-        <div class="px-5 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+        <div class="px-5 py-4 flex items-center justify-between">
             <div class="flex flex-col gap-0.5">
                 <h2 class="text-sm font-semibold text-neutral-900 dark:text-white tracking-tight">
                     Review Panel
@@ -159,8 +169,6 @@ const handleSubmitReview = (verdict: ReviewVerdict) => {
             </div>
 
             <div class="flex items-center gap-3">
-
-
                 <UTooltip :text="t('views.adminfaced.review.reviewEntryAdd')">
                     <UButton
                             :ui="{ rounded: 'rounded-full' }"
@@ -197,7 +205,7 @@ const handleSubmitReview = (verdict: ReviewVerdict) => {
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-5 space-y-6">
+        <div class="flex-1 p-5 space-y-6">
             <div v-if="draft" class="animate-in fade-in slide-in-from-right-4 duration-300">
                 <div class="p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 space-y-4">
                     <div class="flex items-center justify-between">
@@ -281,7 +289,9 @@ const handleSubmitReview = (verdict: ReviewVerdict) => {
 
             <ReviewFeedbackEntries
                     :entries="entries"
-                    @locate="e => emit('locate-entry', e)"
+                    :selected-entry="props.selectedEntry"
+                    @locate="handleSelectEntry"
+                    @select="handleSelectEntry"
                     @remove="handleRemoveEntry"
             />
 

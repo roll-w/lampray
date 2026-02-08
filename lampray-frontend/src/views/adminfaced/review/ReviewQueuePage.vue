@@ -25,7 +25,6 @@ export interface LocalReviewEntry extends ReviewFeedbackEntry {
 <script lang="ts" setup>
 import {computed, onMounted, ref} from "vue";
 import {reviewService} from "@/services/content/review.service";
-import {autoUpdate, shift, useFloating} from "@floating-ui/vue";
 import {
     type ReviewJobContentView,
     type ReviewJobDetailsView,
@@ -93,8 +92,20 @@ const reviewActionDisabled = computed(() => {
     return loadingContent.value;
 });
 
-const handleLocateEntry = (entry: LocalReviewEntry) => {
-    if (contentRef.value?.scrollToEntry) {
+const selectedEntry = ref<LocalReviewEntry | null>(null);
+
+const handleLocateEntry = (entry: LocalReviewEntry | null) => {
+    // Toggle selection if clicking same entry
+    if (entry === null) {
+        selectedEntry.value = null;
+        // Clear highlight in ReviewContent
+        if (contentRef.value?.clearHighlight) {
+            contentRef.value.clearHighlight();
+        }
+        return;
+    }
+    selectedEntry.value = entry;
+    if (entry && contentRef.value?.scrollToEntry) {
         contentRef.value.scrollToEntry(entry);
     }
 };
@@ -108,21 +119,6 @@ const handleSelectionRange = (range: ContentLocationRange, text: string) => {
         text: text
     };
 };
-
-const sidebarAnchor = ref(null);
-const sidebarFloating = ref(null);
-
-const {floatingStyles: sidebarFloatingStyles} = useFloating(sidebarAnchor, sidebarFloating, {
-    strategy: "fixed",
-    placement: "right-start",
-    middleware: [
-        shift({
-            crossAxis: true,
-            padding: {top: 70}
-        })
-    ],
-    whileElementsMounted: autoUpdate
-});
 
 /**
  * Fetch review jobs from server
@@ -199,8 +195,8 @@ const handleReviewSubmit = async (verdict: ReviewVerdict) => {
 
     if (verdict !== ReviewVerdict.APPROVED && currentEntries.value.length === 0 && !reviewSummary.value.trim()) {
         toast.add(newErrorToastFromError(
-            new Error(t("views.adminfaced.review.validation.reasonRequired")),
-            t("views.adminfaced.review.validation.title")
+                new Error(t("views.adminfaced.review.validation.reasonRequired")),
+                t("views.adminfaced.review.validation.title")
         ));
         return;
     }
@@ -262,7 +258,7 @@ onMounted(() => {
 
 <template>
     <DashboardPanel>
-        <template #header>
+        <template ref="dashboardHeader" #header>
             <UDashboardNavbar class="z-20">
                 <template #title>
                     <div class="flex flex-col">
@@ -289,7 +285,7 @@ onMounted(() => {
 
         <template #body>
             <div v-if="loading" class="flex items-center justify-center h-full">
-                <div class="flex flex-col items-center gap-4 animate-pulse">
+                <div class="flex flex-col items-center gap-4">
                     <div class="size-8 rounded-full border-2 border-neutral-200 border-t-neutral-800 animate-spin"/>
                     <p class="text-sm text-neutral-500 font-medium tracking-wide">
                         {{ t("views.adminfaced.review.loading") }}
@@ -318,30 +314,29 @@ onMounted(() => {
                         <div class="w-full p-6 lg:p-10 space-y-6">
                             <ReviewContent
                                     ref="contentRef"
-                                    :job="currentJobView!"
                                     :entries="currentEntries"
+                                    :job="currentJobView!"
                                     @select-range="handleSelectionRange"
                                     @remove-entry="currentDraft = null"
                             />
                         </div>
                     </main>
 
-                    <aside class="hidden lg:block relative">
+                    <aside class="hidden lg:block sticky top-0 self-start w-[400px]">
                         <div ref="sidebarFloating"
-                             :style="{ ...sidebarFloatingStyles }"
-                             class="z-10">
+                             class="max-h-[70vh] scrollbar-hidden p-4 overflow-y-auto">
                             <ReviewSidebar
-                                    class="w-[400px]"
                                     v-if="reviewTask"
                                     v-model:draft="currentDraft"
-                                    v-model:summary="reviewSummary"
                                     v-model:entries="currentEntries"
+                                    v-model:summary="reviewSummary"
                                     :disabled="reviewActionDisabled || submittingReview"
-                                    :job="currentJob!"
-                                    :progress="queueProgress"
-                                    :task-id="reviewTask.taskId"
                                     :is-first="currentIndex === 0"
                                     :is-last="currentIndex >= reviewQueue.length - 1"
+                                    :job="currentJob!"
+                                    :progress="queueProgress"
+                                    :selected-entry="selectedEntry"
+                                    :task-id="reviewTask.taskId"
                                     @submit="handleReviewSubmit"
                                     @locate-entry="handleLocateEntry"
                                     @prev-job="prevJob"
@@ -354,14 +349,15 @@ onMounted(() => {
                         <ReviewSidebar
                                 v-if="reviewTask"
                                 v-model:draft="currentDraft"
-                                v-model:summary="reviewSummary"
                                 v-model:entries="currentEntries"
+                                v-model:summary="reviewSummary"
                                 :disabled="reviewActionDisabled || submittingReview"
-                                :job="currentJob!"
-                                :progress="queueProgress"
-                                :task-id="reviewTask.taskId"
                                 :is-first="currentIndex === 0"
                                 :is-last="currentIndex >= reviewQueue.length - 1"
+                                :job="currentJob!"
+                                :progress="queueProgress"
+                                :selected-entry="selectedEntry"
+                                :task-id="reviewTask.taskId"
                                 @submit="handleReviewSubmit"
                                 @locate-entry="handleLocateEntry"
                                 @prev-job="prevJob"

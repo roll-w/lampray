@@ -107,6 +107,10 @@ const scrollToEntry = (entry: ReviewFeedbackEntry) => {
     }
 };
 
+const clearHighlight = () => {
+    activeEntry.value = null;
+};
+
 const highlights = computed(() => {
     if (!activeEntry.value || !activeEntry.value.locationRange) return [];
     return [{
@@ -116,7 +120,7 @@ const highlights = computed(() => {
     }];
 });
 
-defineExpose({scrollToPath, scrollToEntry});
+defineExpose({scrollToPath, scrollToEntry, clearHighlight});
 
 </script>
 
