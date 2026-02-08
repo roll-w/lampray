@@ -121,9 +121,15 @@ const items = computed(() => props.entries.map((entry, index) => ({
                     </div>
 
                     <div class="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800">
-                        <span class="text-[10px] text-neutral-400 font-mono uppercase">
-                            LOC: {{ entry.locationRange?.startInNode ?? 'N/A' }}
-                        </span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-[10px] text-neutral-400 uppercase font-mono mb-0.5">
+                                {{ t('views.adminfaced.review.reviewEntryContextLabel') }}
+                            </div>
+                            <div class="text-[11px] text-neutral-500 italic font-mono truncate" :title="entry.originalText">
+                                "{{ entry.originalText }}"
+                            </div>
+                        </div>
+
                         <div class="flex items-center gap-1">
                             <UTooltip :text="t('views.adminfaced.review.reviewEntryGoTo')">
                                 <UButton

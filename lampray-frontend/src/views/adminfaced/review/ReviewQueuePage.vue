@@ -14,19 +14,24 @@
   - limitations under the License.
   -->
 
+<script lang="ts">
+import type {ReviewFeedbackEntry} from "@/services/content/review.type.ts";
+
+export interface LocalReviewEntry extends ReviewFeedbackEntry {
+    originalText?: string;
+}
+</script>
+
 <script lang="ts" setup>
 import {computed, onMounted, ref} from "vue";
 import {reviewService} from "@/services/content/review.service";
 import {autoUpdate, shift, useFloating} from "@floating-ui/vue";
 import {
-    type ContentLocationRange,
-    type ReviewFeedbackEntry,
     type ReviewJobContentView,
     type ReviewJobDetailsView,
     type ReviewJobView,
     ReviewStatus,
-    type ReviewTaskView,
-    ReviewVerdict
+    type ReviewTaskView, ReviewVerdict,
 } from "@/services/content/review.type";
 import {useAxios} from "@/composables/useAxios.ts";
 import DashboardPanel from "@/views/adminfaced/DashboardPanel.vue";
@@ -35,6 +40,7 @@ import {newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
 import {useUserStore} from "@/stores/user.ts";
 import ReviewContent from "./ReviewContent.vue";
 import ReviewSidebar, {type ReviewEntryDraft} from "./ReviewSidebar.vue";
+import type {ContentLocationRange} from "@/components/structuraltext/types.ts";
 
 const axios = useAxios();
 const reviewApi = reviewService(axios);
@@ -49,9 +55,8 @@ const reviewQueue = ref<ReviewJobView[]>([]);
 const reviewSummary = ref("");
 const loadingContent = ref(false);
 
-// New State for Sidebar Form
 const currentDraft = ref<ReviewEntryDraft | null>(null);
-const currentEntries = ref<ReviewFeedbackEntry[]>([]);
+const currentEntries = ref<LocalReviewEntry[]>([]);
 
 const contentRef = ref<any>(null);
 
@@ -67,8 +72,8 @@ const currentJob = computed(() => {
 });
 
 const queueProgress = computed(() => {
-    if (reviewQueue.value.length === 0) return 0;
-    return ((currentIndex.value + 1) / reviewQueue.value.length) * 100;
+    if (reviewQueue.value.length <= 1) return 100;
+    return Math.round((currentIndex.value / (reviewQueue.value.length - 1)) * 100);
 });
 
 const reviewTask = computed<ReviewTaskView | null>(() => {
@@ -84,18 +89,13 @@ const reviewTask = computed<ReviewTaskView | null>(() => {
     return manualTask ?? tasks[0] ?? null;
 });
 
-const verdict = ref<ReviewVerdict>(ReviewVerdict.APPROVED);
-
 const reviewActionDisabled = computed(() => {
     return loadingContent.value;
 });
 
-const scrollToEntry = (entry: ReviewFeedbackEntry) => {
-    const location = entry.locationRange;
-    if (!location?.startPath) return;
-
-    if (contentRef.value?.scrollToPath) {
-        contentRef.value.scrollToPath(location.startPath);
+const handleLocateEntry = (entry: LocalReviewEntry) => {
+    if (contentRef.value?.scrollToEntry) {
+        contentRef.value.scrollToEntry(entry);
     }
 };
 
@@ -107,10 +107,7 @@ const handleSelectionRange = (range: ContentLocationRange, text: string) => {
         location: range,
         text: text
     };
-
-    console.log("Selected range for new entry:", range, text);
 };
-
 
 const sidebarAnchor = ref(null);
 const sidebarFloating = ref(null);
@@ -121,7 +118,7 @@ const {floatingStyles: sidebarFloatingStyles} = useFloating(sidebarAnchor, sideb
     middleware: [
         shift({
             crossAxis: true,
-            padding: {top: 70} // Add padding to account for header
+            padding: {top: 70}
         })
     ],
     whileElementsMounted: autoUpdate
@@ -176,20 +173,18 @@ const loadJobContent = async (index: number) => {
         ]);
         currentJobView.value = contentResponse.data?.data || null;
         currentJobDetails.value = detailResponse.data.data || null;
-        currentJobDetails.value = detailResponse.data.data || null;
         reviewSummary.value = "";
 
-        // Restore default verdict logic
-        const hasAutoEntries = currentJobDetails.value?.tasks?.some(t => t.feedback?.entries?.some(e => e.reviewerSource?.isAutomatic));
-        if (hasAutoEntries) {
-            verdict.value = ReviewVerdict.NEEDS_REVISION;
+        // Load entries from current task
+        if (currentJobDetails.value && reviewTask.value) {
+            currentEntries.value = [...(reviewTask.value.feedback?.entries || [])].map(e => ({
+                ...e,
+                originalText: undefined // We don't have this from backend usually
+            }));
         } else {
-            verdict.value = ReviewVerdict.APPROVED;
+            currentEntries.value = [];
         }
 
-        // Clean up
-        currentDraft.value = null;
-        currentEntries.value = [];
     } catch (error: any) {
         toast.add(newErrorToastFromError(error, t("request.error.title")));
     } finally {
@@ -197,20 +192,46 @@ const loadJobContent = async (index: number) => {
     }
 };
 
+const submittingReview = ref(false);
+
+const handleReviewSubmit = async (verdict: ReviewVerdict) => {
+    if (!currentJob.value || !reviewTask.value || submittingReview.value) return;
+
+    if (verdict !== ReviewVerdict.APPROVED && currentEntries.value.length === 0 && !reviewSummary.value.trim()) {
+        toast.add(newErrorToastFromError(
+            new Error(t("views.adminfaced.review.validation.reasonRequired")),
+            t("views.adminfaced.review.validation.title")
+        ));
+        return;
+    }
+
+    submittingReview.value = true;
+    try {
+        await reviewApi.makeReview(currentJob.value.id, reviewTask.value.taskId, {
+            verdict: verdict,
+            entries: currentEntries.value,
+            summary: reviewSummary.value.trim() || undefined
+        });
+        toast.add(newSuccessToast(t("views.adminfaced.review.approveSuccess")));
+        handleReviewSubmitSuccess();
+    } catch (error: any) {
+        toast.add(newErrorToastFromError(error, t("request.error.title")));
+    } finally {
+        submittingReview.value = false;
+    }
+};
+
 const handleReviewSubmitSuccess = () => {
-    // Remove current job from queue
     if (currentIndex.value >= 0 && currentIndex.value < reviewQueue.value.length) {
         reviewQueue.value.splice(currentIndex.value, 1);
     }
 
-    // Load next job or complete
     if (reviewQueue.value.length === 0) {
         currentIndex.value = -1;
         currentJobView.value = null;
         currentJobDetails.value = null;
         toast.add(newSuccessToast(t("views.adminfaced.review.queueComplete")));
     } else {
-        // Stay at same index (which now points to next job)
         const nextIndex = Math.min(currentIndex.value, reviewQueue.value.length - 1);
         loadJobContent(nextIndex);
     }
@@ -230,9 +251,6 @@ const prevJob = async () => {
     }
 };
 
-/**
- * Refresh queue
- */
 const refreshQueue = () => {
     fetchReviewJobs();
 };
@@ -297,31 +315,13 @@ onMounted(() => {
                 <div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-0 relative">
                     <main ref="sidebarAnchor"
                           class="min-w-0 min-h-[calc(100vh-64px)] z-0">
-                        <div class="w-full p-6 space-y-6">
-                            <div class="flex items-center border border-neutral-200 dark:border-neutral-800 rounded-lg p-0.5">
-                                <UButton
-                                        :disabled="currentIndex === 0"
-                                        color="neutral"
-                                        icon="i-lucide-chevron-left"
-                                        size="xs"
-                                        variant="ghost"
-                                        @click="prevJob"
-                                />
-                                <div class="w-px h-3 bg-neutral-200 dark:bg-neutral-800 mx-1"/>
-                                <UButton
-                                        :disabled="currentIndex >= reviewQueue.length - 1"
-                                        color="neutral"
-                                        icon="i-lucide-chevron-right"
-                                        size="xs"
-                                        variant="ghost"
-                                        @click="nextJob"
-                                />
-                            </div>
+                        <div class="w-full p-6 lg:p-10 space-y-6">
                             <ReviewContent
                                     ref="contentRef"
                                     :job="currentJobView!"
                                     :entries="currentEntries"
                                     @select-range="handleSelectionRange"
+                                    @remove-entry="currentDraft = null"
                             />
                         </div>
                     </main>
@@ -329,19 +329,23 @@ onMounted(() => {
                     <aside class="hidden lg:block relative">
                         <div ref="sidebarFloating"
                              :style="{ ...sidebarFloatingStyles }"
-                             class="z-10"
-                        >
+                             class="z-10">
                             <ReviewSidebar
+                                    class="w-[400px]"
                                     v-if="reviewTask"
                                     v-model:draft="currentDraft"
                                     v-model:summary="reviewSummary"
                                     v-model:entries="currentEntries"
-                                    :disabled="reviewActionDisabled"
+                                    :disabled="reviewActionDisabled || submittingReview"
                                     :job="currentJob!"
                                     :progress="queueProgress"
                                     :task-id="reviewTask.taskId"
-                                    @submit-success="handleReviewSubmitSuccess"
-                                    @locate-entry="scrollToEntry"
+                                    :is-first="currentIndex === 0"
+                                    :is-last="currentIndex >= reviewQueue.length - 1"
+                                    @submit="handleReviewSubmit"
+                                    @locate-entry="handleLocateEntry"
+                                    @prev-job="prevJob"
+                                    @next-job="nextJob"
                             />
                         </div>
                     </aside>
@@ -351,12 +355,17 @@ onMounted(() => {
                                 v-if="reviewTask"
                                 v-model:draft="currentDraft"
                                 v-model:summary="reviewSummary"
-                                :disabled="reviewActionDisabled"
+                                v-model:entries="currentEntries"
+                                :disabled="reviewActionDisabled || submittingReview"
                                 :job="currentJob!"
                                 :progress="queueProgress"
                                 :task-id="reviewTask.taskId"
-                                @submit-success="handleReviewSubmitSuccess"
-                                @locate-entry="scrollToEntry"
+                                :is-first="currentIndex === 0"
+                                :is-last="currentIndex >= reviewQueue.length - 1"
+                                @submit="handleReviewSubmit"
+                                @locate-entry="handleLocateEntry"
+                                @prev-job="prevJob"
+                                @next-job="nextJob"
                         />
                     </div>
                 </div>

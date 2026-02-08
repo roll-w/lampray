@@ -15,14 +15,14 @@
   -->
 
 <script lang="ts" setup>
-import {computed, ref} from "vue";
-import type {ContentLocationRange, ReviewJobContentView} from "@/services/content/review.type";
+import {computed, ref, watch} from "vue";
+import type {ReviewJobContentView} from "@/services/content/review.type";
 import StructuralTextEditor from "@/components/structuraltext/StructuralTextEditor.vue";
 import {useI18n} from "vue-i18n";
 import {getContentTypeI18nKey} from "@/services/content/content.type.ts";
 import type {Editor} from "@tiptap/vue-3";
 import type {ReviewFeedbackEntry} from "@/services/content/review.type";
-import {ReviewSeverity} from "@/services/content/review.type";
+import type {ContentLocationRange} from "@/components/structuraltext/types.ts";
 
 const props = defineProps<{
     job: ReviewJobContentView;
@@ -38,6 +38,17 @@ const contentRef = ref<any>(null);
 const showFloatingButton = ref(false); 
 const selectedText = ref("");
 const currentLocation = ref<ContentLocationRange | null>(null);
+
+// Active entry to highlight
+const activeEntry = ref<ReviewFeedbackEntry | null>(null);
+
+watch(() => props.entries, (newEntries) => {
+    if (!activeEntry.value || !newEntries) return;
+    const stillExists = newEntries.some(e => e === activeEntry.value);
+    if (!stillExists) {
+        activeEntry.value = null;
+    }
+}, { deep: true });
 
 const contentTypeDisplay = computed(() => {
     if (!props.job) return "";
@@ -74,7 +85,6 @@ const handleSelection = (editor: Editor) => {
 };
 
 const confirmSelection = () => {
-    console.log("Confirming selection:", currentLocation.value, selectedText.value);
     if (currentLocation.value) {
         emit("select-range", currentLocation.value, selectedText.value);
     }
@@ -85,33 +95,28 @@ const scrollToPath = (path: string) => {
         contentRef.value.scrollToLocation({
             startPath: path,
             startInNode: 0,
-            endInNode: 0 // Placeholder
+            endInNode: 0
         });
     }
 };
 
-const severityToHighlightSeverity = (severity: ReviewSeverity) => {
-    switch (severity) {
-        case ReviewSeverity.CRITICAL: return 'critical';
-        case ReviewSeverity.MAJOR: return 'major';
-        case ReviewSeverity.MINOR: return 'minor';
-        case ReviewSeverity.INFO: return 'info';
-        default: return 'info';
+const scrollToEntry = (entry: ReviewFeedbackEntry) => {
+    if (contentRef.value && entry.locationRange) {
+        activeEntry.value = entry;
+        contentRef.value.scrollToLocation(entry.locationRange);
     }
 };
 
 const highlights = computed(() => {
-    if (!props.entries) return [];
-    return props.entries
-        .filter(e => !!e.locationRange)
-        .map(entry => ({
-            location: entry.locationRange!,
-            info: entry.message,
-            severity: severityToHighlightSeverity(entry.severity)
-        }));
+    if (!activeEntry.value || !activeEntry.value.locationRange) return [];
+    return [{
+        location: activeEntry.value.locationRange,
+        info: activeEntry.value.message,
+        severity: 'active'
+    }];
 });
 
-defineExpose({scrollToPath});
+defineExpose({scrollToPath, scrollToEntry});
 
 </script>
 
@@ -162,3 +167,6 @@ defineExpose({scrollToPath});
         </div>
     </div>
 </template>
+
+<style scoped>
+</style>

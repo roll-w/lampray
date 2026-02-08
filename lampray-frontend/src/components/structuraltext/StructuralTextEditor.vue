@@ -84,7 +84,6 @@ interface Emits {
     (e: "change", value: StructuralText): void
 
     (e: "select-range", editor: Editor): void
-    (e: "init", editor: Editor): void
 }
 
 /**
@@ -159,7 +158,7 @@ const refreshMappings = () => {
         let nodeOffset = 0;
 
         while (nodeOffset < nodeText.length && currentSegmentIndex < structuralSegments.value.length) {
-            const segment = structuralSegments.value[currentSegmentIndex];
+            const segment = structuralSegments.value[currentSegmentIndex]!;
             const segmentRemaining = segment.text.length - currentSegmentOffset;
             const nodeRemaining = nodeText.length - nodeOffset;
 
@@ -207,7 +206,7 @@ const resolveLocationToRange = (loc: ContentLocationRange) => {
     }
 
     if (from === to) to = from + 1;
-    return { from, to };
+    return {from, to};
 };
 
 const locationHighlightExtension = Extension.create({
@@ -219,18 +218,18 @@ const locationHighlightExtension = Extension.create({
                 props: {
                     decorations: (state) => {
                         if (!props.highlights || !mappings.value.length) return DecorationSet.empty;
-                        
+
                         const decos: Decoration[] = [];
                         props.highlights.forEach(hl => {
                             const range = resolveLocationToRange(hl.location);
                             if (!range) return;
-                            
+
                             decos.push(Decoration.inline(range.from, range.to, {
                                 class: `structural-location-highlight highlight-severity-${hl.severity || 'info'}`,
                                 title: hl.info || ''
                             }));
                         });
-                        
+
                         return DecorationSet.create(state.doc, decos);
                     }
                 }
@@ -238,7 +237,6 @@ const locationHighlightExtension = Extension.create({
         ];
     }
 });
-// --- End Location Logic ---
 
 const editor = useEditor({
     extensions: [
@@ -327,7 +325,6 @@ const editor = useEditor({
         const state = editor.state
         const plugins = [preserveSelectionPlugin, ...state.plugins]
         editor.view.updateState(state.reconfigure({plugins}))
-        emit("init", editor)
         refreshMappings()
     },
     onSelectionUpdate: ({editor}) => {
@@ -354,14 +351,14 @@ watch(() => props.modelValue, (newVal) => {
 
 watch(() => props.extensions, () => {
     // Note: Tiptap doesn't support easy hot-reloading of extensions.
-}, { deep: true })
+}, {deep: true})
 
 watch([() => props.highlights, mappings], () => {
     if (editor.value) {
         // Trigger a re-render of decorations by dispatching a metadata-only transaction
         editor.value.view.dispatch(editor.value.state.tr.setMeta('locationHighlightRefresh', true));
     }
-}, { deep: true });
+}, {deep: true});
 
 onBeforeUnmount(() => {
     editor.value?.destroy()
@@ -387,7 +384,13 @@ defineExpose({
         const range = resolveLocationToRange(loc);
         if (range && editor.value) {
             editor.value.commands.setTextSelection(range);
-            editor.value.commands.scrollIntoView();
+            
+            // Scroll to center
+            const { view } = editor.value;
+            const dom = view.nodeDOM(range.from) as HTMLElement || view.domAtPos(range.from).node as HTMLElement;
+            if (dom.scrollIntoView) {
+                dom.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
         }
     },
     refreshMappings
@@ -584,22 +587,14 @@ defineExpose({
  */
 .structural-location-highlight {
     @apply transition-all duration-300;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
 }
 
-.highlight-severity-critical {
-    @apply bg-red-500/20 border-b-2 border-red-500/50;
-}
-
-.highlight-severity-major {
-    @apply bg-orange-500/20 border-b-2 border-orange-500/50;
-}
-
-.highlight-severity-minor {
-    @apply bg-yellow-500/20 border-b-2 border-yellow-500/50;
-}
-
-.highlight-severity-info {
-    @apply bg-blue-500/10 border-b-2 border-blue-500/30;
+.highlight-severity-active {
+    @apply border-b-2 border-primary-500 bg-primary-500/10;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
 }
 
 </style>
