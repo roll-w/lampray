@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
   - limitations under the License.
   -->
 
-<script lang="ts">
-import type {ReviewFeedbackEntry} from "@/services/content/review.type.ts";
-
-export interface LocalReviewEntry extends ReviewFeedbackEntry {
-    originalText?: string;
-}
-</script>
-
 <script lang="ts" setup>
 import {computed, onMounted, ref} from "vue";
 import {reviewService} from "@/services/content/review.service";
@@ -29,6 +21,7 @@ import {
     type ReviewJobContentView,
     type ReviewJobDetailsView,
     type ReviewJobView,
+    type ReviewFeedbackEntry,
     ReviewStatus,
     type ReviewTaskView, ReviewVerdict,
 } from "@/services/content/review.type";
@@ -38,8 +31,13 @@ import {useI18n} from "vue-i18n";
 import {newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
 import {useUserStore} from "@/stores/user.ts";
 import ReviewContent from "./ReviewContent.vue";
-import ReviewSidebar, {type ReviewEntryDraft} from "./ReviewSidebar.vue";
-import type {ContentLocationRange} from "@/components/structuraltext/types.ts";
+import ReviewSidebar from "./ReviewSidebar.vue";
+import {
+    provideReviewQueueContext,
+    type LocalReviewEntry,
+    type ReviewEntryDraft,
+    type ReviewSelection
+} from "./reviewQueueContext.ts";
 
 const axios = useAxios();
 const reviewApi = reviewService(axios);
@@ -56,8 +54,7 @@ const loadingContent = ref(false);
 
 const currentDraft = ref<ReviewEntryDraft | null>(null);
 const currentEntries = ref<LocalReviewEntry[]>([]);
-
-const contentRef = ref<any>(null);
+const selectedEntry = ref<ReviewFeedbackEntry | null>(null);
 
 const currentIndex = ref(-1);
 const hasCurrentJob = computed(() => currentJob.value !== null);
@@ -74,6 +71,9 @@ const queueProgress = computed(() => {
     if (reviewQueue.value.length <= 1) return 100;
     return Math.round((currentIndex.value / (reviewQueue.value.length - 1)) * 100);
 });
+
+const isFirst = computed(() => currentIndex.value <= 0);
+const isLast = computed(() => currentIndex.value >= reviewQueue.value.length - 1);
 
 const reviewTask = computed<ReviewTaskView | null>(() => {
     if (!currentJobDetails.value) return null;
@@ -92,32 +92,27 @@ const reviewActionDisabled = computed(() => {
     return loadingContent.value;
 });
 
-const selectedEntry = ref<LocalReviewEntry | null>(null);
-
-const handleLocateEntry = (entry: LocalReviewEntry | null) => {
-    // Toggle selection if clicking same entry
-    if (entry === null) {
-        selectedEntry.value = null;
-        // Clear highlight in ReviewContent
-        if (contentRef.value?.clearHighlight) {
-            contentRef.value.clearHighlight();
-        }
-        return;
-    }
-    selectedEntry.value = entry;
-    if (entry && contentRef.value?.scrollToEntry) {
-        contentRef.value.scrollToEntry(entry);
-    }
+const setDraftFromSelection = (selection: ReviewSelection) => {
+    currentDraft.value = {
+        location: selection.range,
+        text: selection.text
+    };
 };
 
-/**
- * Handle selection from ReviewContent
- */
-const handleSelectionRange = (range: ContentLocationRange, text: string) => {
-    currentDraft.value = {
-        location: range,
-        text: text
-    };
+const clearDraft = () => {
+    currentDraft.value = null;
+};
+
+const toggleEntrySelection = (entry: ReviewFeedbackEntry) => {
+    selectedEntry.value = selectedEntry.value === entry ? null : entry;
+};
+
+const clearSelection = () => {
+    selectedEntry.value = null;
+};
+
+const selectEntry = (entry: ReviewFeedbackEntry | null) => {
+    selectedEntry.value = entry;
 };
 
 /**
@@ -170,6 +165,7 @@ const loadJobContent = async (index: number) => {
         currentJobView.value = contentResponse.data?.data || null;
         currentJobDetails.value = detailResponse.data.data || null;
         reviewSummary.value = "";
+        selectedEntry.value = null;
 
         // Load entries from current task
         if (currentJobDetails.value && reviewTask.value) {
@@ -251,6 +247,33 @@ const refreshQueue = () => {
     fetchReviewJobs();
 };
 
+provideReviewQueueContext({
+    state: {
+        job: currentJob,
+        jobContent: currentJobView,
+        task: reviewTask,
+        entries: currentEntries,
+        draft: currentDraft,
+        summary: reviewSummary,
+        selectedEntry,
+        progress: queueProgress,
+        isFirst,
+        isLast,
+        disabled: reviewActionDisabled,
+        submitting: submittingReview
+    },
+    actions: {
+        setDraftFromSelection,
+        clearDraft,
+        selectEntry,
+        toggleEntrySelection,
+        clearSelection,
+        submitReview: handleReviewSubmit,
+        prevJob,
+        nextJob
+    }
+});
+
 onMounted(() => {
     fetchReviewJobs();
 });
@@ -271,12 +294,12 @@ onMounted(() => {
                     <UButton
                             :loading="loading"
                             color="neutral"
-                            size="xs"
-                            variant="ghost"
+                            size="md"
+                            variant="soft"
                             @click="refreshQueue"
                     >
                         <template #leading>
-                            <UIcon class="size-4" name="i-lucide-refresh-cw"/>
+                            <UIcon name="i-lucide-refresh-cw"/>
                         </template>
                     </UButton>
                 </template>
@@ -298,6 +321,7 @@ onMounted(() => {
                         :description="t('views.adminfaced.review.allCompleted')"
                         :title="t('views.adminfaced.review.noPendingReviews')"
                         icon="i-lucide-check-circle"
+                        class="w-full h-full p-6"
                 >
                     <template #actions>
                         <UButton color="black" size="md" variant="solid" @click="refreshQueue">
@@ -309,60 +333,20 @@ onMounted(() => {
 
             <div v-else class="pb-32">
                 <div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-0 relative">
-                    <main ref="sidebarAnchor"
-                          class="min-w-0 min-h-[calc(100vh-64px)] z-0">
+                    <main class="min-w-0 min-h-[calc(100vh-64px)] z-0">
                         <div class="w-full p-6 lg:p-10 space-y-6">
-                            <ReviewContent
-                                    ref="contentRef"
-                                    :entries="currentEntries"
-                                    :job="currentJobView!"
-                                    @select-range="handleSelectionRange"
-                                    @remove-entry="currentDraft = null"
-                            />
+                            <ReviewContent/>
                         </div>
                     </main>
 
                     <aside class="hidden lg:block sticky top-0 self-start w-[400px]">
-                        <div ref="sidebarFloating"
-                             class="max-h-[70vh] scrollbar-hidden p-4 overflow-y-auto">
-                            <ReviewSidebar
-                                    v-if="reviewTask"
-                                    v-model:draft="currentDraft"
-                                    v-model:entries="currentEntries"
-                                    v-model:summary="reviewSummary"
-                                    :disabled="reviewActionDisabled || submittingReview"
-                                    :is-first="currentIndex === 0"
-                                    :is-last="currentIndex >= reviewQueue.length - 1"
-                                    :job="currentJob!"
-                                    :progress="queueProgress"
-                                    :selected-entry="selectedEntry"
-                                    :task-id="reviewTask.taskId"
-                                    @submit="handleReviewSubmit"
-                                    @locate-entry="handleLocateEntry"
-                                    @prev-job="prevJob"
-                                    @next-job="nextJob"
-                            />
+                        <div class="scrollbar-hidden p-4 overflow-y-auto">
+                            <ReviewSidebar v-if="reviewTask"/>
                         </div>
                     </aside>
 
                     <div class="lg:hidden block border-t border-neutral-200 dark:border-neutral-800">
-                        <ReviewSidebar
-                                v-if="reviewTask"
-                                v-model:draft="currentDraft"
-                                v-model:entries="currentEntries"
-                                v-model:summary="reviewSummary"
-                                :disabled="reviewActionDisabled || submittingReview"
-                                :is-first="currentIndex === 0"
-                                :is-last="currentIndex >= reviewQueue.length - 1"
-                                :job="currentJob!"
-                                :progress="queueProgress"
-                                :selected-entry="selectedEntry"
-                                :task-id="reviewTask.taskId"
-                                @submit="handleReviewSubmit"
-                                @locate-entry="handleLocateEntry"
-                                @prev-job="prevJob"
-                                @next-job="nextJob"
-                        />
+                        <ReviewSidebar v-if="reviewTask"/>
                     </div>
                 </div>
             </div>

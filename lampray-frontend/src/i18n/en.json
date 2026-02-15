@@ -152,7 +152,7 @@
         "reviewContentId": "Content ID",
         "reviewContentType": "Type",
         "reviewCreatedTime": "Created Time",
-        "reviewCategories": {
+        "category": {
           "CONTENT_QUALITY": "Content Quality",
           "GRAMMAR": "Grammar",
           "FORMAT": "Format",

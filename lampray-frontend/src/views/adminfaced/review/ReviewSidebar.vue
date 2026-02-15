@@ -15,137 +15,122 @@
   -->
 
 <script lang="ts" setup>
-import {computed, ref, watch} from "vue";
+import {ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
-import type {ReviewFeedbackEntry, ReviewJobView} from "@/services/content/review.type";
-import {ReviewCategory, ReviewSeverity, ReviewVerdict} from "@/services/content/review.type";
+import {ReviewCategory, ReviewSeverity} from "@/services/content/review.type";
 import ReviewActionPanel from "./ReviewActionPanel.vue";
 import ReviewFeedbackEntries from "./ReviewFeedbackEntries.vue";
-import {useAxios} from "@/composables/useAxios.ts";
-import {reviewService} from "@/services/content/review.service.ts";
-import type {LocalReviewEntry} from "@/views/adminfaced/review/ReviewQueuePage.vue";
-import type {ContentLocationRange} from "@/components/structuraltext/types.ts";
-
-export interface ReviewEntryDraft {
-    text?: string;
-    location?: ContentLocationRange;
-}
-
-const props = defineProps<{
-    job: ReviewJobView;
-    taskId: string;
-    summary: string;
-    disabled?: boolean;
-    draft?: ReviewEntryDraft | null;
-    progress?: number;
-    entries?: LocalReviewEntry[];
-    isFirst?: boolean;
-    isLast?: boolean;
-    selectedEntry?: ReviewFeedbackEntry | null;
-}>();
-
-const emit = defineEmits<{
-    (e: 'update:summary', value: string): void;
-    (e: 'update:draft', value: ReviewEntryDraft | null): void;
-    (e: 'update:entries', value: any[]): void;
-    (e: 'submit', verdict: ReviewVerdict): void;
-    (e: 'locate-entry', entry: ReviewFeedbackEntry | null): void;
-    (e: 'prev-job'): void;
-    (e: 'next-job'): void;
-}>();
+import {
+    type LocalReviewEntry,
+    type ReviewEntryDraft,
+    useReviewQueueActions,
+    useReviewQueueDraft,
+    useReviewQueueState,
+    useReviewQueueSummary
+} from "./reviewQueueContext.ts";
 
 const {t} = useI18n();
-const axios = useAxios();
-const reviewApi = reviewService(axios);
-const toast = useToast();
-
-const localEntries = ref<ReviewFeedbackEntry[]>([]);
-const entries = computed({
-    get: () => props.entries ?? localEntries.value,
-    set: (val) => {
-        localEntries.value = val;
-        emit('update:entries', val);
-    }
-});
-const loading = ref(false);
-const submitting = ref(false);
+const {
+    job,
+    entries,
+    draft,
+    selectedEntry,
+    progress,
+    isFirst,
+    isLast,
+    disabled,
+    submitting
+} = useReviewQueueState();
+const {selectEntry, toggleEntrySelection, submitReview, prevJob, nextJob} = useReviewQueueActions();
+const summary = useReviewQueueSummary();
+const draftModel = useReviewQueueDraft();
 
 const formState = ref({
-    message: '',
-    suggestion: '',
-    severity: ReviewSeverity.MINOR,
-    category: ReviewCategory.CONTENT_QUALITY
+    message: "",
+    suggestion: "",
+    severity: ReviewSeverity.CRITICAL,
+    category: ReviewCategory.OTHER
 });
 
 const severityOptions = [
-    {label: t('views.adminfaced.review.severity.MINOR'), value: ReviewSeverity.MINOR},
-    {label: t('views.adminfaced.review.severity.MAJOR'), value: ReviewSeverity.MAJOR},
     {label: t('views.adminfaced.review.severity.CRITICAL'), value: ReviewSeverity.CRITICAL},
+    {label: t('views.adminfaced.review.severity.MAJOR'), value: ReviewSeverity.MAJOR},
+    {label: t('views.adminfaced.review.severity.MINOR'), value: ReviewSeverity.MINOR},
     {label: t('views.adminfaced.review.severity.INFO'), value: ReviewSeverity.INFO}
 ];
 
 const categoryOptions = Object.values(ReviewCategory).map(c => ({
-    label: c,
+    label: t(`views.adminfaced.review.category.${c}`),
     value: c
 }));
 
-
 // Watch for external trigger to start creating entry
-watch(() => props.draft, (newVal) => {
+watch(() => draft.value, (newVal) => {
     if (newVal) {
         // Clear form when starting new entry
-        formState.value.message = '';
-        formState.value.suggestion = '';
+        formState.value.message = "";
+        formState.value.suggestion = "";
     }
 });
 
 const handleCancelEntry = () => {
-    emit('update:draft', null);
+    draftModel.value = null;
 };
 
 const handleCreateGeneralEntry = () => {
-    emit('update:draft', {text: '', location: undefined});
+    draftModel.value = {text: "", location: undefined};
 };
+
+const buildLocalEntry = (payload: {
+    message: string;
+    suggestion: string;
+    severity: ReviewSeverity;
+    category: ReviewCategory;
+    location?: ReviewEntryDraft["location"];
+    text?: ReviewEntryDraft["text"];
+}): LocalReviewEntry => ({
+    message: payload.message,
+    suggestion: payload.suggestion,
+    severity: payload.severity,
+    category: payload.category,
+    locationRange: payload.location,
+    originalText: payload.text,
+    reviewerSource: {
+        isAutomatic: false,
+        reviewerName: "manual"
+    }
+});
 
 const handleEntrySubmit = () => {
     if (!formState.value.message.trim()) return;
 
-    const newEntry: LocalReviewEntry = {
+    const newEntry = buildLocalEntry({
         message: formState.value.message,
         suggestion: formState.value.suggestion,
         severity: formState.value.severity,
         category: formState.value.category,
-        locationRange: props.draft?.location,
-        originalText: props.draft?.text,
-        reviewerSource: {
-            isAutomatic: false,
-            reviewerName: 'manual'
-        }
-    };
+        location: draft.value?.location,
+        text: draft.value?.text
+    });
 
     entries.value.unshift(newEntry);
-    emit('update:draft', null);
+    draftModel.value = null;
 
     // Reset form
-    formState.value.message = '';
-    formState.value.suggestion = '';
+    formState.value.message = "";
+    formState.value.suggestion = "";
 };
 
 const handleRemoveEntry = (index: number) => {
+    const removedEntry = entries.value[index] ?? null;
     entries.value.splice(index, 1);
-};
-
-const handleSelectEntry = (entry: ReviewFeedbackEntry) => {
-    // Toggle: if already selected, deselect (emit null)
-    if (props.selectedEntry === entry) {
-        emit("locate-entry", null);
-    } else {
-        emit("locate-entry", entry);
+    if (removedEntry && removedEntry === selectedEntry.value) {
+        selectEntry(null);
     }
 };
 
-const handleSubmitReview = (verdict: ReviewVerdict) => {
-    emit("submit", verdict);
+const handleSelectEntry = (entry: LocalReviewEntry) => {
+    toggleEntrySelection(entry);
 };
 
 </script>
@@ -158,9 +143,9 @@ const handleSubmitReview = (verdict: ReviewVerdict) => {
                     Review Panel
                 </h2>
                 <div class="flex items-center gap-2">
-                    <span class="text-xs font-mono text-neutral-400">#{{ job.id }}</span>
+                    <span class="text-xs font-mono text-neutral-400">#{{ job?.id }}</span>
                 </div>
-                <div v-if="progress !== undefined" class="relative w-full flex items-center justify-center">
+                <div class="relative w-full flex items-center justify-center">
                     <UProgress :max="100" :model-value="progress" color="primary" size="sm"/>
                     <span class="ms-2 text-[10px] font-mono">
                         {{ progress }}%
@@ -190,7 +175,7 @@ const handleSubmitReview = (verdict: ReviewVerdict) => {
                             icon="i-lucide-chevron-left"
                             size="xs"
                             variant="ghost"
-                            @click="emit('prev-job')"
+                            @click="prevJob"
                     />
                     <UButton
                             :disabled="isLast"
@@ -199,7 +184,7 @@ const handleSubmitReview = (verdict: ReviewVerdict) => {
                             icon="i-lucide-chevron-right"
                             size="xs"
                             variant="ghost"
-                            @click="emit('next-job')"
+                            @click="nextJob"
                     />
                 </div>
             </div>
@@ -232,24 +217,22 @@ const handleSubmitReview = (verdict: ReviewVerdict) => {
                         </div>
                     </div>
 
-                    <UFormField :label="t('views.adminfaced.review.category')">
-                        <USelectMenu
-                                v-model="formState.category"
-                                :options="categoryOptions"
-                                option-attribute="label"
-                                size="sm"
-                                value-attribute="value"
+                    <UFormField :label="t('views.adminfaced.review.reviewEntryCategory')" size="sm">
+                        <USelectMenu v-model="formState.category"
+                                     :items="categoryOptions"
+                                     class="w-full"
+                                     size="sm"
                         />
                     </UFormField>
 
-                    <UFormField :label="t('views.adminfaced.review.reviewEntrySeverity')">
+                    <UFormField :label="t('views.adminfaced.review.reviewEntrySeverity')" size="sm">
                         <UTabs v-model="formState.severity"
                                :items="severityOptions"
                                size="xs"
                                variant="pill"
                         />
                     </UFormField>
-                    <UFormField :label="t('views.adminfaced.review.reviewEntryMessage')">
+                    <UFormField :label="t('views.adminfaced.review.reviewEntryMessage')" size="sm">
                         <UTextarea
                                 v-model="formState.message"
                                 :placeholder="t('views.adminfaced.review.reviewEntryMessagePlaceholder')"
@@ -260,7 +243,7 @@ const handleSubmitReview = (verdict: ReviewVerdict) => {
                                 variant="outline"
                         />
                     </UFormField>
-                    <UFormField :label="t('views.adminfaced.review.reviewEntrySuggestion')">
+                    <UFormField :label="t('views.adminfaced.review.reviewEntrySuggestion')" size="sm">
                         <UTextarea
                                 v-model="formState.suggestion"
                                 :placeholder="t('views.adminfaced.review.reviewEntrySuggestionPlaceholder')"
@@ -289,10 +272,10 @@ const handleSubmitReview = (verdict: ReviewVerdict) => {
 
             <ReviewFeedbackEntries
                     :entries="entries"
-                    :selected-entry="props.selectedEntry"
+                    :selected-entry="selectedEntry"
                     @locate="handleSelectEntry"
-                    @select="handleSelectEntry"
                     @remove="handleRemoveEntry"
+                    @select="handleSelectEntry"
             />
 
             <div class="pt-6 border-t border-neutral-100 dark:border-neutral-800">
@@ -300,8 +283,8 @@ const handleSubmitReview = (verdict: ReviewVerdict) => {
                         :disabled="disabled || submitting"
                         :loading="submitting"
                         :summary="summary"
-                        @submit="handleSubmitReview"
-                        @update:summary="val => emit('update:summary', val)"
+                        @submit="submitReview"
+                        @update:summary="val => summary = val"
                 />
             </div>
         </div>

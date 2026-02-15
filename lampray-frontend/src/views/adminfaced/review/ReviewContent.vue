@@ -16,22 +16,13 @@
 
 <script lang="ts" setup>
 import {computed, ref, watch} from "vue";
-import type {ReviewJobContentView} from "@/services/content/review.type";
 import StructuralTextEditor from "@/components/structuraltext/StructuralTextEditor.vue";
 import {useI18n} from "vue-i18n";
 import {getContentTypeI18nKey} from "@/services/content/content.type.ts";
 import type {Editor} from "@tiptap/vue-3";
 import type {ReviewFeedbackEntry} from "@/services/content/review.type";
+import {useReviewQueueActions, useReviewQueueState} from "./reviewQueueContext.ts";
 import type {ContentLocationRange} from "@/components/structuraltext/types.ts";
-
-const props = defineProps<{
-    job: ReviewJobContentView;
-    entries?: ReviewFeedbackEntry[];
-}>();
-
-const emit = defineEmits<{
-    (e: "select-range", range: ContentLocationRange, text: string): void;
-}>();
 
 const {t} = useI18n();
 const contentRef = ref<any>(null);
@@ -39,20 +30,35 @@ const showFloatingButton = ref(false);
 const selectedText = ref("");
 const currentLocation = ref<ContentLocationRange | null>(null);
 
+const {jobContent, entries, selectedEntry} = useReviewQueueState();
+const {setDraftFromSelection, clearSelection} = useReviewQueueActions();
+
 // Active entry to highlight
 const activeEntry = ref<ReviewFeedbackEntry | null>(null);
 
-watch(() => props.entries, (newEntries) => {
-    if (!activeEntry.value || !newEntries) return;
-    const stillExists = newEntries.some(e => e === activeEntry.value);
-    if (!stillExists) {
+watch(() => entries.value, (newEntries) => {
+    if (!newEntries) return;
+    if (selectedEntry.value && !newEntries.some(e => e === selectedEntry.value)) {
+        activeEntry.value = null;
+        clearSelection();
+        return;
+    }
+    if (activeEntry.value && !newEntries.some(e => e === activeEntry.value)) {
         activeEntry.value = null;
     }
 }, { deep: true });
 
+watch(() => selectedEntry.value, (entry) => {
+    if (!entry) {
+        activeEntry.value = null;
+        return;
+    }
+    scrollToEntry(entry);
+});
+
 const contentTypeDisplay = computed(() => {
-    if (!props.job) return "";
-    return t(getContentTypeI18nKey(props.job.contentType));
+    if (!jobContent.value) return "";
+    return t(getContentTypeI18nKey(jobContent.value.contentType));
 });
 
 const handleSelection = (editor: Editor) => {
@@ -86,7 +92,10 @@ const handleSelection = (editor: Editor) => {
 
 const confirmSelection = () => {
     if (currentLocation.value) {
-        emit("select-range", currentLocation.value, selectedText.value);
+        setDraftFromSelection({
+            range: currentLocation.value,
+            text: selectedText.value
+        });
     }
 };
 
@@ -109,6 +118,7 @@ const scrollToEntry = (entry: ReviewFeedbackEntry) => {
 
 const clearHighlight = () => {
     activeEntry.value = null;
+    clearSelection();
 };
 
 const highlights = computed(() => {
@@ -116,7 +126,7 @@ const highlights = computed(() => {
     return [{
         location: activeEntry.value.locationRange,
         info: activeEntry.value.message,
-        severity: 'active'
+        severity: "active"
     }];
 });
 
@@ -133,12 +143,12 @@ defineExpose({scrollToPath, scrollToEntry, clearHighlight});
                 </UBadge>
                 <div class="w-px h-3 bg-neutral-200 dark:bg-neutral-800"/>
                 <span class="text-sm text-neutral-400 font-medium uppercase tracking-widest">
-                    {{ new Date(job.createTime).toLocaleDateString() }}
+                    {{ jobContent ? new Date(jobContent.createTime).toLocaleDateString() : "" }}
                 </span>
             </div>
-            <h1 v-if="job.title"
+            <h1 v-if="jobContent?.title"
                 class="text-4xl text-neutral-900 dark:text-white tracking-tight font-bold">
-                {{ job.title }}
+                {{ jobContent.title }}
             </h1>
         </div>
 
@@ -146,7 +156,7 @@ defineExpose({scrollToPath, scrollToEntry, clearHighlight});
             <StructuralTextEditor
                     ref="contentRef"
                     :editable="false"
-                    :model-value="job.content"
+                    :model-value="jobContent?.content"
                     :show-outline="false"
                     :show-toolbar="false"
                     :highlights="highlights"
@@ -164,7 +174,7 @@ defineExpose({scrollToPath, scrollToEntry, clearHighlight});
                         <template #leading>
                             <UIcon class="size-3" name="i-lucide-message-square-plus"/>
                         </template>
-                        {{ t('views.adminfaced.review.reviewEntryAdd') }}
+                        {{ t("views.adminfaced.review.reviewEntryAdd") }}
                     </UButton>
                 </template>
             </StructuralTextEditor>
