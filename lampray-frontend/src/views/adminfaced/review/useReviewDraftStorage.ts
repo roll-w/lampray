@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {useStorage, StorageSerializers} from "@vueuse/core";
+import {StorageSerializers, useStorage} from "@vueuse/core";
 import {computed, type Ref} from "vue";
 import type {LocalReviewEntry} from "@/views/adminfaced/review/reviewQueueContext.ts";
 

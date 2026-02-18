@@ -123,15 +123,15 @@ const handleCancel = () => {
 
 <template>
     <ReviewEntryForm
-        v-if="isEditing"
-        :model-value="editFormData"
-        :title="t('views.adminfaced.review.editFeedback')"
-        :submit-label="t('views.adminfaced.review.reviewEntryUpdate')"
-        :context-text="entry.originalText"
-        class="border-primary-200 dark:border-primary-800 bg-neutral-100/40 dark:bg-neutral-800/40"
-        @update:model-value="editFormData = $event"
-        @submit="handleSave"
-        @cancel="handleCancel"
+            v-if="isEditing"
+            :model-value="editFormData"
+            :title="t('views.adminfaced.review.editFeedback')"
+            :submit-label="t('views.adminfaced.review.reviewEntryUpdate')"
+            :context-text="entry.originalText"
+            class="border-primary-200 dark:border-primary-800 bg-neutral-100/40 dark:bg-neutral-800/40"
+            @update:model-value="editFormData = $event"
+            @submit="handleSave"
+            @cancel="handleCancel"
     />
 
     <div v-else :class="[
@@ -158,35 +158,35 @@ const handleCancel = () => {
                  class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <UTooltip :text="t('views.adminfaced.review.reviewEntryEdit')">
                     <UButton
-                        v-if="!entry.reviewerSource?.isAutomatic"
-                        color="neutral"
-                        icon="i-lucide-pencil"
-                        size="xs"
-                        variant="ghost"
-                        class="hover:bg-neutral-300/40 dark:hover:bg-neutral-600/40"
-                        @click.stop="handleEdit"
+                            v-if="!entry.reviewerSource?.isAutomatic"
+                            color="neutral"
+                            icon="i-lucide-pencil"
+                            size="xs"
+                            variant="ghost"
+                            class="hover:bg-neutral-300/40 dark:hover:bg-neutral-600/40"
+                            @click.stop="handleEdit"
                     />
                 </UTooltip>
                 <UTooltip
-                    :text="isSelected ? t('views.adminfaced.review.reviewEntrySelected') : t('views.adminfaced.review.reviewEntryGoTo')">
+                        :text="isSelected ? t('views.adminfaced.review.reviewEntrySelected') : t('views.adminfaced.review.reviewEntryGoTo')">
                     <UButton
-                        :color="isSelected ? 'primary' : 'neutral'"
-                        :variant="isSelected ? 'solid' : 'ghost'"
-                        :class="!isSelected && 'hover:bg-neutral-300/40 dark:hover:bg-neutral-600/40'"
-                        icon="i-lucide-locate-fixed"
-                        size="xs"
-                        @click.stop="handleLocate"
+                            :color="isSelected ? 'primary' : 'neutral'"
+                            :variant="isSelected ? 'solid' : 'ghost'"
+                            :class="!isSelected && 'hover:bg-neutral-300/40 dark:hover:bg-neutral-600/40'"
+                            icon="i-lucide-locate-fixed"
+                            size="xs"
+                            @click.stop="handleLocate"
                     />
                 </UTooltip>
                 <UPopover v-if="!entry.reviewerSource?.isAutomatic" v-model:open="showRemoveConfirm">
                     <UTooltip :text="t('views.adminfaced.review.reviewEntryRemove')">
                         <UButton
-                            color="error"
-                            icon="i-lucide-trash-2"
-                            size="xs"
-                            variant="ghost"
-                            class="hover:bg-neutral-300/40 dark:hover:bg-neutral-600/40"
-                            @click.stop
+                                color="error"
+                                icon="i-lucide-trash-2"
+                                size="xs"
+                                variant="ghost"
+                                class="hover:bg-neutral-300/40 dark:hover:bg-neutral-600/40"
+                                @click.stop
                         />
                     </UTooltip>
 
@@ -200,16 +200,16 @@ const handleCancel = () => {
                             </p>
                             <div class="flex justify-end gap-2">
                                 <UButton
-                                    color="neutral"
-                                    size="xs"
-                                    variant="ghost"
-                                    @click="showRemoveConfirm = false">
+                                        color="neutral"
+                                        size="xs"
+                                        variant="ghost"
+                                        @click="showRemoveConfirm = false">
                                     {{ t("common.cancel") }}
                                 </UButton>
                                 <UButton
-                                    color="error"
-                                    size="xs"
-                                    @click="handleRemove">
+                                        color="error"
+                                        size="xs"
+                                        @click="handleRemove">
                                     {{ t("common.remove") }}
                                 </UButton>
                             </div>

@@ -26,7 +26,7 @@ import type {ContentLocationRange} from "@/components/structuraltext/types.ts";
 
 const {t} = useI18n();
 const contentRef = ref<any>(null);
-const showFloatingButton = ref(false); 
+const showFloatingButton = ref(false);
 const selectedText = ref("");
 const currentLocation = ref<ContentLocationRange | null>(null);
 
@@ -46,7 +46,7 @@ watch(() => entries.value, (newEntries) => {
     if (activeEntry.value && !newEntries.some(e => e === activeEntry.value)) {
         activeEntry.value = null;
     }
-}, { deep: true });
+}, {deep: true});
 
 watch(() => selectedEntry.value, (entry) => {
     if (!entry) {
@@ -64,7 +64,7 @@ const contentTypeDisplay = computed(() => {
 const handleSelection = (editor: Editor) => {
     const {state} = editor;
     const {selection} = state;
-    
+
     if (selection.empty) {
         showFloatingButton.value = false;
         return;

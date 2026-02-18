@@ -89,11 +89,11 @@ const handleCancel = () => {
                 {{ title }}
             </span>
             <UButton
-                color="neutral"
-                icon="i-lucide-x"
-                size="xs"
-                variant="ghost"
-                @click="handleCancel"
+                    color="neutral"
+                    icon="i-lucide-x"
+                    size="xs"
+                    variant="ghost"
+                    @click="handleCancel"
             />
         </div>
 
@@ -110,56 +110,56 @@ const handleCancel = () => {
 
         <UFormField :label="t('views.adminfaced.review.reviewEntryCategory')" size="sm">
             <USelectMenu
-                v-model="formData.category"
-                :items="categoryOptions"
-                value-key="value"
-                class="w-full"
-                size="sm"
+                    v-model="formData.category"
+                    :items="categoryOptions"
+                    value-key="value"
+                    class="w-full"
+                    size="sm"
             />
         </UFormField>
 
         <UFormField :label="t('views.adminfaced.review.reviewEntrySeverity')" size="sm">
             <UTabs
-                v-model="formData.severity"
-                :items="severityOptions"
-                size="xs"
-                variant="pill"
-                :color="getSeverityColor(formData.severity)"
+                    v-model="formData.severity"
+                    :items="severityOptions"
+                    size="xs"
+                    variant="pill"
+                    :color="getSeverityColor(formData.severity)"
             />
         </UFormField>
 
         <UFormField :label="t('views.adminfaced.review.reviewEntryMessage')" size="sm">
             <UTextarea
-                v-model="formData.message"
-                :placeholder="t('views.adminfaced.review.reviewEntryMessagePlaceholder')"
-                :rows="3"
-                autoresize
-                class="w-full"
-                size="sm"
-                variant="outline"
+                    v-model="formData.message"
+                    :placeholder="t('views.adminfaced.review.reviewEntryMessagePlaceholder')"
+                    :rows="3"
+                    autoresize
+                    class="w-full"
+                    size="sm"
+                    variant="outline"
             />
         </UFormField>
 
         <UFormField :label="t('views.adminfaced.review.reviewEntrySuggestion')" size="sm">
             <UTextarea
-                v-model="formData.suggestion"
-                :placeholder="t('views.adminfaced.review.reviewEntrySuggestionPlaceholder')"
-                :rows="2"
-                autoresize
-                class="w-full"
-                size="sm"
-                variant="outline"
+                    v-model="formData.suggestion"
+                    :placeholder="t('views.adminfaced.review.reviewEntrySuggestionPlaceholder')"
+                    :rows="2"
+                    autoresize
+                    class="w-full"
+                    size="sm"
+                    variant="outline"
             />
         </UFormField>
 
         <div class="flex justify-end pt-2">
             <UButton
-                :disabled="!formData.message.trim()"
-                block
-                color="primary"
-                size="sm"
-                variant="solid"
-                @click="handleSubmit"
+                    :disabled="!formData.message.trim()"
+                    block
+                    color="primary"
+                    size="sm"
+                    variant="solid"
+                    @click="handleSubmit"
             >
                 {{ submitLabel }}
             </UButton>

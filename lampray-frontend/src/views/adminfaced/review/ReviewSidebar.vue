@@ -238,7 +238,8 @@ const handleSubmitReview = async (verdict: any) => {
                     </span>
                 </div>
 
-                <div v-if="currentDraftExists" class="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+                <div v-if="currentDraftExists"
+                     class="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
                     <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"/>
                     <span>{{ t('views.adminfaced.review.draftSavedLocal') }}</span>
                     <UPopover v-model:open="showDiscardConfirm">

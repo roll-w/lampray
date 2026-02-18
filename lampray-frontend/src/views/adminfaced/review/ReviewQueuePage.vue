@@ -18,12 +18,13 @@
 import {computed, onMounted, ref} from "vue";
 import {reviewService} from "@/services/content/review.service";
 import {
+    type ReviewFeedbackEntry,
     type ReviewJobContentView,
     type ReviewJobDetailsView,
     type ReviewJobView,
-    type ReviewFeedbackEntry,
     ReviewStatus,
-    type ReviewTaskView, ReviewVerdict,
+    type ReviewTaskView,
+    ReviewVerdict,
 } from "@/services/content/review.type";
 import {useAxios} from "@/composables/useAxios.ts";
 import DashboardPanel from "@/views/adminfaced/DashboardPanel.vue";
@@ -33,8 +34,8 @@ import {useUserStore} from "@/stores/user.ts";
 import ReviewContent from "@/views/adminfaced/review/ReviewContent.vue";
 import ReviewSidebar from "@/views/adminfaced/review/ReviewSidebar.vue";
 import {
-    provideReviewQueueContext,
     type LocalReviewEntry,
+    provideReviewQueueContext,
     type ReviewEntryDraft,
     type ReviewSelection
 } from "@/views/adminfaced/review/reviewQueueContext.ts";
