@@ -24,6 +24,7 @@
 
 :root {
     --ui-primary: var(--color-amber-500);
+    --ui-color-primary-50: var(--color-amber-50);
     --ui-color-primary-100: var(--color-amber-100);
     --ui-color-primary-200: var(--color-amber-200);
     --ui-color-primary-300: var(--color-amber-300);

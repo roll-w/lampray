@@ -21,7 +21,7 @@ import {useI18n} from "vue-i18n";
 import {getContentTypeI18nKey} from "@/services/content/content.type.ts";
 import type {Editor} from "@tiptap/vue-3";
 import type {ReviewFeedbackEntry} from "@/services/content/review.type";
-import {useReviewQueueActions, useReviewQueueState} from "./reviewQueueContext.ts";
+import {useReviewQueueActions, useReviewQueueState} from "@/views/adminfaced/review/reviewQueueContext.ts";
 import type {ContentLocationRange} from "@/components/structuraltext/types.ts";
 
 const {t} = useI18n();
@@ -110,9 +110,13 @@ const scrollToPath = (path: string) => {
 };
 
 const scrollToEntry = (entry: ReviewFeedbackEntry) => {
-    if (contentRef.value && entry.locationRange) {
+    if (!contentRef.value) return;
+
+    if (entry.locationRange) {
         activeEntry.value = entry;
         contentRef.value.scrollToLocation(entry.locationRange);
+    } else {
+        activeEntry.value = null;
     }
 };
 
@@ -143,7 +147,7 @@ defineExpose({scrollToPath, scrollToEntry, clearHighlight});
                 </UBadge>
                 <div class="w-px h-3 bg-neutral-200 dark:bg-neutral-800"/>
                 <span class="text-sm text-neutral-400 font-medium uppercase tracking-widest">
-                    {{ jobContent ? new Date(jobContent.createTime).toLocaleDateString() : "" }}
+                    {{ jobContent ? new Date(jobContent.createTime).toLocaleString() : "" }}
                 </span>
             </div>
             <h1 v-if="jobContent?.title"

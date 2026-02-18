@@ -30,14 +30,14 @@ import DashboardPanel from "@/views/adminfaced/DashboardPanel.vue";
 import {useI18n} from "vue-i18n";
 import {newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
 import {useUserStore} from "@/stores/user.ts";
-import ReviewContent from "./ReviewContent.vue";
-import ReviewSidebar from "./ReviewSidebar.vue";
+import ReviewContent from "@/views/adminfaced/review/ReviewContent.vue";
+import ReviewSidebar from "@/views/adminfaced/review/ReviewSidebar.vue";
 import {
     provideReviewQueueContext,
     type LocalReviewEntry,
     type ReviewEntryDraft,
     type ReviewSelection
-} from "./reviewQueueContext.ts";
+} from "@/views/adminfaced/review/reviewQueueContext.ts";
 
 const axios = useAxios();
 const reviewApi = reviewService(axios);
@@ -324,7 +324,7 @@ onMounted(() => {
                         class="w-full h-full p-6"
                 >
                     <template #actions>
-                        <UButton color="black" size="md" variant="solid" @click="refreshQueue">
+                        <UButton color="primary" size="md" variant="primary" @click="refreshQueue">
                             {{ t("views.adminfaced.review.checkForNew") }}
                         </UButton>
                     </template>
@@ -340,7 +340,7 @@ onMounted(() => {
                     </main>
 
                     <aside class="hidden lg:block sticky top-0 self-start w-[400px]">
-                        <div class="scrollbar-hidden p-4 overflow-y-auto">
+                        <div class="p-4">
                             <ReviewSidebar v-if="reviewTask"/>
                         </div>
                     </aside>

@@ -5,6 +5,7 @@ logs/
 
 # excludes the .idea folder in the project root
 .idea/
+.pnpm-store/
 
 ### IntelliJ
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
