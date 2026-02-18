@@ -98,6 +98,7 @@ const handleLocate = () => {
 };
 
 const handleRemove = () => {
+    showRemoveConfirm.value = false;
     emit("remove", props.index);
 };
 
