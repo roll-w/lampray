@@ -64,7 +64,7 @@ interface Props {
     highlights?: {
         location: ContentLocationRange;
         info?: string;
-        severity?: 'critical' | 'major' | 'minor' | 'info' | string;
+        severity?: "critical" | "major" | "minor" | "info" | string;
     }[]
 }
 
@@ -73,7 +73,7 @@ const props = withDefaults(defineProps<Props>(), {
     placeholder: "",
     showToolbar: true,
     showOutline: false,
-    outlineTitle: 'Outline',
+    outlineTitle: "Outline",
 })
 
 const emit = defineEmits<Emits>()
@@ -225,7 +225,7 @@ const locationHighlightExtension = Extension.create({
                             if (!range) return;
 
                             decos.push(Decoration.inline(range.from, range.to, {
-                                class: `structural-location-highlight highlight-severity-${hl.severity || 'info'}`,
+                                class: `structural-location-highlight highlight-severity-${hl.severity || "info"}`,
                                 title: hl.info || ""
                             }));
                         });
@@ -356,7 +356,7 @@ watch(() => props.extensions, () => {
 watch([() => props.highlights, mappings], () => {
     if (editor.value) {
         // Trigger a re-render of decorations by dispatching a metadata-only transaction
-        editor.value.view.dispatch(editor.value.state.tr.setMeta('locationHighlightRefresh', true));
+        editor.value.view.dispatch(editor.value.state.tr.setMeta("locationHighlightRefresh", true));
     }
 }, {deep: true});
 
@@ -411,7 +411,7 @@ defineExpose({
             </template>
         </EditorToolbar>
         <div class="flex relative">
-            <div class="w-full mx-auto ">
+            <div class="w-full mx-auto">
                 <slot name="before-content"/>
                 <EditorBubbleMenu v-if="editor" :editable="editable" :editor="editor">
                     <template #end>
