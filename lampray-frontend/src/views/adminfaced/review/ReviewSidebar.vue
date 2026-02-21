@@ -17,7 +17,7 @@
 <script lang="ts" setup>
 import {computed, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
-import {ReviewCategory, ReviewSeverity} from "@/services/content/review.type";
+import {ReviewCategory, ReviewSeverity, ReviewVerdict} from "@/services/content/review.type";
 import ReviewActionPanel from "@/views/adminfaced/review/ReviewActionPanel.vue";
 import ReviewFeedbackEntries from "@/views/adminfaced/review/ReviewFeedbackEntries.vue";
 import ReviewEntryForm, {type EntryFormData} from "@/views/adminfaced/review/ReviewEntryForm.vue";
@@ -29,8 +29,10 @@ import {
     useReviewQueueState
 } from "@/views/adminfaced/review/reviewQueueContext.ts";
 import {useReviewDraftStorage} from "@/views/adminfaced/review/useReviewDraftStorage.ts";
+import {newErrorToast} from "@/utils/toasts.ts";
 
 const {t} = useI18n();
+const toast = useToast();
 const {
     job,
     task,
@@ -221,7 +223,15 @@ const handleSelectEntry = (entry: LocalReviewEntry) => {
     toggleEntrySelection(entry);
 };
 
-const handleSubmitReview = async (verdict: any) => {
+const handleSubmitReview = async (verdict: ReviewVerdict) => {
+    // Validate: when rejecting, summary is required
+    if (verdict === ReviewVerdict.REJECTED && !summaryRef.value.trim()) {
+        toast.add(newErrorToast(
+            t("views.adminfaced.review.validation.title"),
+            t("views.adminfaced.review.validation.summaryRequiredOnReject")
+        ));
+        return;
+    }
     await submitReview(verdict);
     if (job.value && task.value) {
         clearDraft();
@@ -359,6 +369,5 @@ const handleSubmitReview = async (verdict: any) => {
                 />
             </div>
         </div>
-
     </div>
 </template>

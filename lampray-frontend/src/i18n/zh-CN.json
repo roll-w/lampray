@@ -173,7 +173,8 @@
         "approveSuccess": "审核提交成功",
         "validation": {
           "title": "验证错误",
-          "reasonRequired": "请至少填写一个反馈条目或总结"
+          "reasonRequired": "请至少填写一个反馈条目或总结",
+          "summaryRequiredOnReject": "拒绝审核时必须填写总结"
         }
       },
       "system": {

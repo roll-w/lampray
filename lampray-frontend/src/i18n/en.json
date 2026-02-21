@@ -167,7 +167,8 @@
         "approveSuccess": "Review submitted successfully",
         "validation": {
           "title": "Validation Error",
-          "reasonRequired": "Please add at least one feedback entry or a summary"
+          "reasonRequired": "Please add at least one feedback entry or a summary",
+          "summaryRequiredOnReject": "Summary is required when rejecting a review"
         }
       },
       "system": {
