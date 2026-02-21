@@ -184,6 +184,7 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
                          @click="copyText"
                 />
             </UTooltip>
+            <slot name="end" />
         </div>
     </BubbleMenu>
 

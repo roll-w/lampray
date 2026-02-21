@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
   - limitations under the License.
   -->
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import {EditorContent, useEditor} from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -25,15 +25,18 @@ import {ListKeyboardShortcuts} from "@/components/structuraltext/extensions/List
 import EditorToolbar from "@/components/structuraltext/EditorToolbar.vue";
 import EditorBubbleMenu from "@/components/structuraltext/EditorBubbleMenu.vue";
 import EditorContextMenu from "@/components/structuraltext/EditorContextMenu.vue";
-import type {StructuralText} from "@/components/structuraltext/types";
+import type {ContentLocationRange, StructuralText} from "@/components/structuraltext/types";
 import {convertFromStructuralText, convertToStructuralText} from "@/components/structuraltext/converter";
-import {onBeforeUnmount, watch} from "vue";
+import {computed, onBeforeUnmount, ref, watch} from "vue";
 import {DefaultKeyboardShortcuts} from "@/components/structuraltext/extensions/DefaultKeyboardShortcuts.ts";
 import {Table, TableCell, TableHeader, TableRow} from "@/components/structuraltext/extensions/TableExtension.ts";
 import {HeadingWithId} from "@/components/structuraltext/extensions/HeadingWithId.ts";
 import {Plugin, PluginKey} from "@tiptap/pm/state";
 import {CellSelection} from "@tiptap/pm/tables";
 import StructuralTextOutline from "@/components/structuraltext/StructuralTextOutline.vue";
+import type {Editor} from "@tiptap/core";
+import {Extension} from "@tiptap/core";
+import {Decoration, DecorationSet} from "@tiptap/pm/view";
 
 interface Props {
     modelValue?: StructuralText
@@ -57,6 +60,12 @@ interface Props {
             root?: string
         }
     }
+    extensions?: any[]
+    highlights?: {
+        location: ContentLocationRange;
+        info?: string;
+        severity?: "critical" | "major" | "minor" | "info" | string;
+    }[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -64,7 +73,7 @@ const props = withDefaults(defineProps<Props>(), {
     placeholder: "",
     showToolbar: true,
     showOutline: false,
-    outlineTitle: 'Outline',
+    outlineTitle: "Outline",
 })
 
 const emit = defineEmits<Emits>()
@@ -73,6 +82,8 @@ interface Emits {
     (e: "update:modelValue", value: StructuralText): void
 
     (e: "change", value: StructuralText): void
+
+    (e: "select-range", editor: Editor): void
 }
 
 /**
@@ -97,6 +108,135 @@ const preserveSelectionPlugin = new Plugin({
     }
 })
 
+// --- Location Mapping & Highlighting logic ---
+type SegmentMapping = {
+    path: string;
+    text: string;
+    start: number;
+    end: number;
+}
+
+type StructuralSegment = {
+    path: string;
+    text: string;
+}
+
+const mappings = ref<SegmentMapping[]>([]);
+
+const generateTextSegments = (node: StructuralText, currentPath: string, segments: StructuralSegment[]) => {
+    if (node.content && node.content.length > 0) {
+        segments.push({path: `${currentPath}.content`, text: node.content});
+    }
+    if (node.children && node.children.length > 0) {
+        node.children.forEach((child, index) => {
+            generateTextSegments(child as StructuralText, `${currentPath}.children[${index}]`, segments);
+        });
+    }
+};
+
+const structuralSegments = computed(() => {
+    const segments: StructuralSegment[] = [];
+    if (props.modelValue) {
+        generateTextSegments(props.modelValue, "$", segments);
+    }
+    return segments;
+});
+
+const refreshMappings = () => {
+    const editorVal = editor.value;
+    if (!editorVal || !structuralSegments.value.length) return;
+
+    const doc = editorVal.state.doc;
+    const newMappings: SegmentMapping[] = [];
+    let currentSegmentIndex = 0;
+    let currentSegmentOffset = 0;
+
+    doc.descendants((node, pos) => {
+        if (!node.isText) return;
+
+        const nodeText = node.text || "";
+        let nodeOffset = 0;
+
+        while (nodeOffset < nodeText.length && currentSegmentIndex < structuralSegments.value.length) {
+            const segment = structuralSegments.value[currentSegmentIndex]!;
+            const segmentRemaining = segment.text.length - currentSegmentOffset;
+            const nodeRemaining = nodeText.length - nodeOffset;
+
+            const consumeLength = Math.min(segmentRemaining, nodeRemaining);
+
+            if (currentSegmentOffset === 0) {
+                newMappings.push({
+                    path: segment.path,
+                    text: segment.text,
+                    start: pos + nodeOffset,
+                    end: 0
+                });
+            }
+
+            currentSegmentOffset += consumeLength;
+            nodeOffset += consumeLength;
+
+            if (currentSegmentOffset >= segment.text.length) {
+                const lastMap = newMappings[newMappings.length - 1];
+                if (lastMap) {
+                    lastMap.end = pos + nodeOffset;
+                }
+                currentSegmentIndex++;
+                currentSegmentOffset = 0;
+            }
+        }
+    });
+
+    mappings.value = newMappings;
+};
+
+const resolveLocationToRange = (loc: ContentLocationRange) => {
+    if (!loc.startPath) return null;
+    const startMap = mappings.value.find(m => m.path === loc.startPath);
+    if (!startMap) return null;
+
+    let from = startMap.start + loc.startInNode;
+    let to = from;
+
+    if (loc.endPath) {
+        const endMap = mappings.value.find(m => m.path === loc.endPath);
+        if (endMap) {
+            to = endMap.start + loc.endInNode;
+        }
+    }
+
+    if (from === to) to = from + 1;
+    return {from, to};
+};
+
+const locationHighlightExtension = Extension.create({
+    name: "locationHighlight",
+    addProseMirrorPlugins() {
+        return [
+            new Plugin({
+                key: new PluginKey("locationHighlight"),
+                props: {
+                    decorations: (state) => {
+                        if (!props.highlights || !mappings.value.length) return DecorationSet.empty;
+
+                        const decos: Decoration[] = [];
+                        props.highlights.forEach(hl => {
+                            const range = resolveLocationToRange(hl.location);
+                            if (!range) return;
+
+                            decos.push(Decoration.inline(range.from, range.to, {
+                                class: `structural-location-highlight highlight-severity-${hl.severity || "info"}`,
+                                title: hl.info || ""
+                            }));
+                        });
+
+                        return DecorationSet.create(state.doc, decos);
+                    }
+                }
+            })
+        ];
+    }
+});
 
 const editor = useEditor({
     extensions: [
@@ -146,7 +286,9 @@ const editor = useEditor({
         }),
         TaskList,
         TaskItem,
-        ListKeyboardShortcuts
+        ListKeyboardShortcuts,
+        locationHighlightExtension,
+        ...(props.extensions || [])
     ],
     editorProps: {
         attributes: {
@@ -183,8 +325,13 @@ const editor = useEditor({
         const state = editor.state
         const plugins = [preserveSelectionPlugin, ...state.plugins]
         editor.view.updateState(state.reconfigure({plugins}))
+        refreshMappings()
+    },
+    onSelectionUpdate: ({editor}) => {
+        emit("select-range", editor)
     }
 })
+
 
 watch(() => props.editable, (newVal) => {
     if (editor.value) {
@@ -197,33 +344,82 @@ watch(() => props.modelValue, (newVal) => {
         const currentContent = convertToStructuralText(editor.value)
         if (JSON.stringify(currentContent) !== JSON.stringify(newVal)) {
             editor.value.commands.setContent(convertFromStructuralText(newVal))
+            refreshMappings()
         }
     }
 })
 
+watch(() => props.extensions, () => {
+    // Note: Tiptap doesn't support easy hot-reloading of extensions.
+}, {deep: true})
+
+watch([() => props.highlights, mappings], () => {
+    if (editor.value) {
+        // Trigger a re-render of decorations by dispatching a metadata-only transaction
+        editor.value.view.dispatch(editor.value.state.tr.setMeta("locationHighlightRefresh", true));
+    }
+}, {deep: true});
+
 onBeforeUnmount(() => {
     editor.value?.destroy()
 })
+
+defineExpose({
+    editor,
+    getLocationFromSelection: (selection: any) => {
+        const startMap = mappings.value.find(m => m.start <= selection.from && m.end > selection.from);
+        const endMap = mappings.value.find(m => m.start < selection.to && m.end >= selection.to);
+
+        if (startMap && endMap) {
+            return {
+                startInNode: selection.from - startMap.start,
+                endInNode: selection.to - endMap.start,
+                startPath: startMap.path,
+                endPath: endMap.path
+            };
+        }
+        return null;
+    },
+    scrollToLocation: (loc: ContentLocationRange) => {
+        const range = resolveLocationToRange(loc);
+        if (range && editor.value) {
+            // Scroll to center
+            const {view} = editor.value;
+            let dom = view.nodeDOM(range.from) as HTMLElement || view.domAtPos(range.from).node as HTMLElement;
+            if (dom && dom.nodeType === 3) {
+                dom = dom.parentElement as HTMLElement;
+            }
+            if (dom.scrollIntoView) {
+                dom.scrollIntoView({block: "center", behavior: "smooth"});
+            }
+        }
+    },
+    refreshMappings
+});
 </script>
 
 <template>
     <div :class="{'border border-gray-300 dark:border-gray-700 rounded-md': variant === 'outline'}">
-        <EditorToolbar v-if="showToolbar && editor" :editor="editor"
-                       :sticky="true"
+        <EditorToolbar v-if="showToolbar && editor" :centered="ui && ui.toolbar ? ui.toolbar.centered : false"
                        :class="{[ui?.toolbar?.root || '']: ui && ui!.toolbar && ui!.toolbar.root,
                        'rounded-md border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900': variant === 'outline'
                        }"
-                       :centered="ui && ui.toolbar ? ui.toolbar.centered : false">
+                       :editor="editor"
+                       :sticky="true">
             <template #menu-end>
                 <slot name="toolbar-menu-end"/>
             </template>
         </EditorToolbar>
         <div class="flex relative">
-            <div class="w-full mx-auto ">
+            <div class="w-full mx-auto">
                 <slot name="before-content"/>
-                <EditorBubbleMenu v-if="editor" :editor="editor" :editable="editable"/>
+                <EditorBubbleMenu v-if="editor" :editable="editable" :editor="editor">
+                    <template #end>
+                        <slot name="bubble-menu-end"/>
+                    </template>
+                </EditorBubbleMenu>
                 <EditorDragHandle v-if="editor" :editor="editor"/>
-                <EditorContextMenu v-if="editor" :editor="editor" :editable="editable">
+                <EditorContextMenu v-if="editor" :editable="editable" :editor="editor">
                     <div :class="{[ui?.content?.root || '']: ui && ui!.content && ui!.content.root}">
                         <EditorContent :editor="editor" class="editor"/>
                     </div>
@@ -231,10 +427,10 @@ onBeforeUnmount(() => {
             </div>
 
             <!--TODO: fix aside-->
-            <aside v-if="showOutline" class="hidden xl:block fixed right-4 w-72 z-30" :class="ui?.outline?.root || ''">
-                <StructuralTextOutline color="primary"
-                                       :document="modelValue"
-                                       :title="outlineTitle">
+            <aside v-if="showOutline" :class="ui?.outline?.root || ''" class="hidden xl:block fixed right-4 w-72 z-30">
+                <StructuralTextOutline :document="modelValue"
+                                       :title="outlineTitle"
+                                       color="primary">
                     <template #section-bottom>
                         <slot name="outline-bottom"/>
                     </template>
@@ -385,6 +581,21 @@ onBeforeUnmount(() => {
 
 .editor .ProseMirror-selectednode:not(img):not(pre):not([data-node-view-wrapper]) {
     @apply bg-primary/20;
+}
+
+/**
+ * Structural Location Highlight styles
+ */
+.structural-location-highlight {
+    @apply transition-all duration-300;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.highlight-severity-active {
+    @apply border-b-2 border-primary-500 bg-primary-500/10;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
 }
 
 </style>
