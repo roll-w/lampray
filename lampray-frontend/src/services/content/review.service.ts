@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,13 @@
 
 import type {AxiosInstance, AxiosResponse, RawAxiosRequestConfig} from "axios";
 import type {HttpResponseBody} from "@/services/common.type.ts";
-import type {ReviewJobContentView, ReviewJobDetailsView, ReviewJobView, ReviewRequest, ReviewStatus} from "@/services/content/review.type.ts";
+import {
+    type ReviewJobContentView,
+    type ReviewJobDetailsView,
+    type ReviewJobView,
+    type ReviewRequest,
+    ReviewStatus
+} from "@/services/content/review.type.ts";
 
 export const reviewService = (axios: AxiosInstance) => {
     return {

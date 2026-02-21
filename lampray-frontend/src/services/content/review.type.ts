@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { ContentType } from "./content.type";
-import type { ContentLocationRange, StructuralText } from "@/components/structuraltext/types.ts";
+import type {ContentType} from "./content.type";
+import type {ContentLocationRange, StructuralText} from "@/components/structuraltext/types.ts";
 
 export enum ReviewStatus {
     PENDING = "PENDING",
@@ -32,13 +32,9 @@ export enum ReviewVerdict {
 }
 
 export enum ReviewCategory {
-    CONTENT_QUALITY = "CONTENT_QUALITY",
-    GRAMMAR = "GRAMMAR",
-    FORMAT = "FORMAT",
     POLICY_VIOLATION = "POLICY_VIOLATION",
     SENSITIVE_CONTENT = "SENSITIVE_CONTENT",
     COPYRIGHT = "COPYRIGHT",
-    TECHNICAL = "TECHNICAL",
     OTHER = "OTHER"
 }
 

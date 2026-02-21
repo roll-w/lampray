@@ -143,13 +143,9 @@
         "reviewEntries": "反馈列表",
         "entryUntitled": "无评论内容",
         "category": {
-          "CONTENT_QUALITY": "内容质量",
-          "GRAMMAR": "语法",
-          "FORMAT": "格式",
           "POLICY_VIOLATION": "政策违规",
           "SENSITIVE_CONTENT": "敏感内容",
           "COPYRIGHT": "版权",
-          "TECHNICAL": "技术问题",
           "OTHER": "其他"
         },
         "severity": {

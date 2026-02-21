@@ -141,13 +141,9 @@
         "reviewEntries": "Feedback Entries",
         "entryUntitled": "No message",
         "category": {
-          "CONTENT_QUALITY": "Content Quality",
-          "GRAMMAR": "Grammar",
-          "FORMAT": "Format",
           "POLICY_VIOLATION": "Policy Violation",
           "SENSITIVE_CONTENT": "Sensitive Content",
           "COPYRIGHT": "Copyright",
-          "TECHNICAL": "Technical",
           "OTHER": "Other"
         },
         "severity": {

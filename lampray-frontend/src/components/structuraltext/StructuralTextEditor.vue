@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -210,11 +210,11 @@ const resolveLocationToRange = (loc: ContentLocationRange) => {
 };
 
 const locationHighlightExtension = Extension.create({
-    name: 'locationHighlight',
+    name: "locationHighlight",
     addProseMirrorPlugins() {
         return [
             new Plugin({
-                key: new PluginKey('locationHighlight'),
+                key: new PluginKey("locationHighlight"),
                 props: {
                     decorations: (state) => {
                         if (!props.highlights || !mappings.value.length) return DecorationSet.empty;
@@ -226,7 +226,7 @@ const locationHighlightExtension = Extension.create({
 
                             decos.push(Decoration.inline(range.from, range.to, {
                                 class: `structural-location-highlight highlight-severity-${hl.severity || 'info'}`,
-                                title: hl.info || ''
+                                title: hl.info || ""
                             }));
                         });
 
@@ -383,13 +383,14 @@ defineExpose({
     scrollToLocation: (loc: ContentLocationRange) => {
         const range = resolveLocationToRange(loc);
         if (range && editor.value) {
-            editor.value.commands.setTextSelection(range);
-            
             // Scroll to center
-            const { view } = editor.value;
-            const dom = view.nodeDOM(range.from) as HTMLElement || view.domAtPos(range.from).node as HTMLElement;
+            const {view} = editor.value;
+            let dom = view.nodeDOM(range.from) as HTMLElement || view.domAtPos(range.from).node as HTMLElement;
+            if (dom && dom.nodeType === 3) {
+                dom = dom.parentElement as HTMLElement;
+            }
             if (dom.scrollIntoView) {
-                dom.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                dom.scrollIntoView({block: "center", behavior: "smooth"});
             }
         }
     },

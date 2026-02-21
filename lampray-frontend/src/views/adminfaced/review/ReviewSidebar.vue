@@ -116,8 +116,12 @@ watch(summaryRef, () => {
 });
 
 const confirmDiscardDraft = () => {
-    if (!job.value || !task.value) return;
+    if (!job.value || !task.value) {
+        return;
+    }
     clearDraft();
+    entries.value = [];
+    summaryRef.value = "";
     showDiscardConfirm.value = false;
 };
 
@@ -140,7 +144,9 @@ const handleCreateGeneralEntry = () => {
 
 const handleEditEntry = (index: number) => {
     const entry = entries.value[index];
-    if (!entry || entry.reviewerSource?.isAutomatic) return;
+    if (!entry || entry.reviewerSource?.isAutomatic) {
+        return;
+    }
 
     editingIndex.value = index;
     draftModel.value = {
@@ -151,7 +157,9 @@ const handleEditEntry = (index: number) => {
 
 const handleSaveEntry = (index: number, data: Partial<LocalReviewEntry>) => {
     const entry = entries.value[index];
-    if (!entry) return;
+    if (!entry) {
+        return;
+    }
 
     entries.value[index] = {
         ...entry,
