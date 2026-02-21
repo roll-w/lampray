@@ -32,6 +32,10 @@ class ReviewTaskRepository(
         return reviewTaskDao.saveAndFlush(entity)
     }
 
+    override fun <S : ReviewTaskEntity> saveAll(entities: Iterable<S>): List<S> {
+        return reviewTaskDao.saveAllAndFlush(entities)
+    }
+
     fun findByJobId(jobId: String): List<ReviewTaskEntity> {
         return findAll { root, _, builder ->
             builder.equal(root.get(ReviewTaskEntity_.reviewJobId), jobId)

@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -14,31 +14,52 @@
   - limitations under the License.
   -->
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import {computed, onMounted, ref} from "vue";
 import {reviewService} from "@/services/content/review.service";
-import {type ReviewJobContentView, type ReviewJobView, ReviewStatuses} from "@/services/content/review.type";
+import {
+    type ReviewFeedbackEntry,
+    type ReviewJobContentView,
+    type ReviewJobDetailsView,
+    type ReviewJobView,
+    ReviewStatus,
+    type ReviewTaskView,
+    ReviewVerdict,
+} from "@/services/content/review.type";
 import {useAxios} from "@/composables/useAxios.ts";
 import DashboardPanel from "@/views/adminfaced/DashboardPanel.vue";
 import {useI18n} from "vue-i18n";
 import {newErrorToastFromError, newSuccessToast} from "@/utils/toasts.ts";
-import StructuralTextEditor from "@/components/structuraltext/StructuralTextEditor.vue";
-import {getContentTypeI18nKey} from "@/services/content/content.type.ts";
+import {useUserStore} from "@/stores/user.ts";
+import ReviewContent from "@/views/adminfaced/review/ReviewContent.vue";
+import ReviewSidebar from "@/views/adminfaced/review/ReviewSidebar.vue";
+import {
+    type LocalReviewEntry,
+    provideReviewQueueContext,
+    type ReviewEntryDraft,
+    type ReviewSelection
+} from "@/views/adminfaced/review/reviewQueueContext.ts";
 
 const axios = useAxios();
 const reviewApi = reviewService(axios);
 const toast = useToast();
 const {t} = useI18n();
+const userStore = useUserStore();
 
 const loading = ref(true);
 const currentJobView = ref<ReviewJobContentView | null>(null);
+const currentJobDetails = ref<ReviewJobDetailsView | null>(null);
 const reviewQueue = ref<ReviewJobView[]>([]);
-const reviewReason = ref("");
-const isSubmitting = ref(false);
+const reviewSummary = ref("");
 const loadingContent = ref(false);
+
+const currentDraft = ref<ReviewEntryDraft | null>(null);
+const currentEntries = ref<LocalReviewEntry[]>([]);
+const selectedEntry = ref<ReviewFeedbackEntry | null>(null);
 
 const currentIndex = ref(-1);
 const hasCurrentJob = computed(() => currentJob.value !== null);
+const currentUserId = computed(() => userStore.user?.id ?? null);
 
 const currentJob = computed(() => {
     if (currentIndex.value < 0 || currentIndex.value >= reviewQueue.value.length) {
@@ -48,14 +69,52 @@ const currentJob = computed(() => {
 });
 
 const queueProgress = computed(() => {
-    if (reviewQueue.value.length === 0) return 0;
-    return ((currentIndex.value + 1) / reviewQueue.value.length) * 100;
+    if (reviewQueue.value.length <= 1) return 100;
+    return Math.round((currentIndex.value / (reviewQueue.value.length - 1)) * 100);
 });
 
-const contentTypeDisplay = computed(() => {
-    if (!currentJob.value) return "";
-    return t(getContentTypeI18nKey(currentJob.value.contentType));
+const isFirst = computed(() => currentIndex.value <= 0);
+const isLast = computed(() => currentIndex.value >= reviewQueue.value.length - 1);
+
+const reviewTask = computed<ReviewTaskView | null>(() => {
+    if (!currentJobDetails.value) return null;
+    const tasks = currentJobDetails.value.tasks || [];
+    if (tasks.length === 0) return null;
+    const userId = currentUserId.value;
+    if (userId !== null) {
+        const assignedTask = tasks.find(task => task.reviewerId === userId);
+        if (assignedTask) return assignedTask;
+    }
+    const manualTask = tasks.find(task => !task.feedback?.entries?.some(entry => entry.reviewerSource.isAutomatic));
+    return manualTask ?? tasks[0] ?? null;
 });
+
+const reviewActionDisabled = computed(() => {
+    return loadingContent.value;
+});
+
+const setDraftFromSelection = (selection: ReviewSelection) => {
+    currentDraft.value = {
+        location: selection.range,
+        text: selection.text
+    };
+};
+
+const clearDraft = () => {
+    currentDraft.value = null;
+};
+
+const toggleEntrySelection = (entry: ReviewFeedbackEntry) => {
+    selectedEntry.value = selectedEntry.value === entry ? null : entry;
+};
+
+const clearSelection = () => {
+    selectedEntry.value = null;
+};
+
+const selectEntry = (entry: ReviewFeedbackEntry | null) => {
+    selectedEntry.value = entry;
+};
 
 /**
  * Fetch review jobs from server
@@ -65,9 +124,11 @@ const fetchReviewJobs = async () => {
     reviewQueue.value = [];
     currentIndex.value = -1;
     currentJobView.value = null;
+    currentJobDetails.value = null;
+    reviewSummary.value = "";
 
     try {
-        const response = await reviewApi.getReviewJobs(ReviewStatuses.UNFINISHED);
+        const response = await reviewApi.getReviewJobs([ReviewStatus.PENDING]);
         reviewQueue.value = response.data.data || [];
 
         if (reviewQueue.value.length > 0) {
@@ -88,6 +149,7 @@ const loadJobContent = async (index: number) => {
     if (index < 0 || index >= reviewQueue.value.length) {
         currentIndex.value = -1;
         currentJobView.value = null;
+        currentJobDetails.value = null;
         return;
     }
 
@@ -97,9 +159,24 @@ const loadJobContent = async (index: number) => {
     loadingContent.value = true;
     currentIndex.value = index;
     try {
-        const response = await reviewApi.getReviewContent(job.id);
-        currentJobView.value = response.data?.data || null;
-        reviewReason.value = "";
+        const [contentResponse, detailResponse] = await Promise.all([
+            reviewApi.getReviewContent(job.id),
+            reviewApi.getReviewJob(job.id)
+        ]);
+        currentJobView.value = contentResponse.data?.data || null;
+        currentJobDetails.value = detailResponse.data.data || null;
+        reviewSummary.value = "";
+        selectedEntry.value = null;
+
+        // Load entries from current task
+        if (currentJobDetails.value && reviewTask.value) {
+            currentEntries.value = [...(reviewTask.value.feedback?.entries || [])].map(e => ({
+                ...e,
+                originalText: undefined // We don't have this from backend usually
+            }));
+        } else {
+            currentEntries.value = [];
+        }
 
     } catch (error: any) {
         toast.add(newErrorToastFromError(error, t("request.error.title")));
@@ -108,13 +185,12 @@ const loadJobContent = async (index: number) => {
     }
 };
 
-/**
- * Submit review decision
- */
-const submitReview = async (pass: boolean) => {
-    if (!currentJob.value) return;
+const submittingReview = ref(false);
 
-    if (!pass && !reviewReason.value.trim()) {
+const handleReviewSubmit = async (verdict: ReviewVerdict) => {
+    if (!currentJob.value || !reviewTask.value || submittingReview.value) return;
+
+    if (verdict !== ReviewVerdict.APPROVED && currentEntries.value.length === 0 && !reviewSummary.value.trim()) {
         toast.add(newErrorToastFromError(
                 new Error(t("views.adminfaced.review.validation.reasonRequired")),
                 t("views.adminfaced.review.validation.title")
@@ -122,41 +198,37 @@ const submitReview = async (pass: boolean) => {
         return;
     }
 
-    isSubmitting.value = true;
+    submittingReview.value = true;
     try {
-        await reviewApi.makeReview(currentJob.value.id, {
-            pass,
-            reason: reviewReason.value.trim()
+        await reviewApi.makeReview(currentJob.value.id, reviewTask.value.taskId, {
+            verdict: verdict,
+            entries: currentEntries.value,
+            summary: reviewSummary.value.trim() || undefined
         });
-
-        toast.add(newSuccessToast(
-                pass
-                        ? t("views.adminfaced.review.approveSuccess")
-                        : t("views.adminfaced.review.rejectSuccess")
-        ));
-
-        // Remove current job from queue
-        reviewQueue.value.splice(currentIndex.value, 1);
-
-        // Load next job or complete
-        if (reviewQueue.value.length === 0) {
-            currentIndex.value = -1;
-            currentJobView.value = null;
-            toast.add(newSuccessToast(t("views.adminfaced.review.queueComplete")));
-        } else {
-            // Stay at same index (which now points to next job)
-            const nextIndex = Math.min(currentIndex.value, reviewQueue.value.length - 1);
-            await loadJobContent(nextIndex);
-        }
+        toast.add(newSuccessToast(t("views.adminfaced.review.approveSuccess")));
+        handleReviewSubmitSuccess();
     } catch (error: any) {
         toast.add(newErrorToastFromError(error, t("request.error.title")));
     } finally {
-        isSubmitting.value = false;
+        submittingReview.value = false;
     }
 };
 
-const handleApprove = () => submitReview(true);
-const handleReject = () => submitReview(false);
+const handleReviewSubmitSuccess = () => {
+    if (currentIndex.value >= 0 && currentIndex.value < reviewQueue.value.length) {
+        reviewQueue.value.splice(currentIndex.value, 1);
+    }
+
+    if (reviewQueue.value.length === 0) {
+        currentIndex.value = -1;
+        currentJobView.value = null;
+        currentJobDetails.value = null;
+        toast.add(newSuccessToast(t("views.adminfaced.review.queueComplete")));
+    } else {
+        const nextIndex = Math.min(currentIndex.value, reviewQueue.value.length - 1);
+        loadJobContent(nextIndex);
+    }
+};
 
 const nextJob = async () => {
     const nextIndex = currentIndex.value + 1;
@@ -172,12 +244,36 @@ const prevJob = async () => {
     }
 };
 
-/**
- * Refresh queue
- */
 const refreshQueue = () => {
     fetchReviewJobs();
 };
+
+provideReviewQueueContext({
+    state: {
+        job: currentJob,
+        jobContent: currentJobView,
+        task: reviewTask,
+        entries: currentEntries,
+        draft: currentDraft,
+        summary: reviewSummary,
+        selectedEntry,
+        progress: queueProgress,
+        isFirst,
+        isLast,
+        disabled: reviewActionDisabled,
+        submitting: submittingReview
+    },
+    actions: {
+        setDraftFromSelection,
+        clearDraft,
+        selectEntry,
+        toggleEntrySelection,
+        clearSelection,
+        submitReview: handleReviewSubmit,
+        prevJob,
+        nextJob
+    }
+});
 
 onMounted(() => {
     fetchReviewJobs();
@@ -186,227 +282,75 @@ onMounted(() => {
 
 <template>
     <DashboardPanel>
-        <template #header>
-            <UDashboardNavbar>
+        <template ref="dashboardHeader" #header>
+            <UDashboardNavbar class="z-20">
                 <template #title>
                     <div class="flex flex-col">
-                        <span class="text-lg font-medium">
+                        <span class="text-base text-neutral-900 dark:text-white tracking-tight">
                             {{ t("views.adminfaced.review.title") }}
-                        </span>
-                        <span class="text-sm text-neutral-500 font-normal mt-1">
-                            {{ t("views.adminfaced.review.description") }}
                         </span>
                     </div>
                 </template>
                 <template #right>
                     <UButton
-                            icon="i-lucide-refresh-cw"
-                            color="primary"
-                            variant="outline"
                             :loading="loading"
+                            color="neutral"
+                            size="md"
+                            variant="soft"
                             @click="refreshQueue"
                     >
-                        {{ t("views.adminfaced.review.refresh") }}
+                        <template #leading>
+                            <UIcon name="i-lucide-refresh-cw"/>
+                        </template>
                     </UButton>
                 </template>
             </UDashboardNavbar>
         </template>
 
         <template #body>
-            <div v-if="reviewQueue.length > 0" class="mb-6 px-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {{
-                            t("views.adminfaced.review.progress", {
-                                current: currentIndex + 1,
-                                total: reviewQueue.length
-                            })
-                        }}
-                    </span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ Math.round(queueProgress) }}%
-                    </span>
-                </div>
-                <UProgress :model-value="queueProgress"/>
-            </div>
-
-            <div v-if="loading" class="flex items-center justify-center py-12">
-                <div class="text-center flex flex-col items-center">
-                    <UIcon name="i-lucide-loader-2"
-                           class="w-8 h-8 animate-spin text-primary mb-2"/>
-                    <p class="text-gray-500 dark:text-gray-400">
+            <div v-if="loading" class="flex items-center justify-center h-full">
+                <div class="flex flex-col items-center gap-4">
+                    <div class="size-8 rounded-full border-2 border-neutral-200 border-t-neutral-800 animate-spin"/>
+                    <p class="text-sm text-neutral-500 font-medium tracking-wide">
                         {{ t("views.adminfaced.review.loading") }}
                     </p>
                 </div>
             </div>
 
-            <div v-else-if="!hasCurrentJob && !loading"
-                 class="flex flex-col items-center justify-center py-12">
-                <div class="flex flex-col items-center gap-2 py-4">
-                    <div class="w-14 h-14 rounded-full bg-gradient-to-br flex items-center justify-center">
-                        <UIcon name="i-lucide-check-circle" class="w-7 h-7 text-success"/>
-                    </div>
-                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">
-                        {{ t("views.adminfaced.review.noPendingReviews") }}</h1>
-                    <p class="text-normal text-gray-600 dark:text-gray-400">
-                        {{ t("views.adminfaced.review.allCompleted") }}
-                    </p>
-                    <UButton @click="refreshQueue" color="primary" class="mt-5">
-                        {{ t("views.adminfaced.review.checkForNew") }}
-                    </UButton>
-                </div>
-
+            <div v-else-if="!hasCurrentJob" class="flex flex-col items-center justify-center h-full">
+                <UEmpty
+                        :description="t('views.adminfaced.review.allCompleted')"
+                        :title="t('views.adminfaced.review.noPendingReviews')"
+                        icon="i-lucide-check-circle"
+                        class="w-full h-full p-6"
+                >
+                    <template #actions>
+                        <UButton color="primary" size="md" variant="primary" @click="refreshQueue">
+                            {{ t("views.adminfaced.review.checkForNew") }}
+                        </UButton>
+                    </template>
+                </UEmpty>
             </div>
 
-            <div v-else-if="hasCurrentJob" class="grid grid-cols-1 lg:grid-cols-4 gap-4 px-4">
-                <div class="lg:col-span-3 space-y-4">
-
-                    <UPageCard :title="t('views.adminfaced.review.contentToReview')">
-                        <div v-if="loadingContent" class="flex items-center justify-center py-8">
-                            <UIcon name="i-lucide-loader-2"
-                                   class="w-6 h-6 animate-spin text-primary"/>
+            <div v-else class="pb-32">
+                <div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-0 relative">
+                    <main class="min-w-0 min-h-[calc(100vh-64px)] z-0">
+                        <div class="w-full p-6 lg:p-10 space-y-6">
+                            <ReviewContent/>
                         </div>
-                        <div v-else-if="currentJobView">
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-8">
-                                <div>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ t("views.adminfaced.review.jobId") }}
-                                </span>
-                                    <p class="font-medium text-gray-900 dark:text-white">
-                                        #{{ currentJob!.id }}
-                                    </p>
-                                </div>
-                                <div>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ t("views.adminfaced.review.contentType") }}
-                                </span>
-                                    <p class="font-medium text-gray-900 dark:text-white">
-                                        {{ contentTypeDisplay }}
-                                    </p>
-                                </div>
-                                <div>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ t("views.adminfaced.review.contentId") }}
-                                </span>
-                                    <p class="font-medium text-gray-900 dark:text-white">
-                                        {{ currentJob!.contentId }}
-                                    </p>
-                                </div>
-                                <div>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ t("views.adminfaced.review.created") }}
-                                </span>
-                                    <p class="font-medium text-gray-900 dark:text-white">
-                                        {{ new Date(currentJob!.assignedTime).toLocaleString() }}
-                                    </p>
-                                </div>
-                            </div>
-                            <div v-if="currentJobView.title" class="mb-4">
-                                <h4 class="text-xl font-bold text-gray-900 dark:text-white">
-                                    {{ currentJobView.title }}
-                                </h4>
-                            </div>
+                    </main>
 
-                            <div class="overflow-hidden border-t border-gray-200 dark:border-gray-700 max-w-[80vw]">
-                                <StructuralTextEditor
-                                        :model-value="currentJobView!.content"
-                                        :editable="false"
-                                        :show-toolbar="false"
-                                        :show-outline="false">
-                                </StructuralTextEditor>
-                            </div>
-
-                            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <div class="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <span class="text-gray-500 dark:text-gray-400">User ID</span>
-                                        <span class="ml-2 text-gray-900 dark:text-white">{{
-                                                currentJobView.userId
-                                            }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-500 dark:text-gray-400"> {{
-                                                t("views.adminfaced.review.created")
-                                            }}</span>
-                                        <span class="ml-2 text-gray-900 dark:text-white">
-                                            {{ new Date(currentJobView.createTime).toLocaleString() }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                    <aside class="hidden lg:block sticky top-0 self-start w-[400px]">
+                        <div class="p-4">
+                            <ReviewSidebar v-if="reviewTask"/>
                         </div>
-                    </UPageCard>
-                </div>
+                    </aside>
 
-                <div class="lg:col-span-1 space-y-4">
-                    <UPageCard :title="t('views.adminfaced.review.reviewDecision')">
-                        <div class="flex w-full justify-between gap-2">
-                            <UButton
-                                    block
-                                    color="neutral"
-                                    variant="outline"
-                                    class="flex-1"
-                                    icon="i-lucide-arrow-left"
-                                    :disabled="isSubmitting || currentIndex === 0 || loadingContent"
-                                    @click="prevJob"
-                            >
-                                {{ t("views.adminfaced.review.prev") }}
-                            </UButton>
-                            <UButton
-                                    block
-                                    color="neutral"
-                                    variant="outline"
-                                    class="flex-1"
-                                    icon="i-lucide-arrow-right"
-                                    :disabled="isSubmitting || currentIndex >= reviewQueue.length - 1 || loadingContent"
-                                    @click="nextJob"
-                            >
-                                {{ t("views.adminfaced.review.next") }}
-                            </UButton>
-                        </div>
-                        <div class="space-y-4 w-full">
-                            <UFormField
-                                    :label="t('views.adminfaced.review.reviewComments')"
-                                    name="reviewReason"
-                            >
-                                <UTextarea
-                                        v-model="reviewReason"
-                                        class="w-full"
-                                        :placeholder="t('views.adminfaced.review.reviewCommentsPlaceholder')"
-                                        :rows="4"
-                                        :disabled="isSubmitting || loadingContent"
-                                />
-                            </UFormField>
-
-                            <div class="flex w-full justify-between gap-2">
-                                <UButton block
-                                         color="success"
-                                         variant="subtle"
-                                         class="flex-1"
-                                         icon="i-lucide-check-circle"
-                                         :loading="isSubmitting"
-                                         :disabled="loadingContent"
-                                         @click="handleApprove">
-                                    {{ t("views.adminfaced.review.approve") }}
-                                </UButton>
-                                <UButton block
-                                         color="error"
-                                         variant="subtle"
-                                         class="flex-1"
-                                         icon="i-lucide-x-circle"
-                                         :loading="isSubmitting"
-                                         :disabled="loadingContent"
-                                         @click="handleReject">
-                                    {{ t("views.adminfaced.review.reject") }}
-                                </UButton>
-                            </div>
-                        </div>
-                    </UPageCard>
+                    <div class="lg:hidden block border-t border-neutral-200 dark:border-neutral-800">
+                        <ReviewSidebar v-if="reviewTask"/>
+                    </div>
                 </div>
             </div>
         </template>
     </DashboardPanel>
 </template>
-
-<style scoped>
-</style>
