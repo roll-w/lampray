@@ -17,7 +17,7 @@
 import {computed, ref} from 'vue'
 import {defineStore} from 'pinia'
 import {UserRole} from '@/services/user/user.type'
-import {useUserBroadcast} from '@/composables/useUserBroadcast'
+import {type BroadcastCallbacks, type UserBroadcastInstance, useUserBroadcast} from '@/composables/useUserBroadcast'
 
 export interface User {
     username: string
@@ -79,6 +79,8 @@ export const useUserStore = defineStore('user', () => {
         return user.value?.role && user.value.role !== UserRole.USER
     })
 
+    let broadcast: UserBroadcastInstance | null = null
+
     function setLogin(newUser: User, newToken: Token, shouldRemember: boolean, isBlocked: boolean) {
         user.value = newUser
         token.value = newToken
@@ -121,29 +123,29 @@ export const useUserStore = defineStore('user', () => {
         storage.setItem(userDataKey, JSON.stringify(newUserData))
     }
 
-    const broadcast = useUserBroadcast(
-        {setLogin, setLogout, setToken, setUserData: setUserDataFull}
-    )
-
     function loginUser(newUser: User, newToken: Token, shouldRemember: boolean, isBlocked: boolean) {
         setLogin(newUser, newToken, shouldRemember, isBlocked)
-        broadcast.broadcastLogin(newUser, newToken, shouldRemember, isBlocked)
+        broadcast?.broadcastLogin(newUser, newToken, shouldRemember, isBlocked)
     }
 
     function refreshToken(newToken: Token) {
         setToken(newToken)
-        broadcast.broadcastToken(newToken)
+        broadcast?.broadcastToken(newToken)
     }
 
     function logout() {
         setLogout()
-        broadcast.broadcastLogout()
+        broadcast?.broadcastLogout()
     }
 
     function setUserData(partialData: Partial<UserData>) {
         const newUserData = {...userData.value, ...partialData} as UserData
         setUserDataFull(newUserData)
-        broadcast.broadcastUserData(newUserData)
+        broadcast?.broadcastUserData(newUserData)
+    }
+
+    function setBlock(value: boolean) {
+        block.value = value
     }
 
     function load() {
@@ -189,8 +191,25 @@ export const useUserStore = defineStore('user', () => {
         }
     }
 
+    /**
+     * Initialize the broadcast channel with navigation callbacks.
+     * This should be called once during app bootstrap (e.g., in main.ts).
+     *
+     * @param callbacks - Navigation callbacks for cross-tab events
+     */
+    function initBroadcast(callbacks?: BroadcastCallbacks): void {
+        if (broadcast) {
+            broadcast.dispose()
+        }
+        broadcast = useUserBroadcast(
+            {setLogin, setLogout, setToken, setUserData: setUserDataFull},
+            {callbacks, autoDispose: false}
+        )
+    }
+
     function dispose() {
-        broadcast.dispose()
+        broadcast?.dispose()
+        broadcast = null
     }
 
     return {
@@ -207,7 +226,9 @@ export const useUserStore = defineStore('user', () => {
         refreshToken,
         setUserData,
         load,
+        initBroadcast,
         dispose,
+        setBlock,
     }
 })
 

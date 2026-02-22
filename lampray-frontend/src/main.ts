@@ -25,8 +25,9 @@ import {createAxios} from "@/services/request.ts";
 import {useUserStore} from "@/stores/user.ts";
 import {RouteName} from "@/router/routeName.ts";
 import {i18n, type LocaleOption, mappingToAvailableLocale} from "@/i18n/i18n.ts";
-import {addCollection} from "@iconify/vue"
+import {addCollection} from "@iconify/vue";
 import {useNavigatorLanguage, useStorage} from "@vueuse/core";
+import type {Token, User} from "@/stores/user";
 
 async function bootstrap() {
     try {
@@ -68,21 +69,60 @@ async function bootstrap() {
     };
 
     const userStore = useUserStore();
+
     const onLoginExpired = () => {
         userStore.logout();
         router.push({
             name: RouteName.LOGIN,
             query: {source: router.currentRoute.value.fullPath}
-        })
-    }
+        });
+    };
 
     const onUserBlocked = () => {
-        userStore.block = true;
+        userStore.setBlock(true);
         router.push({
             name: RouteName.BLOCKED,
             query: {source: router.currentRoute.value.fullPath}
-        })
-    }
+        });
+    };
+
+
+    const handleBroadcastLogin = (
+        _user: User,
+        _token: Token,
+        _remember: boolean,
+        _block: boolean
+    ) => {
+        const currentRoute = router.currentRoute.value;
+
+        if (currentRoute.name === RouteName.LOGIN || currentRoute.name === RouteName.REGISTER) {
+            const source = currentRoute.query.source;
+            if (source) {
+                const url = decodeURIComponent(source.toString());
+                window.location.replace(url);
+            } else {
+                router.push({name: RouteName.USER_HOME});
+            }
+        }
+    };
+
+    const handleBroadcastLogout = () => {
+        const currentRoute = router.currentRoute.value;
+        const matched = currentRoute.matched;
+        const requiresAuth = matched.some(record => record.meta.requireLogin);
+
+        if (requiresAuth) {
+            router.push({
+                name: RouteName.LOGIN,
+                query: {source: currentRoute.fullPath}
+            });
+        }
+    };
+
+    userStore.initBroadcast({
+        onLogin: handleBroadcastLogin,
+        onLogout: handleBroadcastLogout,
+    });
 
     const axios = createAxios(userStore, onLoginExpired, onUserBlocked);
     const server = ((window as any).config?.server) || {

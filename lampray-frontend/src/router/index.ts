@@ -166,17 +166,14 @@ router.afterEach((to, from) => {
 })
 
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
     const userStore = useUserStore()
-
-    // TODO: improve performance
-    userStore.load()
     if (to.meta.requireLogin && !userStore.isLogin) {
         return next({
             name: RouteName.LOGIN,
+            query: { source: to.fullPath }
         })
     }
-
     if (userStore.isBlocked && to.name !== RouteName.BLOCKED) {
         return next({
             name: RouteName.BLOCKED,
@@ -186,10 +183,11 @@ router.beforeEach((to, from, next) => {
         return next()
     }
 
-    const role = userStore.user!.role
+    const role = userStore.user?.role
     if (!userStore.isLogin || !role || role === UserRole.USER) {
         return next({
             name: RouteName.LOGIN,
+            query: { source: to.fullPath }
         })
     }
     return next()
