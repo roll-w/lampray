@@ -75,7 +75,7 @@ const jumpTo = () => {
      const source = router.currentRoute.value.query.source;
      if (source) {
          const url = decodeURIComponent(source.toString());
-         window.location.replace(url);
+         router.replace(url);
      } else {
          router.push({name: RouteName.USER_HOME});
      }

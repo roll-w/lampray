@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import {computed, ref} from 'vue'
 import {defineStore} from 'pinia'
-import {UserRole} from "@/services/user/user.type.ts";
-
-export type UserStore = ReturnType<typeof useUserStore>
+import {UserRole} from '@/services/user/user.type'
+import {type BroadcastCallbacks, type UserBroadcastInstance, useUserBroadcast} from '@/composables/useUserBroadcast'
 
 export interface User {
     username: string
@@ -43,131 +43,214 @@ export const tokenKey = 'token'
 export const userKey = 'user'
 export const userDataKey = 'user_data'
 
-export const useUserStore = defineStore('user', {
-    state: (): {
-        user: User | null
-        token: Token | null
-        userData: UserData | null
-        remember: boolean
-        block: boolean
-    } => ({
-        user: null,
-        token: null,
-        userData: null,
-        remember: false,
-        block: false,
-    }),
-    getters: {
-        isLogin: (state) => {
-            if (!state.token) return false
-            const now = new Date().getTime()
-            return (
-                state.token!.accessToken &&
-                state.token!.refreshToken &&
-                now < state.token!.refreshTokenExpiry.getTime()
-            )
-        },
-
-        getUser: (state) => state.user,
-        getToken: (state) => state.token,
-        getUserData: (state) => state.userData,
-        isBlocked: (state) => state.block,
-
-        hasAdminRole: (state) => state.user?.role && state.user.role !== UserRole.USER,
-    },
-    actions: {
-        loginUser(
-            user: User,
-            token: Token,
-            remember: boolean,
-            block: boolean
-        ) {
-            this.user = user
-            this.token = token
-            this.remember = remember
-            this.block = block
-
-            const storage = this.remember ? localStorage : sessionStorage
-            storage.setItem(userKey, JSON.stringify(this.user))
-            storage.setItem(tokenKey, JSON.stringify(this.token))
-            if (this.userData) {
-                storage.setItem(userDataKey, JSON.stringify(this.userData))
-            }
-        },
-
-        refreshToken(token: Token) {
-            this.token = token
-            const storage = this.remember ? localStorage : sessionStorage
-            storage.setItem(tokenKey, JSON.stringify(this.token))
-        },
-
-        logout() {
-            this.$reset()
-
-            localStorage.removeItem(tokenKey)
-            localStorage.removeItem(userKey)
-            localStorage.removeItem(userDataKey)
-
-            sessionStorage.removeItem(tokenKey)
-            sessionStorage.removeItem(userKey)
-            sessionStorage.removeItem(userDataKey)
-        },
-
-        setUserData(userData: Partial<UserData>) {
-            this.userData = {...this.userData, ...userData} as UserData
-            const storage = this.remember ? localStorage : sessionStorage
-            storage.setItem(userDataKey, JSON.stringify(userData))
-        },
-
-        load() {
-            const localUser = localStorage.getItem(userKey)
-            const localToken = localStorage.getItem(tokenKey)
-            const localUserData = localStorage.getItem(userDataKey)
-
-            if (localUser && localToken) {
-                this.user = tryParse<User>(localUser)
-                const rawToken = tryParse<Token>(localToken)
-                if (!rawToken) {
-                    return
-                }
-                rawToken.accessTokenExpiry = new Date(rawToken.accessTokenExpiry)
-                rawToken.refreshTokenExpiry = new Date(rawToken.refreshTokenExpiry)
-                this.token = rawToken
-                if (localUserData !== null) {
-                    this.userData = tryParse<UserData>(localUserData)
-                }
-                this.remember = true
-                return
-            }
-
-            const sessionUser = sessionStorage.getItem(userKey)
-            const sessionToken = sessionStorage.getItem(tokenKey)
-            const sessionUserData = sessionStorage.getItem(userDataKey)
-            if (sessionUser && sessionToken) {
-                this.user = tryParse<User>(sessionUser)
-                const rawToken = tryParse<Token>(sessionToken)
-                if (!rawToken) {
-                    return;
-                }
-                rawToken.accessTokenExpiry = new Date(rawToken.accessTokenExpiry)
-                rawToken.refreshTokenExpiry = new Date(rawToken.refreshTokenExpiry)
-                this.token = rawToken
-                if (sessionUserData) {
-                    this.userData = tryParse<UserData>(sessionUserData)
-                }
-                this.remember = false
-            }
-        }
-    },
-})
-
-const tryParse = <T>(value: string | null): T | null => {
-    if (!value) {
-        return null;
-    }
+function tryParse<T>(value: string | null): T | null {
+    if (!value) return null
     try {
-        return JSON.parse(value) as T;
+        return JSON.parse(value) as T
     } catch {
-        return null;
+        return null
     }
 }
+
+function getStorage(remember: boolean) {
+    return remember ? localStorage : sessionStorage
+}
+
+function normalizeToken(input: Token): Token {
+    return {
+        ...input,
+        accessTokenExpiry: new Date(input.accessTokenExpiry),
+        refreshTokenExpiry: new Date(input.refreshTokenExpiry),
+    }
+}
+
+export const useUserStore = defineStore('user', () => {
+    const user = ref<User | null>(null)
+    const token = ref<Token | null>(null)
+    const userData = ref<UserData | null>(null)
+    const remember = ref(false)
+    const block = ref(false)
+
+    const isLogin = computed(() => {
+        if (!token.value) return false
+        const now = new Date().getTime()
+        return (
+            token.value.accessToken &&
+            token.value.refreshToken &&
+            now < token.value.refreshTokenExpiry.getTime()
+        )
+    })
+
+    const isBlocked = computed(() => block.value)
+
+    const hasAdminRole = computed(() => {
+        return user.value?.role && user.value.role !== UserRole.USER
+    })
+
+    let broadcast: UserBroadcastInstance | null = null
+
+    function setLogin(newUser: User, newToken: Token, shouldRemember: boolean, isBlocked: boolean) {
+        const normalizedToken = normalizeToken(newToken)
+
+        user.value = newUser
+        token.value = normalizedToken
+        remember.value = shouldRemember
+        block.value = isBlocked
+
+        const storage = getStorage(shouldRemember)
+        storage.setItem(userKey, JSON.stringify(newUser))
+        storage.setItem(tokenKey, JSON.stringify(normalizedToken))
+        if (userData.value) {
+            storage.setItem(userDataKey, JSON.stringify(userData.value))
+        } else {
+            storage.removeItem(userDataKey)
+        }
+    }
+
+    function setLogout() {
+        user.value = null
+        token.value = null
+        userData.value = null
+        remember.value = false
+        block.value = false
+
+        localStorage.removeItem(tokenKey)
+        localStorage.removeItem(userKey)
+        localStorage.removeItem(userDataKey)
+
+        sessionStorage.removeItem(tokenKey)
+        sessionStorage.removeItem(userKey)
+        sessionStorage.removeItem(userDataKey)
+    }
+
+    function setToken(newToken: Token) {
+        const normalizedToken = normalizeToken(newToken)
+        token.value = normalizedToken
+        const storage = getStorage(remember.value)
+        storage.setItem(tokenKey, JSON.stringify(normalizedToken))
+    }
+
+    function runWithBroadcast(action: (instance: UserBroadcastInstance) => void): void {
+        if (!broadcast) {
+            if (import.meta.env.DEV) {
+                console.warn('[userStore] Broadcast channel is not initialized. Sync event skipped.')
+            }
+            return
+        }
+        action(broadcast)
+    }
+
+    function setUserDataFull(newUserData: UserData) {
+        userData.value = newUserData
+        const storage = getStorage(remember.value)
+        storage.setItem(userDataKey, JSON.stringify(newUserData))
+    }
+
+    function loginUser(newUser: User, newToken: Token, shouldRemember: boolean, isBlocked: boolean) {
+        setLogin(newUser, newToken, shouldRemember, isBlocked)
+        runWithBroadcast((instance) => instance.broadcastLogin(newUser, newToken, shouldRemember, isBlocked))
+    }
+
+    function refreshToken(newToken: Token) {
+        setToken(newToken)
+        runWithBroadcast((instance) => instance.broadcastToken(newToken))
+    }
+
+    function logout() {
+        setLogout()
+        runWithBroadcast((instance) => instance.broadcastLogout())
+    }
+
+    function setUserData(partialData: Partial<UserData>) {
+        const newUserData = {...userData.value, ...partialData} as UserData
+        setUserDataFull(newUserData)
+        runWithBroadcast((instance) => instance.broadcastUserData(newUserData))
+    }
+
+    function setBlock(value: boolean) {
+        block.value = value
+    }
+
+    function load() {
+        const localUser = localStorage.getItem(userKey)
+        const localToken = localStorage.getItem(tokenKey)
+        const localUserData = localStorage.getItem(userDataKey)
+
+        if (localUser && localToken) {
+            const parsedUser = tryParse<User>(localUser)
+            const parsedToken = tryParse<Token>(localToken)
+            if (!parsedUser || !parsedToken) return
+
+            const normalizedToken = normalizeToken(parsedToken)
+
+            user.value = parsedUser
+            token.value = normalizedToken
+            if (localUserData !== null) {
+                userData.value = tryParse<UserData>(localUserData)
+            }
+            remember.value = true
+            return
+        }
+
+        const sessionUser = sessionStorage.getItem(userKey)
+        const sessionToken = sessionStorage.getItem(tokenKey)
+        const sessionUserData = sessionStorage.getItem(userDataKey)
+
+        if (sessionUser && sessionToken) {
+            const parsedUser = tryParse<User>(sessionUser)
+            const parsedToken = tryParse<Token>(sessionToken)
+            if (!parsedUser || !parsedToken) return
+
+            const normalizedToken = normalizeToken(parsedToken)
+
+            user.value = parsedUser
+            token.value = normalizedToken
+            if (sessionUserData) {
+                userData.value = tryParse<UserData>(sessionUserData)
+            }
+            remember.value = false
+        }
+    }
+
+    /**
+     * Initialize the broadcast channel with navigation callbacks.
+     * This should be called once during app bootstrap (e.g., in main.ts).
+     *
+     * @param callbacks - Navigation callbacks for cross-tab events
+     */
+    function initBroadcast(callbacks?: BroadcastCallbacks): void {
+        if (broadcast) {
+            broadcast.dispose()
+        }
+        broadcast = useUserBroadcast(
+            {setLogin, setLogout, setToken, setUserData: setUserDataFull},
+            {callbacks, autoDispose: false}
+        )
+    }
+
+    function dispose() {
+        broadcast?.dispose()
+        broadcast = null
+    }
+
+    return {
+        user: computed(() => user.value),
+        token: computed(() => token.value),
+        userData: computed(() => userData.value),
+        remember: computed(() => remember.value),
+        block: computed(() => block.value),
+        isLogin,
+        isBlocked,
+        hasAdminRole,
+        loginUser,
+        logout,
+        refreshToken,
+        setUserData,
+        load,
+        initBroadcast,
+        dispose,
+        setBlock,
+    }
+})
+
+export type UserStore = ReturnType<typeof useUserStore>
