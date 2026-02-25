@@ -56,6 +56,14 @@ function getStorage(remember: boolean) {
     return remember ? localStorage : sessionStorage
 }
 
+function normalizeToken(input: Token): Token {
+    return {
+        ...input,
+        accessTokenExpiry: new Date(input.accessTokenExpiry),
+        refreshTokenExpiry: new Date(input.refreshTokenExpiry),
+    }
+}
+
 export const useUserStore = defineStore('user', () => {
     const user = ref<User | null>(null)
     const token = ref<Token | null>(null)
@@ -82,16 +90,20 @@ export const useUserStore = defineStore('user', () => {
     let broadcast: UserBroadcastInstance | null = null
 
     function setLogin(newUser: User, newToken: Token, shouldRemember: boolean, isBlocked: boolean) {
+        const normalizedToken = normalizeToken(newToken)
+
         user.value = newUser
-        token.value = newToken
+        token.value = normalizedToken
         remember.value = shouldRemember
         block.value = isBlocked
 
         const storage = getStorage(shouldRemember)
         storage.setItem(userKey, JSON.stringify(newUser))
-        storage.setItem(tokenKey, JSON.stringify(newToken))
+        storage.setItem(tokenKey, JSON.stringify(normalizedToken))
         if (userData.value) {
             storage.setItem(userDataKey, JSON.stringify(userData.value))
+        } else {
+            storage.removeItem(userDataKey)
         }
     }
 
@@ -112,9 +124,20 @@ export const useUserStore = defineStore('user', () => {
     }
 
     function setToken(newToken: Token) {
-        token.value = newToken
+        const normalizedToken = normalizeToken(newToken)
+        token.value = normalizedToken
         const storage = getStorage(remember.value)
-        storage.setItem(tokenKey, JSON.stringify(newToken))
+        storage.setItem(tokenKey, JSON.stringify(normalizedToken))
+    }
+
+    function runWithBroadcast(action: (instance: UserBroadcastInstance) => void): void {
+        if (!broadcast) {
+            if (import.meta.env.DEV) {
+                console.warn('[userStore] Broadcast channel is not initialized. Sync event skipped.')
+            }
+            return
+        }
+        action(broadcast)
     }
 
     function setUserDataFull(newUserData: UserData) {
@@ -125,23 +148,23 @@ export const useUserStore = defineStore('user', () => {
 
     function loginUser(newUser: User, newToken: Token, shouldRemember: boolean, isBlocked: boolean) {
         setLogin(newUser, newToken, shouldRemember, isBlocked)
-        broadcast?.broadcastLogin(newUser, newToken, shouldRemember, isBlocked)
+        runWithBroadcast((instance) => instance.broadcastLogin(newUser, newToken, shouldRemember, isBlocked))
     }
 
     function refreshToken(newToken: Token) {
         setToken(newToken)
-        broadcast?.broadcastToken(newToken)
+        runWithBroadcast((instance) => instance.broadcastToken(newToken))
     }
 
     function logout() {
         setLogout()
-        broadcast?.broadcastLogout()
+        runWithBroadcast((instance) => instance.broadcastLogout())
     }
 
     function setUserData(partialData: Partial<UserData>) {
         const newUserData = {...userData.value, ...partialData} as UserData
         setUserDataFull(newUserData)
-        broadcast?.broadcastUserData(newUserData)
+        runWithBroadcast((instance) => instance.broadcastUserData(newUserData))
     }
 
     function setBlock(value: boolean) {
@@ -158,11 +181,10 @@ export const useUserStore = defineStore('user', () => {
             const parsedToken = tryParse<Token>(localToken)
             if (!parsedUser || !parsedToken) return
 
-            parsedToken.accessTokenExpiry = new Date(parsedToken.accessTokenExpiry)
-            parsedToken.refreshTokenExpiry = new Date(parsedToken.refreshTokenExpiry)
+            const normalizedToken = normalizeToken(parsedToken)
 
             user.value = parsedUser
-            token.value = parsedToken
+            token.value = normalizedToken
             if (localUserData !== null) {
                 userData.value = tryParse<UserData>(localUserData)
             }
@@ -179,11 +201,10 @@ export const useUserStore = defineStore('user', () => {
             const parsedToken = tryParse<Token>(sessionToken)
             if (!parsedUser || !parsedToken) return
 
-            parsedToken.accessTokenExpiry = new Date(parsedToken.accessTokenExpiry)
-            parsedToken.refreshTokenExpiry = new Date(parsedToken.refreshTokenExpiry)
+            const normalizedToken = normalizeToken(parsedToken)
 
             user.value = parsedUser
-            token.value = parsedToken
+            token.value = normalizedToken
             if (sessionUserData) {
                 userData.value = tryParse<UserData>(sessionUserData)
             }

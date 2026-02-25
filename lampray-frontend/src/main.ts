@@ -47,6 +47,8 @@ async function bootstrap() {
     const app = createApp(App);
     const pinia = createPinia();
     app.use(pinia);
+    const userStore = useUserStore();
+    userStore.load();
     app.use(router);
     app.use(ui);
 
@@ -67,8 +69,6 @@ async function bootstrap() {
             console.error(`Failed to load locale ${localeCode.code}:`, e);
         }
     };
-
-    const userStore = useUserStore();
 
     const onLoginExpired = () => {
         userStore.logout();
@@ -99,7 +99,7 @@ async function bootstrap() {
             const source = currentRoute.query.source;
             if (source) {
                 const url = decodeURIComponent(source.toString());
-                window.location.replace(url);
+                router.replace(url);
             } else {
                 router.push({name: RouteName.USER_HOME});
             }

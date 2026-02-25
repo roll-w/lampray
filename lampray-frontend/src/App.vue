@@ -15,7 +15,6 @@
   -->
 <script setup lang="ts">
 import {RouterView} from "vue-router";
-import {useUserStore} from "@/stores/user.ts";
 import LamprayLogo from "@/components/LamprayLogo.vue";
 import * as locales from '@nuxt/ui/locale'
 import {useI18n} from "vue-i18n";
@@ -23,11 +22,8 @@ import type {ToasterProps} from "@nuxt/ui";
 
 const toaster: ToasterProps = {position: 'top-right', progress: false};
 const {locale} = useI18n()
-const userStore = useUserStore();
 
 const uLocale = locales[locale.value.replace("-", "_").toLocaleLowerCase() as keyof typeof locales] || locales['en']
-
-userStore.load()
 
 </script>
 

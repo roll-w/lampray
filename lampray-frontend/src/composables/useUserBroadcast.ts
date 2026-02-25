@@ -125,6 +125,14 @@ function createChannel(): BroadcastChannel | null {
     return new BroadcastChannel(BROADCAST_CHANNEL_NAME);
 }
 
+function normalizeToken(token: Token): Token {
+    return {
+        ...token,
+        accessTokenExpiry: new Date(token.accessTokenExpiry),
+        refreshTokenExpiry: new Date(token.refreshTokenExpiry)
+    };
+}
+
 export interface UserBroadcast {
     /**
      * Manually close the broadcast channel.
@@ -189,7 +197,7 @@ export function useUserBroadcast(
             const message = event.data;
             lastOrigin = message.origin;
 
-            // Don"t process our own broadcasts
+            // Don't process our own broadcasts
             if (message.origin === tabId) {
                 return;
             }
@@ -205,8 +213,9 @@ export function useUserBroadcast(
         switch (message.type) {
             case "login": {
                 const {user, token, remember, block} = message.data;
-                setters.setLogin(user, token, remember, block);
-                callbacks?.onLogin?.(user, token, remember, block);
+                const normalizedToken = normalizeToken(token);
+                setters.setLogin(user, normalizedToken, remember, block);
+                callbacks?.onLogin?.(user, normalizedToken, remember, block);
                 break;
             }
             case "logout": {
@@ -216,8 +225,9 @@ export function useUserBroadcast(
             }
             case "refresh-token": {
                 const {token} = message.data;
-                setters.setToken(token);
-                callbacks?.onTokenRefresh?.(token);
+                const normalizedToken = normalizeToken(token);
+                setters.setToken(normalizedToken);
+                callbacks?.onTokenRefresh?.(normalizedToken);
                 break;
             }
             case "update-user-data": {
