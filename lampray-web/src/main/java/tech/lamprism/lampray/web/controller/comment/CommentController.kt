@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import tech.lamprism.lampray.content.ContentAccessCredential
 import tech.lamprism.lampray.content.ContentAccessCredentials
+import tech.lamprism.lampray.content.ContentAccessService
+import tech.lamprism.lampray.content.ContentIdentity
 import tech.lamprism.lampray.content.ContentPublishProvider
 import tech.lamprism.lampray.content.ContentType
 import tech.lamprism.lampray.content.SimpleUncreatedContent
@@ -43,6 +45,7 @@ import tech.rollw.common.web.system.ContextThreadAware
 class CommentController(
     private val apiContextThreadAware: ContextThreadAware<ApiContext>,
     private val contentPublishProvider: ContentPublishProvider,
+    private val contentAccessService: ContentAccessService,
     private val contentCollectionProviderFactory: ContentCollectionProviderFactory
 ) {
     @PostMapping("/{contentType}/{contentId}/comments")
@@ -84,16 +87,29 @@ class CommentController(
         val collectionType = getFromContentType(contentType)
         val context = apiContextThreadAware.contextThread
             .context
-        val contentAccessCredentials = ContentAccessCredentials.of(
-            ContentAccessCredential.Type.USER,
-            context.user
+        val contentAccessCredentials = if (context.user != null) {
+            ContentAccessCredentials.of(
+                ContentAccessCredential.Type.USER,
+                context.user
+            )
+        } else {
+            ContentAccessCredentials.ANONYMOUS
+        }
+
+        contentAccessService.openContent(
+            ContentIdentity.of(contentId, contentType),
+            contentAccessCredentials
         )
 
         val contents = contentCollectionProviderFactory.getContents(
-            ContentCollectionIdentity.of(contentId, collectionType),
-            contentAccessCredentials
+            ContentCollectionIdentity.of(contentId, collectionType)
         ).mapNotNull {
-            CommentVo.of(it.contentDetails)
+            try {
+                contentAccessService.openContent(it, contentAccessCredentials)
+                CommentVo.of(it.contentDetails)
+            } catch (_: RuntimeException) {
+                null
+            }
         }
         return HttpResponseEntity.success(contents)
     }

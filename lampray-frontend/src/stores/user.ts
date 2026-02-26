@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import {computed, ref} from 'vue'
-import {defineStore} from 'pinia'
-import {UserRole} from '@/services/user/user.type'
-import {type BroadcastCallbacks, type UserBroadcastInstance, useUserBroadcast} from '@/composables/useUserBroadcast'
+import {computed, ref} from "vue";
+import {defineStore} from "pinia";
+import {UserRole} from "@/services/user/user.type";
+import {type BroadcastCallbacks, type UserBroadcastInstance, useUserBroadcast} from "@/composables/useUserBroadcast";
 
 export interface User {
     username: string
@@ -39,9 +39,9 @@ export interface Token {
     refreshTokenExpiry: Date
 }
 
-export const tokenKey = 'token'
-export const userKey = 'user'
-export const userDataKey = 'user_data'
+export const tokenKey = "token"
+export const userKey = "user"
+export const userDataKey = "user_data"
 
 function tryParse<T>(value: string | null): T | null {
     if (!value) return null
@@ -64,7 +64,7 @@ function normalizeToken(input: Token): Token {
     }
 }
 
-export const useUserStore = defineStore('user', () => {
+export const useUserStore = defineStore("user", () => {
     const user = ref<User | null>(null)
     const token = ref<Token | null>(null)
     const userData = ref<UserData | null>(null)
@@ -133,7 +133,7 @@ export const useUserStore = defineStore('user', () => {
     function runWithBroadcast(action: (instance: UserBroadcastInstance) => void): void {
         if (!broadcast) {
             if (import.meta.env.DEV) {
-                console.warn('[userStore] Broadcast channel is not initialized. Sync event skipped.')
+                console.warn("[userStore] Broadcast channel is not initialized. Sync event skipped.")
             }
             return
         }

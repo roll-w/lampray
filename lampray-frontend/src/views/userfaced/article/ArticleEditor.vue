@@ -24,6 +24,8 @@ import {newErrorToast, newSuccessToast} from "@/utils/toasts.ts";
 import {useI18n} from "vue-i18n";
 import {articleService} from "@/services/content/article.service.ts";
 import {useAxios} from "@/composables/useAxios.ts";
+import {useRouter} from "vue-router";
+import {RouteName} from "@/router/routeName.ts";
 
 const {t} = useI18n();
 const axios = useAxios();
@@ -31,6 +33,7 @@ const title = ref<string>("");
 const content = ref<StructuralText | undefined>();
 const isPublishing = ref(false);
 const toast = useToast();
+const router = useRouter();
 
 /**
  * Compute total text length of a StructuralText tree by summing `content` lengths.
@@ -100,9 +103,16 @@ const publishArticle = async () => {
             title: title.value,
             content: content.value!,
         })
-        console.log(article)
-        // TODO: auto redirect to article page after publishing
         toast.add(newSuccessToast(t("request.success.title"), t("article.editor.publish.success")))
+        const articleId = article.data.data?.id
+        if (articleId) {
+            await router.push({
+                name: RouteName.ARTICLE_DETAIL,
+                params: {
+                    id: articleId,
+                },
+            })
+        }
     } finally {
         isPublishing.value = false
     }

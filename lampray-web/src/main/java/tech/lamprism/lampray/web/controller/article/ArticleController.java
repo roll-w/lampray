@@ -16,22 +16,36 @@
 
 package tech.lamprism.lampray.web.controller.article;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import tech.lamprism.lampray.content.ContentAccessCredential;
+import tech.lamprism.lampray.content.ContentAccessCredentials;
+import tech.lamprism.lampray.content.ContentAccessService;
 import tech.lamprism.lampray.content.ContentDetails;
+import tech.lamprism.lampray.content.ContentIdentity;
+import tech.lamprism.lampray.content.ContentMetadataDetails;
 import tech.lamprism.lampray.content.ContentPublishProvider;
+import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.UncreatedContent;
 import tech.lamprism.lampray.content.article.ArticleDetailsMetadata;
+import tech.lamprism.lampray.content.collection.ContentCollectionIdentity;
+import tech.lamprism.lampray.content.collection.ContentCollectionProviderFactory;
+import tech.lamprism.lampray.content.collection.ContentCollectionType;
 import tech.lamprism.lampray.content.common.ContentException;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.web.controller.article.model.ArticleCreateRequest;
 import tech.lamprism.lampray.web.controller.article.model.ArticleInfoView;
+import tech.lamprism.lampray.web.controller.article.model.ArticleVo;
 import tech.rollw.common.web.HttpResponseEntity;
 import tech.rollw.common.web.UserErrorCode;
 import tech.rollw.common.web.system.ContextThread;
 import tech.rollw.common.web.system.ContextThreadAware;
+
+import java.util.List;
 
 /**
  * @author RollW
@@ -39,12 +53,45 @@ import tech.rollw.common.web.system.ContextThreadAware;
 @Api
 public class ArticleController {
     private final ContentPublishProvider contentPublishProvider;
+    private final ContentAccessService contentAccessService;
+    private final ContentCollectionProviderFactory contentCollectionProviderFactory;
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
     public ArticleController(ContentPublishProvider contentPublishProvider,
+                             ContentAccessService contentAccessService,
+                             ContentCollectionProviderFactory contentCollectionProviderFactory,
                              ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.contentPublishProvider = contentPublishProvider;
+        this.contentAccessService = contentAccessService;
+        this.contentCollectionProviderFactory = contentCollectionProviderFactory;
         this.apiContextThreadAware = apiContextThreadAware;
+    }
+
+    @GetMapping("/articles")
+    public HttpResponseEntity<List<ArticleInfoView>> getArticles() {
+        ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
+        ApiContext apiContext = apiContextThread.getContext();
+        ContentAccessCredentials credentials = getContentAccessCredentials(apiContext);
+        List<ContentMetadataDetails<? extends ContentDetails>> contents = contentCollectionProviderFactory.getContents(
+                ContentCollectionIdentity.of(0L, ContentCollectionType.ARTICLES)
+        );
+        List<ArticleInfoView> articleViews = contents.stream()
+                .filter(content -> canReadArticle(content, credentials))
+                .map(ArticleInfoView::from)
+                .toList();
+        return HttpResponseEntity.success(articleViews);
+    }
+
+    @GetMapping("/articles/{articleId}")
+    public HttpResponseEntity<ArticleVo> getArticle(
+            @PathVariable("articleId") Long articleId) {
+        ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
+        ApiContext apiContext = apiContextThread.getContext();
+        ContentAccessCredentials credentials = getContentAccessCredentials(apiContext);
+        ContentIdentity contentIdentity = ContentIdentity.of(articleId, ContentType.ARTICLE);
+        contentAccessService.openContent(contentIdentity, credentials);
+        ContentMetadataDetails<?> details = contentAccessService.getContentMetadataDetails(contentIdentity);
+        return HttpResponseEntity.success(ArticleVo.of(details));
     }
 
     @PostMapping("/articles")
@@ -64,5 +111,28 @@ public class ArticleController {
                 contentPublishProvider.publishContent(uncreatedContent);
         ArticleInfoView articleInfoView = ArticleInfoView.from(articleDetails);
         return HttpResponseEntity.success(articleInfoView);
+    }
+
+    private ContentAccessCredentials getContentAccessCredentials(ApiContext apiContext) {
+        if (!apiContext.hasUser()) {
+            return ContentAccessCredentials.ANONYMOUS;
+        }
+        return ContentAccessCredentials.of(
+                ContentAccessCredential.Type.USER,
+                apiContext.getUser()
+        );
+    }
+
+    private boolean canReadArticle(ContentMetadataDetails<? extends ContentDetails> content,
+                                   ContentAccessCredentials credentials) {
+        try {
+            contentAccessService.openContent(
+                    ContentIdentity.of(content.getContentId(), ContentType.ARTICLE),
+                    credentials
+            );
+            return true;
+        } catch (ContentException e) {
+            return false;
+        }
     }
 }

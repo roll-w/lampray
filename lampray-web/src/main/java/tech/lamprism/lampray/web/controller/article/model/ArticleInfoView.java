@@ -18,6 +18,8 @@ package tech.lamprism.lampray.web.controller.article.model;
 
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentDetailsMetadata;
+import tech.lamprism.lampray.content.ContentAccessAuthType;
+import tech.lamprism.lampray.content.ContentMetadataDetails;
 import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.article.ArticleDetailsMetadata;
 import tech.lamprism.lampray.web.controller.content.vo.ContentVo;
@@ -33,7 +35,8 @@ public record ArticleInfoView(
         String title,
         String cover,
         OffsetDateTime createTime,
-        OffsetDateTime updateTime
+        OffsetDateTime updateTime,
+        ContentAccessAuthType accessAuthType
 ) implements ContentVo {
     public static ArticleInfoView from(ContentDetails contentDetails) {
         if (contentDetails == null) {
@@ -50,7 +53,8 @@ public record ArticleInfoView(
                     contentDetails.getTitle(),
                     null,
                     contentDetails.getCreateTime(),
-                    contentDetails.getUpdateTime()
+                    contentDetails.getUpdateTime(),
+                    resolveAccessAuthType(contentDetails)
             );
         }
         return new ArticleInfoView(
@@ -59,7 +63,15 @@ public record ArticleInfoView(
                 contentDetails.getTitle(),
                 articleMetadata.getCover(),
                 contentDetails.getCreateTime(),
-                contentDetails.getUpdateTime()
+                contentDetails.getUpdateTime(),
+                resolveAccessAuthType(contentDetails)
         );
+    }
+
+    private static ContentAccessAuthType resolveAccessAuthType(ContentDetails contentDetails) {
+        if (contentDetails instanceof ContentMetadataDetails<?> metadataDetails) {
+            return metadataDetails.getContentAccessAuthType();
+        }
+        return ContentAccessAuthType.PUBLIC;
     }
 }

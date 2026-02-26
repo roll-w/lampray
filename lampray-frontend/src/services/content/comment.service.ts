@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,23 @@
 
 import type {AxiosInstance, AxiosResponse, RawAxiosRequestConfig} from "axios";
 import type {HttpResponseBody} from "@/services/common.type.ts";
-import type {
-    ArticleCreateRequest,
-    ArticleDetailsView,
-    ArticleInfoView
-} from "@/services/content/article.type.ts";
+import type {CommentRequest, CommentView} from "@/services/content/comment.type.ts";
 
-export const articleService = (axios: AxiosInstance) => {
+export const commentService = (axios: AxiosInstance) => {
     return {
-        async getArticles(options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<ArticleInfoView[]>>> {
-            return await axios.get<HttpResponseBody<ArticleInfoView[]>>(
-                "/api/v1/articles",
-                options
-            );
-        },
-
-        async getArticle(articleId: number | string, options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<ArticleDetailsView>>> {
-            const path = `/api/v1/articles/{articleId}`
+        async getArticleComments(articleId: number | string,
+                                 options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<CommentView[]>>> {
+            const path = `/api/v1/articles/{articleId}/comments`
                 .replace(`{articleId}`, encodeURIComponent(String(articleId)));
-            return await axios.get<HttpResponseBody<ArticleDetailsView>>(
+            return await axios.get<HttpResponseBody<CommentView[]>>(
                 path,
                 options
             );
         },
 
-        async createArticle(request: ArticleCreateRequest, options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<ArticleInfoView>>> {
+        async createArticleComment(articleId: number | string,
+                                   request: CommentRequest,
+                                   options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<CommentView>>> {
             const mergedOptions = {...options};
             if (mergedOptions.headers) {
                 mergedOptions.headers["Content-Type"] = "application/json";
@@ -49,8 +41,12 @@ export const articleService = (axios: AxiosInstance) => {
                     "Content-Type": "application/json"
                 };
             }
-            return await axios.post<HttpResponseBody<ArticleInfoView>>(
-                "/api/v1/articles", request, mergedOptions
+            const path = `/api/v1/articles/{articleId}/comments`
+                .replace(`{articleId}`, encodeURIComponent(String(articleId)));
+            return await axios.post<HttpResponseBody<CommentView>>(
+                path,
+                request,
+                mergedOptions
             );
         },
     }

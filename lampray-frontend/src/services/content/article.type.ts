@@ -16,6 +16,16 @@
 
 import type {StructuralText} from "@/components/structuraltext/types.ts";
 
+export const ContentAccessAuthType = {
+    PUBLIC: "PUBLIC",
+    PASSWORD: "PASSWORD",
+    PRIVATE: "PRIVATE",
+    USER: "USER",
+    USER_GROUP: "USER_GROUP",
+} as const;
+
+export type ContentAccessAuthType = typeof ContentAccessAuthType[keyof typeof ContentAccessAuthType];
+
 export interface ArticleCreateRequest {
     title: string;
     content: StructuralText;
@@ -28,4 +38,15 @@ export interface ArticleInfoView {
     cover?: string;
     createTime: string;
     updateTime: string;
+    accessAuthType: ContentAccessAuthType;
+}
+
+export interface ArticleDetailsView {
+    id: number;
+    title: string;
+    content: StructuralText;
+    userId: number;
+    createTime: string;
+    updateTime: string;
+    accessAuthType: ContentAccessAuthType;
 }

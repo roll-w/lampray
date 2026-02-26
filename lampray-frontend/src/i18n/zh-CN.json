@@ -73,6 +73,8 @@
     "admin-system-setting-detail": "设置详情",
     "admin-firewall": "防火墙管理",
     "admin-filter-table": "过滤表管理",
+    "article-list": "文章列表",
+    "article-detail": "文章详情",
     "article-editor": "文章编辑器",
     "not-found": "未找到",
     "blocked": "已封禁"
@@ -430,6 +432,31 @@
           "invalidInput": "不是有效的输入"
         }
       }
+    },
+    "list": {
+      "title": "文章列表",
+      "loadError": "加载文章失败",
+      "retry": "重试",
+      "empty": "暂无文章",
+      "showMore": "显示更多文章",
+      "showing": "已显示 {visible}/{total}"
+    },
+    "detail": {
+      "loadError": "加载文章失败",
+      "retry": "重试",
+      "restricted": "该内容需要登录后查看",
+      "restrictedHint": "请先登录后继续",
+      "commentsTitle": "评论",
+      "commentsEmpty": "来发表第一条评论吧",
+      "showMoreComments": "显示更多评论",
+      "reply": "回复",
+      "replyingTo": "正在回复",
+      "cancelReply": "取消回复",
+      "commentPlaceholder": "写下你的评论...",
+      "commentRequired": "评论不能为空",
+      "commentSubmit": "发表评论",
+      "loginRequired": "登录后可发表评论",
+      "postFailed": "发表评论失败"
     }
   },
   "content": {

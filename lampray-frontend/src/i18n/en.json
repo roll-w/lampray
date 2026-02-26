@@ -64,6 +64,8 @@
     "admin-system-setting-detail": "Setting Details",
     "admin-firewall": "Firewall Management",
     "admin-filter-table": "Filter Table Management",
+    "article-list": "Articles",
+    "article-detail": "Article",
     "article-editor": "Article Editor",
     "not-found": "Not Found",
     "blocked": "Blocked"
@@ -432,6 +434,31 @@
           "invalidInput": "Not a valid input"
         }
       }
+    },
+    "list": {
+      "title": "Articles",
+      "loadError": "Unable to load articles",
+      "retry": "Retry",
+      "empty": "No articles yet",
+      "showMore": "Show more articles",
+      "showing": "Showing {visible}/{total}"
+    },
+    "detail": {
+      "loadError": "Unable to load article",
+      "retry": "Retry",
+      "restricted": "This content requires authentication",
+      "restrictedHint": "Please sign in to continue",
+      "commentsTitle": "Comments",
+      "commentsEmpty": "Be the first to comment",
+      "showMoreComments": "Show more comments",
+      "reply": "Reply",
+      "replyingTo": "Replying to",
+      "cancelReply": "Cancel reply",
+      "commentPlaceholder": "Write a comment...",
+      "commentRequired": "Comment cannot be empty",
+      "commentSubmit": "Post comment",
+      "loginRequired": "Sign in to post comments",
+      "postFailed": "Failed to post comment"
     }
   },
   "content": {
