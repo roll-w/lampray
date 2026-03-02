@@ -18,28 +18,11 @@ import type {AxiosInstance, AxiosResponse, RawAxiosRequestConfig} from "axios";
 import type {HttpResponseBody} from "@/services/common.type.ts";
 import type {
     ArticleCreateRequest,
-    ArticleDetailsView,
     ArticleInfoView
 } from "@/services/content/article.type.ts";
 
 export const articleService = (axios: AxiosInstance) => {
     return {
-        async getArticles(options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<ArticleInfoView[]>>> {
-            return await axios.get<HttpResponseBody<ArticleInfoView[]>>(
-                "/api/v1/articles",
-                options
-            );
-        },
-
-        async getArticle(articleId: number | string, options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<ArticleDetailsView>>> {
-            const path = `/api/v1/articles/{articleId}`
-                .replace(`{articleId}`, encodeURIComponent(String(articleId)));
-            return await axios.get<HttpResponseBody<ArticleDetailsView>>(
-                path,
-                options
-            );
-        },
-
         async createArticle(request: ArticleCreateRequest, options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<ArticleInfoView>>> {
             const mergedOptions = {...options};
             if (mergedOptions.headers) {

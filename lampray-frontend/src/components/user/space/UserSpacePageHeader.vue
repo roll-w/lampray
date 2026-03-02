@@ -15,32 +15,28 @@
   -->
 
 <template>
-    <div class="rounded-2xl bg-no-repeat bg-cover bg-center bg">
-        <div class="rounded-2xl pt-10 backdrop-blur-3xl">
-            <div class="rounded-b-2xl p-7 pb-7 mt-14 w-full bg-opacity-20 bg-gradient-to-b from-transparent to-gray-500/50">
-                <div class="flex items-center mx-auto w-full lg:w-4/5">
-                    <UAvatar :text="getInitials()"
-                             :alt="userInfo.nickname"
-                             size="2xl"
-                             class="mr-5">
-                    </UAvatar>
-                    <div class="leading-tight">
-                        <div class="text-white text-2xl font-bold">
-                            {{ userInfo.nickname }}
-                        </div>
-                        <div class="text-gray-200 text-lg font-light">
-                            @{{ userInfo.username }}
-                        </div>
-                    </div>
-                    <div class="flex-grow"></div>
-                    <div class="flex items-end pr-5">
-                        <div class="py-0.5 px-2 text-gray-100 bg-neutral-300/50 rounded text-sm font-medium">
-                            UID
-                        </div>
-                        <div class="ml-3 text-gray-100">
-                            {{ userInfo.userId }}
-                        </div>
-                    </div>
+    <div class="rounded-2xl overflow-hidden bg-no-repeat bg-cover bg-center bg">
+        <div class="px-6 sm:px-8 pt-12 pb-8 bg-gradient-to-b from-transparent to-slate-900/35 backdrop-blur-lg">
+            <div class="w-full flex items-center gap-5">
+                <UAvatar
+                        :text="getInitials()"
+                        :alt="userInfo.nickname"
+                        size="2xl"
+                        class="shrink-0"
+                />
+
+                <div class="min-w-0">
+                    <p class="text-white text-2xl sm:text-3xl font-semibold tracking-tight truncate">
+                        {{ userInfo.nickname }}
+                    </p>
+                    <p class="text-blue-100/90 text-base sm:text-lg truncate">
+                        @{{ userInfo.username }}
+                    </p>
+                </div>
+
+                <div class="ml-auto hidden sm:flex items-end gap-3 text-white/90">
+                    <span class="px-2 py-0.5 rounded-md bg-white/20 text-xs uppercase tracking-[0.12em]">UID</span>
+                    <span class="text-sm font-medium">{{ userInfo.userId }}</span>
                 </div>
             </div>
         </div>
@@ -55,9 +51,11 @@ const props = defineProps<{
 }>()
 
 const getInitials = (): string => {
-    const name = props.userInfo.nickname || props.userInfo.username
-    if (name!.length === 0) return '?'
-    return name!
+    const name = (props.userInfo.nickname || props.userInfo.username || "").trim()
+    if (name.length === 0) {
+        return "?"
+    }
+    return name[0]!.toUpperCase()
 }
 </script>
 
@@ -65,13 +63,11 @@ const getInitials = (): string => {
 /*TODO: the background is temporary, replace with image*/
 .bg {
     background: radial-gradient(
-            110vw 250vh ellipse at 0% 11%,
-            #b4cfe8,
-            #5faffd 28%,
-            #ff5858 35%,
-            #e754db 40%,
-            #fb206e 50%,
-            #f09819 65%
+            110vw 220vh ellipse at 0% 8%,
+            #dce8f6,
+            #93c6fa 36%,
+            #5f8fbd 62%,
+            #27405a 96%
     );
 }
 </style>

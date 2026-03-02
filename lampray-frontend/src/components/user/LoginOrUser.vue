@@ -44,6 +44,9 @@ const fetchCurrentUser = async () => {
         const user = body.data!;
         userStore.setUserData({...user, setup: true});
     } catch (error: AxiosResponse | any) {
+        if (import.meta.env.DEV) {
+            console.debug("[LoginOrUser] Failed to refresh current user profile", error)
+        }
     }
 };
 
@@ -54,6 +57,14 @@ watch(() => userStore.isLogin, (newVal) => {
 }, {immediate: true});
 
 const menuItems = ref<DropdownMenuItem[]>([]);
+
+const buildWriteArticleMenuItem = (): DropdownMenuItem => ({
+    label: t("navbar.writeArticle"),
+    icon: "i-lucide-square-pen",
+    to: {
+        name: RouteName.ARTICLE_EDITOR,
+    }
+})
 
 const buildUserMenu = (): DropdownMenuItem[] => [
     [
@@ -67,6 +78,7 @@ const buildUserMenu = (): DropdownMenuItem[] => [
                 }
             },
         },
+        buildWriteArticleMenuItem(),
         {
             label: t("navbar.settings"),
             icon: "i-lucide-settings",
@@ -76,7 +88,7 @@ const buildUserMenu = (): DropdownMenuItem[] => [
         {
             label: t("navbar.logout"),
             icon: "i-lucide-log-out",
-            onSelect: (e: Event) => {
+            onSelect: () => {
                 userStore.logout();
                 router.push({name: RouteName.USER_HOME});
             }
@@ -89,7 +101,7 @@ const buildAdminMenu = (): DropdownMenuItem[] => [
         {
             label: t("navbar.admin"),
             icon: "i-lucide-shield-check",
-            onSelect: (e: Event) => {
+            onSelect: () => {
                 router.push({name: RouteName.ADMIN_HOME});
             }
         }
@@ -105,6 +117,7 @@ const buildAdminMenu = (): DropdownMenuItem[] => [
                 }
             },
         },
+        buildWriteArticleMenuItem(),
         {
             label: t("navbar.settings"),
             icon: "i-lucide-settings",
@@ -117,7 +130,7 @@ const buildAdminMenu = (): DropdownMenuItem[] => [
         {
             label: t("navbar.logout"),
             icon: "i-lucide-log-out",
-            onSelect: (e: Event) => {
+            onSelect: () => {
                 userStore.logout();
                 router.push({name: RouteName.USER_HOME});
             }

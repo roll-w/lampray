@@ -14,7 +14,7 @@
   - limitations under the License.
   -->
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import {computed, ref} from "vue";
 import {useI18n} from "vue-i18n";
 
@@ -31,8 +31,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-    submit: [message: string];
-    cancel: [];
+    "comment:submit": [message: string];
+    "comment:cancel": [];
 }>();
 
 const {t} = useI18n();
@@ -47,27 +47,28 @@ function onSubmit(): void {
     if (!normalized) {
         return;
     }
-    emit("submit", normalized);
+    emit("comment:submit", normalized);
     message.value = "";
 }
 </script>
 
 <template>
-    <div class="space-y-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-3">
+    <div class="space-y-3 rounded-xl bg-neutral-100/70 dark:bg-neutral-900/45 p-3">
         <UTextarea
                 v-model="message"
-                :rows="3"
                 :disabled="disabled || submitting"
                 :placeholder="t('article.detail.commentPlaceholder')"
-                :ui="{ base: 'border-neutral-200 dark:border-neutral-800 rounded-lg' }"
+                :rows="3"
+                :ui="{ base: 'border-neutral-200/80 dark:border-neutral-700/70 rounded-lg bg-white/80 dark:bg-neutral-950/60' }"
                 autoresize
+                class="w-full"
         />
 
         <div class="flex items-center gap-2">
             <UButton
-                    :loading="submitting"
                     :disabled="!canSubmit"
-                    color="neutral"
+                    :loading="submitting"
+                    color="primary"
                     @click="onSubmit"
             >
                 {{ t("article.detail.commentSubmit") }}
@@ -75,10 +76,10 @@ function onSubmit(): void {
 
             <UButton
                     v-if="showCancel"
-                    variant="ghost"
-                    color="neutral"
                     :disabled="submitting"
-                    @click="emit('cancel')"
+                    color="neutral"
+                    variant="ghost"
+                    @click="emit('comment:cancel')"
             >
                 {{ t("article.detail.cancelReply") }}
             </UButton>

@@ -22,6 +22,15 @@ export enum ContentType {
     USER_SPACE = "USER_SPACE",
 }
 
+export const UrlContentType = {
+    ARTICLE: "articles",
+    COMMENT: "comments",
+    POST: "posts",
+    IMAGE: "images",
+} as const;
+
+export type UrlContentType = typeof UrlContentType[keyof typeof UrlContentType];
+
 /**
  * Get the i18n key for a content type
  */
@@ -39,4 +48,3 @@ export function parseContentType(value: string): ContentType | null {
     }
     return null;
 }
-

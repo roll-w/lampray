@@ -64,7 +64,6 @@
     "admin-system-setting-detail": "Setting Details",
     "admin-firewall": "Firewall Management",
     "admin-filter-table": "Filter Table Management",
-    "article-list": "Articles",
     "article-detail": "Article",
     "article-editor": "Article Editor",
     "not-found": "Not Found",
@@ -75,7 +74,8 @@
     "home": "Home",
     "logout": "Logout",
     "profile": "Profile",
-    "settings": "Settings"
+    "settings": "Settings",
+    "writeArticle": "Write Article"
   },
   "request": {
     "error": {
@@ -328,6 +328,19 @@
           "title": "Registration Successful",
           "subtitle": "Please check your email and click the activation link to activate your account."
         }
+      },
+      "space": {
+        "state": {
+          "requestFailed": "Failed to load user information",
+          "userNotFound": "User not found",
+          "userUnavailable": "User is unavailable"
+        },
+        "sections": {
+          "articles": {
+            "title": "Articles",
+            "description": "Long-form content"
+          }
+        }
       }
     }
   },
@@ -436,29 +449,39 @@
       }
     },
     "list": {
-      "title": "Articles",
-      "loadError": "Unable to load articles",
-      "retry": "Retry",
+      "restrictedTitle": "Sign in required",
+      "restrictedDescription": "This list is available after authentication.",
+      "userNotFoundTitle": "User not found",
+      "userNotFoundDescription": "The requested user does not exist or is unavailable.",
+      "unavailable": "Articles are temporarily unavailable. Please try again later.",
       "empty": "No articles yet",
       "showMore": "Show more articles",
       "showing": "Showing {visible}/{total}"
     },
     "detail": {
-      "loadError": "Unable to load article",
-      "retry": "Retry",
+      "notFoundTitle": "Article unavailable",
+      "notFoundDescription": "The article was removed, hidden, or does not exist.",
+      "unavailableDescription": "The article is temporarily unavailable. Please try again later.",
       "restricted": "This content requires authentication",
       "restrictedHint": "Please sign in to continue",
       "commentsTitle": "Comments",
       "commentsEmpty": "Be the first to comment",
+      "commentsUnavailableTitle": "Comments unavailable",
+      "commentsUnavailableDescription": "Comments cannot be loaded right now.",
+      "commentsRestrictedTitle": "Comments are restricted",
+      "commentsRestrictedDescription": "You do not have permission to view comments for this article.",
       "showMoreComments": "Show more comments",
       "reply": "Reply",
       "replyingTo": "Replying to",
       "cancelReply": "Cancel reply",
       "commentPlaceholder": "Write a comment...",
-      "commentRequired": "Comment cannot be empty",
       "commentSubmit": "Post comment",
       "loginRequired": "Sign in to post comments",
-      "postFailed": "Failed to post comment"
+      "viewAuthorSpace": "View {name}'s space",
+      "unknownAuthor": "Unknown author",
+      "authorBadge": "Author",
+      "metaPanelTitle": "Article Meta",
+      "createdAt": "Created"
     }
   },
   "content": {

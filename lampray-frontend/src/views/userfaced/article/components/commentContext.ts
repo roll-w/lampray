@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-import type {StructuralText} from "@/components/structuraltext/types.ts";
-import type {ContentType} from "@/services/content/content.type.ts";
+import type {InjectionKey, Ref} from "vue";
+import type {UserCommonDetailsVo} from "@/services/user/user.type.ts";
 
-export interface CommentRequest {
-    content: StructuralText;
-    parent?: number | null;
+export interface ArticleCommentContext {
+    profiles: Ref<Map<number, UserCommonDetailsVo | null>>;
+    articleAuthorId: Ref<number>;
+    canReply: Ref<boolean>;
+    activeReplyId: Ref<number | null>;
+    submitting: Ref<boolean>;
 }
 
-export interface CommentView {
-    id: number;
-    userId: number;
-    parent: number;
-    content: StructuralText;
-    contentId: number;
-    contentType: ContentType;
-    createTime: string;
-    updateTime: string;
-}
+export const articleCommentContextKey: InjectionKey<ArticleCommentContext> = Symbol("article-comment-context");

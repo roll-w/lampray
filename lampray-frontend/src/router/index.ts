@@ -33,19 +33,14 @@ const routes: RouteRecordRaw[] = [
                 component: () => import("@/views/userfaced/user/UserHome.vue"),
             },
             {
-                path: "/articles",
-                name: RouteName.ARTICLE_LIST,
-                component: () => import("@/views/userfaced/article/ArticleList.vue"),
-            },
-            {
-                path: "/articles/:id",
+                path: "/users/:userId/articles/:articleId",
                 name: RouteName.ARTICLE_DETAIL,
-                component: () => import("@/views/userfaced/article/ArticleDetail.vue"),
+                component: () => import("@/views/userfaced/article/ArticleDetailPage.vue"),
             },
             {
                 path: "/article/editor",
                 name: RouteName.ARTICLE_EDITOR,
-                component: () => import("@/views/userfaced/article/ArticleEditor.vue"),
+                component: () => import("@/views/userfaced/article/ArticleEditorPage.vue"),
                 meta: {
                     requireLogin: true
                 }

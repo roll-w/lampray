@@ -78,11 +78,10 @@ public class ContentController {
             @PathVariable("contentId") Long contentId) {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
+        ContentAccessCredentials contentAccessCredentials = getContentAccessCredentials(apiContext);
         ContentDetails details = contentAccessService.openContent(
                 ContentIdentity.of(contentId, contentType.getContentType()),
-                ContentAccessCredentials.of(
-                        ContentAccessCredential.Type.USER, apiContext.getUser()
-                )
+                contentAccessCredentials
         );
         if (details.getUserId() != userId) {
             return HttpResponseEntity.of(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
@@ -127,11 +126,7 @@ public class ContentController {
         ContextThread<ApiContext> apiContextThread =
                 apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
-        // TODO: check if the user is the same as the current user
-        ContentAccessCredentials contentAccessCredentials = ContentAccessCredentials.of(
-                ContentAccessCredential.Type.USER,
-                apiContext.getUser()
-        );
+        ContentAccessCredentials contentAccessCredentials = getContentAccessCredentials(apiContext);
 
         List<ContentMetadataDetails<?>> contents =
                 contentCollectionProviderFactory.getContents(
@@ -181,5 +176,15 @@ public class ContentController {
 
     private ContentVo contentVoConvert(ContentDetails details) {
        return ContentViewHelper.toContentView(details);
+    }
+
+    private ContentAccessCredentials getContentAccessCredentials(ApiContext apiContext) {
+        if (!apiContext.hasUser()) {
+            return ContentAccessCredentials.ANONYMOUS;
+        }
+        return ContentAccessCredentials.of(
+                ContentAccessCredential.Type.USER,
+                apiContext.getUser()
+        );
     }
 }

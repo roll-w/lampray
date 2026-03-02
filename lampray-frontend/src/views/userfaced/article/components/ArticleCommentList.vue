@@ -15,14 +15,18 @@
   -->
 
 <script setup lang="ts">
-import {computed} from "vue";
+import {computed, provide, toRef} from "vue";
 import {useI18n} from "vue-i18n";
-import type {CommentThreadNode} from "@/services/content/comment.type.ts";
+import type {UserCommonDetailsVo} from "@/services/user/user.type.ts";
 import ArticleCommentItem from "@/views/userfaced/article/components/ArticleCommentItem.vue";
+import {articleCommentContextKey} from "@/views/userfaced/article/components/commentContext.ts";
+import type {CommentThreadNode} from "@/views/userfaced/article/types/commentThread.ts";
 
 interface Props {
     comments: CommentThreadNode[];
     visibleCount: number;
+    profiles: Map<number, UserCommonDetailsVo | null>;
+    articleAuthorId: number;
     canReply: boolean;
     activeReplyId: number | null;
     submitting: boolean;
@@ -31,24 +35,29 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-    showMore: [];
-    requestReply: [id: number];
-    submitReply: [payload: { parentId: number; message: string }];
-    cancelReply: [];
+    "comments:show-more": [];
+    "reply:request": [id: number];
+    "reply:submit": [payload: { parentId: number; message: string }];
+    "reply:cancel": [];
 }>();
 
 const {t} = useI18n();
 
-const visibleComments = computed(() => {
-    return props.comments.slice(0, props.visibleCount);
+provide(articleCommentContextKey, {
+    profiles: toRef(props, "profiles"),
+    articleAuthorId: toRef(props, "articleAuthorId"),
+    canReply: toRef(props, "canReply"),
+    activeReplyId: toRef(props, "activeReplyId"),
+    submitting: toRef(props, "submitting"),
 });
 
+const visibleComments = computed(() => props.comments.slice(0, props.visibleCount));
 const hasMore = computed(() => props.visibleCount < props.comments.length);
 </script>
 
 <template>
-    <div class="space-y-3">
-        <p v-if="comments.length === 0" class="text-sm text-neutral-500 dark:text-neutral-400">
+    <div class="space-y-2">
+        <p v-if="comments.length === 0" class="text-sm text-neutral-500 dark:text-neutral-400 px-1">
             {{ t("article.detail.commentsEmpty") }}
         </p>
 
@@ -56,19 +65,17 @@ const hasMore = computed(() => props.visibleCount < props.comments.length);
                 v-for="comment in visibleComments"
                 :key="comment.id"
                 :node="comment"
-                :can-reply="canReply"
-                :active-reply-id="activeReplyId"
-                :submitting="submitting"
-                @request-reply="(id) => emit('requestReply', id)"
-                @submit-reply="(payload) => emit('submitReply', payload)"
-                @cancel-reply="emit('cancelReply')"
+                @reply:request="emit('reply:request', $event)"
+                @reply:submit="emit('reply:submit', $event)"
+                @reply:cancel="emit('reply:cancel')"
         />
 
         <UButton
                 v-if="hasMore"
-                variant="outline"
-                color="neutral"
-                @click="emit('showMore')"
+                variant="ghost"
+                color="primary"
+                :disabled="submitting"
+                @click="emit('comments:show-more')"
         >
             {{ t("article.detail.showMoreComments") }}
         </UButton>

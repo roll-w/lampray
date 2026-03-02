@@ -26,6 +26,7 @@ import {articleService} from "@/services/content/article.service.ts";
 import {useAxios} from "@/composables/useAxios.ts";
 import {useRouter} from "vue-router";
 import {RouteName} from "@/router/routeName.ts";
+import {useUserStore} from "@/stores/user.ts";
 
 const {t} = useI18n();
 const axios = useAxios();
@@ -34,6 +35,7 @@ const content = ref<StructuralText | undefined>();
 const isPublishing = ref(false);
 const toast = useToast();
 const router = useRouter();
+const userStore = useUserStore();
 
 /**
  * Compute total text length of a StructuralText tree by summing `content` lengths.
@@ -62,18 +64,18 @@ function createArticlePreSchema(i18nT: (key: string) => string) {
     }).superRefine((data, ctx) => {
         const value = data.content as StructuralText | undefined
         if (!value) {
-            ctx.addIssue({code: "custom" as any, message: i18nT("article.editor.content.empty")})
+            ctx.addIssue({code: "custom", message: i18nT("article.editor.content.empty")})
             return
         }
         if (value.type !== StructuralTextType.DOCUMENT) {
-            ctx.addIssue({code: "custom" as any, message: i18nT("article.editor.content.rootMustBeDocument")})
+            ctx.addIssue({code: "custom", message: i18nT("article.editor.content.rootMustBeDocument")})
         }
         const total = computeTotalTextLength(value)
         if (total < 1) {
-            ctx.addIssue({code: "too_small" as any, minimum: 1, message: i18nT("article.editor.content.tooShort")})
+            ctx.addIssue({code: "custom", message: i18nT("article.editor.content.tooShort")})
         }
         if (total > 100000) {
-            ctx.addIssue({code: "too_big" as any, maximum: 100000, message: i18nT("article.editor.content.tooLong")})
+            ctx.addIssue({code: "custom", message: i18nT("article.editor.content.tooLong")})
         }
     })
 }
@@ -105,11 +107,13 @@ const publishArticle = async () => {
         })
         toast.add(newSuccessToast(t("request.success.title"), t("article.editor.publish.success")))
         const articleId = article.data.data?.id
-        if (articleId) {
+        const authorId = article.data.data?.userId ?? userStore.user?.id
+        if (articleId && authorId) {
             await router.push({
                 name: RouteName.ARTICLE_DETAIL,
                 params: {
-                    id: articleId,
+                    userId: authorId,
+                    articleId,
                 },
             })
         }

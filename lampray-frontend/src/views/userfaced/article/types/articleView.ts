@@ -14,21 +14,7 @@
  * limitations under the License.
  */
 
-import type {StructuralText} from "@/components/structuraltext/types.ts";
-import type {ContentType} from "@/services/content/content.type.ts";
+import type {ArticleContentView} from "@/services/content/article.type.ts";
 
-export interface CommentRequest {
-    content: StructuralText;
-    parent?: number | null;
-}
-
-export interface CommentView {
-    id: number;
-    userId: number;
-    parent: number;
-    content: StructuralText;
-    contentId: number;
-    contentType: ContentType;
-    createTime: string;
-    updateTime: string;
-}
+export type ArticleDetailsView = ArticleContentView;
+export type ArticleListItemView = ArticleContentView;
