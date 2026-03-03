@@ -344,7 +344,6 @@
         "profile": {
           "latest": "Latest",
           "overviewTitle": "Profile",
-          "browseArticles": "Browse articles",
           "locationLabel": "Location",
           "websiteLabel": "Website",
           "unknownLocation": "Unknown location",
@@ -466,8 +465,7 @@
       "userNotFoundDescription": "The requested user does not exist or is unavailable.",
       "unavailable": "Articles are temporarily unavailable. Please try again later.",
       "empty": "No articles yet",
-      "showMore": "Show more articles",
-      "showing": "Showing {visible}/{total}"
+      "showMore": "Show more articles"
     },
     "detail": {
       "notFoundTitle": "Article unavailable",
@@ -491,11 +489,11 @@
       "viewAuthorSpace": "View {name}'s space",
       "unknownAuthor": "Unknown author",
       "authorBadge": "Author",
-      "metaPanelTitle": "Article Meta",
+      "metaPanelTitle": "Article Info",
       "createdAt": "Created",
-      "estimatedRead": "{minutes} min read",
       "jumpToTop": "Top",
-      "openDiscussion": "Discussion"
+      "openDiscussion": "Discussion",
+      "outlineTitle": "Article Outline"
     }
   },
   "content": {

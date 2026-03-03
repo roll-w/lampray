@@ -342,7 +342,6 @@
         "profile": {
           "latest": "最新",
           "overviewTitle": "资料概览",
-          "browseArticles": "浏览文章",
           "locationLabel": "所在地",
           "websiteLabel": "网站",
           "unknownLocation": "未知地区",
@@ -464,8 +463,7 @@
       "userNotFoundDescription": "目标用户不存在或不可访问。",
       "unavailable": "文章暂时不可用，请稍后再试。",
       "empty": "暂无文章",
-      "showMore": "显示更多文章",
-      "showing": "已显示 {visible}/{total}"
+      "showMore": "显示更多文章"
     },
     "detail": {
       "notFoundTitle": "文章不可用",
@@ -491,9 +489,9 @@
       "authorBadge": "作者",
       "metaPanelTitle": "文章信息",
       "createdAt": "创建时间",
-      "estimatedRead": "预计阅读 {minutes} 分钟",
       "jumpToTop": "回到顶部",
-      "openDiscussion": "进入讨论"
+      "openDiscussion": "进入讨论",
+      "outlineTitle": "文章大纲"
     }
   },
   "content": {

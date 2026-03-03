@@ -50,8 +50,6 @@ const visibleCount = ref(BATCH_SIZE);
 
 const visibleArticles = computed(() => articles.value.slice(0, visibleCount.value));
 const canShowMore = computed(() => visibleCount.value < articles.value.length);
-const sectionTitle = computed(() => t("views.userfaced.space.sections.articles.title"));
-const sectionProgress = computed(() => t("article.list.showing", {visible: visibleArticles.value.length, total: articles.value.length}));
 const skeletonRows = [0, 1, 2, 3] as const;
 
 function articleDetailRoute(articleId: number) {
@@ -132,14 +130,6 @@ watch(() => props.userId, () => {
 
 <template>
     <section id="articles" class="space-y-4">
-        <header class="px-1 flex items-end justify-between gap-3">
-            <div>
-                <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">{{ sectionTitle }}</h2>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ t("views.userfaced.space.sections.articles.description") }}</p>
-            </div>
-            <UBadge color="primary" variant="soft">{{ sectionProgress }}</UBadge>
-        </header>
-
         <div v-if="loading" class="space-y-2">
             <div
                     v-for="row in skeletonRows"

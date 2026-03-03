@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 <template>
     <div class="rounded-2xl overflow-hidden bg-no-repeat bg-cover bg-center bg">
-        <div class="px-6 sm:px-8 pt-12 pb-8 bg-gradient-to-b from-transparent to-slate-900/35 backdrop-blur-lg">
+        <div class="px-6 sm:px-8 pt-12 pb-8 bg-linear-to-b from-transparent to-slate-900/35 backdrop-blur-lg">
             <div class="w-full flex items-center gap-5">
                 <UAvatar
                         :text="getInitials()"
@@ -25,16 +25,16 @@
                         class="shrink-0"
                 />
 
-                <div class="min-w-0">
-                    <p class="text-white text-2xl sm:text-3xl font-semibold tracking-tight truncate">
+                <div class="min-w-0 tracking-tight">
+                    <p class="text-white text-2xl font-semibold truncate">
                         {{ userInfo.nickname }}
                     </p>
-                    <p class="text-blue-100/90 text-base sm:text-lg truncate">
+                    <p class="text-blue-100/90 text-lg truncate">
                         @{{ userInfo.username }}
                     </p>
                 </div>
 
-                <div class="ml-auto hidden sm:flex items-end gap-3 text-white/90">
+                <div class="h-full ml-auto hidden sm:flex items-end gap-3 text-white/90 align-bottom">
                     <span class="px-2 py-0.5 rounded-md bg-white/20 text-xs uppercase tracking-[0.12em]">UID</span>
                     <span class="text-sm font-medium">{{ userInfo.userId }}</span>
                 </div>
