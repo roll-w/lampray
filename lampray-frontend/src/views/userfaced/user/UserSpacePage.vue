@@ -22,6 +22,9 @@ import {useI18n} from "vue-i18n";
 import {useRoute} from "vue-router";
 import {userService} from "@/services/user/user.service.ts";
 import UserSpaceArticleFeed from "@/components/user/space/UserSpaceArticleFeed.vue";
+import UserSpacePageHeader from "@/components/user/space/UserSpacePageHeader.vue";
+
+const ARTICLES_SECTION_ID = "user-space-articles"
 
 const axios = useAxios()
 const route = useRoute()
@@ -47,16 +50,107 @@ const userId = computed<number>(() => {
 })
 
 const activeTab = ref<SpaceTabValue>("articles")
+const articleSectionTitle = computed(() => t("views.userfaced.space.sections.articles.title"))
+const articleSectionDescription = computed(() => t("views.userfaced.space.sections.articles.description"))
+
+const userDisplayName = computed(() => {
+    if (!userInfo.value) {
+        return ""
+    }
+
+    const nickname = userInfo.value.nickname?.trim() ?? ""
+    if (nickname.length > 0) {
+        return nickname
+    }
+
+    return userInfo.value.username
+})
+
+const userHandle = computed(() => {
+    if (!userInfo.value) {
+        return ""
+    }
+    return `@${userInfo.value.username}`
+})
+
+const userIntroduction = computed(() => {
+    const introduction = userInfo.value?.introduction?.trim() ?? ""
+    if (introduction.length > 0) {
+        return introduction
+    }
+
+    return t("views.userfaced.space.profile.introductionPlaceholder")
+})
+
+const userLocation = computed(() => {
+    const location = userInfo.value?.location?.trim() ?? ""
+    if (location.length > 0) {
+        return location
+    }
+
+    return t("views.userfaced.space.profile.unknownLocation")
+})
+
+const userWebsiteUrl = computed(() => {
+    const website = userInfo.value?.website?.trim() ?? ""
+    if (website.length === 0) {
+        return ""
+    }
+
+    const protocolSeparator = "://"
+    const protocolIndex = website.indexOf(protocolSeparator)
+    if (protocolIndex > 0) {
+        const pathIndex = protocolIndex + protocolSeparator.length
+        const secureProtocol = "https"
+        const protocol = website.slice(0, protocolIndex).toLowerCase()
+        if (protocol === secureProtocol) {
+            return website
+        }
+
+        return `${secureProtocol}${protocolSeparator}${website.slice(pathIndex)}`
+    }
+
+    return `https://${website}`
+})
+
+const profileQuickFacts = computed(() => {
+    if (!userInfo.value) {
+        return [] as { label: string; value: string }[]
+    }
+
+    return [
+        {
+            label: t("views.userfaced.space.profile.uidLabel"),
+            value: String(userInfo.value.userId),
+        },
+        {
+            label: t("views.userfaced.space.profile.roleLabel"),
+            value: userInfo.value.role,
+        },
+    ]
+})
 
 const tabs = computed<SpaceTabItem[]>(() => {
     return [
         {
-            label: t("views.userfaced.space.sections.articles.title"),
+            label: articleSectionTitle.value,
             value: "articles",
             icon: "i-lucide-file-text",
         },
     ]
 })
+
+function scrollToArticles(): void {
+    if (typeof window === "undefined") {
+        return
+    }
+
+    const target = document.getElementById(ARTICLES_SECTION_ID)
+    target?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+    })
+}
 
 const resolveUserInfoMessage = (status: number): string => {
     if (status >= 500) {
@@ -72,6 +166,8 @@ const resolveUserInfoMessage = (status: number): string => {
 
 const loadUserInfo = async () => {
     loadingUserInfo.value = true
+    userInfo.value = null
+    message.value = null
 
     if (userId.value <= 0) {
         userInfo.value = null
@@ -105,17 +201,19 @@ watch(() => route.params.id, () => {
 </script>
 
 <template>
-    <div class="px-2 sm:px-4 lg:px-5 py-6 space-y-6">
+    <div class="w-full mx-auto max-w-screen-2xl px-2 sm:px-4 lg:px-8 py-6 space-y-6">
         <UserSpacePageHeader
                 v-if="userInfo"
                 :user-info="userInfo"
         />
-        <div v-else-if="loadingUserInfo" class="min-h-56 rounded-xl bg-neutral-100/70 dark:bg-neutral-900/40 px-6 py-6 space-y-3">
+
+        <div v-else-if="loadingUserInfo" class="min-h-56 rounded-2xl bg-neutral-100/70 dark:bg-neutral-900/40 px-6 py-6 space-y-3">
             <USkeleton class="h-8 w-40"/>
             <USkeleton class="h-5 w-64"/>
             <USkeleton class="h-5 w-44"/>
         </div>
-        <div v-else class="min-h-56 flex items-center rounded-xl bg-neutral-100/70 dark:bg-neutral-900/40 p-4 sm:p-5">
+
+        <div v-else class="min-h-56 flex items-center rounded-2xl bg-neutral-100/70 dark:bg-neutral-900/40 p-4 sm:p-5">
             <UAlert
                     :title="t('request.error.title')"
                     :description="message || t('views.userfaced.space.state.requestFailed')"
@@ -126,24 +224,83 @@ watch(() => route.params.id, () => {
             />
         </div>
 
-        <div v-if="userInfo && userId > 0" class="space-y-4">
-            <section class="rounded-xl bg-white dark:bg-neutral-950/70 ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 p-3 sm:p-4 space-y-3">
-                <UTabs
-                        v-model="activeTab"
-                        :items="tabs"
-                        :content="false"
-                        color="primary"
-                        variant="link"
-                        class="w-full"
-                />
+        <div v-if="userInfo && userId > 0" class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18.5rem] items-start">
+            <div class="space-y-4">
+                <section class="rounded-2xl bg-white dark:bg-neutral-950/70 ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 p-3 sm:p-4 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <UTabs
+                                v-model="activeTab"
+                                :items="tabs"
+                                :content="false"
+                                color="primary"
+                                variant="link"
+                                class="w-full md:w-auto"
+                        />
 
-                <div class="space-y-1 px-1">
-                    <p class="text-sm font-medium text-neutral-800 dark:text-neutral-100">{{ t("views.userfaced.space.sections.articles.title") }}</p>
-                    <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ t("views.userfaced.space.sections.articles.description") }}</p>
+                        <UButton color="primary" variant="soft" size="sm" icon="i-lucide-arrow-down" @click="scrollToArticles">
+                            {{ t("views.userfaced.space.profile.latest") }}
+                        </UButton>
+                    </div>
+
+                    <div class="space-y-1 px-1">
+                        <p class="text-sm font-medium text-neutral-800 dark:text-neutral-100">{{ articleSectionTitle }}</p>
+                        <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ articleSectionDescription }}</p>
+                    </div>
+                </section>
+
+                <div :id="ARTICLES_SECTION_ID">
+                    <UserSpaceArticleFeed :user-id="userId"/>
                 </div>
-            </section>
+            </div>
 
-            <UserSpaceArticleFeed :user-id="userId"/>
+            <aside class="xl:sticky xl:top-[calc(var(--ui-header-height)+1rem)] space-y-4">
+                <section class="rounded-2xl bg-white dark:bg-neutral-950/70 ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 p-4 space-y-3">
+                    <div class="space-y-1">
+                        <p class="text-base font-semibold text-neutral-900 dark:text-neutral-100">{{ userDisplayName }}</p>
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ userHandle }}</p>
+                    </div>
+
+                    <p class="text-sm leading-6 text-neutral-700 dark:text-neutral-300">
+                        {{ userIntroduction }}
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div
+                                v-for="fact in profileQuickFacts"
+                                :key="fact.label"
+                                class="rounded-lg bg-neutral-100/70 dark:bg-neutral-900/45 p-3 space-y-1"
+                        >
+                            <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ fact.label }}</p>
+                            <p class="text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ fact.value }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="rounded-2xl bg-white dark:bg-neutral-950/70 ring-1 ring-neutral-200/70 dark:ring-neutral-800/70 p-4 space-y-3">
+                    <p class="text-xs uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400">{{ t("views.userfaced.space.profile.overviewTitle") }}</p>
+
+                    <div class="space-y-1">
+                        <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ t("views.userfaced.space.profile.locationLabel") }}</p>
+                        <p class="text-sm text-neutral-800 dark:text-neutral-100">{{ userLocation }}</p>
+                    </div>
+
+                    <div v-if="userWebsiteUrl.length > 0" class="space-y-1">
+                        <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ t("views.userfaced.space.profile.websiteLabel") }}</p>
+                        <a
+                                :href="userWebsiteUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-sm text-primary-600 dark:text-primary-400 hover:underline break-all"
+                        >
+                            {{ userWebsiteUrl }}
+                        </a>
+                    </div>
+
+                    <UButton color="primary" variant="soft" size="sm" icon="i-lucide-file-text" @click="scrollToArticles">
+                        {{ t("views.userfaced.space.profile.browseArticles") }}
+                    </UButton>
+                </section>
+            </aside>
         </div>
     </div>
 </template>

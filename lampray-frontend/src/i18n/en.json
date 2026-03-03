@@ -340,6 +340,17 @@
             "title": "Articles",
             "description": "Long-form content"
           }
+        },
+        "profile": {
+          "latest": "Latest",
+          "overviewTitle": "Profile",
+          "browseArticles": "Browse articles",
+          "locationLabel": "Location",
+          "websiteLabel": "Website",
+          "unknownLocation": "Unknown location",
+          "introductionPlaceholder": "This user has not added an introduction yet.",
+          "uidLabel": "UID",
+          "roleLabel": "Role"
         }
       }
     }
@@ -481,7 +492,10 @@
       "unknownAuthor": "Unknown author",
       "authorBadge": "Author",
       "metaPanelTitle": "Article Meta",
-      "createdAt": "Created"
+      "createdAt": "Created",
+      "estimatedRead": "{minutes} min read",
+      "jumpToTop": "Top",
+      "openDiscussion": "Discussion"
     }
   },
   "content": {

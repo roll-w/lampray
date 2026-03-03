@@ -338,6 +338,17 @@
             "title": "文章",
             "description": "长文内容"
           }
+        },
+        "profile": {
+          "latest": "最新",
+          "overviewTitle": "资料概览",
+          "browseArticles": "浏览文章",
+          "locationLabel": "所在地",
+          "websiteLabel": "网站",
+          "unknownLocation": "未知地区",
+          "introductionPlaceholder": "该用户暂未填写个人简介。",
+          "uidLabel": "用户 ID",
+          "roleLabel": "角色"
         }
       }
     }
@@ -479,7 +490,10 @@
       "unknownAuthor": "未知作者",
       "authorBadge": "作者",
       "metaPanelTitle": "文章信息",
-      "createdAt": "创建时间"
+      "createdAt": "创建时间",
+      "estimatedRead": "预计阅读 {minutes} 分钟",
+      "jumpToTop": "回到顶部",
+      "openDiscussion": "进入讨论"
     }
   },
   "content": {
