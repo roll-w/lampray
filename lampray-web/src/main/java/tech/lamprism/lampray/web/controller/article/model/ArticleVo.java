@@ -29,7 +29,7 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 public record ArticleVo(
-        long id,
+        String id,
         String title,
         StructuralText content,
         long userId,

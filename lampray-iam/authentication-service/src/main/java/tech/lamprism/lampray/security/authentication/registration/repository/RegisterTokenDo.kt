@@ -18,11 +18,11 @@ package tech.lamprism.lampray.security.authentication.registration.repository
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.EventType
+import org.hibernate.annotations.Generated
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.TimeAttributed
 import tech.lamprism.lampray.security.authentication.VerifiableToken
@@ -42,10 +42,13 @@ import java.time.OffsetDateTime
     ]
 )
 class RegisterTokenDo(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
+    var id: Long? = null,
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private var id: Long? = null,
+    @Column(name = "resource_id", unique = true, nullable = false, length = 64)
+    var resourceId: String = "",
 
     @Column(name = "token")
     var token: String = "",
@@ -58,7 +61,7 @@ class RegisterTokenDo(
 
     @Column(name = "used")
     var used: Boolean = false
-) : VerifiableToken, DataEntity<Long> {
+) : VerifiableToken, DataEntity<String> {
     override fun token(): String {
         return token
     }
@@ -75,13 +78,9 @@ class RegisterTokenDo(
         return !used && !isExpired()
     }
 
-    fun setId(id: Long?) {
-        this.id = id
-    }
+    fun getId(): Long? = id
 
-    override fun getEntityId(): Long? {
-        return id
-    }
+    override fun getEntityId(): String = resourceId
 
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
 
@@ -91,7 +90,7 @@ class RegisterTokenDo(
         RegisterTokenResourceKind
 
     fun lock(): RegisterVerificationToken = RegisterVerificationToken(
-        id, token, userId,
+        id, resourceId, token, userId,
         expiryTime, used
     )
 
@@ -110,7 +109,7 @@ class RegisterTokenDo(
     companion object {
         @JvmStatic
         fun RegisterVerificationToken.toDo(): RegisterTokenDo = RegisterTokenDo(
-            entityId, token, userId, expiryTime, used
+            id, entityId, token, userId, expiryTime, used
         )
 
         @JvmStatic
@@ -121,6 +120,7 @@ class RegisterTokenDo(
 
     class Builder {
         private var id: Long? = null
+        private var resourceId: String = ""
         private var token: String = ""
         private var userId: Long = 0
         private var expiryTime: Long = 0
@@ -130,6 +130,7 @@ class RegisterTokenDo(
 
         internal constructor(registerTokenDo: RegisterTokenDo) {
             id = registerTokenDo.id
+            resourceId = registerTokenDo.resourceId
             token = registerTokenDo.token
             userId = registerTokenDo.userId
             expiryTime = registerTokenDo.expiryTime
@@ -138,6 +139,11 @@ class RegisterTokenDo(
 
         fun setId(id: Long?): Builder {
             this.id = id
+            return this
+        }
+
+        fun setResourceId(resourceId: String): Builder {
+            this.resourceId = resourceId
             return this
         }
 
@@ -159,6 +165,10 @@ class RegisterTokenDo(
         fun setUsed(used: Boolean): Builder {
             this.used = used
             return this
+        }
+
+        fun build(): RegisterTokenDo {
+            return RegisterTokenDo(id, resourceId, token, userId, expiryTime, used)
         }
     }
 }

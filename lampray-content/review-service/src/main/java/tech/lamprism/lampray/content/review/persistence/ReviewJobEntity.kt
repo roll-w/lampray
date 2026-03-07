@@ -56,7 +56,7 @@ class ReviewJobEntity(
     var resourceId: String = "",
 
     @Column(name = "content_id", nullable = false)
-    var reviewContentId: Long = 0,
+    var reviewContentId: String = "",
 
     @Column(name = "content_type", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
@@ -123,7 +123,7 @@ class ReviewJobEntity(
     class Builder {
         private var id: Long? = null
         private var resourceId: String? = null
-        private var reviewContentId: Long = 0
+        private var reviewContentId: String = ""
         private var reviewContentType: ContentType = ContentType.ARTICLE
         private var status: ReviewStatus = ReviewStatus.PENDING
         private var createTime: OffsetDateTime = OffsetDateTime.now()
@@ -151,7 +151,7 @@ class ReviewJobEntity(
             this.resourceId = resourceId
         }
 
-        fun setReviewContentId(reviewContentId: Long) = apply {
+        fun setReviewContentId(reviewContentId: String) = apply {
             this.reviewContentId = reviewContentId
         }
 

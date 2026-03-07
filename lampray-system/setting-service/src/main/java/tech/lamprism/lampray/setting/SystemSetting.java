@@ -28,13 +28,15 @@ import java.util.Objects;
  * @author RollW
  */
 @SuppressWarnings("all")
-public class SystemSetting implements DataEntity<Long> {
+public class SystemSetting implements DataEntity<String> {
     private final Long id;
+    private final String resourceId;
     private final String key;
     private final String value;
 
-    public SystemSetting(Long id, String key, String value) {
+    public SystemSetting(Long id, String resourceId, String key, String value) {
         this.id = id;
+        this.resourceId = resourceId;
         this.key = key;
         this.value = value;
     }
@@ -48,7 +50,11 @@ public class SystemSetting implements DataEntity<Long> {
     }
 
     @Override
-    public Long getEntityId() {
+    public String getEntityId() {
+        return resourceId;
+    }
+
+    public Long getId() {
         return id;
     }
 
@@ -75,7 +81,7 @@ public class SystemSetting implements DataEntity<Long> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, key, value);
+        return Objects.hash(id, resourceId, key, value);
     }
 
     @Override
@@ -83,20 +89,25 @@ public class SystemSetting implements DataEntity<Long> {
         if (this == o) return true;
         if (!(o instanceof SystemSetting)) return false;
         SystemSetting that = (SystemSetting) o;
-        return Objects.equals(id, that.id) && Objects.equals(key, that.key) && Objects.equals(value, that.value);
+        return Objects.equals(id, that.id)
+                && Objects.equals(resourceId, that.resourceId)
+                && Objects.equals(key, that.key)
+                && Objects.equals(value, that.value);
     }
 
     @Override
     public String toString() {
         return "SystemSetting{" +
                 "id=" + id +
+                ", resourceId='" + resourceId + '\'' +
                 ", key='" + key + '\'' +
                 ", value='" + value + '\''
                 + '}';
     }
 
-    public static final class Builder implements EntityBuilder<SystemSetting, Long> {
+    public static final class Builder implements EntityBuilder<SystemSetting, String> {
         private Long id;
+        private String resourceId;
         private String key;
         private String value;
 
@@ -104,9 +115,15 @@ public class SystemSetting implements DataEntity<Long> {
         }
 
         public Builder(SystemSetting systemSetting) {
-            this.id = systemSetting.getEntityId();
+            this.id = systemSetting.getId();
+            this.resourceId = systemSetting.getEntityId();
             this.key = systemSetting.getKey();
             this.value = systemSetting.getValue();
+        }
+
+        public Builder setId(Long id) {
+            this.id = id;
+            return this;
         }
 
         public Builder setKey(String key) {
@@ -121,12 +138,12 @@ public class SystemSetting implements DataEntity<Long> {
 
         @Override
         public SystemSetting build() {
-            return new SystemSetting(id, key, value);
+            return new SystemSetting(id, resourceId, key, value);
         }
 
         @Override
-        public Builder setEntityId(Long id) {
-            this.id = id;
+        public Builder setEntityId(String id) {
+            this.resourceId = id;
             return this;
         }
     }

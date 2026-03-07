@@ -22,11 +22,12 @@ import space.lingu.NonNull;
  * @author RollW
  */
 public record SimpleContentIdentity(
-        long contentId,
+        @NonNull String contentId,
         @NonNull ContentType contentType
 ) implements ContentIdentity {
     @Override
-    public long getContentId() {
+    @NonNull
+    public String getContentId() {
         return contentId;
     }
 

@@ -95,7 +95,10 @@ public class UserServiceImpl implements UserSignatureProvider,
                 .setUpdateTime(time)
                 .setEmail(email)
                 .build();
-        UserDo inserted = userRepository.save(user);
+        UserDo inserted = userRepository.saveAndFlush(user);
+        if (inserted.getEntityId() == null) {
+            throw new IllegalStateException("User database id is unavailable after flush");
+        }
         NewUserCreatedEvent newUserCreatedEvent = new NewUserCreatedEvent(inserted);
         eventPublisher.publishEvent(newUserCreatedEvent);
         return inserted;

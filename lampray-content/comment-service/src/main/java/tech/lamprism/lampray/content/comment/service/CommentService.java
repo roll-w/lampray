@@ -18,6 +18,8 @@ package tech.lamprism.lampray.content.comment.service;
 
 import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
+import space.lingu.Nullable;
+import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.content.Content;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentDetailsMetadata;
@@ -51,11 +53,14 @@ import java.util.List;
 public class CommentService implements ContentPublisher, ContentCollectionProvider {
     private final CommentRepository commentRepository;
     private final ContentMetadataService contentMetadataService;
+    private final ResourceIdGenerator resourceIdGenerator;
 
     public CommentService(CommentRepository commentRepository,
-                          ContentMetadataService contentMetadataService) {
+                          ContentMetadataService contentMetadataService,
+                          ResourceIdGenerator resourceIdGenerator) {
         this.commentRepository = commentRepository;
         this.contentMetadataService = contentMetadataService;
+        this.resourceIdGenerator = resourceIdGenerator;
     }
 
     @Override
@@ -74,10 +79,11 @@ public class CommentService implements ContentPublisher, ContentCollectionProvid
                 commentDetailsMetadata.contentType()
         );
         checkCommentOnContent(commentOn, operator);
-        long parentId = checkParentId(commentDetailsMetadata.parentId(), operator);
+        String parentId = checkParentId(commentDetailsMetadata.parentId(), operator);
 
         CommentDo comment = CommentDo
                 .builder()
+                .setResourceId(resourceIdGenerator.nextId(ContentType.COMMENT.getSystemResourceKind()))
                 .setUserId(operator.getUserId())
                 .setParentId(parentId)
                 .setContent(uncreatedContent.getContent())
@@ -88,7 +94,8 @@ public class CommentService implements ContentPublisher, ContentCollectionProvid
                 .setCommentStatus(CommentStatus.NONE)
                 .build();
 
-        return commentRepository.save(comment).lock();
+        CommentDo created = commentRepository.saveAndFlush(comment);
+        return created.lock();
     }
 
     private void checkCommentOnContent(
@@ -107,22 +114,23 @@ public class CommentService implements ContentPublisher, ContentCollectionProvid
         throw new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
     }
 
-    private long checkParentId(Long parentId, UserIdentity operator) {
-        if (parentId == null || parentId == Comment.COMMENT_ROOT_ID) {
-            return Comment.COMMENT_ROOT_ID;
+    @Nullable
+    private String checkParentId(@Nullable String parentId, UserIdentity operator) {
+        String normalizedParentId = parentId == null ? null : parentId.trim();
+        if (normalizedParentId == null || normalizedParentId.isEmpty() || "0".equals(normalizedParentId)) {
+            return null;
         }
-        if (parentId < 0) {
-            throw new IllegalArgumentException("Parent id must be greater than 0");
+
+        CommentDo comment = commentRepository.findById(normalizedParentId).orElse(null);
+        if (comment == null) {
+            throw new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
         }
-        CommentDo comment = commentRepository.findById(parentId).orElseThrow(
-                () -> new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND)
-        );
         ContentMetadata metadata = contentMetadataService.getMetadata(
-                new SimpleContentIdentity(parentId, ContentType.COMMENT));
+                new SimpleContentIdentity(comment.getEntityId(), ContentType.COMMENT));
         if (!checkCanCommentOn(comment, metadata, operator)) {
             throw new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
         }
-        return parentId;
+        return comment.getEntityId();
     }
 
     private boolean checkCanCommentOn(

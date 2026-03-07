@@ -22,7 +22,7 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 public interface ContentVo {
-    long id();
+    String id();
 
     OffsetDateTime createTime();
 

@@ -26,7 +26,7 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 public record SimpleContentDetails(
-        long contentId,
+        @NonNull String contentId,
         @NonNull ContentType contentType,
         long userId,
         @Nullable String title,
@@ -36,7 +36,8 @@ public record SimpleContentDetails(
         @Nullable ContentDetailsMetadata contentDetailsMetadata
 ) implements ContentDetails {
     @Override
-    public long getContentId() {
+    @NonNull
+    public String getContentId() {
         return contentId;
     }
 

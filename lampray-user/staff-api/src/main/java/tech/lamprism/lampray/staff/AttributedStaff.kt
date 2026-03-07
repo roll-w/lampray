@@ -23,14 +23,12 @@ import tech.rollw.common.web.system.SystemResourceKind
 /**
  * @author RollW
  */
-interface AttributedStaff : SystemResource<Long>, TimeAttributed {
+interface AttributedStaff : SystemResource<String>, TimeAttributed {
     val staffId: Long
 
     val userId: Long
 
     val types: Set<StaffType>
-
-    override fun getResourceId(): Long = staffId
 
     override fun getSystemResourceKind(): SystemResourceKind =
         StaffResourceKind

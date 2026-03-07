@@ -47,7 +47,7 @@ class CommentController(
 ) {
     @PostMapping("/{contentType}/{contentId}/comments")
     fun createComment(
-        @PathVariable("contentId") contentId: Long,
+        @PathVariable("contentId") contentId: String,
         @PathVariable("contentType") type: String,
         @RequestBody commentRequest: CommentRequest
     ): HttpResponseEntity<CommentVo> {
@@ -77,7 +77,7 @@ class CommentController(
 
     @GetMapping("/{contentType}/{contentId}/comments")
     fun getComments(
-        @PathVariable("contentId") contentId: Long,
+        @PathVariable("contentId") contentId: String,
         @PathVariable("contentType") type: String
     ): HttpResponseEntity<List<CommentVo>> {
         val contentType = getContentType(type)

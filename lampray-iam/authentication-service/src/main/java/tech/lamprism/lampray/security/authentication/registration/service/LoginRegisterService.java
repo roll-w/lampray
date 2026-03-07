@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.LampException;
 import tech.lamprism.lampray.RequestMetadata;
+import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.security.authentication.UserInfoSignature;
 import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationToken;
@@ -38,6 +39,7 @@ import tech.lamprism.lampray.security.authentication.login.LoginVerifiableToken;
 import tech.lamprism.lampray.security.authentication.login.OnUserLoginEvent;
 import tech.lamprism.lampray.security.authentication.registration.OnUserRegistrationEvent;
 import tech.lamprism.lampray.security.authentication.registration.RegisterProvider;
+import tech.lamprism.lampray.security.authentication.registration.RegisterTokenResourceKind;
 import tech.lamprism.lampray.security.authentication.registration.RegisterTokenProvider;
 import tech.lamprism.lampray.security.authentication.registration.RegisterVerificationToken;
 import tech.lamprism.lampray.security.authentication.registration.Registration;
@@ -76,6 +78,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
     private static final Logger logger = LoggerFactory.getLogger(LoginRegisterService.class);
 
     private final RegisterTokenRepository registerTokenRepository;
+    private final ResourceIdGenerator resourceIdGenerator;
     private final FirewallRegistry firewallRegistry;
     private final SystemResourceOperatorProvider<Long> systemResourceOperatorProvider;
     private final UserProvider userProvider;
@@ -89,6 +92,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
 
     public LoginRegisterService(List<LoginStrategy> strategies,
                                 RegisterTokenRepository registerTokenRepository,
+                                ResourceIdGenerator resourceIdGenerator,
                                 FirewallRegistry firewallRegistry,
                                 SystemResourceOperatorProvider<Long> systemResourceOperatorProvider,
                                 UserProvider userProvider,
@@ -98,6 +102,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                                 UserSignatureProvider userSignatureProvider,
                                 List<RegistrationInterceptor> registrationInterceptors) {
         this.registerTokenRepository = registerTokenRepository;
+        this.resourceIdGenerator = resourceIdGenerator;
         this.firewallRegistry = firewallRegistry;
         this.systemResourceOperatorProvider = systemResourceOperatorProvider;
         this.userProvider = userProvider;
@@ -237,9 +242,17 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         String token = uuid.toString();
         long expiryTime = RegisterVerificationToken.calculateExpiryDate();
         RegisterTokenDo registerVerificationToken = new RegisterTokenDo(
-                null, token, userIdentity.getUserId(), expiryTime, false
+                null,
+                resourceIdGenerator.nextId(RegisterTokenResourceKind.INSTANCE),
+                token,
+                userIdentity.getUserId(),
+                expiryTime,
+                false
         );
-        registerVerificationToken = registerTokenRepository.save(registerVerificationToken);
+        registerVerificationToken = registerTokenRepository.saveAndFlush(registerVerificationToken);
+        if (registerVerificationToken.getId() == null) {
+            throw new IllegalStateException("Register token database id is unavailable after flush");
+        }
         return registerVerificationToken.lock();
     }
 

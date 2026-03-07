@@ -28,7 +28,7 @@ import java.util.Locale
 @Repository
 class LocalizedMessageRepository(
     private val localizedMessageDao: LocalizedMessageDao
-) : CommonRepository<LocalizedMessageDo, Long>(localizedMessageDao) {
+) : CommonRepository<LocalizedMessageDo, String>(localizedMessageDao) {
     fun findByKey(key: String, locale: Locale) =
         findOne { root, _, criteriaBuilder ->
             criteriaBuilder.and(

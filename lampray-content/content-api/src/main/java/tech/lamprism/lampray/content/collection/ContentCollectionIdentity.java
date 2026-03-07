@@ -20,15 +20,21 @@ package tech.lamprism.lampray.content.collection;
  * @author RollW
  */
 public interface ContentCollectionIdentity {
-    long getContentCollectionId();
+    String getContentCollectionId();
 
     ContentCollectionType getContentCollectionType();
 
     static ContentCollectionIdentity of(
-            long contentCollectionId,
+            String contentCollectionId,
             ContentCollectionType contentCollectionType) {
         return SimpleContentCollectionIdentity.of(
                 contentCollectionId,
                 contentCollectionType);
+    }
+
+    static ContentCollectionIdentity of(
+            long contentCollectionId,
+            ContentCollectionType contentCollectionType) {
+        return of(Long.toString(contentCollectionId), contentCollectionType);
     }
 }

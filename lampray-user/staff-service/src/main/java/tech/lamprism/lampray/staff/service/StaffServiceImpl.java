@@ -26,6 +26,8 @@ import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.user.UserProvider;
 import tech.rollw.common.web.DataErrorCode;
 
+import java.util.Optional;
+
 /**
  * @author RollW
  */
@@ -51,12 +53,26 @@ public class StaffServiceImpl implements StaffService {
     }
 
     @Override
-    public StaffInfo getStaff(long staffId) {
-        StaffDo staff = staffRepository.findById(staffId).orElse(null);
+    public StaffInfo getStaff(String resourceId) {
+        StaffDo staff = staffRepository.findById(resourceId)
+                .or(() -> findLegacyStaff(resourceId))
+                .orElse(null);
         if (staff == null) {
             throw new LampException(DataErrorCode.ERROR_DATA_NOT_EXIST);
         }
         UserIdentity userIdentity = userProvider.getUser(staff.getUserId());
         return StaffInfo.from(staff.lock(), userIdentity);
+    }
+
+    private Optional<StaffDo> findLegacyStaff(String resourceId) {
+        if (!resourceId.chars().allMatch(Character::isDigit)) {
+            return Optional.empty();
+        }
+
+        try {
+            return staffRepository.findByStaffId(Long.parseLong(resourceId));
+        } catch (NumberFormatException exception) {
+            return Optional.empty();
+        }
     }
 }

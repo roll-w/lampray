@@ -20,6 +20,8 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import space.lingu.NonNull;
+import tech.lamprism.lampray.common.data.ResourceIdGenerator;
+import tech.lamprism.lampray.staff.StaffResourceKind;
 import tech.lamprism.lampray.staff.StaffType;
 import tech.lamprism.lampray.staff.persistence.StaffDo;
 import tech.lamprism.lampray.staff.persistence.StaffRepository;
@@ -36,9 +38,12 @@ import java.time.OffsetDateTime;
 public class CreateStaffOnUserCreateListener implements ApplicationListener<NewUserCreatedEvent> {
 
     private final StaffRepository staffRepository;
+    private final ResourceIdGenerator resourceIdGenerator;
 
-    public CreateStaffOnUserCreateListener(StaffRepository staffRepository) {
+    public CreateStaffOnUserCreateListener(StaffRepository staffRepository,
+                                           ResourceIdGenerator resourceIdGenerator) {
         this.staffRepository = staffRepository;
+        this.resourceIdGenerator = resourceIdGenerator;
     }
 
     @Override
@@ -51,6 +56,7 @@ public class CreateStaffOnUserCreateListener implements ApplicationListener<NewU
         OffsetDateTime now = OffsetDateTime.now();
         StaffType type = StaffType.of(attributedUser.getRole());
         StaffDo staff = StaffDo.builder()
+                .setResourceId(resourceIdGenerator.nextId(StaffResourceKind.INSTANCE))
                 .setUserId(attributedUser.getUserId())
                 .setCreateTime(now)
                 .setUpdateTime(now)

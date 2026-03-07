@@ -37,8 +37,8 @@ import java.util.List;
  * @author RollW
  */
 @Service
-public class ContentProvideService implements SystemResourceProvider<Long>,
-        SystemResourceOperatorFactory<Long>, ContentProviderFactory {
+public class ContentProvideService implements SystemResourceProvider<String>,
+        SystemResourceOperatorFactory<String>, ContentProviderFactory {
     private final List<ContentProvider> contentProviders;
 
     public ContentProvideService(List<ContentProvider> contentProviders) {
@@ -52,8 +52,8 @@ public class ContentProvideService implements SystemResourceProvider<Long>,
 
     @NonNull
     @Override
-    public SystemResourceOperator<Long> createResourceOperator(
-            SystemResource<Long> systemResource,
+    public SystemResourceOperator<String> createResourceOperator(
+            SystemResource<String> systemResource,
             boolean checkDelete) {
         ContentType contentType = ContentType.from(systemResource.getSystemResourceKind());
         if (contentType == null) {
@@ -67,7 +67,7 @@ public class ContentProvideService implements SystemResourceProvider<Long>,
 
     @NonNull
     @Override
-    public ContentDetails provide(@NonNull Long resourceId,
+    public ContentDetails provide(@NonNull String resourceId,
                                   @NonNull SystemResourceKind systemResourceKind)
             throws CommonRuntimeException, UnsupportedKindException {
         ContentType contentType = ContentType.from(systemResourceKind);
@@ -82,7 +82,7 @@ public class ContentProvideService implements SystemResourceProvider<Long>,
 
     @NonNull
     @Override
-    public ContentDetails provide(@NonNull SystemResource<Long> rawSystemResource)
+    public ContentDetails provide(@NonNull SystemResource<String> rawSystemResource)
             throws CommonRuntimeException, UnsupportedKindException {
         if (rawSystemResource instanceof ContentDetails contentDetails) {
             return contentDetails;

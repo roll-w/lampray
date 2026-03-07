@@ -27,16 +27,16 @@ import tech.lamprism.lampray.content.ContentType
 @Repository
 class CommentRepository(
     private val commentDao: CommentDao
-) : CommonRepository<CommentDo, Long>(commentDao) {
+) : CommonRepository<CommentDo, String>(commentDao) {
     fun findByContent(
-        contentId: Long,
+        contentId: String,
         contentType: ContentType
     ): List<CommentDo> {
         return findAll(createContentSpecification(contentId, contentType))
     }
 
     private fun createContentSpecification(
-        contentId: Long,
+        contentId: String,
         contentType: ContentType
     ): Specification<CommentDo> = Specification { root, query, criteriaBuilder ->
         criteriaBuilder.and(

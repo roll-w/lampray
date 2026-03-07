@@ -25,7 +25,13 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface ArticleDao : CommonDao<ArticleDo, Long> {
+interface ArticleDao : CommonDao<ArticleDo, String> {
     @Query("FROM ArticleDo a WHERE a.userId = :userId")
     fun findAllByUserId(@Param("userId") userId: Long): List<ArticleDo>
+
+    @Query("FROM ArticleDo a WHERE a.id = :id")
+    fun findById(@Param("id") id: Long): ArticleDo?
+
+    @Query("FROM ArticleDo a WHERE a.id in :ids")
+    fun findAllByIdIn(@Param("ids") ids: List<Long>): List<ArticleDo>
 }

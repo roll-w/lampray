@@ -23,7 +23,8 @@ import java.time.OffsetDateTime
  * @author RollW
  */
 data class StaffInfo(
-    val id: Long,
+    override val staffId: Long,
+    override val resourceId: String,
     val userIdentity: UserIdentity,
     override val types: Set<StaffType>,
     private val createTime: OffsetDateTime,
@@ -31,9 +32,6 @@ data class StaffInfo(
     val allowUser: Boolean,
     val deleted: Boolean
 ) : AttributedStaff {
-    override val staffId: Long
-        get() = id
-
     override val userId: Long
         get() = userIdentity.userId
 
@@ -45,26 +43,14 @@ data class StaffInfo(
         @JvmStatic
         fun from(staff: Staff, userIdentity: UserIdentity): StaffInfo {
             return StaffInfo(
-                staff.entityId,
+                staff.staffId,
+                staff.resourceId,
                 userIdentity,
                 staff.types,
                 staff.createTime,
                 staff.updateTime,
                 staff.isAsUser,
                 staff.isDeleted
-            )
-        }
-
-        @JvmStatic
-        fun from(userIdentity: UserIdentity): StaffInfo {
-            return StaffInfo(
-                userIdentity.userId,
-                userIdentity,
-                emptySet(),
-                OffsetDateTime.now(),
-                OffsetDateTime.now(),
-                false,
-                false
             )
         }
 

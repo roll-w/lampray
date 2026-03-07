@@ -23,5 +23,5 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface RegisterTokenDao : CommonDao<RegisterTokenDo, Long> {
+interface RegisterTokenDao : CommonDao<RegisterTokenDo, String> {
 }

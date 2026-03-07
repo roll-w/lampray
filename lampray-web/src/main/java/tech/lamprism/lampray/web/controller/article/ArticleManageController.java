@@ -46,7 +46,7 @@ public class ArticleManageController {
     @GetMapping("/users/{userId}/articles/{articleId}")
     public HttpResponseEntity<ArticleMetaVo> getArticle(
             @PathVariable("userId") Long userId,
-            @PathVariable("articleId") Long articleId) {
+            @PathVariable("articleId") String articleId) {
         ContentMetadataDetails<?> contentMetadataDetails =
                 contentAccessService.getContentMetadataDetails(
                         ContentIdentity.of(articleId, ContentType.ARTICLE)

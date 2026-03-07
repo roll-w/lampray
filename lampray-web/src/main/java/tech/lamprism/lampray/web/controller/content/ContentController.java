@@ -55,13 +55,13 @@ import java.util.List;
 public class ContentController {
     private final ContentPublishProvider contentPublishProvider;
     private final ContentAccessService contentAccessService;
-    private final SystemResourceOperatorProvider<Long> systemResourceOperatorProvider;
+    private final SystemResourceOperatorProvider<String> systemResourceOperatorProvider;
     private final ContentCollectionProviderFactory contentCollectionProviderFactory;
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
     public ContentController(ContentPublishProvider contentPublishProvider,
                              ContentAccessService contentAccessService,
-                             SystemResourceOperatorProvider<Long> systemResourceOperatorProvider,
+                             SystemResourceOperatorProvider<String> systemResourceOperatorProvider,
                              ContentCollectionProviderFactory contentCollectionProviderFactory,
                              ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.contentPublishProvider = contentPublishProvider;
@@ -75,7 +75,7 @@ public class ContentController {
     public HttpResponseEntity<ContentVo> getContent(
             @PathVariable("userId") Long userId,
             @PathVariable("contentType") UrlContentType contentType,
-            @PathVariable("contentId") Long contentId) {
+            @PathVariable("contentId") String contentId) {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         ContentDetails details = contentAccessService.openContent(
@@ -150,7 +150,7 @@ public class ContentController {
     public HttpResponseEntity<Void> deleteContent(
             @PathVariable("userId") Long userId,
             @PathVariable("contentType") UrlContentType contentType,
-            @PathVariable("contentId") Long contentId) {
+            @PathVariable("contentId") String contentId) {
         ContentOperator contentOperator =
                 systemResourceOperatorProvider.getSystemResourceOperator(
                         getSystemResource(contentId, contentType), true
@@ -167,12 +167,12 @@ public class ContentController {
     public HttpResponseEntity<Void> updateContent(
             @PathVariable("userId") Long userId,
             @PathVariable("contentType") UrlContentType contentType,
-            @PathVariable("contentId") Long contentId) {
+            @PathVariable("contentId") String contentId) {
         return HttpResponseEntity.success();
     }
 
-    private SystemResource<Long> getSystemResource(Long contentId,
-                                                   UrlContentType contentType) {
+    private SystemResource<String> getSystemResource(String contentId,
+                                                     UrlContentType contentType) {
         return new SimpleSystemResource<>(
                 contentId,
                 contentType.getContentType().getSystemResourceKind()

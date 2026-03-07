@@ -24,13 +24,13 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.ForeignKey
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
+import org.hibernate.annotations.EventType
+import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
@@ -45,10 +45,13 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = "staff")
 class StaffDo(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
+    var id: Long? = null,
+
     @Id
-    @Column(name = "id", nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null,
+    @Column(name = "resource_id", unique = true, nullable = false, length = 64)
+    var resourceId: String = "",
 
     @Column(name = "user_id", nullable = false)
     override var userId: Long = 0,
@@ -75,8 +78,8 @@ class StaffDo(
 
     @Column(name = "deleted", nullable = false)
     var deleted: Boolean = false
-) : DataEntity<Long>, AttributedStaff {
-    override fun getEntityId(): Long? = id
+) : DataEntity<String>, AttributedStaff {
+    override fun getEntityId(): String = resourceId
     
     fun setId(id: Long?) {
         this.id = id
@@ -97,15 +100,16 @@ class StaffDo(
     override val staffId: Long
         get() = id!!
 
-    override fun getResourceId(): Long = id!!
+    override fun getResourceId(): String = resourceId
 
     fun lock() = Staff(
-        id, userId, types, createTime, updateTime, 
+        id, resourceId, userId, types, createTime, updateTime,
         asUser, deleted
     )
 
     class Builder {
         private var id: Long? = null
+        private var resourceId: String = ""
         private var userId: Long = 0
         private var types: MutableSet<StaffType>? = null
         private var createTime: OffsetDateTime? = null
@@ -117,6 +121,7 @@ class StaffDo(
         
         constructor(staff: StaffDo) {
             this.id = staff.id
+            this.resourceId = staff.resourceId
             this.userId = staff.userId
             this.types = staff.types.toMutableSet()
             this.createTime = staff.createTime
@@ -127,6 +132,10 @@ class StaffDo(
 
         fun setId(id: Long?) = apply {
             this.id = id
+        }
+
+        fun setResourceId(resourceId: String) = apply {
+            this.resourceId = resourceId
         }
 
         fun setUserId(userId: Long) = apply{
@@ -168,7 +177,7 @@ class StaffDo(
         }
         
         fun build() = StaffDo(
-            id, userId, types ?: emptySet(),
+            id, resourceId, userId, types ?: emptySet(),
             createTime!!, 
             updateTime!!, 
             asUser, deleted
@@ -179,7 +188,7 @@ class StaffDo(
         @JvmStatic
         fun Staff.toDo(): StaffDo {
             return StaffDo(
-                entityId, userId, types, createTime, updateTime,
+                id, entityId, userId, types, createTime, updateTime,
                 isAsUser, isDeleted
             )
         }

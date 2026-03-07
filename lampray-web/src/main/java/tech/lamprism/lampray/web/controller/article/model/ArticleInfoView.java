@@ -28,7 +28,7 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 public record ArticleInfoView(
-        long id,
+        String id,
         long userId,
         String title,
         String cover,

@@ -69,7 +69,8 @@ public class ContentCollectionDetails<T extends ContentDetails> implements Conte
     }
 
     @Override
-    public long getContentId() {
+    @NonNull
+    public String getContentId() {
         return contentMetadata.getContentId();
     }
 

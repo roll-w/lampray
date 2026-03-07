@@ -22,7 +22,7 @@ package tech.lamprism.lampray.content;
  * @author RollW
  */
 public interface ContentTrait {
-    long getContentId();
+    String getContentId();
 
     ContentType getContentType();
 }

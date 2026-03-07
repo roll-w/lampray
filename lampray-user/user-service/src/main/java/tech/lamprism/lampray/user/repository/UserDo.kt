@@ -51,7 +51,7 @@ class UserDo(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private var id: Long? = null,
+    var id: Long? = null,
 
     @Column(name = "username", length = 120, nullable = false)
     private var username: String = "",

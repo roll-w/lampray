@@ -45,7 +45,7 @@ import java.time.OffsetDateTime
 class UserPersonalDataDo(
     @Id
     @Column(name = "id", nullable = false)
-    private var id: Long = 0,
+    var id: Long = 0,
 
     @Column(name = "nickname", nullable = false, length = 120)
     var nickname: String = "",

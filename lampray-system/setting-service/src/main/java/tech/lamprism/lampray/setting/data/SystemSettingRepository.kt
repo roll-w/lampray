@@ -26,7 +26,7 @@ import java.util.Optional
 @Repository
 class SystemSettingRepository(
     private val systemSettingDao: SystemSettingDao
-) : CommonRepository<SystemSettingDo, Long>(systemSettingDao) {
+) : CommonRepository<SystemSettingDo, String>(systemSettingDao) {
     fun findByKey(key: String): Optional<SystemSettingDo> {
         return findOne { root, query, criteriaBuilder ->
             criteriaBuilder.equal(root.get<String>("key"), key)

@@ -24,7 +24,7 @@ public interface ContentCollection extends ContentCollectionIdentity {
 
     long getUserId();
 
-    long getContentCollectionId();
+    String getContentCollectionId();
 
     ContentCollectionType getContentCollectionType();
 }

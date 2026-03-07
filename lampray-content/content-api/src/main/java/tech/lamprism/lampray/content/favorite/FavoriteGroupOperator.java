@@ -26,7 +26,7 @@ import tech.rollw.common.web.system.SystemResourceOperator;
 /**
  * @author RollW
  */
-public interface FavoriteGroupOperator extends SystemResourceOperator<Long>, SystemResource<Long> {
+public interface FavoriteGroupOperator extends SystemResourceOperator<String>, SystemResource<String> {
     @Override
     void setCheckDeleted(boolean checkDeleted);
 
@@ -51,12 +51,12 @@ public interface FavoriteGroupOperator extends SystemResourceOperator<Long>, Sys
 
     FavoriteGroupOperator removeFavorite(ContentTrait contentTrait);
 
-    FavoriteGroupOperator removeFavorite(long favoriteItemId);
+    FavoriteGroupOperator removeFavorite(String itemId);
 
     FavoriteGroup getFavoriteGroup();
 
     @Override
-    default Long getResourceId() {
+    default String getResourceId() {
         return getFavoriteGroup().getEntityId();
     }
 

@@ -25,7 +25,7 @@ import java.time.OffsetDateTime
  * @author RollW
  */
 data class ReviewJobContentView(
-    val contentId: Long,
+    val contentId: String,
     val contentType: ContentType,
     val title: String?,
     val content: StructuralText,

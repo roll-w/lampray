@@ -28,9 +28,9 @@ public interface FavoriteProvider {
 
     List<FavoriteGroup> getFavoriteGroups(UserIdentity userIdentity);
 
-    List<FavoriteItem> getFavoriteItems(long favoriteGroupId);
+    List<FavoriteItem> getFavoriteItems(String groupId);
 
-    FavoriteGroup getFavoriteGroup(long favoriteGroupId);
+    FavoriteGroup getFavoriteGroup(String id);
 
-    FavoriteItem getFavoriteItem(long favoriteItemId);
+    FavoriteItem getFavoriteItem(String id);
 }

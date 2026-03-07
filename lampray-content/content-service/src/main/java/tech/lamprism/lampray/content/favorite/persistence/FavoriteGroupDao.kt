@@ -23,5 +23,5 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface FavoriteGroupDao : CommonDao<FavoriteGroupDo, Long> {
+interface FavoriteGroupDao : CommonDao<FavoriteGroupDo, String> {
 }

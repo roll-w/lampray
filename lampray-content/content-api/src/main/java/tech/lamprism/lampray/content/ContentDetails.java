@@ -31,7 +31,8 @@ public interface ContentDetails extends Content, TimeAttributed {
      * @inheritDoc
      */
     @Override
-    long getContentId();
+    @NonNull
+    String getContentId();
 
     /**
      * @inheritDoc

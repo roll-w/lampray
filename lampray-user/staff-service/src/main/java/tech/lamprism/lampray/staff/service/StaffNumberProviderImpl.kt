@@ -29,11 +29,11 @@ import tech.rollw.common.web.system.SystemResourceException
 @Service
 class StaffNumberProviderImpl : StaffNumberProvider {
     override fun getStaffNumber(staff: Staff): String {
-        if (staff.entityId == null) {
+        if (staff.id == null) {
             throw SystemResourceException(CommonErrorCode.ERROR_NULL, "Staff id is null.")
         }
         val type = staff.types.firstOrNull() ?: StaffType.UNASSIGNED
-        val idDigitFormat = "%08d".format(staff.entityId)
+        val idDigitFormat = "%08d".format(staff.staffId)
 
         return "${prefixOf(type)}${idDigitFormat}"
     }

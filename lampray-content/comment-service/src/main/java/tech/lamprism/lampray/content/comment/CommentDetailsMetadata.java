@@ -26,10 +26,10 @@ import tech.lamprism.lampray.content.ContentType;
  */
 public record CommentDetailsMetadata(
         ContentType contentType,
-        long contentId,
+        String contentId,
 
         @Nullable
-        Long parentId
+        String parentId
 ) implements ContentDetailsMetadata {
     public ContentIdentity getCommentOn() {
         return ContentIdentity.of(contentId, contentType);

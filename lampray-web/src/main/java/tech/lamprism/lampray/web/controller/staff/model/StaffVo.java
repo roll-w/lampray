@@ -27,7 +27,8 @@ import java.util.Set;
  */
 // TODO: add fields
 public record StaffVo(
-        long id,
+        String id,
+        Long legacyId,
         long userId,
         Set<StaffType> types,
         OffsetDateTime createTime,
@@ -39,6 +40,7 @@ public record StaffVo(
             return null;
         }
         return new StaffVo(
+                staffInfo.getResourceId(),
                 staffInfo.getStaffId(),
                 staffInfo.getUserId(),
                 staffInfo.getTypes(),

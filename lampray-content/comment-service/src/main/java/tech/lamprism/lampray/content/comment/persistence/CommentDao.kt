@@ -23,5 +23,4 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface CommentDao : CommonDao<CommentDo, Long> {
-}
+interface CommentDao : CommonDao<CommentDo, String>

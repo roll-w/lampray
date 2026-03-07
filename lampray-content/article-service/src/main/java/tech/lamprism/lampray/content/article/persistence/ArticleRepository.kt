@@ -27,7 +27,13 @@ import java.util.Optional
 @Repository
 class ArticleRepository(
     private val articleDao: ArticleDao
-) : CommonRepository<ArticleDo, Long>(articleDao) {
+) : CommonRepository<ArticleDo, String>(articleDao) {
+    fun findById(id: Long): Optional<ArticleDo> =
+        Optional.ofNullable(articleDao.findById(id))
+
+    fun findAllByIdIn(ids: List<Long>): List<ArticleDo> =
+        if (ids.isEmpty()) emptyList() else articleDao.findAllByIdIn(ids)
+
     fun findAllByUserId(userId: Long): List<ArticleDo> {
         return articleDao.findAllByUserId(userId)
     }

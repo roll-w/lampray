@@ -25,16 +25,17 @@ import java.io.Serializable;
 /**
  * @author RollW
  */
-public interface ContentIdentity extends ContentTrait, SystemResource<Long>, Serializable {
+public interface ContentIdentity extends ContentTrait, SystemResource<String>, Serializable {
     @Override
-    long getContentId();
+    @NonNull
+    String getContentId();
 
     @Override
     ContentType getContentType();
 
     @Override
     @NonNull
-    default Long getResourceId() {
+    default String getResourceId() {
         return getContentId();
     }
 
@@ -44,7 +45,11 @@ public interface ContentIdentity extends ContentTrait, SystemResource<Long>, Ser
         return getContentType().getSystemResourceKind();
     }
 
-    static ContentIdentity of(long contentId, @NonNull ContentType contentType) {
+    static ContentIdentity of(@NonNull String contentId, @NonNull ContentType contentType) {
         return new SimpleContentIdentity(contentId, contentType);
+    }
+
+    static ContentIdentity of(long contentId, @NonNull ContentType contentType) {
+        return of(Long.toString(contentId), contentType);
     }
 }

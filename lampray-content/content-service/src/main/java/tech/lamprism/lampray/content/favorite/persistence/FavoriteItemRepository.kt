@@ -25,5 +25,5 @@ import tech.lamprism.lampray.common.data.CommonRepository
 @Repository
 class FavoriteItemRepository(
     private val favoriteItemDao: FavoriteItemDao
-) : CommonRepository<FavoriteItemDo, Long>(favoriteItemDao) {
+) : CommonRepository<FavoriteItemDo, String>(favoriteItemDao) {
 }

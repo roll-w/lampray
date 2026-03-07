@@ -27,7 +27,10 @@ import java.util.Optional
 @Repository
 class StaffRepository(
     private val staffDao: StaffDao
-) : CommonRepository<StaffDo, Long>(staffDao) {
+) : CommonRepository<StaffDo, String>(staffDao) {
+    fun findByStaffId(staffId: Long): Optional<StaffDo> =
+        Optional.ofNullable(staffDao.findById(staffId))
+
     fun findByUserId(userId: Long): Optional<StaffDo> {
         return findOne { root, _, criteriaBuilder ->
             criteriaBuilder.equal(root.get(StaffDo_.userId), userId)

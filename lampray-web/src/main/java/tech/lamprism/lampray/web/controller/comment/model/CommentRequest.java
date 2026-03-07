@@ -23,6 +23,6 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText;
  */
 public record CommentRequest(
         StructuralText content,
-        Long parent
+        String parent
 ) {
 }

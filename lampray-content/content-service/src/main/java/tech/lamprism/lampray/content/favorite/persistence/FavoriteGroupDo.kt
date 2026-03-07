@@ -20,13 +20,13 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Lob
 import jakarta.persistence.Table
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
+import org.hibernate.annotations.EventType
+import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.proxy.HibernateProxy
 import org.hibernate.type.SqlTypes
@@ -42,10 +42,13 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = "favorite_group")
 class FavoriteGroupDo(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
+    var id: Long? = null,
+
     @Id
-    @Column(name = "id", nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null,
+    @Column(name = "resource_id", unique = true, nullable = false, length = 64)
+    var resourceId: String = "",
 
     @Column(name = "name", nullable = false)
     var name: String = "",
@@ -78,8 +81,8 @@ class FavoriteGroupDo(
 
     @Column(name = "deleted", nullable = false)
     var deleted: Boolean = false
-) : DataEntity<Long> {
-    override fun getEntityId(): Long = id!!
+) : DataEntity<String> {
+    override fun getEntityId(): String = resourceId
 
     override fun getSystemResourceKind() = FavoriteGroupResourceKind
 
@@ -94,6 +97,7 @@ class FavoriteGroupDo(
     fun lock(): FavoriteGroup =
         FavoriteGroup(
             id,
+            resourceId,
             name,
             userId,
             type,
@@ -109,6 +113,7 @@ class FavoriteGroupDo(
 
     class Builder {
         private var id: Long? = null
+        private var resourceId: String = ""
         private var name: String = ""
         private var userId: Long = 0L
         private var type: FavoriteGroupType = FavoriteGroupType.USER
@@ -123,6 +128,7 @@ class FavoriteGroupDo(
 
         constructor(favoriteGroup: FavoriteGroupDo) {
             this.id = favoriteGroup.id
+            this.resourceId = favoriteGroup.resourceId
             this.name = favoriteGroup.name
             this.userId = favoriteGroup.userId
             this.type = favoriteGroup.type
@@ -136,6 +142,10 @@ class FavoriteGroupDo(
 
         fun setId(id: Long?) = apply {
             this.id = id
+        }
+
+        fun setResourceId(resourceId: String) = apply {
+            this.resourceId = resourceId
         }
 
         fun setName(name: String) = apply {
@@ -176,6 +186,7 @@ class FavoriteGroupDo(
 
         fun build() = FavoriteGroupDo(
             id,
+            resourceId,
             name,
             userId,
             type,
@@ -194,6 +205,7 @@ class FavoriteGroupDo(
 
         @JvmStatic
         fun FavoriteGroup.toDo() = FavoriteGroupDo(
+            id,
             entityId,
             name,
             userId,
@@ -217,7 +229,7 @@ class FavoriteGroupDo(
         if (thisEffectiveClass != oEffectiveClass) return false
         other as FavoriteGroupDo
 
-        return id != null && id == other.id
+        return resourceId == other.resourceId
     }
 
     final override fun hashCode(): Int =

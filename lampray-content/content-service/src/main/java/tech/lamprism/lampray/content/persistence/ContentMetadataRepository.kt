@@ -27,7 +27,7 @@ import java.util.Optional
 @Repository
 class ContentMetadataRepository(
     private val contentMetadataDao: ContentMetadataDao
-) : CommonRepository<ContentMetadataDo, Long>(contentMetadataDao) {
+) : CommonRepository<ContentMetadataDo, String>(contentMetadataDao) {
     fun findByContent(content: ContentTrait): Optional<ContentMetadataDo> {
         return findOne { root, query, criteriaBuilder ->
             criteriaBuilder.and(

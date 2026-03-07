@@ -19,14 +19,14 @@ package tech.lamprism.lampray.system.resource.data
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Lob
 import jakarta.persistence.Table
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.EventType
+import org.hibernate.annotations.Generated
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.TimeAttributed
 import tech.lamprism.lampray.common.data.LocaleAttributeConverter
@@ -47,10 +47,13 @@ import java.util.Locale
     ]
 )
 class LocalizedMessageDo(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
+    var id: Long? = null,
+
     @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null,
+    @Column(name = "resource_id", unique = true, nullable = false, length = 64)
+    var resourceId: String = "",
 
     @Column(name = "key", nullable = false, length = 255)
     override var key: String = "",
@@ -66,14 +69,10 @@ class LocalizedMessageDo(
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "update_time", nullable = false)
     private var updateTime: OffsetDateTime = OffsetDateTime.now()
-) : LocalizedMessageResource, DataEntity<Long> {
-    override fun getEntityId(): Long? {
-        return id
-    }
+) : LocalizedMessageResource, DataEntity<String> {
+    override fun getEntityId(): String = resourceId
 
-    fun setId(id: Long?) {
-        this.id = id
-    }
+    fun getId(): Long? = id
 
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
 
@@ -88,12 +87,12 @@ class LocalizedMessageDo(
     }
 
     fun lock(): LocalizedMessage {
-        return LocalizedMessage(id, key, value, locale, updateTime)
+        return LocalizedMessage(id, resourceId, key, value, locale, updateTime)
     }
 
     companion object {
         fun LocalizedMessage.toDo(): LocalizedMessageDo {
-            return LocalizedMessageDo(entityId, key, value, locale, updateTime)
+            return LocalizedMessageDo(null, entityId, key, value, locale, updateTime)
         }
     }
 }

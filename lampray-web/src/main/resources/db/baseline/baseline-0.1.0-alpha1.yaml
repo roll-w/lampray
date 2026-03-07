@@ -46,6 +46,11 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
@@ -87,13 +92,16 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                  name: user_id
-                  type: BIGINT
+                  name: resource_id
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
-                  name: parent_id
+                  name: user_id
                   type: BIGINT
+              - column:
+                  name: parent_id
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -118,7 +126,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: comment_on_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -138,13 +146,18 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
                   constraints:
                     nullable: false
                   name: content_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -171,6 +184,11 @@ databaseChangeLog:
                     primaryKeyName: pk_favorite_group
                   name: id
                   type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -230,18 +248,23 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
                   constraints:
                     nullable: false
                   name: group_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
                   name: content_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -276,6 +299,11 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: key
                   type: VARCHAR(255)
               - column:
@@ -304,6 +332,11 @@ databaseChangeLog:
                     primaryKeyName: pk_register_verification_token
                   name: id
                   type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
               - column:
                   name: token
                   type: VARCHAR(255)
@@ -337,7 +370,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: content_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -420,6 +453,11 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
@@ -466,6 +504,11 @@ databaseChangeLog:
                     primaryKeyName: pk_system_setting
                   name: id
                   type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
               - column:
                   name: key
                   type: VARCHAR(255)
@@ -592,6 +635,42 @@ databaseChangeLog:
             columnNames: content_id, type
             constraintName: index__content_id_type
             tableName: content_metadata
+        - addUniqueConstraint:
+            columnNames: resource_id
+            constraintName: uc_article_resource
+            tableName: article
+        - addUniqueConstraint:
+            columnNames: resource_id
+            constraintName: uc_comment_resource
+            tableName: comment
+        - addUniqueConstraint:
+            columnNames: resource_id
+            constraintName: uc_content_metadata_resource
+            tableName: content_metadata
+        - addUniqueConstraint:
+            columnNames: resource_id
+            constraintName: uc_favorite_group_resource
+            tableName: favorite_group
+        - addUniqueConstraint:
+            columnNames: resource_id
+            constraintName: uc_favorite_item_resource
+            tableName: favorite_item
+        - addUniqueConstraint:
+            columnNames: resource_id
+            constraintName: uc_localized_message_resource
+            tableName: localized_message
+        - addUniqueConstraint:
+            columnNames: resource_id
+            constraintName: uc_reg_verify_token_resource
+            tableName: register_verification_token
+        - addUniqueConstraint:
+            columnNames: resource_id
+            constraintName: uc_staff_resource
+            tableName: staff
+        - addUniqueConstraint:
+            columnNames: resource_id
+            constraintName: uc_system_setting_resource
+            tableName: system_setting
         - addUniqueConstraint:
             columnNames: key
             constraintName: index__key

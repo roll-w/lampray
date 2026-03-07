@@ -18,15 +18,16 @@ package tech.lamprism.lampray.setting.data
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.EventType
+import org.hibernate.annotations.Generated
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.TimeAttributed
+import tech.lamprism.lampray.setting.SystemSetting
 import tech.lamprism.lampray.setting.SystemSettingResourceKind
 import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
@@ -39,10 +40,13 @@ import java.time.OffsetDateTime
     UniqueConstraint(columnNames = ["key"], name = "index__key")
 ])
 class SystemSettingDo(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
+    var id: Long? = null,
+
     @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null,
+    @Column(name = "resource_id", unique = true, nullable = false, length = 64)
+    var resourceId: String = "",
 
     @Column(name = "key")
     var key: String = "",
@@ -53,12 +57,10 @@ class SystemSettingDo(
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "update_time", nullable = false)
     private var updateTime: OffsetDateTime = OffsetDateTime.now()
-) : DataEntity<Long> {
-    override fun getEntityId(): Long? = id
+) : DataEntity<String> {
+    override fun getEntityId(): String = resourceId
 
-    fun setId(id: Long?) {
-        this.id = id
-    }
+    fun getId(): Long? = id
 
     fun setUpdateTime(updateTime: OffsetDateTime) {
         this.updateTime = updateTime
@@ -70,4 +72,7 @@ class SystemSettingDo(
 
     override fun getSystemResourceKind(): SystemResourceKind =
         SystemSettingResourceKind
+
+    fun lock(): SystemSetting =
+        SystemSetting(id, resourceId, key, value)
 }

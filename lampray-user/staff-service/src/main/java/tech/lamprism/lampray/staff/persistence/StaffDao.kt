@@ -16,6 +16,8 @@
 
 package tech.lamprism.lampray.staff.persistence
 
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import tech.lamprism.lampray.common.data.CommonDao
 import tech.lamprism.lampray.common.data.Dao
 
@@ -23,5 +25,7 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface StaffDao : CommonDao<StaffDo, Long> {
+interface StaffDao : CommonDao<StaffDo, String> {
+    @Query("FROM StaffDo s WHERE s.id = :id")
+    fun findById(@Param("id") id: Long): StaffDo?
 }

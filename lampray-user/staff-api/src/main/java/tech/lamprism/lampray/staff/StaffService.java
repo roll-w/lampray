@@ -24,5 +24,5 @@ public interface StaffService {
 
     AttributedStaff getStaffByUser(long userId);
 
-    AttributedStaff getStaff(long staffId);
+    AttributedStaff getStaff(String resourceId);
 }

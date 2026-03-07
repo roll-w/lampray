@@ -28,7 +28,7 @@ import java.time.OffsetDateTime
  * @author RollW
  */
 data class NoticeBoard(
-    private val id: Long?,
+    val id: Long?,
     val title: String,
     val content: String?,
     /**

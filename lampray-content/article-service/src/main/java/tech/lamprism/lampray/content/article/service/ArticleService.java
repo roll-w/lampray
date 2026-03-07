@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
+import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentPublisher;
 import tech.lamprism.lampray.content.ContentType;
@@ -47,9 +48,12 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
     private static final Logger logger = LoggerFactory.getLogger(ArticleService.class);
 
     private final ArticleRepository articleRepository;
+    private final ResourceIdGenerator resourceIdGenerator;
 
-    public ArticleService(ArticleRepository articleRepository) {
+    public ArticleService(ArticleRepository articleRepository,
+                          ResourceIdGenerator resourceIdGenerator) {
         this.articleRepository = articleRepository;
+        this.resourceIdGenerator = resourceIdGenerator;
     }
 
     @Override
@@ -70,6 +74,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
         }
 
         ArticleDo article = ArticleDo.builder()
+                .setResourceId(resourceIdGenerator.nextId(ContentType.ARTICLE.getSystemResourceKind()))
                 .setUserId(userId)
                 .setTitle(title)
                 .setContent(content)
@@ -77,7 +82,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
                 .setCreateTime(timestamp)
                 .setUpdateTime(timestamp)
                 .build();
-        ArticleDo created = articleRepository.save(article);
+        ArticleDo created = articleRepository.saveAndFlush(article);
         logger.trace("Article({}) title={} created by user({})",
                 created.getEntityId(), created.getTitle(), created.getUserId());
         return created;
@@ -117,7 +122,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
         return switch (contentCollectionIdentity.getContentCollectionType()) {
             case ARTICLES -> getArticles();
             case USER_ARTICLES -> getUserArticles(
-                    contentCollectionIdentity.getContentCollectionId()
+                    Long.parseLong(contentCollectionIdentity.getContentCollectionId())
             );
             default -> throw new UnsupportedOperationException("Unsupported collection type: " +
                     contentCollectionIdentity.getContentCollectionType());

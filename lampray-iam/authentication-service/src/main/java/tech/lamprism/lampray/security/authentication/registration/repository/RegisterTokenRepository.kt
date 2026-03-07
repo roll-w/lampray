@@ -26,7 +26,7 @@ import java.util.Optional
 @Repository
 class RegisterTokenRepository(
     private val registerTokenDao: RegisterTokenDao
-) : CommonRepository<RegisterTokenDo, Long>(registerTokenDao) {
+) : CommonRepository<RegisterTokenDo, String>(registerTokenDao) {
     fun findByToken(token: String): Optional<RegisterTokenDo> {
         return findOne { root, _, cb ->
             cb.equal(root.get(RegisterTokenDo_.token), token)

@@ -18,6 +18,11 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
@@ -45,6 +50,10 @@ databaseChangeLog:
                     nullable: false
                   name: update_time
                   type: DATETIME
+        - addUniqueConstraint:
+            tableName: article
+            columnNames: resource_id
+            constraintName: uc_article_resource
   - changeSet:
       id: 0.1.0-alpha1-02-comment
       author: RollW
@@ -64,13 +73,16 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                  name: user_id
-                  type: BIGINT
+                  name: resource_id
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
-                  name: parent_id
+                  name: user_id
                   type: BIGINT
+              - column:
+                  name: parent_id
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -95,12 +107,16 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: comment_on_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
                   name: comment_status
                   type: VARCHAR(40)
+        - addUniqueConstraint:
+            tableName: comment
+            columnNames: resource_id
+            constraintName: uc_comment_resource
   - changeSet:
       id: 0.1.0-alpha1-03-content_metadata
       author: RollW
@@ -120,13 +136,18 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
                   constraints:
                     nullable: false
                   name: content_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -146,6 +167,10 @@ databaseChangeLog:
             tableName: content_metadata
             columnNames: content_id, type
             constraintName: index__content_id_type
+        - addUniqueConstraint:
+            tableName: content_metadata
+            columnNames: resource_id
+            constraintName: uc_content_metadata_resource
   - changeSet:
       id: 0.1.0-alpha1-04-favorite_group
       author: RollW
@@ -162,6 +187,11 @@ databaseChangeLog:
                     primaryKeyName: pk_favorite_group
                   name: id
                   type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -207,6 +237,10 @@ databaseChangeLog:
                     nullable: false
                   name: deleted
                   type: BOOLEAN
+        - addUniqueConstraint:
+            tableName: favorite_group
+            columnNames: resource_id
+            constraintName: uc_favorite_group_resource
   - changeSet:
       id: 0.1.0-alpha1-05-favorite_item
       author: RollW
@@ -226,18 +260,23 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
                   constraints:
                     nullable: false
                   name: group_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
                   name: content_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -258,6 +297,10 @@ databaseChangeLog:
                     nullable: false
                   name: deleted
                   type: BOOLEAN
+        - addUniqueConstraint:
+            tableName: favorite_item
+            columnNames: resource_id
+            constraintName: uc_favorite_item_resource
   - changeSet:
       id: 0.1.0-alpha1-06-localized_message
       author: RollW
@@ -274,6 +317,11 @@ databaseChangeLog:
                     primaryKeyName: pk_localized_message
                   name: id
                   type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -298,6 +346,10 @@ databaseChangeLog:
             tableName: localized_message
             columnNames: key, locale
             constraintName: index__key_locale
+        - addUniqueConstraint:
+            tableName: localized_message
+            columnNames: resource_id
+            constraintName: uc_localized_message_resource
   - changeSet:
       id: 0.1.0-alpha1-07-register_verification_token
       author: RollW
@@ -315,6 +367,11 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
+                  constraints:
+                    nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
                   name: token
                   type: VARCHAR(255)
               - column:
@@ -330,6 +387,10 @@ databaseChangeLog:
             tableName: register_verification_token
             columnNames: token
             constraintName: index__token
+        - addUniqueConstraint:
+            tableName: register_verification_token
+            columnNames: resource_id
+            constraintName: uc_reg_verify_token_resource
   - changeSet:
       id: 0.1.0-alpha1-08-review_job
       author: RollW
@@ -356,7 +417,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: content_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -453,6 +514,11 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
@@ -475,6 +541,10 @@ databaseChangeLog:
                     nullable: false
                   name: deleted
                   type: BOOLEAN
+        - addUniqueConstraint:
+            tableName: staff
+            columnNames: resource_id
+            constraintName: uc_staff_resource
   - changeSet:
       id: 0.1.0-alpha1-11-staff_types
       author: RollW
@@ -512,6 +582,11 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
+                  constraints:
+                    nullable: false
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
                   name: key
                   type: VARCHAR(255)
               - column:
@@ -526,6 +601,10 @@ databaseChangeLog:
             tableName: system_setting
             columnNames: key
             constraintName: index__key
+        - addUniqueConstraint:
+            tableName: system_setting
+            columnNames: resource_id
+            constraintName: uc_system_setting_resource
   - changeSet:
       id: 0.1.0-alpha1-13-user
       author: RollW

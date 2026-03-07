@@ -38,8 +38,11 @@ public class StaffController {
 
     @GetMapping("/staffs/{staffId}")
     public HttpResponseEntity<StaffVo> getStaff(
-            @PathVariable("staffId") Long staffId) {
-        return HttpResponseEntity.success();
+            @PathVariable("staffId") String staffId) {
+        AttributedStaff staffInfo = staffService.getStaff(staffId);
+        return HttpResponseEntity.success(
+                StaffVo.from(staffInfo)
+        );
     }
 
     @GetMapping("/users/{userId}/staff")

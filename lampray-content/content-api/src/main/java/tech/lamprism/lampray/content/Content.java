@@ -37,7 +37,8 @@ public interface Content extends ContentIdentity {
      * @return content id
      */
     @Override
-    long getContentId();
+    @NonNull
+    String getContentId();
 
     /**
      * Get the type of the content.
@@ -48,9 +49,14 @@ public interface Content extends ContentIdentity {
     @Override
     ContentType getContentType();
 
-    static Content of(long userId, long contentId,
+    static Content of(long userId, @NonNull String contentId,
                       @NonNull ContentType contentType) {
         return new SimpleContentInfo(userId, contentId, contentType);
+    }
+
+    static Content of(long userId, long contentId,
+                      @NonNull ContentType contentType) {
+        return of(userId, Long.toString(contentId), contentType);
     }
 
     static Content of(long userId,

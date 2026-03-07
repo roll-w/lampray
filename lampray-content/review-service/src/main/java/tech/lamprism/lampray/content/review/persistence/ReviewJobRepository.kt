@@ -37,7 +37,7 @@ class ReviewJobRepository(
     }
 
     fun findByContent(
-        contentId: Long,
+        contentId: String,
         contentType: ContentType,
     ): List<ReviewJobEntity> = findAll { root, _, criteriaBuilder ->
         criteriaBuilder.and(
@@ -47,7 +47,7 @@ class ReviewJobRepository(
     }
 
     fun findByContentAndStatus(
-        contentId: Long,
+        contentId: String,
         contentType: ContentType,
         reviewStatus: ReviewStatus
     ): List<ReviewJobEntity> = findAll { root, _, criteriaBuilder ->

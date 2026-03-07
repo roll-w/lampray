@@ -67,7 +67,7 @@ public abstract class AbstractContentOperator implements ContentOperator {
     }
 
     @Override
-    public final long getContentId() {
+    public final String getContentId() {
         return content.getContentId();
     }
 

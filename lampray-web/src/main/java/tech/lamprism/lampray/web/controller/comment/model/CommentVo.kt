@@ -26,17 +26,17 @@ import java.time.OffsetDateTime
  * @author RollW
  */
 data class CommentVo(
-    val id: Long,
+    val id: String,
     val userId: Long,
-    val parent: Long,
+    val parent: String?,
     val content: StructuralText,
-    val contentId: Long,
+    val contentId: String,
     val contentType: ContentType,
     val createTime: OffsetDateTime,
     val updateTime: OffsetDateTime
 ) : ContentVo {
 
-    override fun id(): Long = id
+    override fun id(): String = id
 
     override fun createTime(): OffsetDateTime = createTime
 

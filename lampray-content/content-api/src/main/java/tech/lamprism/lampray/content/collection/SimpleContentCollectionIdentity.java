@@ -20,11 +20,11 @@ package tech.lamprism.lampray.content.collection;
  * @author RollW
  */
 public record SimpleContentCollectionIdentity(
-        long contentCollectionId,
+        String contentCollectionId,
         ContentCollectionType contentCollectionType
 ) implements ContentCollectionIdentity {
     @Override
-    public long getContentCollectionId() {
+    public String getContentCollectionId() {
         return contentCollectionId;
     }
 
@@ -34,7 +34,7 @@ public record SimpleContentCollectionIdentity(
     }
 
     public static SimpleContentCollectionIdentity of(
-            long contentCollectionId,
+            String contentCollectionId,
             ContentCollectionType contentCollectionType) {
         return new SimpleContentCollectionIdentity(
                 contentCollectionId,

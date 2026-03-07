@@ -25,7 +25,7 @@ import tech.rollw.common.web.system.SystemResourceOperator;
 /**
  * @author RollW
  */
-public interface ContentOperator extends SystemResourceOperator<Long>, ContentDetails {
+public interface ContentOperator extends SystemResourceOperator<String>, ContentDetails {
     @Override
     ContentOperator update() throws CommonRuntimeException;
 
@@ -68,7 +68,7 @@ public interface ContentOperator extends SystemResourceOperator<Long>, ContentDe
 
     @NonNull
     @Override
-    default Long getResourceId() {
+    default String getResourceId() {
         return getContentId();
     }
 

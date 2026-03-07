@@ -27,7 +27,7 @@ import java.util.Optional
 @Repository
 class FavoriteGroupRepository(
     private val favoriteGroupDao: FavoriteGroupDao
-) : CommonRepository<FavoriteGroupDo, Long>(favoriteGroupDao) {
+) : CommonRepository<FavoriteGroupDo, String>(favoriteGroupDao) {
     fun findByName(name: String, operator: Operator): Optional<FavoriteGroupDo> =
         findOne { root, _, builder ->
             builder.and(

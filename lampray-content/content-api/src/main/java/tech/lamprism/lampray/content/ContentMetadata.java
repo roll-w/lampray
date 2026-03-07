@@ -18,7 +18,7 @@ package tech.lamprism.lampray.content;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.DataEntity;
-import tech.lamprism.lampray.LongEntityBuilder;
+import tech.lamprism.lampray.EntityBuilder;
 import tech.rollw.common.web.system.SystemResourceKind;
 
 import java.time.OffsetDateTime;
@@ -27,11 +27,12 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 @SuppressWarnings({"ClassCanBeRecord"})
-public class ContentMetadata implements DataEntity<Long>, ContentTrait {
+public class ContentMetadata implements DataEntity<String>, ContentTrait {
     // only maintains the metadata of the content.
     private final Long id;
+    private final String resourceId;
     private final long userId;
-    private final long contentId;
+    private final String contentId;
 
     @NonNull
     private final ContentType contentType;
@@ -42,12 +43,13 @@ public class ContentMetadata implements DataEntity<Long>, ContentTrait {
     @NonNull
     private final ContentAccessAuthType contentAccessAuthType;
 
-    public ContentMetadata(Long id, long userId,
-                           long contentId,
+    public ContentMetadata(Long id, String resourceId, long userId,
+                           String contentId,
                            @NonNull ContentType contentType,
                            @NonNull ContentStatus contentStatus,
                            @NonNull ContentAccessAuthType contentAccessAuthType) {
         this.id = id;
+        this.resourceId = resourceId;
         this.userId = userId;
         this.contentId = contentId;
         this.contentType = contentType;
@@ -70,7 +72,11 @@ public class ContentMetadata implements DataEntity<Long>, ContentTrait {
     }
 
     @Override
-    public Long getEntityId() {
+    public String getEntityId() {
+        return resourceId;
+    }
+
+    public Long getId() {
         return id;
     }
 
@@ -101,7 +107,7 @@ public class ContentMetadata implements DataEntity<Long>, ContentTrait {
     }
 
     @Override
-    public long getContentId() {
+    public String getContentId() {
         return contentId;
     }
 
@@ -135,10 +141,11 @@ public class ContentMetadata implements DataEntity<Long>, ContentTrait {
         return ContentMetadataResourceKind.INSTANCE;
     }
 
-    public static class Builder implements LongEntityBuilder<ContentMetadata> {
+    public static class Builder implements EntityBuilder<ContentMetadata, String> {
         private Long id;
+        private String resourceId;
         private long userId;
-        private long contentId;
+        private String contentId;
         private ContentType contentType;
         private ContentStatus contentStatus;
         private ContentAccessAuthType contentAccessAuthType;
@@ -148,6 +155,7 @@ public class ContentMetadata implements DataEntity<Long>, ContentTrait {
 
         public Builder(ContentMetadata contentMetadata) {
             this.id = contentMetadata.id;
+            this.resourceId = contentMetadata.resourceId;
             this.userId = contentMetadata.userId;
             this.contentId = contentMetadata.contentId;
             this.contentType = contentMetadata.contentType;
@@ -156,7 +164,12 @@ public class ContentMetadata implements DataEntity<Long>, ContentTrait {
         }
 
         @Override
-        public Builder setEntityId(Long id) {
+        public Builder setEntityId(String id) {
+            this.resourceId = id;
+            return this;
+        }
+
+        public Builder setId(Long id) {
             this.id = id;
             return this;
         }
@@ -166,7 +179,7 @@ public class ContentMetadata implements DataEntity<Long>, ContentTrait {
             return this;
         }
 
-        public Builder setContentId(long contentId) {
+        public Builder setContentId(String contentId) {
             this.contentId = contentId;
             return this;
         }
@@ -188,7 +201,7 @@ public class ContentMetadata implements DataEntity<Long>, ContentTrait {
 
         @Override
         public ContentMetadata build() {
-            return new ContentMetadata(id, userId, contentId,
+            return new ContentMetadata(id, resourceId, userId, contentId,
                     contentType, contentStatus, contentAccessAuthType);
         }
     }

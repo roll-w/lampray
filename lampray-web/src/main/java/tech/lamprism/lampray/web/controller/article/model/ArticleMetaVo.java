@@ -28,7 +28,7 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 public record ArticleMetaVo(
-        long id,
+        String id,
         String title,
         StructuralText content,
         long authorId,

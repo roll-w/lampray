@@ -40,12 +40,12 @@ import tech.rollw.common.web.system.SystemResourceOperatorProvider;
 public class ContentManageController {
     private final ContentAccessService contentAccessService;
     private final ContentProviderFactory contentProviderFactory;
-    private final SystemResourceOperatorProvider<Long> systemResourceOperatorProvider;
+    private final SystemResourceOperatorProvider<String> systemResourceOperatorProvider;
     private final ContentCollectionProviderFactory contentCollectionProviderFactory;
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
     public ContentManageController(ContentAccessService contentAccessService, ContentProviderFactory contentProviderFactory,
-                                   SystemResourceOperatorProvider<Long> systemResourceOperatorProvider,
+                                   SystemResourceOperatorProvider<String> systemResourceOperatorProvider,
                                    ContentCollectionProviderFactory contentCollectionProviderFactory,
                                    ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.contentAccessService = contentAccessService;
@@ -59,7 +59,7 @@ public class ContentManageController {
     public HttpResponseEntity<ContentVo> getContent(
             @PathVariable("userId") Long userId,
             @PathVariable("contentType") UrlContentType contentType,
-            @PathVariable("contentId") Long contentId) {
+            @PathVariable("contentId") String contentId) {
         ContentMetadataDetails<?> contentMetadataDetails = contentAccessService.getContentMetadataDetails(
                 ContentIdentity.of(contentId, contentType.getContentType())
         );

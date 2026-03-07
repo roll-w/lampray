@@ -82,6 +82,7 @@ public class CommentMetadata {
         return builder()
                 .setUserId(content.getUserId())
                 .setId(-1L)
+                .setContentId(content.getContentId())
                 .setContentType(content.getContentType())
                 .setCommentPermission(ContentCommentPermission.PUBLIC)
                 .build();

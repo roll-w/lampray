@@ -20,11 +20,11 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Lob
 import jakarta.persistence.Table
+import org.hibernate.annotations.EventType
+import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
@@ -46,16 +46,19 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = "comment")
 class CommentDo(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
+    var id: Long? = null,
+
     @Id
-    @Column(name = "id", nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null,
+    @Column(name = "resource_id", unique = true, nullable = false, length = 64)
+    var resourceId: String = "",
 
     @Column(name = "user_id", nullable = false)
     private var userId: Long = 0,
 
-    @Column(name = "parent_id", nullable = false)
-    var parentId: Long = 0,
+    @Column(name = "parent_id", length = 64)
+    var parentId: String? = null,
 
     @Lob
     @Column(name = "content", nullable = false, length = 1000000)
@@ -73,20 +76,20 @@ class CommentDo(
     var commentOnType: ContentType = ContentType.COMMENT,
 
     @Column(name = "comment_on_id", nullable = false)
-    var commentOnId: Long = 0,
+    var commentOnId: String = "",
 
     @Column(name = "comment_status", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var commentStatus: CommentStatus = CommentStatus.NONE
-) : DataEntity<Long>, ContentDetails, ContentAssociated {
-    override fun getEntityId(): Long? = id
+) : DataEntity<String>, ContentDetails, ContentAssociated {
+    override fun getEntityId(): String = resourceId
 
     fun setId(id: Long) {
         this.id = id
     }
 
-    override fun getResourceId(): Long = id!!
+    override fun getResourceId(): String = resourceId
 
     override fun getCreateTime(): OffsetDateTime = createTime
 
@@ -100,7 +103,7 @@ class CommentDo(
         this.updateTime = updateTime
     }
 
-    override fun getContentId(): Long = id!!
+    override fun getContentId(): String = resourceId
 
     override fun getContentType(): ContentType =
         ContentType.COMMENT
@@ -126,13 +129,14 @@ class CommentDo(
         CommentResourceKind
 
     override fun getMetadata(): CommentDetailsMetadata {
+        val metadataParentId = parentId?.takeIf { it != "0" }
         return CommentDetailsMetadata(
-            commentOnType, commentOnId, parentId
+            commentOnType, commentOnId, metadataParentId
         )
     }
 
     fun lock(): Comment = Comment(
-        id!!, userId, parentId, content, createTime,
+        id!!, resourceId, userId, parentId, content, createTime,
         updateTime, commentOnType, commentOnId, commentStatus
     )
 
@@ -152,19 +156,21 @@ class CommentDo(
 
     class Builder {
         private var id: Long? = null
+        private var resourceId: String = ""
         private var userId: Long = 0
-        private var parentId: Long = 0
+        private var parentId: String? = null
         private var content: StructuralText? = null
         private var createTime: OffsetDateTime? = null
         private var updateTime: OffsetDateTime? = null
         private var commentOnType: ContentType? = null
-        private var commentOnId: Long = 0
+        private var commentOnId: String = ""
         private var commentStatus: CommentStatus? = null
 
         constructor()
 
         constructor(other: CommentDo) {
             this.id = other.id
+            this.resourceId = other.resourceId
             this.userId = other.userId
             this.parentId = other.parentId
             this.content = other.content
@@ -179,11 +185,15 @@ class CommentDo(
             this.id = id
         }
 
+        fun setResourceId(resourceId: String) = apply {
+            this.resourceId = resourceId
+        }
+
         fun setUserId(userId: Long) = apply {
             this.userId = userId
         }
 
-        fun setParentId(parentId: Long) = apply {
+        fun setParentId(parentId: String?) = apply {
             this.parentId = parentId
         }
 
@@ -203,7 +213,7 @@ class CommentDo(
             this.commentOnType = commentOnType
         }
 
-        fun setCommentOnId(commentOnId: Long) = apply {
+        fun setCommentOnId(commentOnId: String) = apply {
             this.commentOnId = commentOnId
         }
 
@@ -214,6 +224,7 @@ class CommentDo(
         fun build(): CommentDo {
             return CommentDo(
                 id,
+                resourceId,
                 userId,
                 parentId,
                 content!!,
@@ -233,7 +244,7 @@ class CommentDo(
         @JvmStatic
         fun Comment.toDo(): CommentDo {
             return CommentDo(
-                entityId, userId, parentId, content,
+                id, entityId, userId, parentId, content,
                 createTime, updateTime,
                 commentOnType, commentOnId, commentStatus
             )

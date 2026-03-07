@@ -18,7 +18,7 @@ package tech.lamprism.lampray.staff;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.DataEntity;
-import tech.lamprism.lampray.LongEntityBuilder;
+import tech.lamprism.lampray.EntityBuilder;
 import tech.rollw.common.web.system.SystemResourceKind;
 
 import java.time.OffsetDateTime;
@@ -29,8 +29,9 @@ import java.util.Set;
 /**
  * @author RollW
  */
-public class Staff implements DataEntity<Long>, AttributedStaff {
+public class Staff implements DataEntity<String>, AttributedStaff {
     private final Long id;
+    private final String resourceId;
     private final long userId;
     private final Set<StaffType> types;
     private final OffsetDateTime createTime;
@@ -43,11 +44,12 @@ public class Staff implements DataEntity<Long>, AttributedStaff {
     private final boolean asUser;
     private final boolean deleted;
 
-    public Staff(Long id, long userId,
+    public Staff(Long id, String resourceId, long userId,
                  Set<StaffType> types, OffsetDateTime createTime,
                  OffsetDateTime updateTime, boolean asUser,
                  boolean deleted) {
         this.id = id;
+        this.resourceId = resourceId;
         this.userId = userId;
         this.types = types.isEmpty() ? EnumSet.noneOf(StaffType.class) : types;
         this.createTime = createTime;
@@ -57,7 +59,11 @@ public class Staff implements DataEntity<Long>, AttributedStaff {
     }
 
     @Override
-    public Long getEntityId() {
+    public String getEntityId() {
+        return resourceId;
+    }
+
+    public Long getId() {
         return id;
     }
 
@@ -101,8 +107,8 @@ public class Staff implements DataEntity<Long>, AttributedStaff {
 
     @NonNull
     @Override
-    public Long getResourceId() {
-        return id;
+    public String getResourceId() {
+        return resourceId;
     }
 
     @Override
@@ -115,18 +121,19 @@ public class Staff implements DataEntity<Long>, AttributedStaff {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Staff staff)) return false;
-        return userId == staff.userId && createTime == staff.createTime && updateTime == staff.updateTime && asUser == staff.asUser && deleted == staff.deleted && Objects.equals(id, staff.id) && Objects.equals(types, staff.types);
+        return userId == staff.userId && createTime == staff.createTime && updateTime == staff.updateTime && asUser == staff.asUser && deleted == staff.deleted && Objects.equals(id, staff.id) && Objects.equals(resourceId, staff.resourceId) && Objects.equals(types, staff.types);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, userId, types, createTime, updateTime, asUser, deleted);
+        return Objects.hash(id, resourceId, userId, types, createTime, updateTime, asUser, deleted);
     }
 
     @Override
     public String toString() {
         return "Staff{" +
                 "id=" + id +
+                ", resourceId='" + resourceId + '\'' +
                 ", userId=" + userId +
                 ", types=" + types +
                 ", createTime=" + createTime +
@@ -145,8 +152,9 @@ public class Staff implements DataEntity<Long>, AttributedStaff {
     }
 
 
-    public final static class Builder implements LongEntityBuilder<Staff> {
+    public final static class Builder implements EntityBuilder<Staff, String> {
         private Long id;
+        private String resourceId;
         private long userId;
         private Set<StaffType> type;
         private OffsetDateTime createTime;
@@ -159,6 +167,7 @@ public class Staff implements DataEntity<Long>, AttributedStaff {
 
         public Builder(Staff staff) {
             this.id = staff.id;
+            this.resourceId = staff.resourceId;
             this.userId = staff.userId;
             this.type = staff.types;
             this.createTime = staff.createTime;
@@ -168,7 +177,12 @@ public class Staff implements DataEntity<Long>, AttributedStaff {
         }
 
         @Override
-        public Builder setEntityId(Long id) {
+        public Builder setEntityId(String id) {
+            this.resourceId = id;
+            return this;
+        }
+
+        public Builder setId(Long id) {
             this.id = id;
             return this;
         }
@@ -214,7 +228,7 @@ public class Staff implements DataEntity<Long>, AttributedStaff {
 
         @Override
         public Staff build() {
-            return new Staff(id, userId, type, createTime,
+            return new Staff(id, resourceId, userId, type, createTime,
                     updateTime, asUser, deleted);
         }
     }

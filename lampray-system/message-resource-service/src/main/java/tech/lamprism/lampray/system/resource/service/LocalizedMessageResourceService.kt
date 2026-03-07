@@ -17,7 +17,9 @@
 package tech.lamprism.lampray.system.resource.service
 
 import org.springframework.stereotype.Service
+import tech.lamprism.lampray.common.data.ResourceIdGenerator
 import tech.lamprism.lampray.system.resource.LocalizedMessageResource
+import tech.lamprism.lampray.system.resource.LocalizedMessageResourceKind
 import tech.lamprism.lampray.system.resource.LocalizedMessageResourceProvider
 import tech.lamprism.lampray.system.resource.SimpleLocalizedMessageResource
 import tech.lamprism.lampray.system.resource.data.LocalizedMessageDo
@@ -31,7 +33,8 @@ import java.util.function.Supplier
  */
 @Service
 class LocalizedMessageResourceService(
-    private val localizedMessageRepository: LocalizedMessageRepository
+    private val localizedMessageRepository: LocalizedMessageRepository,
+    private val resourceIdGenerator: ResourceIdGenerator
 ) : LocalizedMessageResourceProvider {
     private var _fallbackLocale: Locale = Locale.ROOT
 
@@ -46,15 +49,14 @@ class LocalizedMessageResourceService(
         value: String,
         locale: Locale
     ) {
-        val localizedMessageDo = localizedMessageRepository
-            .findByKey(key, locale).orElse(null) ?: LocalizedMessageDo().apply {
+        val existing = localizedMessageRepository.findByKey(key, locale).orElse(null)
+        val localizedMessageDo = existing ?: LocalizedMessageDo().apply {
+            resourceId = resourceIdGenerator.nextId(LocalizedMessageResourceKind)
             this.key = key
             this.value = value
             this.locale = locale
         }
-        if (localizedMessageDo.entityId != null &&
-            localizedMessageDo.value == value
-        ) {
+        if (existing != null && localizedMessageDo.value == value) {
             return
         }
         val time = OffsetDateTime.now()

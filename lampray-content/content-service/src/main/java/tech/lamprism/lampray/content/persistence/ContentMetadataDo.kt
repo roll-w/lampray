@@ -20,11 +20,11 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.EventType
+import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
@@ -48,16 +48,19 @@ import java.time.OffsetDateTime
     ]
 )
 class ContentMetadataDo(
-    @Column(name = "id")
+    @Column(name = "id", insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
+    var id: Long? = null,
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null,
+    @Column(name = "resource_id", unique = true, nullable = false, length = 64)
+    var resourceId: String = "",
 
     @Column(name = "user_id", nullable = false)
     var userId: Long = 0,
 
     @Column(name = "content_id", nullable = false)
-    private var contentId: Long = 0,
+    private var contentId: String = "",
 
     @Column(name = "type", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
@@ -73,8 +76,8 @@ class ContentMetadataDo(
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var contentAccessAuthType: ContentAccessAuthType = ContentAccessAuthType.PUBLIC
-) : DataEntity<Long>, ContentTrait {
-    override fun getEntityId(): Long? = id
+) : DataEntity<String>, ContentTrait {
+    override fun getEntityId(): String = resourceId
 
     fun setId(id: Long?) {
         this.id = id
@@ -87,9 +90,9 @@ class ContentMetadataDo(
     override fun getSystemResourceKind(): SystemResourceKind =
         ContentMetadataResourceKind
 
-    override fun getContentId(): Long = contentId
+    override fun getContentId(): String = contentId
 
-    fun setContentId(contentId: Long) {
+    fun setContentId(contentId: String) {
         this.contentId = contentId
     }
 
@@ -100,7 +103,7 @@ class ContentMetadataDo(
     }
 
     fun lock(): ContentMetadata = ContentMetadata(
-        id, userId, contentId, contentType, contentStatus, contentAccessAuthType
+        id, resourceId, userId, contentId, contentType, contentStatus, contentAccessAuthType
     )
 
     fun toBuilder(): Builder {
@@ -114,7 +117,7 @@ class ContentMetadataDo(
         @JvmStatic
         fun ContentMetadata.toDo() =
             ContentMetadataDo(
-                entityId, userId, contentId, contentType,
+                id, entityId, userId, contentId, contentType,
                 contentStatus, contentAccessAuthType
             )
 
@@ -122,8 +125,9 @@ class ContentMetadataDo(
 
     class Builder {
         private var id: Long? = null
+        private var resourceId: String = ""
         private var userId: Long = 0
-        private var contentId: Long = 0
+        private var contentId: String = ""
         private var contentType: ContentType? = null
         private var contentStatus: ContentStatus? = null
         private var contentAccessAuthType: ContentAccessAuthType? = null
@@ -131,7 +135,8 @@ class ContentMetadataDo(
         constructor()
 
         constructor(other: ContentMetadataDo) {
-            this.id = other.getEntityId()
+            this.id = other.id
+            this.resourceId = other.resourceId
             this.userId = other.userId
             this.contentId = other.getContentId()
             this.contentType = other.getContentType()
@@ -143,11 +148,15 @@ class ContentMetadataDo(
             this.id = id
         }
 
+        fun setResourceId(resourceId: String) = apply {
+            this.resourceId = resourceId
+        }
+
         fun setUserId(userId: Long) = apply {
             this.userId = userId
         }
 
-        fun setContentId(contentId: Long) = apply {
+        fun setContentId(contentId: String) = apply {
             this.contentId = contentId
         }
 
@@ -165,7 +174,7 @@ class ContentMetadataDo(
 
         fun build(): ContentMetadataDo {
             return ContentMetadataDo(
-                id, userId,
+                id, resourceId, userId,
                 contentId,
                 contentType!!, contentStatus!!,
                 contentAccessAuthType!!

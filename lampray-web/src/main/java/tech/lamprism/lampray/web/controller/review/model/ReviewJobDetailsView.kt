@@ -29,7 +29,7 @@ data class ReviewJobDetailsView(
     val id: String,
     val status: ReviewStatus,
     val contentType: ContentType,
-    val contentId: Long,
+    val contentId: String,
     val reviewMark: ReviewMark,
     val createTime: OffsetDateTime,
     val updateTime: OffsetDateTime,
