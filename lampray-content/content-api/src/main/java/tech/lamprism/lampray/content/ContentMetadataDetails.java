@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class ContentMetadataDetails<T extends ContentDetails> implements Content
     }
 
     @Override
-    public long getContentId() {
+    public String getContentId() {
         return contentMetadata.getContentId();
     }
 

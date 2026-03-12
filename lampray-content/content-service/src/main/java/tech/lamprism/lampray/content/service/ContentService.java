@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.content.Content;
 import tech.lamprism.lampray.content.ContentAccessAuthType;
 import tech.lamprism.lampray.content.ContentAccessCredentials;
@@ -27,6 +28,7 @@ import tech.lamprism.lampray.content.ContentAccessService;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentMetadata;
 import tech.lamprism.lampray.content.ContentMetadataDetails;
+import tech.lamprism.lampray.content.ContentMetadataResourceKind;
 import tech.lamprism.lampray.content.ContentProvider;
 import tech.lamprism.lampray.content.ContentProviderFactory;
 import tech.lamprism.lampray.content.ContentPublishProvider;
@@ -44,7 +46,7 @@ import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
 import tech.lamprism.lampray.content.permit.ContentPermitChecker;
 import tech.lamprism.lampray.content.permit.ContentPermitResult;
-import tech.lamprism.lampray.content.persistence.ContentMetadataDo;
+import tech.lamprism.lampray.content.persistence.ContentMetadataEntity;
 import tech.lamprism.lampray.content.persistence.ContentMetadataRepository;
 import tech.lamprism.lampray.content.publish.ContentPublishListener;
 import tech.rollw.common.web.CommonErrorCode;
@@ -72,6 +74,7 @@ public class ContentService implements ContentAccessService,
     private final ContentProviderFactory contentProviderFactory;
     private final ContentPermitChecker contentPermitChecker;
     private final ContentMetadataRepository contentMetadataRepository;
+    private final ResourceIdGenerator resourceIdGenerator;
 
     public ContentService(List<ContentPublisher> contentPublishers,
                           List<UncreatedContentPreChecker> uncreatedContentPreCheckers,
@@ -79,7 +82,8 @@ public class ContentService implements ContentAccessService,
                           List<ContentPublishListener> contentPublishListeners,
                           ContentProviderFactory contentProviderFactory,
                           ContentPermitChecker contentPermitChecker,
-                          ContentMetadataRepository contentMetadataRepository) {
+                          ContentMetadataRepository contentMetadataRepository,
+                          ResourceIdGenerator resourceIdGenerator) {
         this.contentPublishers = contentPublishers;
         this.uncreatedContentPreCheckers = uncreatedContentPreCheckers;
         this.contentCollectionProviders = contentCollectionProviders;
@@ -87,6 +91,7 @@ public class ContentService implements ContentAccessService,
         this.contentProviderFactory = contentProviderFactory;
         this.contentPermitChecker = contentPermitChecker;
         this.contentMetadataRepository = contentMetadataRepository;
+        this.resourceIdGenerator = resourceIdGenerator;
     }
 
     /**
@@ -95,7 +100,7 @@ public class ContentService implements ContentAccessService,
     @Override
     public ContentDetails openContent(ContentTrait contentTrait,
                                       ContentAccessCredentials contentAccessCredentials) throws ContentException {
-        ContentMetadataDo metadata = contentMetadataRepository
+        ContentMetadataEntity metadata = contentMetadataRepository
                 .findByContent(contentTrait)
                 .orElseThrow(() -> new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND));
         ErrorCode errorCode = fromContentStatus(metadata.getContentStatus());
@@ -129,7 +134,7 @@ public class ContentService implements ContentAccessService,
     @Override
     public ContentMetadataDetails<?> getContentMetadataDetails(ContentTrait contentTrait)
             throws ContentException {
-        ContentMetadataDo metadata = contentMetadataRepository
+        ContentMetadataEntity metadata = contentMetadataRepository
                 .findByContent(contentTrait)
                 .orElse(null);
         if (metadata == null) {
@@ -147,7 +152,7 @@ public class ContentService implements ContentAccessService,
      */
     public ContentStatus getContentStatus(ContentTrait contentTrait)
             throws ContentException {
-        ContentMetadataDo metadata = contentMetadataRepository
+        ContentMetadataEntity metadata = contentMetadataRepository
                 .findByContent(contentTrait)
                 .orElse(null);
         if (metadata == null) {
@@ -187,8 +192,9 @@ public class ContentService implements ContentAccessService,
                 uncreatedContent,
                 timestamp
         );
-        ContentMetadataDo.Builder contentMetadataBuilder = ContentMetadataDo
+        ContentMetadataEntity.Builder contentMetadataBuilder = ContentMetadataEntity
                 .builder()
+                .setResourceId(resourceIdGenerator.nextId(ContentMetadataResourceKind.INSTANCE))
                 .setContentId(contentDetails.getContentId())
                 .setContentType(contentDetails.getContentType())
                 .setUserId(contentDetails.getUserId())
@@ -210,7 +216,7 @@ public class ContentService implements ContentAccessService,
             List<ContentMetadata> contentMetadata) {
         return contentDetails.stream().map(details -> {
             ContentMetadata metadata = contentMetadata.stream()
-                    .filter(m -> m.getContentId() == details.getContentId())
+                    .filter(m -> m.getContentId().equals(details.getContentId()))
                     .findFirst()
                     .orElseThrow(() -> new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND));
             return new ContentMetadataDetails<>(details, metadata);
@@ -246,7 +252,7 @@ public class ContentService implements ContentAccessService,
         List<ContentMetadata> contentMetadatas = contentMetadataRepository
                 .findByContents(contents)
                 .stream()
-                .map(ContentMetadataDo::lock)
+                .map(ContentMetadataEntity::lock)
                 .toList();
         return pairWith(contents, contentMetadatas);
     }

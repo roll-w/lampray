@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 public record SimpleContentDetails(
-        long contentId,
+        @NonNull String contentId,
         @NonNull ContentType contentType,
         long userId,
         @Nullable String title,
@@ -36,7 +36,7 @@ public record SimpleContentDetails(
         @Nullable ContentDetailsMetadata contentDetailsMetadata
 ) implements ContentDetails {
     @Override
-    public long getContentId() {
+    public String getContentId() {
         return contentId;
     }
 

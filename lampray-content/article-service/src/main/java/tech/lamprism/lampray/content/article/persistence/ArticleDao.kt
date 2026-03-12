@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface ArticleDao : CommonDao<ArticleDo, Long> {
-    @Query("FROM ArticleDo a WHERE a.userId = :userId")
-    fun findAllByUserId(@Param("userId") userId: Long): List<ArticleDo>
+interface ArticleDao : CommonDao<ArticleEntity, String> {
+    @Query("FROM ArticleEntity a WHERE a.userId = :userId")
+    fun findAllByUserId(@Param("userId") userId: Long): List<ArticleEntity>
 }

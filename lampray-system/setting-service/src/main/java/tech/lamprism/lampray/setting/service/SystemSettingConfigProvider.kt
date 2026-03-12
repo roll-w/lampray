@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.setting.service
 
 import org.springframework.stereotype.Service
+import tech.lamprism.lampray.common.data.ResourceIdGenerator
 import tech.lamprism.lampray.setting.ConfigPath
 import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.setting.ConfigReader
@@ -28,7 +29,8 @@ import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import tech.lamprism.lampray.setting.SettingSpecificationHelper
 import tech.lamprism.lampray.setting.SettingSpecificationProvider
 import tech.lamprism.lampray.setting.SnapshotConfigValue
-import tech.lamprism.lampray.setting.data.SystemSettingDo
+import tech.lamprism.lampray.setting.SystemSettingResourceKind
+import tech.lamprism.lampray.setting.data.SystemSettingEntity
 import tech.lamprism.lampray.setting.data.SystemSettingRepository
 
 /**
@@ -37,7 +39,8 @@ import tech.lamprism.lampray.setting.data.SystemSettingRepository
 @Service
 class SystemSettingConfigProvider(
     private val systemSettingRepository: SystemSettingRepository,
-    private val settingSpecificationProvider: SettingSpecificationProvider
+    private val settingSpecificationProvider: SettingSpecificationProvider,
+    private val resourceIdGenerator: ResourceIdGenerator
 ) : ConfigProvider {
 
     override val metadata: ConfigReader.Metadata =
@@ -109,7 +112,8 @@ class SystemSettingConfigProvider(
             systemSettingRepository.save(setting)
             return SettingSource.DATABASE
         }
-        val newSetting = SystemSettingDo(
+        val newSetting = SystemSettingEntity(
+            resourceId = resourceIdGenerator.nextId(SystemSettingResourceKind),
             key = key,
             value = value
         )
@@ -128,7 +132,8 @@ class SystemSettingConfigProvider(
             systemSettingRepository.save(setting)
             return SettingSource.DATABASE
         }
-        val newSetting = SystemSettingDo(
+        val newSetting = SystemSettingEntity(
+            resourceId = resourceIdGenerator.nextId(SystemSettingResourceKind),
             key = spec.key.name,
             value = value
         )

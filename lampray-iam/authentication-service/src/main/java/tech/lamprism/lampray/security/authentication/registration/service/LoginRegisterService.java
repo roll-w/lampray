@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.LampException;
 import tech.lamprism.lampray.RequestMetadata;
+import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.security.authentication.UserInfoSignature;
 import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationToken;
@@ -39,10 +40,11 @@ import tech.lamprism.lampray.security.authentication.login.OnUserLoginEvent;
 import tech.lamprism.lampray.security.authentication.registration.OnUserRegistrationEvent;
 import tech.lamprism.lampray.security.authentication.registration.RegisterProvider;
 import tech.lamprism.lampray.security.authentication.registration.RegisterTokenProvider;
+import tech.lamprism.lampray.security.authentication.registration.RegisterTokenResourceKind;
 import tech.lamprism.lampray.security.authentication.registration.RegisterVerificationToken;
 import tech.lamprism.lampray.security.authentication.registration.Registration;
 import tech.lamprism.lampray.security.authentication.registration.RegistrationInterceptor;
-import tech.lamprism.lampray.security.authentication.registration.repository.RegisterTokenDo;
+import tech.lamprism.lampray.security.authentication.registration.repository.RegisterTokenEntity;
 import tech.lamprism.lampray.security.authentication.registration.repository.RegisterTokenRepository;
 import tech.lamprism.lampray.security.firewall.FirewallAccessRequest;
 import tech.lamprism.lampray.security.firewall.FirewallRegistry;
@@ -78,6 +80,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
     private final RegisterTokenRepository registerTokenRepository;
     private final FirewallRegistry firewallRegistry;
     private final SystemResourceOperatorProvider<Long> systemResourceOperatorProvider;
+    private final ResourceIdGenerator resourceIdGenerator;
     private final UserProvider userProvider;
     private final UserManageService userManageService;
     private final ApplicationEventPublisher eventPublisher;
@@ -91,6 +94,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                                 RegisterTokenRepository registerTokenRepository,
                                 FirewallRegistry firewallRegistry,
                                 SystemResourceOperatorProvider<Long> systemResourceOperatorProvider,
+                                ResourceIdGenerator resourceIdGenerator,
                                 UserProvider userProvider,
                                 UserManageService userManageService,
                                 ApplicationEventPublisher eventPublisher,
@@ -100,6 +104,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         this.registerTokenRepository = registerTokenRepository;
         this.firewallRegistry = firewallRegistry;
         this.systemResourceOperatorProvider = systemResourceOperatorProvider;
+        this.resourceIdGenerator = resourceIdGenerator;
         this.userProvider = userProvider;
         this.userManageService = userManageService;
         this.eventPublisher = eventPublisher;
@@ -236,16 +241,20 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         UUID uuid = UUID.randomUUID();
         String token = uuid.toString();
         long expiryTime = RegisterVerificationToken.calculateExpiryDate();
-        RegisterTokenDo registerVerificationToken = new RegisterTokenDo(
-                null, token, userIdentity.getUserId(), expiryTime, false
-        );
+        RegisterTokenEntity registerVerificationToken = RegisterTokenEntity.Companion.builder()
+                .setResourceId(resourceIdGenerator.nextId(RegisterTokenResourceKind.INSTANCE))
+                .setToken(token)
+                .setUserId(userIdentity.getUserId())
+                .setExpiryTime(expiryTime)
+                .setUsed(false)
+                .build();
         registerVerificationToken = registerTokenRepository.save(registerVerificationToken);
         return registerVerificationToken.lock();
     }
 
     @Override
     public RegisterVerificationToken getRegisterToken(String token) {
-        RegisterTokenDo registerTokenDo = registerTokenRepository.findByToken(token)
+        RegisterTokenEntity registerTokenDo = registerTokenRepository.findByToken(token)
                 .orElseThrow(() -> new AuthenticationException(AuthErrorCode.ERROR_TOKEN_NOT_EXIST));
         if (registerTokenDo.isExpired() || registerTokenDo.getUsed()) {
             throw new AuthenticationException(AuthErrorCode.ERROR_TOKEN_NOT_EXIST);
@@ -271,7 +280,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
 
     @Override
     public void verifyRegisterToken(String token) {
-        RegisterTokenDo registerTokenDo = registerTokenRepository.findByToken(token)
+        RegisterTokenEntity registerTokenDo = registerTokenRepository.findByToken(token)
                 .orElseThrow(() -> new AuthenticationException(AuthErrorCode.ERROR_TOKEN_NOT_EXIST));
         if (registerTokenDo.getUsed()) {
             throw new AuthenticationException(AuthErrorCode.ERROR_TOKEN_USED);

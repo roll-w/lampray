@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package tech.lamprism.lampray.security.authentication.registration;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.DataEntity;
-import tech.lamprism.lampray.LongEntityBuilder;
+import tech.lamprism.lampray.EntityBuilder;
 import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.rollw.common.web.system.SystemResourceKind;
 
@@ -32,17 +32,18 @@ import java.util.Date;
  */
 public record RegisterVerificationToken(
         Long id,
+        String resourceId,
         String token,
         long userId,
-        long expiryTime,// timestamp
+        long expiryTime,
         boolean used
-) implements VerifiableToken, DataEntity<Long> {
+) implements VerifiableToken, DataEntity<String> {
 
     public boolean isExpired() {
         return System.currentTimeMillis() > expiryTime;
     }
 
-    private static final int EXPIRATION = 60 * 24;// min
+    private static final int EXPIRATION = 60 * 24;
 
     public static long calculateExpiryDate(int expiryTimeInMinutes) {
         long now = System.currentTimeMillis();
@@ -59,8 +60,8 @@ public record RegisterVerificationToken(
     }
 
     @Override
-    public Long getEntityId() {
-        return id;
+    public String getEntityId() {
+        return resourceId;
     }
 
     @NonNull
@@ -103,8 +104,9 @@ public record RegisterVerificationToken(
         return !used && !isExpired();
     }
 
-    public static final class Builder implements LongEntityBuilder<RegisterVerificationToken> {
+    public static final class Builder implements EntityBuilder<RegisterVerificationToken, String> {
         private Long id;
+        private String resourceId;
         private String token;
         private long userId;
         private long expiryTime;
@@ -115,6 +117,7 @@ public record RegisterVerificationToken(
 
         public Builder(RegisterVerificationToken source) {
             this.id = source.id;
+            this.resourceId = source.resourceId;
             this.token = source.token;
             this.userId = source.userId;
             this.expiryTime = source.expiryTime;
@@ -122,8 +125,17 @@ public record RegisterVerificationToken(
         }
 
         @Override
-        public Builder setEntityId(Long id) {
+        public Builder setEntityId(String id) {
+            return setResourceId(id);
+        }
+
+        public Builder setId(Long id) {
             this.id = id;
+            return this;
+        }
+
+        public Builder setResourceId(String resourceId) {
+            this.resourceId = resourceId;
             return this;
         }
 
@@ -149,7 +161,7 @@ public record RegisterVerificationToken(
 
         @Override
         public RegisterVerificationToken build() {
-            return new RegisterVerificationToken(id, token, userId, expiryTime, used);
+            return new RegisterVerificationToken(id, resourceId, token, userId, expiryTime, used);
         }
     }
 }

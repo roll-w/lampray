@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,15 @@ import java.util.Objects;
  * @author RollW
  */
 @SuppressWarnings("all")
-public class SystemSetting implements DataEntity<Long> {
+public class SystemSetting implements DataEntity<String> {
     private final Long id;
+    private final String resourceId;
     private final String key;
     private final String value;
 
-    public SystemSetting(Long id, String key, String value) {
+    public SystemSetting(Long id, String resourceId, String key, String value) {
         this.id = id;
+        this.resourceId = resourceId;
         this.key = key;
         this.value = value;
     }
@@ -47,9 +49,13 @@ public class SystemSetting implements DataEntity<Long> {
         return value;
     }
 
-    @Override
-    public Long getEntityId() {
+    public Long getId() {
         return id;
+    }
+
+    @Override
+    public String getEntityId() {
+        return resourceId;
     }
 
     @NonNull
@@ -95,8 +101,9 @@ public class SystemSetting implements DataEntity<Long> {
                 + '}';
     }
 
-    public static final class Builder implements EntityBuilder<SystemSetting, Long> {
+    public static final class Builder implements EntityBuilder<SystemSetting, String> {
         private Long id;
+        private String resourceId;
         private String key;
         private String value;
 
@@ -104,9 +111,15 @@ public class SystemSetting implements DataEntity<Long> {
         }
 
         public Builder(SystemSetting systemSetting) {
-            this.id = systemSetting.getEntityId();
+            this.id = systemSetting.id;
+            this.resourceId = systemSetting.resourceId;
             this.key = systemSetting.getKey();
             this.value = systemSetting.getValue();
+        }
+
+        public Builder setResourceId(String resourceId) {
+            this.resourceId = resourceId;
+            return this;
         }
 
         public Builder setKey(String key) {
@@ -121,12 +134,17 @@ public class SystemSetting implements DataEntity<Long> {
 
         @Override
         public SystemSetting build() {
-            return new SystemSetting(id, key, value);
+            return new SystemSetting(id, resourceId, key, value);
+        }
+
+        public Builder setId(Long id) {
+            this.id = id;
+            return this;
         }
 
         @Override
-        public Builder setEntityId(Long id) {
-            this.id = id;
+        public Builder setEntityId(String id) {
+            this.resourceId = id;
             return this;
         }
     }

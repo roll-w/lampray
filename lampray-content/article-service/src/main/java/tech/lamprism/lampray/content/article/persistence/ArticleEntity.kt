@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package tech.lamprism.lampray.content.article.persistence
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Lob
 import jakarta.persistence.Table
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
+import org.hibernate.annotations.Generated
+import org.hibernate.generator.EventType
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.content.ContentDetails
 import tech.lamprism.lampray.content.ContentDetailsMetadata
@@ -39,11 +39,14 @@ import java.time.OffsetDateTime
  */
 @Entity
 @Table(name = "article")
-class ArticleDo(
-    @Column(name = "id", nullable = false)
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+class ArticleEntity(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
     var id: Long? = null,
+
+    @Id
+    @Column(name = "resource_id", nullable = false, length = 64, unique = true)
+    private var persistedResourceId: String,
 
     @Column(name = "user_id", nullable = false)
     private var userId: Long = 0,
@@ -59,16 +62,16 @@ class ArticleDo(
     private var content: StructuralText = StructuralText.EMPTY,
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "createTime", nullable = false)
+    @Column(name = "create_time", nullable = false)
     private var createTime: OffsetDateTime = OffsetDateTime.now(),
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "update_time", nullable = false)
     private var updateTime: OffsetDateTime = OffsetDateTime.now()
-) : DataEntity<Long>, ContentDetails {
-    override fun getEntityId(): Long? = id
+) : DataEntity<String>, ContentDetails {
+    override fun getEntityId(): String = persistedResourceId
 
-    override fun getResourceId(): Long = id!!
+    override fun getResourceId(): String = persistedResourceId
 
     override fun getCreateTime(): OffsetDateTime = createTime
 
@@ -82,7 +85,7 @@ class ArticleDo(
         this.updateTime = updateTime
     }
 
-    override fun getContentId(): Long = id!!
+    override fun getContentId(): String = persistedResourceId
 
     override fun getContentType(): ContentType = ContentType.ARTICLE
 
@@ -108,14 +111,15 @@ class ArticleDo(
         ArticleDetailsMetadata(cover)
 
     fun lock(): Article = Article(
-        id!!, userId, title, cover, content, createTime, updateTime
+        id, persistedResourceId, userId, title, cover, content, createTime, updateTime
     )
 
     fun toBuilder(): Builder = Builder(this)
 
     override fun toString(): String {
-        return "ArticleDo(" +
+        return "ArticleEntity(" +
                 "id=$id, " +
+                "resourceId='$persistedResourceId', " +
                 "userId=$userId, " +
                 "title='$title', " +
                 "cover='$cover', " +
@@ -127,6 +131,7 @@ class ArticleDo(
 
     class Builder {
         private var id: Long? = null
+        private var resourceId: String? = null
         private var userId: Long = 0
         private var title: String? = null
         private var cover: String = ""
@@ -136,8 +141,9 @@ class ArticleDo(
 
         constructor()
 
-        constructor(other: ArticleDo) {
+        constructor(other: ArticleEntity) {
             this.id = other.id
+            this.resourceId = other.getResourceId()
             this.userId = other.userId
             this.title = other.title
             this.cover = other.cover
@@ -148,6 +154,10 @@ class ArticleDo(
 
         fun setId(id: Long?) = apply {
             this.id = id
+        }
+
+        fun setResourceId(resourceId: String) = apply {
+            this.resourceId = resourceId
         }
 
         fun setUserId(userId: Long) = apply {
@@ -174,20 +184,32 @@ class ArticleDo(
             this.updateTime = updateTime
         }
 
-        fun build(): ArticleDo {
-            return ArticleDo(
-                id, userId, title!!, cover,
-                content!!, createTime!!, updateTime!!
+        fun build(): ArticleEntity {
+            return ArticleEntity(
+                id = id,
+                persistedResourceId = resourceId!!,
+                userId = userId,
+                title = title!!,
+                cover = cover,
+                content = content!!,
+                createTime = createTime!!,
+                updateTime = updateTime!!
             )
         }
     }
 
     companion object {
         @JvmStatic
-        fun Article.toDo(): ArticleDo {
-            return ArticleDo(
-                entityId, userId, title, cover, content,
-                createTime, updateTime
+        fun Article.toEntity(): ArticleEntity {
+            return ArticleEntity(
+                id = id,
+                persistedResourceId = resourceId,
+                userId = userId,
+                title = title,
+                cover = cover,
+                content = content,
+                createTime = createTime,
+                updateTime = updateTime
             )
         }
 

@@ -1,0 +1,168 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0.1.0-alpha1-15-resource-id-columns
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            tableName: article
+            columns:
+              - column:
+                  name: resource_id
+                  type: VARCHAR(64)
+        - sql:
+            sql: UPDATE article SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - addNotNullConstraint:
+            tableName: article
+            columnName: resource_id
+            columnDataType: VARCHAR(64)
+        - addUniqueConstraint:
+            tableName: article
+            columnNames: resource_id
+            constraintName: uc_article_resource_id
+
+        - addColumn:
+            tableName: comment
+            columns:
+              - column:
+                  name: resource_id
+                  type: VARCHAR(64)
+        - sql:
+            sql: UPDATE comment SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - modifyDataType:
+            tableName: comment
+            columnName: parent_id
+            newDataType: VARCHAR(64)
+        - modifyDataType:
+            tableName: comment
+            columnName: comment_on_id
+            newDataType: VARCHAR(64)
+        - sql:
+            sql: UPDATE comment SET parent_id = '' WHERE parent_id = '0' OR parent_id IS NULL;
+        - addNotNullConstraint:
+            tableName: comment
+            columnName: resource_id
+            columnDataType: VARCHAR(64)
+        - addUniqueConstraint:
+            tableName: comment
+            columnNames: resource_id
+            constraintName: uc_comment_resource_id
+
+        - addColumn:
+            tableName: content_metadata
+            columns:
+              - column:
+                  name: resource_id
+                  type: VARCHAR(64)
+        - sql:
+            sql: UPDATE content_metadata SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - modifyDataType:
+            tableName: content_metadata
+            columnName: content_id
+            newDataType: VARCHAR(64)
+        - addNotNullConstraint:
+            tableName: content_metadata
+            columnName: resource_id
+            columnDataType: VARCHAR(64)
+        - addUniqueConstraint:
+            tableName: content_metadata
+            columnNames: resource_id
+            constraintName: uc_content_metadata_resource_id
+
+        - addColumn:
+            tableName: favorite_group
+            columns:
+              - column:
+                  name: resource_id
+                  type: VARCHAR(64)
+        - sql:
+            sql: UPDATE favorite_group SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - addNotNullConstraint:
+            tableName: favorite_group
+            columnName: resource_id
+            columnDataType: VARCHAR(64)
+        - addUniqueConstraint:
+            tableName: favorite_group
+            columnNames: resource_id
+            constraintName: uc_favorite_group_resource_id
+
+        - addColumn:
+            tableName: favorite_item
+            columns:
+              - column:
+                  name: resource_id
+                  type: VARCHAR(64)
+        - sql:
+            sql: UPDATE favorite_item SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - modifyDataType:
+            tableName: favorite_item
+            columnName: group_id
+            newDataType: VARCHAR(64)
+        - modifyDataType:
+            tableName: favorite_item
+            columnName: content_id
+            newDataType: VARCHAR(64)
+        - addNotNullConstraint:
+            tableName: favorite_item
+            columnName: resource_id
+            columnDataType: VARCHAR(64)
+        - addUniqueConstraint:
+            tableName: favorite_item
+            columnNames: resource_id
+            constraintName: uc_favorite_item_resource_id
+
+        - addColumn:
+            tableName: localized_message
+            columns:
+              - column:
+                  name: resource_id
+                  type: VARCHAR(64)
+        - sql:
+            sql: UPDATE localized_message SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - addNotNullConstraint:
+            tableName: localized_message
+            columnName: resource_id
+            columnDataType: VARCHAR(64)
+        - addUniqueConstraint:
+            tableName: localized_message
+            columnNames: resource_id
+            constraintName: uc_localized_message_resource_id
+
+        - addColumn:
+            tableName: register_verification_token
+            columns:
+              - column:
+                  name: resource_id
+                  type: VARCHAR(64)
+        - sql:
+            sql: UPDATE register_verification_token SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - addNotNullConstraint:
+            tableName: register_verification_token
+            columnName: resource_id
+            columnDataType: VARCHAR(64)
+        - addUniqueConstraint:
+            tableName: register_verification_token
+            columnNames: resource_id
+            constraintName: uc_register_verification_token_resource_id
+
+        - modifyDataType:
+            tableName: review_job
+            columnName: content_id
+            newDataType: VARCHAR(64)
+
+        - addColumn:
+            tableName: system_setting
+            columns:
+              - column:
+                  name: resource_id
+                  type: VARCHAR(64)
+        - sql:
+            sql: UPDATE system_setting SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - addNotNullConstraint:
+            tableName: system_setting
+            columnName: resource_id
+            columnDataType: VARCHAR(64)
+        - addUniqueConstraint:
+            tableName: system_setting
+            columnNames: resource_id
+            constraintName: uc_system_setting_resource_id

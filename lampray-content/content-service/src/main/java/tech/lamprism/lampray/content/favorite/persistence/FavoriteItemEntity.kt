@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import jakarta.persistence.Temporal
-import jakarta.persistence.TemporalType
+import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.generator.EventType
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.content.ContentType
@@ -39,42 +37,41 @@ import java.time.OffsetDateTime
  */
 @Entity
 @Table(name = "favorite_item")
-class FavoriteItemDo(
-    @Id
-    @Column(name = "id", nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+class FavoriteItemEntity(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
     private var id: Long? = null,
+
+    @Id
+    @Column(name = "resource_id", nullable = false, length = 64, unique = true)
+    private var resourceId: String,
 
     @Column(name = "user_id", nullable = false)
     var userId: Long,
 
-    @Column(name = "group_id", nullable = false)
-    var groupId: Long,
+    @Column(name = "group_id", nullable = false, length = 64)
+    var groupId: String,
 
-    @Column(name = "content_id", nullable = false)
-    var contentId: Long = 0,
+    @Column(name = "content_id", nullable = false, length = 64)
+    var contentId: String = "",
 
     @Column(name = "content_type", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var contentType: ContentType = ContentType.ARTICLE,
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_time", nullable = false)
     private var createTime: OffsetDateTime = OffsetDateTime.now(),
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "update_time", nullable = false)
     private var updateTime: OffsetDateTime = OffsetDateTime.now(),
 
     @Column(name = "deleted", nullable = false)
     var deleted: Boolean = false
-) : DataEntity<Long> {
-    override fun getEntityId(): Long = id!!
+) : DataEntity<String> {
+    override fun getEntityId(): String = resourceId
 
-    fun setId(id: Long) {
-        this.id = id
-    }
+    fun getId(): Long? = id
 
     override fun getSystemResourceKind() = FavoriteItemResourceKind
 
@@ -85,6 +82,7 @@ class FavoriteItemDo(
     fun lock(): FavoriteItem =
         FavoriteItem(
             id,
+            resourceId,
             groupId,
             userId,
             contentId,
@@ -98,9 +96,10 @@ class FavoriteItemDo(
 
     class Builder {
         private var id: Long? = null
+        private var resourceId: String? = null
         private var userId: Long = 0
-        private var groupId: Long = 0
-        private var contentId: Long = 0
+        private var groupId: String = ""
+        private var contentId: String = ""
         private var contentType: ContentType = ContentType.ARTICLE
         private var createTime: OffsetDateTime = OffsetDateTime.now()
         private var updateTime: OffsetDateTime = OffsetDateTime.now()
@@ -108,8 +107,9 @@ class FavoriteItemDo(
 
         constructor()
 
-        constructor(favoriteItem: FavoriteItemDo) {
+        constructor(favoriteItem: FavoriteItemEntity) {
             this.id = favoriteItem.id
+            this.resourceId = favoriteItem.resourceId
             this.userId = favoriteItem.userId
             this.groupId = favoriteItem.groupId
             this.contentId = favoriteItem.contentId
@@ -123,15 +123,19 @@ class FavoriteItemDo(
             this.id = id
         }
 
+        fun setResourceId(resourceId: String) = apply {
+            this.resourceId = resourceId
+        }
+
         fun setUserId(userId: Long) = apply {
             this.userId = userId
         }
 
-        fun setGroupId(groupId: Long) = apply {
+        fun setGroupId(groupId: String) = apply {
             this.groupId = groupId
         }
 
-        fun setContentId(contentId: Long) = apply {
+        fun setContentId(contentId: String) = apply {
             this.contentId = contentId
         }
 
@@ -151,31 +155,33 @@ class FavoriteItemDo(
             this.deleted = deleted
         }
 
-        fun build(): FavoriteItemDo {
-            return FavoriteItemDo(
-                id,
-                userId,
-                groupId,
-                contentId,
-                contentType,
-                createTime,
-                updateTime,
-                deleted
+        fun build(): FavoriteItemEntity {
+            return FavoriteItemEntity(
+                id = id,
+                resourceId = resourceId!!,
+                userId = userId,
+                groupId = groupId,
+                contentId = contentId,
+                contentType = contentType,
+                createTime = createTime,
+                updateTime = updateTime,
+                deleted = deleted
             )
         }
     }
 
     companion object {
         @JvmStatic
-        fun FavoriteItem.toDo() = FavoriteItemDo(
-            entityId,
-            userId,
-            groupId,
-            contentId,
-            contentType,
-            createTime,
-            updateTime,
-            isDeleted
+        fun FavoriteItem.toEntity() = FavoriteItemEntity(
+            id = id,
+            resourceId = entityId,
+            userId = userId,
+            groupId = groupId,
+            contentId = contentId,
+            contentType = contentType,
+            createTime = createTime,
+            updateTime = updateTime,
+            deleted = isDeleted
         )
 
         @JvmStatic

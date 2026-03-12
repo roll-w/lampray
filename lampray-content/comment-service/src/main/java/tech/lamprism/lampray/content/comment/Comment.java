@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package tech.lamprism.lampray.content.comment;
 import space.lingu.NonNull;
 import space.lingu.Nullable;
 import tech.lamprism.lampray.DataEntity;
-import tech.lamprism.lampray.LongEntityBuilder;
+import tech.lamprism.lampray.EntityBuilder;
 import tech.lamprism.lampray.content.ContentAssociated;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentDetailsMetadata;
@@ -33,18 +33,19 @@ import java.time.OffsetDateTime;
 /**
  * @author RollW
  */
-public class Comment implements DataEntity<Long>, ContentDetails, ContentAssociated {
-    public static final int COMMENT_ROOT_ID = 0;
+public class Comment implements DataEntity<String>, ContentDetails, ContentAssociated {
+    public static final String COMMENT_ROOT_ID = "";
 
     private final Long id;
+    private final String resourceId;
     private final long userId;
     /**
      * Parent comment id.
      * <p>
      * If the comment is a top-level comment,
-     * the parent id is 0.
+     * the parent id is an empty string.
      */
-    private final long parentId;
+    private final String parentId;
     private final StructuralText content;
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
@@ -53,7 +54,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
      * Comment on which type of content.
      */
     private final ContentType commentOnType;
-    private final long commentOnId;
+    private final String commentOnId;
 
     @NonNull
     private final CommentStatus commentStatus;
@@ -61,11 +62,12 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
     private final ContentIdentity associatedContent;
     private final CommentDetailsMetadata commentDetailsMetadata;
 
-    public Comment(Long id, long userId, long parentId, StructuralText content,
+    public Comment(Long id, String resourceId, long userId, String parentId, StructuralText content,
                    OffsetDateTime createTime, OffsetDateTime updateTime,
-                   ContentType commentOnType, long commentOnId,
+                   ContentType commentOnType, String commentOnId,
                    @NonNull CommentStatus commentStatus) {
         this.id = id;
+        this.resourceId = resourceId;
         this.userId = userId;
         this.commentOnId = commentOnId;
         this.parentId = parentId;
@@ -79,19 +81,19 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
     }
 
     @Override
-    public Long getEntityId() {
-        return id;
+    public String getEntityId() {
+        return resourceId;
     }
 
+    @Override
     @NonNull
-    @Override
-    public Long getResourceId() {
-        return id;
+    public String getResourceId() {
+        return resourceId;
     }
 
     @Override
-    public long getContentId() {
-        return id;
+    public String getContentId() {
+        return resourceId;
     }
 
     @NonNull
@@ -117,11 +119,11 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
         return content;
     }
 
-    public long getParentId() {
+    public String getParentId() {
         return parentId;
     }
 
-    public long getCommentOnId() {
+    public String getCommentOnId() {
         return commentOnId;
     }
 
@@ -171,11 +173,12 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
         return CommentResourceKind.INSTANCE;
     }
 
-    public static class Builder implements LongEntityBuilder<Comment> {
+    public static class Builder implements EntityBuilder<Comment, String> {
         private Long id;
+        private String resourceId;
         private long userId;
-        private long commentOn;
-        private long parentId;
+        private String commentOn;
+        private String parentId = COMMENT_ROOT_ID;
         private StructuralText content;
         private OffsetDateTime createTime;
         private OffsetDateTime updateTime;
@@ -185,6 +188,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
 
         public Builder(Comment comment) {
             this.id = comment.id;
+            this.resourceId = comment.resourceId;
             this.userId = comment.userId;
             this.commentOn = comment.commentOnId;
             this.parentId = comment.parentId;
@@ -200,8 +204,17 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
         }
 
         @Override
-        public Builder setEntityId(Long id) {
+        public Builder setEntityId(String id) {
+            return setResourceId(id);
+        }
+
+        public Builder setId(Long id) {
             this.id = id;
+            return this;
+        }
+
+        public Builder setResourceId(String resourceId) {
+            this.resourceId = resourceId;
             return this;
         }
 
@@ -210,12 +223,12 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
             return this;
         }
 
-        public Builder setCommentOn(long commentOn) {
+        public Builder setCommentOn(String commentOn) {
             this.commentOn = commentOn;
             return this;
         }
 
-        public Builder setParentId(long parentId) {
+        public Builder setParentId(String parentId) {
             this.parentId = parentId;
             return this;
         }
@@ -248,7 +261,7 @@ public class Comment implements DataEntity<Long>, ContentDetails, ContentAssocia
         @Override
         public Comment build() {
             return new Comment(
-                    id, userId, parentId,
+                    id, resourceId, userId, parentId,
                     content, createTime,
                     updateTime, type,
                     commentOn, commentStatus

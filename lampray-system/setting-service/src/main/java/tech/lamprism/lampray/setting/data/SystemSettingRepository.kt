@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,18 @@ import java.util.Optional
 @Repository
 class SystemSettingRepository(
     private val systemSettingDao: SystemSettingDao
-) : CommonRepository<SystemSettingDo, Long>(systemSettingDao) {
-    fun findByKey(key: String): Optional<SystemSettingDo> {
+) : CommonRepository<SystemSettingEntity, String>(systemSettingDao) {
+    override fun <S : SystemSettingEntity> save(entity: S): S {
+        return systemSettingDao.saveAndFlush(entity)
+    }
+
+    fun findByKey(key: String): Optional<SystemSettingEntity> {
         return findOne { root, query, criteriaBuilder ->
             criteriaBuilder.equal(root.get<String>("key"), key)
         }
     }
 
-    fun findByKeyIn(keys: Set<String>): List<SystemSettingDo> {
+    fun findByKeyIn(keys: Set<String>): List<SystemSettingEntity> {
         if (keys.isEmpty()) {
             return emptyList()
         }

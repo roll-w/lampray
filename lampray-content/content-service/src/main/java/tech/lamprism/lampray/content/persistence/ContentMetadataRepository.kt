@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package tech.lamprism.lampray.content.persistence
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
 import tech.lamprism.lampray.content.ContentTrait
+import tech.lamprism.lampray.content.ContentType
 import java.util.Optional
 
 /**
@@ -27,25 +28,33 @@ import java.util.Optional
 @Repository
 class ContentMetadataRepository(
     private val contentMetadataDao: ContentMetadataDao
-) : CommonRepository<ContentMetadataDo, Long>(contentMetadataDao) {
-    fun findByContent(content: ContentTrait): Optional<ContentMetadataDo> {
-        return findOne { root, query, criteriaBuilder ->
+) : CommonRepository<ContentMetadataEntity, String>(contentMetadataDao) {
+    override fun <S : ContentMetadataEntity> save(entity: S): S {
+        return contentMetadataDao.saveAndFlush(entity)
+    }
+
+    override fun <S : ContentMetadataEntity> saveAll(entities: Iterable<S>): List<S> {
+        return contentMetadataDao.saveAllAndFlush(entities)
+    }
+
+    fun findByContent(content: ContentTrait): Optional<ContentMetadataEntity> {
+        return findOne { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get(ContentMetadataDo_.contentId), content.contentId),
-                criteriaBuilder.equal(root.get(ContentMetadataDo_.contentType), content.contentType)
+                criteriaBuilder.equal(root.get<String>("contentId"), content.contentId),
+                criteriaBuilder.equal(root.get<ContentType>("contentType"), content.contentType)
             )
         }
     }
 
-    fun findByContents(contents: List<ContentTrait>): List<ContentMetadataDo> {
+    fun findByContents(contents: List<ContentTrait>): List<ContentMetadataEntity> {
         if (contents.isEmpty()) {
             return emptyList()
         }
         return findAll { root, _, builder ->
             val predicates = contents.map {
                 builder.and(
-                    builder.equal(root.get(ContentMetadataDo_.contentId), it.contentId),
-                    builder.equal(root.get(ContentMetadataDo_.contentType), it.contentType)
+                    builder.equal(root.get<String>("contentId"), it.contentId),
+                    builder.equal(root.get<ContentType>("contentType"), it.contentType)
                 )
             }
             builder.or(*predicates.toTypedArray())

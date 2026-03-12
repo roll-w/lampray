@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,6 @@ package tech.lamprism.lampray.content.review.feedback
  */
 enum class ReviewCategory {
     /**
-     * Content quality issues.
-     */
-    CONTENT_QUALITY,
-
-    /**
-     * Grammar or spelling issues.
-     */
-    GRAMMAR,
-
-    /**
-     * Formatting or structure issues.
-     */
-    FORMAT,
-
-    /**
      * Policy or guideline violations.
      */
     POLICY_VIOLATION,
@@ -50,11 +35,6 @@ enum class ReviewCategory {
      * Copyright or plagiarism issues.
      */
     COPYRIGHT,
-
-    /**
-     * Technical or implementation issues.
-     */
-    TECHNICAL,
 
     /**
      * Other unclassified issues.

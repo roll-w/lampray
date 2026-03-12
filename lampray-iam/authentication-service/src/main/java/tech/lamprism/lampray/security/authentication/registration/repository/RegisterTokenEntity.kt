@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package tech.lamprism.lampray.security.authentication.registration.repository
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.Generated
+import org.hibernate.generator.EventType
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.TimeAttributed
 import tech.lamprism.lampray.security.authentication.VerifiableToken
@@ -41,11 +41,14 @@ import java.time.OffsetDateTime
         UniqueConstraint(columnNames = ["token"], name = "index__token")
     ]
 )
-class RegisterTokenDo(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+class RegisterTokenEntity(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
     private var id: Long? = null,
+
+    @Id
+    @Column(name = "resource_id", nullable = false, length = 64, unique = true)
+    private var resourceId: String,
 
     @Column(name = "token")
     var token: String = "",
@@ -58,13 +61,13 @@ class RegisterTokenDo(
 
     @Column(name = "used")
     var used: Boolean = false
-) : VerifiableToken, DataEntity<Long> {
+) : VerifiableToken, DataEntity<String> {
     override fun token(): String {
         return token
     }
 
     override fun getUserId(): Long {
-       return userId
+        return userId
     }
 
     fun setUserId(userId: Long) {
@@ -75,12 +78,10 @@ class RegisterTokenDo(
         return !used && !isExpired()
     }
 
-    fun setId(id: Long?) {
-        this.id = id
-    }
+    fun getId(): Long? = id
 
-    override fun getEntityId(): Long? {
-        return id
+    override fun getEntityId(): String {
+        return resourceId
     }
 
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
@@ -91,8 +92,7 @@ class RegisterTokenDo(
         RegisterTokenResourceKind
 
     fun lock(): RegisterVerificationToken = RegisterVerificationToken(
-        id, token, userId,
-        expiryTime, used
+        id, resourceId, token, userId, expiryTime, used
     )
 
     fun toBuilder(): Builder {
@@ -109,8 +109,13 @@ class RegisterTokenDo(
 
     companion object {
         @JvmStatic
-        fun RegisterVerificationToken.toDo(): RegisterTokenDo = RegisterTokenDo(
-            entityId, token, userId, expiryTime, used
+        fun RegisterVerificationToken.toEntity(): RegisterTokenEntity = RegisterTokenEntity(
+            id = id,
+            resourceId = entityId,
+            token = token,
+            userId = userId,
+            expiryTime = expiryTime,
+            used = used
         )
 
         @JvmStatic
@@ -121,6 +126,7 @@ class RegisterTokenDo(
 
     class Builder {
         private var id: Long? = null
+        private var resourceId: String? = null
         private var token: String = ""
         private var userId: Long = 0
         private var expiryTime: Long = 0
@@ -128,16 +134,22 @@ class RegisterTokenDo(
 
         internal constructor()
 
-        internal constructor(registerTokenDo: RegisterTokenDo) {
-            id = registerTokenDo.id
-            token = registerTokenDo.token
-            userId = registerTokenDo.userId
-            expiryTime = registerTokenDo.expiryTime
-            used = registerTokenDo.used
+        internal constructor(registerTokenEntity: RegisterTokenEntity) {
+            id = registerTokenEntity.id
+            resourceId = registerTokenEntity.resourceId
+            token = registerTokenEntity.token
+            userId = registerTokenEntity.userId
+            expiryTime = registerTokenEntity.expiryTime
+            used = registerTokenEntity.used
         }
 
         fun setId(id: Long?): Builder {
             this.id = id
+            return this
+        }
+
+        fun setResourceId(resourceId: String): Builder {
+            this.resourceId = resourceId
             return this
         }
 
@@ -159,6 +171,17 @@ class RegisterTokenDo(
         fun setUsed(used: Boolean): Builder {
             this.used = used
             return this
+        }
+
+        fun build(): RegisterTokenEntity {
+            return RegisterTokenEntity(
+                id = id,
+                resourceId = resourceId!!,
+                token = token,
+                userId = userId,
+                expiryTime = expiryTime,
+                used = used
+            )
         }
     }
 }

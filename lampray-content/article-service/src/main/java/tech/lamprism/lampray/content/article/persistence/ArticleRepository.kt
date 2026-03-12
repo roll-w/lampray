@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,23 +27,31 @@ import java.util.Optional
 @Repository
 class ArticleRepository(
     private val articleDao: ArticleDao
-) : CommonRepository<ArticleDo, Long>(articleDao) {
-    fun findAllByUserId(userId: Long): List<ArticleDo> {
+) : CommonRepository<ArticleEntity, String>(articleDao) {
+    override fun <S : ArticleEntity> save(entity: S): S {
+        return articleDao.saveAndFlush(entity)
+    }
+
+    override fun <S : ArticleEntity> saveAll(entities: Iterable<S>): List<S> {
+        return articleDao.saveAllAndFlush(entities)
+    }
+
+    fun findAllByUserId(userId: Long): List<ArticleEntity> {
         return articleDao.findAllByUserId(userId)
     }
 
-    fun findByTitle(title: String, userId: Long): Optional<ArticleDo> {
+    fun findByTitle(title: String, userId: Long): Optional<ArticleEntity> {
         return articleDao.findOne(createTitleSpecification(title, userId))
     }
 
     private fun createTitleSpecification(
         title: String,
         userId: Long
-    ): Specification<ArticleDo> {
-        return Specification { root, query, criteriaBuilder ->
+    ): Specification<ArticleEntity> {
+        return Specification { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get(ArticleDo_.title), title),
-                criteriaBuilder.equal(root.get(ArticleDo_.userId), userId)
+                criteriaBuilder.equal(root.get(ArticleEntity_.title), title),
+                criteriaBuilder.equal(root.get(ArticleEntity_.userId), userId)
             )
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,19 +27,27 @@ import java.util.Optional
 @Repository
 class FavoriteGroupRepository(
     private val favoriteGroupDao: FavoriteGroupDao
-) : CommonRepository<FavoriteGroupDo, Long>(favoriteGroupDao) {
-    fun findByName(name: String, operator: Operator): Optional<FavoriteGroupDo> =
+) : CommonRepository<FavoriteGroupEntity, String>(favoriteGroupDao) {
+    override fun <S : FavoriteGroupEntity> save(entity: S): S {
+        return favoriteGroupDao.saveAndFlush(entity)
+    }
+
+    override fun <S : FavoriteGroupEntity> saveAll(entities: Iterable<S>): List<S> {
+        return favoriteGroupDao.saveAllAndFlush(entities)
+    }
+
+    fun findByName(name: String, operator: Operator): Optional<FavoriteGroupEntity> =
         findOne { root, _, builder ->
             builder.and(
-                builder.equal(root.get(FavoriteGroupDo_.name), name),
-                builder.equal(root.get(FavoriteGroupDo_.userId), operator.operatorId)
+                builder.equal(root.get<String>("name"), name),
+                builder.equal(root.get<Long>("userId"), operator.operatorId)
             )
         }
 
-    fun findByUser(userId: Long): List<FavoriteGroupDo> =
+    fun findByUser(userId: Long): List<FavoriteGroupEntity> =
         findAll { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get(FavoriteGroupDo_.userId), userId)
+                criteriaBuilder.equal(root.get<Long>("userId"), userId)
             )
         }
 }

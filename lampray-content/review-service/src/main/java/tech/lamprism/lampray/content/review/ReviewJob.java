@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.Objects;
 public class ReviewJob implements DataEntity<String>, ContentAssociated, ReviewJobSummary {
     private final Long id;
     private final String jobId;
-    private final long reviewContentId;
+    private final String reviewContentId;
     private final ContentType reviewContentType;
 
     private final ReviewStatus status;
@@ -44,7 +44,7 @@ public class ReviewJob implements DataEntity<String>, ContentAssociated, ReviewJ
     private final ReviewMark reviewMark;
     private final ContentIdentity associatedContent;
 
-    public ReviewJob(Long id, String jobId, long reviewContentId,
+    public ReviewJob(Long id, String jobId, String reviewContentId,
                      ContentType reviewContentType,
                      ReviewStatus status, OffsetDateTime createTime,
                      OffsetDateTime updateTime,
@@ -73,7 +73,7 @@ public class ReviewJob implements DataEntity<String>, ContentAssociated, ReviewJ
         return id;
     }
 
-    public long getReviewContentId() {
+    public String getReviewContentId() {
         return reviewContentId;
     }
 
@@ -161,7 +161,7 @@ public class ReviewJob implements DataEntity<String>, ContentAssociated, ReviewJ
     public final static class Builder implements EntityBuilder<ReviewJob, String> {
         private Long id = null;
         private String jobId;
-        private long reviewContentId;
+        private String reviewContentId;
         private ReviewStatus status;
         private ContentType reviewContentType;
         private OffsetDateTime assignedTime;
@@ -196,7 +196,7 @@ public class ReviewJob implements DataEntity<String>, ContentAssociated, ReviewJ
             return this;
         }
 
-        public Builder setReviewContentId(long reviewContentId) {
+        public Builder setReviewContentId(String reviewContentId) {
             this.reviewContentId = reviewContentId;
             return this;
         }

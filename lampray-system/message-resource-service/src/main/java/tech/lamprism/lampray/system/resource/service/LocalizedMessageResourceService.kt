@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@
 package tech.lamprism.lampray.system.resource.service
 
 import org.springframework.stereotype.Service
+import tech.lamprism.lampray.common.data.ResourceIdGenerator
 import tech.lamprism.lampray.system.resource.LocalizedMessageResource
+import tech.lamprism.lampray.system.resource.LocalizedMessageResourceKind
 import tech.lamprism.lampray.system.resource.LocalizedMessageResourceProvider
 import tech.lamprism.lampray.system.resource.SimpleLocalizedMessageResource
-import tech.lamprism.lampray.system.resource.data.LocalizedMessageDo
+import tech.lamprism.lampray.system.resource.data.LocalizedMessageEntity
 import tech.lamprism.lampray.system.resource.data.LocalizedMessageRepository
 import java.time.OffsetDateTime
 import java.util.Locale
@@ -31,7 +33,8 @@ import java.util.function.Supplier
  */
 @Service
 class LocalizedMessageResourceService(
-    private val localizedMessageRepository: LocalizedMessageRepository
+    private val localizedMessageRepository: LocalizedMessageRepository,
+    private val resourceIdGenerator: ResourceIdGenerator
 ) : LocalizedMessageResourceProvider {
     private var _fallbackLocale: Locale = Locale.ROOT
 
@@ -46,19 +49,20 @@ class LocalizedMessageResourceService(
         value: String,
         locale: Locale
     ) {
-        val localizedMessageDo = localizedMessageRepository
-            .findByKey(key, locale).orElse(null) ?: LocalizedMessageDo().apply {
+        val localizedMessageEntity = localizedMessageRepository
+            .findByKey(key, locale).orElse(null) ?: LocalizedMessageEntity().apply {
+            setResourceId(resourceIdGenerator.nextId(LocalizedMessageResourceKind))
             this.key = key
             this.value = value
             this.locale = locale
         }
-        if (localizedMessageDo.entityId != null &&
-            localizedMessageDo.value == value
+        if (localizedMessageEntity.getId() != null &&
+            localizedMessageEntity.value == value
         ) {
             return
         }
         val time = OffsetDateTime.now()
-        localizedMessageDo.apply {
+        localizedMessageEntity.apply {
             this.value = value
             this.updateTime = time
         }.let {
@@ -86,9 +90,9 @@ class LocalizedMessageResourceService(
         key: String,
         locale: Locale
     ): LocalizedMessageResource? {
-        val localizedMessageDo = localizedMessageRepository
+        val localizedMessageEntity = localizedMessageRepository
             .findByKey(key, locale).orElse(null)
-        return localizedMessageDo?.lock()
+        return localizedMessageEntity?.lock()
     }
 
     override fun getMessageResource(
@@ -104,10 +108,10 @@ class LocalizedMessageResourceService(
         locale: Locale,
         defaultValueProvider: Supplier<String>
     ): LocalizedMessageResource? {
-        val localizedMessageDo = localizedMessageRepository
+        val localizedMessageEntity = localizedMessageRepository
             .findByKey(key, locale).orElse(null)
-        if (localizedMessageDo != null) {
-            return localizedMessageDo.lock()
+        if (localizedMessageEntity != null) {
+            return localizedMessageEntity.lock()
         }
         return SimpleLocalizedMessageResource(key, defaultValueProvider.get(), locale)
     }

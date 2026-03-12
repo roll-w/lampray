@@ -93,7 +93,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: parent_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -118,7 +118,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: comment_on_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -138,13 +138,19 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                    unique: true
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
                   constraints:
                     nullable: false
                   name: content_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -171,6 +177,12 @@ databaseChangeLog:
                     primaryKeyName: pk_favorite_group
                   name: id
                   type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    unique: true
+                  name: resource_id
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -230,18 +242,24 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                    unique: true
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
                   constraints:
                     nullable: false
                   name: group_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
                   name: content_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -276,6 +294,12 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                    unique: true
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
                   name: key
                   type: VARCHAR(255)
               - column:
@@ -304,6 +328,12 @@ databaseChangeLog:
                     primaryKeyName: pk_register_verification_token
                   name: id
                   type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    unique: true
+                  name: resource_id
+                  type: VARCHAR(64)
               - column:
                   name: token
                   type: VARCHAR(255)
@@ -337,7 +367,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: content_id
-                  type: BIGINT
+                  type: VARCHAR(64)
               - column:
                   constraints:
                     nullable: false
@@ -467,6 +497,12 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
+                  constraints:
+                    nullable: false
+                    unique: true
+                  name: resource_id
+                  type: VARCHAR(64)
+              - column:
                   name: key
                   type: VARCHAR(255)
               - column:
@@ -546,7 +582,7 @@ databaseChangeLog:
                     nullable: false
                     primaryKey: true
                     primaryKeyName: pk_user_personal_data
-                  name: id
+                  name: user_id
                   type: BIGINT
               - column:
                   constraints:
