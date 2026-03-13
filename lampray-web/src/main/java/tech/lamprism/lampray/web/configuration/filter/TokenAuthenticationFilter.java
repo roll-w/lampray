@@ -68,10 +68,6 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String loadToken(HttpServletRequest request) {
-        String token = request.getHeader("Authorization");
-        if (token == null || token.isEmpty()) {
-            return request.getParameter("token");
-        }
-        return token;
+        return request.getHeader("Authorization");
     }
 }

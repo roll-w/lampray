@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.web.configuration;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,6 +44,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import tech.lamprism.lampray.security.authentication.SecurityConfigKeys;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationProvider;
 import tech.lamprism.lampray.security.authentication.adapter.TokenBasedAuthenticationProvider;
 import tech.lamprism.lampray.security.authorization.PrivilegedUserProvider;
@@ -50,6 +52,7 @@ import tech.lamprism.lampray.security.authorization.hierarchy.AuthorizationScope
 import tech.lamprism.lampray.security.firewall.FirewallFilter;
 import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
+import tech.lamprism.lampray.setting.ConfigReader;
 import tech.lamprism.lampray.web.configuration.compenent.ForwardedHeaderDelegateFilter;
 import tech.lamprism.lampray.web.configuration.compenent.WebDelegateSecurityHandler;
 import tech.lamprism.lampray.web.configuration.filter.ApiContextInitializeFilter;
@@ -60,6 +63,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author RollW
@@ -69,8 +73,10 @@ import java.util.List;
 @EnableGlobalAuthentication
 @EnableMethodSecurity
 public class WebSecurityConfiguration {
+    private final ConfigReader configReader;
 
-    public WebSecurityConfiguration() {
+    public WebSecurityConfiguration(ConfigReader configReader) {
+        this.configReader = configReader;
     }
 
     @Bean
@@ -192,7 +198,18 @@ public class WebSecurityConfiguration {
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.addAllowedOriginPattern("*");
+        boolean allowAllOrigins = Boolean.TRUE.equals(configReader.get(SecurityConfigKeys.CORS_ALLOW_ALL_ORIGINS));
+        Set<String> allowedOrigins = configReader.get(SecurityConfigKeys.CORS_ALLOWED_ORIGINS, Set.of());
+
+        if (allowAllOrigins) {
+            configuration.addAllowedOriginPattern("*");
+        } else {
+            allowedOrigins.stream()
+                    .map(String::trim)
+                    .filter(StringUtils::isNotBlank)
+                    .forEach(configuration::addAllowedOrigin);
+        }
+
         configuration.setAllowedMethods(Arrays.stream(HttpMethod.values())
                 .map(HttpMethod::name)
                 .toList()

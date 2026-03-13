@@ -59,24 +59,18 @@ const performTokenRefresh = async (
     instance: AxiosInstance,
     userStore: UserStore
 ): Promise<Token> => {
-    const currentToken = userStore.getToken
+    const currentToken = userStore.token
 
-    if (!currentToken?.refreshToken || isTokenExpired(currentToken.refreshTokenExpiry)) {
+    if (!currentToken || isTokenExpired(currentToken.refreshTokenExpiry)) {
         throw new Error('Refresh token expired')
     }
 
-    const response = await instance.post<HttpResponseBody<TokenRefreshResponse>>(
-        refreshTokenUrl,
-        {
-            refreshToken: currentToken.refreshToken
-        },
-    )
+    const response = await instance.post<HttpResponseBody<TokenRefreshResponse>>(refreshTokenUrl)
     const data = response.data.data!
 
     const newToken: Token = {
         accessToken: data.accessToken,
         accessTokenExpiry: new Date(data.accessTokenExpiry),
-        refreshToken: currentToken.refreshToken,
         refreshTokenExpiry: currentToken.refreshTokenExpiry,
         prefix: currentToken.prefix
     }
@@ -145,7 +139,7 @@ export function createAxios(
                 try {
                     await handleTokenRefresh(instance, userStore)
                 } catch (error) {
-                    console.error('Token refresh failed:', error)
+                    console.warn('Token refresh failed.')
                     return Promise.reject(new Error('Token refresh failed'))
                 }
             }
@@ -164,7 +158,6 @@ export function createAxios(
     // Response interceptor
     instance.interceptors.response.use(
         (response: AxiosResponse) => {
-            console.log("Success response: ", response)
             if (!response.data || !response.data.errorCode) {
                 return response
             }
@@ -175,8 +168,6 @@ export function createAxios(
             return response
         },
         (error) => {
-            console.log("Error response: ", error)
-
             const errorData: HttpResponseBody<void> = error.response?.data || error
             const errorCode = errorData.errorCode || '00000'
 

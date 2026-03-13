@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.web.controller.user;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -36,6 +37,9 @@ import tech.lamprism.lampray.security.token.AuthorizationTokenConfigKeys;
 import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.InheritedAuthorizationScope;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
+import tech.lamprism.lampray.security.token.SimpleAuthorizationToken;
+import tech.lamprism.lampray.security.token.TokenFormat;
+import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenType;
 import tech.lamprism.lampray.security.token.UserTokenSubject;
 import tech.lamprism.lampray.setting.ConfigReader;
@@ -43,6 +47,7 @@ import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.AttributedUserDetails;
 import tech.lamprism.lampray.user.UserProvider;
 import tech.lamprism.lampray.web.common.ParamValidate;
+import tech.lamprism.lampray.web.controller.auth.RefreshTokenCookieHelper;
 import tech.lamprism.lampray.web.controller.user.model.LoginResponse;
 import tech.lamprism.lampray.web.controller.user.model.LoginTokenSendRequest;
 import tech.lamprism.lampray.web.controller.user.model.RegisterTokenInfoVo;
@@ -69,17 +74,20 @@ public class LoginRegisterController {
     private final LoginProvider loginProvider;
     private final RegisterProvider registerProvider;
     private final AuthorizationTokenManager authorizationTokenManager;
+    private final TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider;
     private final ConfigReader configReader;
     private final UserProvider userProvider;
 
     public LoginRegisterController(LoginProvider loginProvider,
                                    RegisterProvider registerProvider,
                                    AuthorizationTokenManager authorizationTokenManager,
+                                   TokenSubjectSignKeyProvider tokenSubjectSignKeyProvider,
                                    ConfigReader configReader,
                                    UserProvider userProvider) {
         this.loginProvider = loginProvider;
         this.registerProvider = registerProvider;
         this.authorizationTokenManager = authorizationTokenManager;
+        this.tokenSubjectSignKeyProvider = tokenSubjectSignKeyProvider;
         this.configReader = configReader;
         this.userProvider = userProvider;
     }
@@ -87,6 +95,8 @@ public class LoginRegisterController {
     @PostMapping("/login/password")
     public HttpResponseEntity<LoginResponse> loginByPassword(
             RequestMetadata requestMetadata,
+            HttpServletRequest request,
+            HttpServletResponse response,
             @RequestBody UserLoginRequest loginRequest) {
         // account login, account maybe the username or email
         // needs to check the account type and get the user id
@@ -98,20 +108,22 @@ public class LoginRegisterController {
                 loginRequest.token(),
                 LoginStrategyType.PASSWORD,
                 requestMetadata);
-        return loginResponse(userInfoSignature);
+        return loginResponse(request, response, userInfoSignature, loginRequest.rememberMe());
     }
 
     // TODO: login by email token
     @PostMapping("/login/token/email")
     public HttpResponseEntity<LoginResponse> loginByEmailToken(
             RequestMetadata requestMetadata,
+            HttpServletRequest request,
+            HttpServletResponse response,
             @RequestBody UserLoginRequest loginRequest) {
         UserInfoSignature signature = loginProvider.login(
                 loginRequest.identity(),
                 loginRequest.token(),
                 LoginStrategyType.EMAIL_TOKEN,
                 requestMetadata);
-        return loginResponse(signature);
+        return loginResponse(request, response, signature, loginRequest.rememberMe());
     }
 
     @PostMapping("/login/token")
@@ -127,7 +139,10 @@ public class LoginRegisterController {
         return HttpResponseEntity.success();
     }
 
-    private HttpResponseEntity<LoginResponse> loginResponse(UserInfoSignature userInfoSignature) {
+    private HttpResponseEntity<LoginResponse> loginResponse(HttpServletRequest request,
+                                                            HttpServletResponse response,
+                                                            UserInfoSignature userInfoSignature,
+                                                            boolean rememberMe) {
         long accessTokenExpireTime = Objects.requireNonNull(configReader.get(AuthorizationTokenConfigKeys.ACCESS_TOKEN_EXPIRE_TIME));
         long refreshTokenExpireTime = Objects.requireNonNull(configReader.get(AuthorizationTokenConfigKeys.REFRESH_TOKEN_EXPIRE_TIME));
 
@@ -147,11 +162,19 @@ public class LoginRegisterController {
                 List.of(InheritedAuthorizationScope.fromSubject(tokenSubject))
         );
 
-        LoginResponse response = new LoginResponse(
+        RefreshTokenCookieHelper.writeRefreshTokenCookie(
+                request,
+                response,
+                refreshToken.getToken(),
+                rememberMe,
+                Duration.ofSeconds(refreshTokenExpireTime)
+        );
+
+        LoginResponse loginResponse = new LoginResponse(
                 accessToken, refreshToken,
                 userInfoSignature
         );
-        return HttpResponseEntity.success(response);
+        return HttpResponseEntity.success(loginResponse);
     }
 
     @PostMapping("/register")
@@ -199,7 +222,46 @@ public class LoginRegisterController {
     }
 
     @PostMapping("/logout")
-    public HttpResponseEntity<Void> logout(HttpServletRequest request) {
+    public HttpResponseEntity<Void> logout(HttpServletRequest request,
+                                           HttpServletResponse response) {
+        revokeAuthenticatedToken(request);
+        RefreshTokenCookieHelper.clearRefreshTokenCookie(request, response);
         return HttpResponseEntity.success();
+    }
+
+    private void revokeAuthenticatedToken(HttpServletRequest request) {
+        String accessToken = resolveAccessToken(request);
+        if (accessToken == null) {
+            return;
+        }
+
+        try {
+            MetadataAuthorizationToken parsedToken = authorizationTokenManager.parseToken(
+                    new SimpleAuthorizationToken(accessToken, TokenType.ACCESS),
+                    tokenSubjectSignKeyProvider
+            );
+            authorizationTokenManager.revokeToken(parsedToken);
+        } catch (RuntimeException e) {
+            logger.warn("Failed to revoke token during logout.", e);
+        }
+    }
+
+    private String resolveAccessToken(HttpServletRequest request) {
+        String authorizationHeader = request.getHeader("Authorization");
+        if (StringUtils.isBlank(authorizationHeader)) {
+            return null;
+        }
+
+        int separatorIndex = authorizationHeader.indexOf(' ');
+        if (separatorIndex <= 0 || separatorIndex == authorizationHeader.length() - 1) {
+            return null;
+        }
+
+        String tokenFormat = authorizationHeader.substring(0, separatorIndex);
+        if (!StringUtils.equals(tokenFormat, TokenFormat.BEARER.getValue())) {
+            return null;
+        }
+
+        return authorizationHeader.substring(separatorIndex + 1);
     }
 }

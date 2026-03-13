@@ -122,6 +122,20 @@ export const loginRegisterService = (axios: AxiosInstance) => {
             );
         },
 
+        async logout(options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<void>>> {
+            const mergedOptions = {...options};
+            if (mergedOptions.headers) {
+                mergedOptions.headers["Content-Type"] = "application/json";
+            } else {
+                mergedOptions.headers = {
+                    "Content-Type": "application/json"
+                };
+            }
+            return await axios.post<HttpResponseBody<void>>(
+                "/api/v1/user/logout", undefined, mergedOptions
+            );
+        },
+
         async activateUser(token: string, options: RawAxiosRequestConfig = {}): Promise<AxiosResponse<HttpResponseBody<void>>> {
             const mergedOptions = {...options};
             if (mergedOptions.headers) {
@@ -154,4 +168,3 @@ export const loginRegisterService = (axios: AxiosInstance) => {
         }
     }
 }
-

@@ -27,11 +27,11 @@ export interface ResendRegisterActivateRequest {
 export interface UserLoginRequest {
     identity: string;
     token: string;
+    rememberMe: boolean;
 }
 
 export interface LoginResponse {
     accessToken: string;
-    refreshToken: string;
     accessTokenExpiry: string;
     refreshTokenExpiry: string;
     user: UserVo;

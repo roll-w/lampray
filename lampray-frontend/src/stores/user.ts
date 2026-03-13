@@ -32,7 +32,6 @@ export interface UserData {
 }
 
 export interface Token {
-    refreshToken: string
     accessToken: string
     prefix: string
     accessTokenExpiry: Date
@@ -76,7 +75,6 @@ export const useUserStore = defineStore('user', () => {
         const now = new Date().getTime()
         return (
             token.value.accessToken &&
-            token.value.refreshToken &&
             now < token.value.refreshTokenExpiry.getTime()
         )
     })

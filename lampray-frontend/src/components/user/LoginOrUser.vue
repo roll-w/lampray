@@ -19,7 +19,7 @@ import {useRouter} from "vue-router";
 import {RouteName} from "@/router/routeName.ts";
 import {ref, watch} from "vue";
 import {useUserStore} from "@/stores/user.ts";
-import {userService} from "@/services/user/user.service.ts";
+import {loginRegisterService, userService} from "@/services/user/user.service.ts";
 import type {DropdownMenuItem} from "@nuxt/ui";
 import {useAxios} from "@/composables/useAxios.ts";
 import type {AxiosResponse} from "axios";
@@ -43,7 +43,19 @@ const fetchCurrentUser = async () => {
         const body = response.data;
         const user = body.data!;
         userStore.setUserData({...user, setup: true});
-    } catch (error: AxiosResponse | any) {
+    } catch (_error: AxiosResponse | any) {
+        console.warn("Failed to load current user profile.");
+    }
+};
+
+const handleLogout = async () => {
+    try {
+        await loginRegisterService(axios).logout();
+    } catch (_error) {
+        console.warn("Logout request failed, clearing local auth state anyway.");
+    } finally {
+        userStore.logout();
+        router.push({name: RouteName.USER_HOME});
     }
 };
 
@@ -76,9 +88,8 @@ const buildUserMenu = (): DropdownMenuItem[] => [
         {
             label: t("navbar.logout"),
             icon: "i-lucide-log-out",
-            onSelect: (e: Event) => {
-                userStore.logout();
-                router.push({name: RouteName.USER_HOME});
+            onSelect: async (_event: Event) => {
+                await handleLogout();
             }
         }
     ]
@@ -117,9 +128,8 @@ const buildAdminMenu = (): DropdownMenuItem[] => [
         {
             label: t("navbar.logout"),
             icon: "i-lucide-log-out",
-            onSelect: (e: Event) => {
-                userStore.logout();
-                router.push({name: RouteName.USER_HOME});
+            onSelect: async (_event: Event) => {
+                await handleLogout();
             }
         }
     ]

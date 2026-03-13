@@ -88,19 +88,19 @@ const jumpTo = () => {
          toast.add(newErrorToastFromError(new Error(firstError), t("request.error.title")));
          return;
      }
-     try {
-         const response = await loginRegisterService(axios).loginByPassword({
-             identity: loginForm.identity!,
-             token: loginForm.token!,
-         });
-         const body = response.data;
-         const data = body.data!;
-         userStore.loginUser(data.user, {
-             accessToken: data.accessToken,
-             refreshToken: data.refreshToken,
-             prefix: "Bearer ",
-             accessTokenExpiry: new Date(data.accessTokenExpiry),
-             refreshTokenExpiry: new Date(data.refreshTokenExpiry),
+      try {
+          const response = await loginRegisterService(axios).loginByPassword({
+              identity: loginForm.identity!,
+              token: loginForm.token!,
+              rememberMe: loginForm.rememberMe!,
+          });
+          const body = response.data;
+          const data = body.data!;
+          userStore.loginUser(data.user, {
+              accessToken: data.accessToken,
+              prefix: "Bearer ",
+              accessTokenExpiry: new Date(data.accessTokenExpiry),
+              refreshTokenExpiry: new Date(data.refreshTokenExpiry),
          }, loginForm.rememberMe!, false);
          toast.add(newSuccessToast(t("views.userfaced.user.login.success")));
          jumpTo();
