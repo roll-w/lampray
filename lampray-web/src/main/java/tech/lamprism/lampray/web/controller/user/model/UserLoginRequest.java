@@ -17,8 +17,8 @@
 package tech.lamprism.lampray.web.controller.user.model;
 
 /**
- * @param identity Identity, could be a username or email, etc.
- * @param token    login token, could be the password or a code.
+ * @param identity   Identity, could be a username or email, etc.
+ * @param token      login token, could be the password or a code.
  * @param rememberMe whether the refresh cookie should persist across browser restarts.
  * @author RollW
  */

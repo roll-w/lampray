@@ -14,7 +14,7 @@
   - limitations under the License.
   -->
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import {useRouter} from "vue-router";
 import {RouteName} from "@/router/routeName.ts";
 import {ref, watch} from "vue";
@@ -161,14 +161,14 @@ watch([locale, () => userStore.user], () => {
 </script>
 <template>
     <div>
-        <UButton @click="handleLoginClick" v-if="!userStore.isLogin" size="xl"
-                 color="primary"
-                 variant="soft">
+        <UButton v-if="!userStore.isLogin" color="primary" size="xl"
+                 variant="soft"
+                 @click="handleLoginClick">
             {{ t("views.common.user.login") }}
         </UButton>
         <!--TODO: hover to open-->
-        <UDropdownMenu v-else class="cursor-pointer"
-                       :items="menuItems"
+        <UDropdownMenu v-else :items="menuItems"
+                       class="cursor-pointer"
                        size="md">
             <UButton
                     :avatar="{
@@ -176,8 +176,8 @@ watch([locale, () => userStore.user], () => {
                         alt: userStore.userData?.nickname,
                     }"
                     color="neutral"
-                    variant="ghost"
                     size="xl"
+                    variant="ghost"
             />
         </UDropdownMenu>
     </div>
