@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@
 package tech.lamprism.lampray.web.controller.user.model;
 
 /**
- * @param identity Identity, could be a username or email, etc.
- * @param token    login token, could be the password or a code.
+ * @param identity   Identity, could be a username or email, etc.
+ * @param token      login token, could be the password or a code.
+ * @param rememberMe whether the refresh cookie should persist across browser restarts.
  * @author RollW
  */
 public record UserLoginRequest(
         String identity,
-        String token
+        String token,
+        boolean rememberMe
 ) {
 }

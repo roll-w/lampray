@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import java.time.OffsetDateTime;
  */
 public record LoginResponse(
         String accessToken,
-        String refreshToken,
         OffsetDateTime accessTokenExpiry,
         OffsetDateTime refreshTokenExpiry,
         UserVo user
@@ -34,13 +33,13 @@ public record LoginResponse(
     public LoginResponse(MetadataAuthorizationToken accessToken,
                          MetadataAuthorizationToken refreshToken,
                          UserIdentity userIdentity) {
-        this(accessToken.getToken(), refreshToken.getToken(),
+        this(accessToken.getToken(),
                 accessToken.getExpirationAt(), refreshToken.getExpirationAt(),
                 UserVo.toVo(userIdentity));
     }
 
     public static final LoginResponse NULL = new LoginResponse(
-            null, null, null, null, null);
+            null, null, null, null);
 
     public static LoginResponse nullResponse() {
         return NULL;

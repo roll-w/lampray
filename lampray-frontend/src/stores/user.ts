@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ export interface UserData {
 }
 
 export interface Token {
-    refreshToken: string
     accessToken: string
     prefix: string
     accessTokenExpiry: Date
@@ -76,7 +75,6 @@ export const useUserStore = defineStore('user', () => {
         const now = new Date().getTime()
         return (
             token.value.accessToken &&
-            token.value.refreshToken &&
             now < token.value.refreshTokenExpiry.getTime()
         )
     })

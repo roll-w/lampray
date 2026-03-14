@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 
 package tech.lamprism.lampray.web.controller.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tech.lamprism.lampray.security.token.AuthorizationTokenConfigKeys;
@@ -29,7 +30,6 @@ import tech.lamprism.lampray.security.token.SimpleAuthorizationToken;
 import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenType;
 import tech.lamprism.lampray.setting.ConfigReader;
-import tech.lamprism.lampray.web.controller.auth.model.RefreshTokenRequest;
 import tech.lamprism.lampray.web.controller.auth.model.RefreshTokenResponse;
 import tech.rollw.common.web.CommonErrorCode;
 import tech.rollw.common.web.CommonRuntimeException;
@@ -58,19 +58,28 @@ public class AuthTokenController {
 
     @PostMapping("/token:refresh")
     public HttpResponseEntity<RefreshTokenResponse> refreshToken(
-            @RequestBody RefreshTokenRequest refreshTokenRequest) {
-        if (refreshTokenRequest == null || StringUtils.isBlank(refreshTokenRequest.getRefreshToken())) {
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        String refreshToken = RefreshTokenCookieHelper.resolveRefreshToken(request);
+        if (StringUtils.isBlank(refreshToken)) {
+            RefreshTokenCookieHelper.clearRefreshTokenCookie(request, response);
             throw new CommonRuntimeException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "Refresh token is required");
         }
 
         Long accessTokenExpireTime = configReader.get(AuthorizationTokenConfigKeys.ACCESS_TOKEN_EXPIRE_TIME);
-        MetadataAuthorizationToken exchangedToken = authorizationTokenManager.exchangeToken(
-                new SimpleAuthorizationToken(refreshTokenRequest.getRefreshToken(), TokenType.REFRESH),
-                tokenSubjectSignKeyProvider,
-                TokenType.ACCESS,
-                Duration.ofSeconds(accessTokenExpireTime),
-                List.of()
-        );
+        MetadataAuthorizationToken exchangedToken;
+        try {
+            exchangedToken = authorizationTokenManager.exchangeToken(
+                    new SimpleAuthorizationToken(refreshToken, TokenType.REFRESH),
+                    tokenSubjectSignKeyProvider,
+                    TokenType.ACCESS,
+                    Duration.ofSeconds(accessTokenExpireTime),
+                    List.of()
+            );
+        } catch (RuntimeException e) {
+            RefreshTokenCookieHelper.clearRefreshTokenCookie(request, response);
+            throw e;
+        }
         return HttpResponseEntity.success(
                 new RefreshTokenResponse(exchangedToken.getToken(), exchangedToken.getExpirationAt())
         );
