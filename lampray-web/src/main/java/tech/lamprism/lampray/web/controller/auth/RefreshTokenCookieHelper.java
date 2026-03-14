@@ -19,6 +19,7 @@ package tech.lamprism.lampray.web.controller.auth;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -60,7 +61,7 @@ public final class RefreshTokenCookieHelper {
 
     public static String resolveRefreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
-        if (cookies == null || cookies.length == 0) {
+        if (ArrayUtils.isEmpty(cookies)) {
             return null;
         }
 
