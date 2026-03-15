@@ -34,6 +34,7 @@ import java.time.Duration;
 public final class RefreshTokenCookieHelper {
     public static final String COOKIE_NAME = "lampray_refresh_token";
     public static final String COOKIE_PATH = "/api/v1/auth";
+    public static final String REMEMBER_ME_HEADER = "X-Lampray-Remember-Me";
     private static final String SAME_SITE = "Strict";
 
     private RefreshTokenCookieHelper() {
@@ -71,6 +72,10 @@ public final class RefreshTokenCookieHelper {
             }
         }
         return null;
+    }
+
+    public static boolean resolveRememberMe(HttpServletRequest request) {
+        return Boolean.parseBoolean(request.getHeader(REMEMBER_ME_HEADER));
     }
 
     private static ResponseCookie.ResponseCookieBuilder newCookieBuilder(HttpServletRequest request,

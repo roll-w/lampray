@@ -26,10 +26,17 @@ const ERROR_CODES = {
 } as const
 
 const refreshTokenUrl = '/api/v1/auth/token:refresh';
+const rememberMeHeader = 'X-Lampray-Remember-Me';
 
 interface TokenRefreshResponse {
     accessToken: string
     accessTokenExpiry: string
+    refreshTokenExpiry: string
+}
+
+interface AxiosLifecycleCallbacks {
+    onLoginExpired?: () => void
+    onUserBlocked?: () => void
 }
 
 
@@ -65,23 +72,36 @@ const performTokenRefresh = async (
         throw new Error('Refresh token expired')
     }
 
-    const response = await instance.post<HttpResponseBody<TokenRefreshResponse>>(refreshTokenUrl)
+    const response = await instance.post<HttpResponseBody<TokenRefreshResponse>>(
+        refreshTokenUrl,
+        undefined,
+        {
+            headers: {
+                [rememberMeHeader]: String(userStore.remember)
+            }
+        }
+    )
     const data = response.data.data!
+    const refreshedRefreshTokenExpiry = new Date(data.refreshTokenExpiry)
 
     const newToken: Token = {
         accessToken: data.accessToken,
         accessTokenExpiry: new Date(data.accessTokenExpiry),
-        refreshTokenExpiry: currentToken.refreshTokenExpiry,
+        refreshTokenExpiry: refreshedRefreshTokenExpiry,
         prefix: currentToken.prefix
     }
     userStore.refreshToken(newToken)
+
     return newToken
 }
 
 /**
  * Handle token refresh with concurrent request protection
  */
-const handleTokenRefresh = async (instance: AxiosInstance, userStore: UserStore): Promise<void> => {
+const handleTokenRefresh = async (
+    instance: AxiosInstance,
+    userStore: UserStore
+): Promise<void> => {
     if (refreshPromise) {
         await refreshPromise
         return
@@ -106,11 +126,15 @@ const isErrorCodeMatch = (errorCode: string | undefined, errorList: readonly str
  */
 export function createAxios(
     userStore: UserStore,
-    onLoginExpired: () => void = () => {
-    },
-    onUserBlocked: () => void = () => {
-    }
+    callbacks: AxiosLifecycleCallbacks = {}
 ): AxiosInstance {
+    const {
+        onLoginExpired = () => {
+        },
+        onUserBlocked = () => {
+        }
+    } = callbacks
+
     const instance = axios.create({
         withCredentials: true
     })
@@ -140,7 +164,7 @@ export function createAxios(
                     await handleTokenRefresh(instance, userStore)
                 } catch (error) {
                     console.warn('Token refresh failed.')
-                    return Promise.reject(new Error('Token refresh failed'))
+                    return Promise.reject(error)
                 }
             }
 

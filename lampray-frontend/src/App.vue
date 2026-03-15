@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -15,15 +15,26 @@
   -->
 <script setup lang="ts">
 import {RouterView} from "vue-router";
+import {onBeforeUnmount} from "vue";
 import LamprayLogo from "@/components/LamprayLogo.vue";
 import * as locales from '@nuxt/ui/locale'
+import type {Toast} from "@nuxt/ui/runtime/composables/useToast.d.ts";
 import {useI18n} from "vue-i18n";
 import type {ToasterProps} from "@nuxt/ui";
+import {clearToastHandler, registerToastHandler} from "@/utils/toastBus.ts";
 
 const toaster: ToasterProps = {position: 'top-right', progress: false};
 const {locale} = useI18n()
+const toast = useToast()
+const toastHandler = (payload: Partial<Toast>) => toast.add(payload)
 
 const uLocale = locales[locale.value.replace("-", "_").toLocaleLowerCase() as keyof typeof locales] || locales['en']
+
+registerToastHandler(toastHandler)
+
+onBeforeUnmount(() => {
+    clearToastHandler(toastHandler)
+})
 
 </script>
 

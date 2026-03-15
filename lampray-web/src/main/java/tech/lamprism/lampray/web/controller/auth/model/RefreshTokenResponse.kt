@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,5 +24,5 @@ import java.time.OffsetDateTime
 data class RefreshTokenResponse(
     val accessToken: String,
     val accessTokenExpiry: OffsetDateTime,
-) {
-}
+    val refreshTokenExpiry: OffsetDateTime,
+)

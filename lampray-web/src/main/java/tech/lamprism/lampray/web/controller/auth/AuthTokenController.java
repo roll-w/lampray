@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import tech.lamprism.lampray.security.token.AuthorizationTokenConfigKeys;
 import tech.lamprism.lampray.security.token.AuthorizationTokenManager;
 import tech.lamprism.lampray.security.token.MetadataAuthorizationToken;
+import tech.lamprism.lampray.security.token.RefreshMetadataAuthorizationToken;
 import tech.lamprism.lampray.security.token.SimpleAuthorizationToken;
 import tech.lamprism.lampray.security.token.TokenSubjectSignKeyProvider;
 import tech.lamprism.lampray.security.token.TokenType;
@@ -36,7 +37,9 @@ import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.HttpResponseEntity;
 
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author RollW
@@ -60,29 +63,118 @@ public class AuthTokenController {
     public HttpResponseEntity<RefreshTokenResponse> refreshToken(
             HttpServletRequest request,
             HttpServletResponse response) {
-        String refreshToken = RefreshTokenCookieHelper.resolveRefreshToken(request);
-        if (StringUtils.isBlank(refreshToken)) {
-            RefreshTokenCookieHelper.clearRefreshTokenCookie(request, response);
-            throw new CommonRuntimeException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "Refresh token is required");
-        }
+        RefreshRequestContext context = resolveRefreshRequestContext(request, response);
 
-        Long accessTokenExpireTime = configReader.get(AuthorizationTokenConfigKeys.ACCESS_TOKEN_EXPIRE_TIME);
-        MetadataAuthorizationToken exchangedToken;
         try {
-            exchangedToken = authorizationTokenManager.exchangeToken(
-                    new SimpleAuthorizationToken(refreshToken, TokenType.REFRESH),
-                    tokenSubjectSignKeyProvider,
-                    TokenType.ACCESS,
-                    Duration.ofSeconds(accessTokenExpireTime),
-                    List.of()
+            RefreshMetadataAuthorizationToken parsedRefreshToken = parseRefreshToken(context.rawRefreshToken());
+            MetadataAuthorizationToken activeRefreshToken = resolveActiveRefreshToken(
+                    parsedRefreshToken,
+                    request,
+                    response,
+                    context
             );
+            MetadataAuthorizationToken accessToken = exchangeAccessToken(
+                    activeRefreshToken,
+                    context.accessTokenExpiry()
+            );
+            return HttpResponseEntity.success(toRefreshTokenResponse(accessToken, activeRefreshToken));
         } catch (RuntimeException e) {
             RefreshTokenCookieHelper.clearRefreshTokenCookie(request, response);
             throw e;
         }
-        return HttpResponseEntity.success(
-                new RefreshTokenResponse(exchangedToken.getToken(), exchangedToken.getExpirationAt())
+    }
+
+    private RefreshRequestContext resolveRefreshRequestContext(HttpServletRequest request,
+                                                               HttpServletResponse response) {
+        String rawRefreshToken = RefreshTokenCookieHelper.resolveRefreshToken(request);
+        if (StringUtils.isBlank(rawRefreshToken)) {
+            RefreshTokenCookieHelper.clearRefreshTokenCookie(request, response);
+            throw new CommonRuntimeException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "Refresh token is required");
+        }
+
+        Duration accessTokenExpiry = Duration.ofSeconds(Objects.requireNonNull(
+                configReader.get(AuthorizationTokenConfigKeys.ACCESS_TOKEN_EXPIRE_TIME)
+        ));
+        Duration refreshTokenExpiry = Duration.ofSeconds(Objects.requireNonNull(
+                configReader.get(AuthorizationTokenConfigKeys.REFRESH_TOKEN_EXPIRE_TIME)
+        ));
+
+        return new RefreshRequestContext(
+                rawRefreshToken,
+                accessTokenExpiry,
+                refreshTokenExpiry,
+                RefreshTokenCookieHelper.resolveRememberMe(request)
         );
+    }
+
+    private MetadataAuthorizationToken resolveActiveRefreshToken(
+            RefreshMetadataAuthorizationToken parsedRefreshToken,
+            HttpServletRequest request,
+            HttpServletResponse response,
+            RefreshRequestContext context) {
+        if (!shouldRotateRefreshToken(parsedRefreshToken.getExpirationAt(), context.accessTokenExpiry())) {
+            return parsedRefreshToken;
+        }
+
+        MetadataAuthorizationToken rotatedRefreshToken = authorizationTokenManager.createToken(
+                parsedRefreshToken.getSubject(),
+                tokenSubjectSignKeyProvider,
+                TokenType.REFRESH,
+                context.refreshTokenExpiry(),
+                parsedRefreshToken.getPermittedScopes()
+        );
+        authorizationTokenManager.revokeToken(parsedRefreshToken);
+        RefreshTokenCookieHelper.writeRefreshTokenCookie(
+                request,
+                response,
+                rotatedRefreshToken.getToken(),
+                context.rememberMe(),
+                context.refreshTokenExpiry()
+        );
+        return rotatedRefreshToken;
+    }
+
+    private MetadataAuthorizationToken exchangeAccessToken(MetadataAuthorizationToken refreshToken,
+                                                           Duration accessTokenExpiry) {
+        return authorizationTokenManager.exchangeToken(
+                refreshToken,
+                tokenSubjectSignKeyProvider,
+                TokenType.ACCESS,
+                accessTokenExpiry,
+                List.of()
+        );
+    }
+
+    private RefreshTokenResponse toRefreshTokenResponse(MetadataAuthorizationToken accessToken,
+                                                        MetadataAuthorizationToken refreshToken) {
+        return new RefreshTokenResponse(
+                accessToken.getToken(),
+                accessToken.getExpirationAt(),
+                refreshToken.getExpirationAt()
+        );
+    }
+
+    private RefreshMetadataAuthorizationToken parseRefreshToken(String refreshToken) {
+        MetadataAuthorizationToken parsedToken = authorizationTokenManager.parseToken(
+                new SimpleAuthorizationToken(refreshToken, TokenType.REFRESH),
+                tokenSubjectSignKeyProvider
+        );
+        if (parsedToken instanceof RefreshMetadataAuthorizationToken refreshMetadataAuthorizationToken) {
+            return refreshMetadataAuthorizationToken;
+        }
+
+        throw new CommonRuntimeException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "Refresh token is invalid");
+    }
+
+    private boolean shouldRotateRefreshToken(OffsetDateTime refreshTokenExpiryAt,
+                                             Duration accessTokenExpiry) {
+        return !refreshTokenExpiryAt.isAfter(OffsetDateTime.now().plus(accessTokenExpiry));
+    }
+
+    private record RefreshRequestContext(String rawRefreshToken,
+                                         Duration accessTokenExpiry,
+                                         Duration refreshTokenExpiry,
+                                         boolean rememberMe) {
     }
 
     @GetMapping("/token:verify")
