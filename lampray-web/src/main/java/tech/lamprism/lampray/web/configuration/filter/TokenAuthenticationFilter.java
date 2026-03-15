@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,10 +68,6 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String loadToken(HttpServletRequest request) {
-        String token = request.getHeader("Authorization");
-        if (token == null || token.isEmpty()) {
-            return request.getParameter("token");
-        }
-        return token;
+        return request.getHeader("Authorization");
     }
 }

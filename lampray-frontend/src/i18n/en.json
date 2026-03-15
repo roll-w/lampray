@@ -76,6 +76,10 @@
     "settings": "Settings"
   },
   "request": {
+    "auth": {
+      "sessionExpiredTitle": "Session expired",
+      "sessionExpiredDescription": "Please sign in again to continue."
+    },
     "error": {
       "title": "Request Error"
     },

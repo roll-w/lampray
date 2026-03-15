@@ -1,5 +1,9 @@
 {
   "request": {
+    "auth": {
+      "sessionExpiredTitle": "会话已过期",
+      "sessionExpiredDescription": "请重新登录后继续。"
+    },
     "error": {
       "title": "请求错误"
     },

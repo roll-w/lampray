@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.web.controller.auth.model
+import type {Toast} from "@nuxt/ui/runtime/composables/useToast.d.ts";
 
-/**
- * @author RollW
- */
-data class RefreshTokenRequest(
-    val refreshToken: String
-)
+type ToastHandler = (payload: Partial<Toast>) => void
+
+let toastHandler: ToastHandler | null = null
+
+export const registerToastHandler = (handler: ToastHandler): void => {
+    toastHandler = handler
+}
+
+export const clearToastHandler = (handler?: ToastHandler): void => {
+    if (!handler || toastHandler === handler) {
+        toastHandler = null
+    }
+}
+
+export const pushToast = (payload: Partial<Toast>): void => {
+    toastHandler?.(payload)
+}

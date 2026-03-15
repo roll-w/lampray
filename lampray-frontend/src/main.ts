@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import {i18n, type LocaleOption, mappingToAvailableLocale} from "@/i18n/i18n.ts"
 import {addCollection} from "@iconify/vue";
 import {useNavigatorLanguage, useStorage} from "@vueuse/core";
 import type {Token, User} from "@/stores/user";
+import {newErrorToast} from "@/utils/toasts.ts";
+import {pushToast} from "@/utils/toastBus.ts";
 
 async function bootstrap() {
     try {
@@ -71,6 +73,10 @@ async function bootstrap() {
     };
 
     const onLoginExpired = () => {
+        pushToast(newErrorToast(
+            i18n.global.t("request.auth.sessionExpiredTitle"),
+            i18n.global.t("request.auth.sessionExpiredDescription")
+        ));
         userStore.logout();
         router.push({
             name: RouteName.LOGIN,
@@ -124,7 +130,10 @@ async function bootstrap() {
         onLogout: handleBroadcastLogout,
     });
 
-    const axios = createAxios(userStore, onLoginExpired, onUserBlocked);
+    const axios = createAxios(userStore, {
+        onLoginExpired,
+        onUserBlocked
+    });
     const server = ((window as any).config?.server) || {
         httpProtocol: "http",
         host: "localhost:5100",

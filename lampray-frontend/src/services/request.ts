@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,17 @@ const ERROR_CODES = {
 } as const
 
 const refreshTokenUrl = '/api/v1/auth/token:refresh';
+const rememberMeHeader = 'X-Lampray-Remember-Me';
 
 interface TokenRefreshResponse {
     accessToken: string
     accessTokenExpiry: string
+    refreshTokenExpiry: string
+}
+
+interface AxiosLifecycleCallbacks {
+    onLoginExpired?: () => void
+    onUserBlocked?: () => void
 }
 
 
@@ -59,35 +66,42 @@ const performTokenRefresh = async (
     instance: AxiosInstance,
     userStore: UserStore
 ): Promise<Token> => {
-    const currentToken = userStore.getToken
+    const currentToken = userStore.token
 
-    if (!currentToken?.refreshToken || isTokenExpired(currentToken.refreshTokenExpiry)) {
+    if (!currentToken || isTokenExpired(currentToken.refreshTokenExpiry)) {
         throw new Error('Refresh token expired')
     }
 
     const response = await instance.post<HttpResponseBody<TokenRefreshResponse>>(
         refreshTokenUrl,
+        undefined,
         {
-            refreshToken: currentToken.refreshToken
-        },
+            headers: {
+                [rememberMeHeader]: String(userStore.remember)
+            }
+        }
     )
     const data = response.data.data!
+    const refreshedRefreshTokenExpiry = new Date(data.refreshTokenExpiry)
 
     const newToken: Token = {
         accessToken: data.accessToken,
         accessTokenExpiry: new Date(data.accessTokenExpiry),
-        refreshToken: currentToken.refreshToken,
-        refreshTokenExpiry: currentToken.refreshTokenExpiry,
+        refreshTokenExpiry: refreshedRefreshTokenExpiry,
         prefix: currentToken.prefix
     }
     userStore.refreshToken(newToken)
+
     return newToken
 }
 
 /**
  * Handle token refresh with concurrent request protection
  */
-const handleTokenRefresh = async (instance: AxiosInstance, userStore: UserStore): Promise<void> => {
+const handleTokenRefresh = async (
+    instance: AxiosInstance,
+    userStore: UserStore
+): Promise<void> => {
     if (refreshPromise) {
         await refreshPromise
         return
@@ -112,11 +126,15 @@ const isErrorCodeMatch = (errorCode: string | undefined, errorList: readonly str
  */
 export function createAxios(
     userStore: UserStore,
-    onLoginExpired: () => void = () => {
-    },
-    onUserBlocked: () => void = () => {
-    }
+    callbacks: AxiosLifecycleCallbacks = {}
 ): AxiosInstance {
+    const {
+        onLoginExpired = () => {
+        },
+        onUserBlocked = () => {
+        }
+    } = callbacks
+
     const instance = axios.create({
         withCredentials: true
     })
@@ -145,8 +163,8 @@ export function createAxios(
                 try {
                     await handleTokenRefresh(instance, userStore)
                 } catch (error) {
-                    console.error('Token refresh failed:', error)
-                    return Promise.reject(new Error('Token refresh failed'))
+                    console.warn('Token refresh failed.')
+                    return Promise.reject(error)
                 }
             }
 
@@ -164,7 +182,6 @@ export function createAxios(
     // Response interceptor
     instance.interceptors.response.use(
         (response: AxiosResponse) => {
-            console.log("Success response: ", response)
             if (!response.data || !response.data.errorCode) {
                 return response
             }
@@ -175,8 +192,6 @@ export function createAxios(
             return response
         },
         (error) => {
-            console.log("Error response: ", error)
-
             const errorData: HttpResponseBody<void> = error.response?.data || error
             const errorCode = errorData.errorCode || '00000'
 
