@@ -1,0 +1,206 @@
+/*
+ * Copyright (C) 2023-2026 RollW
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package tech.lamprism.lampray.storage.persistence
+
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.Id
+import jakarta.persistence.Table
+import jakarta.persistence.Temporal
+import jakarta.persistence.TemporalType
+import org.hibernate.annotations.Generated
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.generator.EventType
+import org.hibernate.proxy.HibernateProxy
+import org.hibernate.type.SqlTypes
+import tech.lamprism.lampray.DataEntity
+import tech.lamprism.lampray.storage.FileStorage
+import tech.lamprism.lampray.storage.FileType
+import tech.lamprism.lampray.storage.StorageResourceKind
+import tech.lamprism.lampray.storage.StorageVisibility
+import tech.rollw.common.web.system.SystemResourceKind
+import java.time.OffsetDateTime
+
+/**
+ * @author RollW
+ */
+@Entity
+@Table(name = "storage_file")
+class StorageFileEntity(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
+    var id: Long? = null,
+
+    @Id
+    @Column(name = "file_id", nullable = false, length = 64, unique = true)
+    var fileId: String = "",
+
+    @Column(name = "blob_id", nullable = false, length = 64)
+    var blobId: String = "",
+
+    @Column(name = "group_name", nullable = false, length = 80)
+    var groupName: String = "",
+
+    @Column(name = "owner_user_id")
+    var ownerUserId: Long? = null,
+
+    @Column(name = "file_name", nullable = false, length = 255)
+    var fileName: String = "",
+
+    @Column(name = "file_size", nullable = false)
+    var fileSize: Long = 0,
+
+    @Column(name = "mime_type", nullable = false, length = 255)
+    var mimeType: String = "application/octet-stream",
+
+    @Column(name = "file_type", nullable = false, length = 40)
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    var fileType: FileType = FileType.OTHER,
+
+    @Column(name = "visibility", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    var visibility: StorageVisibility = StorageVisibility.PRIVATE,
+
+    @Column(name = "create_time", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private var createTime: OffsetDateTime = OffsetDateTime.now(),
+
+    @Column(name = "update_time", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private var updateTime: OffsetDateTime = OffsetDateTime.now(),
+) : DataEntity<String> {
+    override fun getEntityId(): String = fileId
+
+    override fun getCreateTime(): OffsetDateTime = createTime
+
+    override fun getUpdateTime(): OffsetDateTime = updateTime
+
+    override fun getSystemResourceKind(): SystemResourceKind = StorageResourceKind
+
+    fun setCreateTime(createTime: OffsetDateTime) {
+        this.createTime = createTime
+    }
+
+    fun setUpdateTime(updateTime: OffsetDateTime) {
+        this.updateTime = updateTime
+    }
+
+    fun toBuilder(): Builder = Builder(this)
+
+    fun lock(): FileStorage = FileStorage.builder()
+        .setFileId(fileId)
+        .setFileName(fileName)
+        .setFileSize(fileSize)
+        .setMimeType(mimeType)
+        .setFileType(fileType)
+        .setCreateTime(createTime)
+        .build()
+
+    class Builder {
+        private var id: Long? = null
+        private var fileId: String? = null
+        private var blobId: String = ""
+        private var groupName: String = ""
+        private var ownerUserId: Long? = null
+        private var fileName: String = ""
+        private var fileSize: Long = 0
+        private var mimeType: String = "application/octet-stream"
+        private var fileType: FileType = FileType.OTHER
+        private var visibility: StorageVisibility = StorageVisibility.PRIVATE
+        private var createTime: OffsetDateTime = OffsetDateTime.now()
+        private var updateTime: OffsetDateTime = OffsetDateTime.now()
+
+        constructor()
+
+        constructor(other: StorageFileEntity) {
+            id = other.id
+            fileId = other.fileId
+            blobId = other.blobId
+            groupName = other.groupName
+            ownerUserId = other.ownerUserId
+            fileName = other.fileName
+            fileSize = other.fileSize
+            mimeType = other.mimeType
+            fileType = other.fileType
+            visibility = other.visibility
+            createTime = other.createTime
+            updateTime = other.updateTime
+        }
+
+        fun setId(id: Long?) = apply { this.id = id }
+
+        fun setFileId(fileId: String) = apply { this.fileId = fileId }
+
+        fun setBlobId(blobId: String) = apply { this.blobId = blobId }
+
+        fun setGroupName(groupName: String) = apply { this.groupName = groupName }
+
+        fun setOwnerUserId(ownerUserId: Long?) = apply { this.ownerUserId = ownerUserId }
+
+        fun setFileName(fileName: String) = apply { this.fileName = fileName }
+
+        fun setFileSize(fileSize: Long) = apply { this.fileSize = fileSize }
+
+        fun setMimeType(mimeType: String) = apply { this.mimeType = mimeType }
+
+        fun setFileType(fileType: FileType) = apply { this.fileType = fileType }
+
+        fun setVisibility(visibility: StorageVisibility) = apply { this.visibility = visibility }
+
+        fun setCreateTime(createTime: OffsetDateTime) = apply { this.createTime = createTime }
+
+        fun setUpdateTime(updateTime: OffsetDateTime) = apply { this.updateTime = updateTime }
+
+        fun build(): StorageFileEntity = StorageFileEntity(
+            id = id,
+            fileId = fileId!!,
+            blobId = blobId,
+            groupName = groupName,
+            ownerUserId = ownerUserId,
+            fileName = fileName,
+            fileSize = fileSize,
+            mimeType = mimeType,
+            fileType = fileType,
+            visibility = visibility,
+            createTime = createTime,
+            updateTime = updateTime,
+        )
+    }
+
+    companion object {
+        @JvmStatic
+        fun builder(): Builder = Builder()
+    }
+
+    final override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null) return false
+        val otherClass =
+            if (other is HibernateProxy) other.hibernateLazyInitializer.persistentClass else other.javaClass
+        val thisClass = if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else this.javaClass
+        if (thisClass != otherClass) return false
+        other as StorageFileEntity
+        return fileId == other.fileId
+    }
+
+    final override fun hashCode(): Int =
+        if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass.hashCode() else javaClass.hashCode()
+}

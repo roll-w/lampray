@@ -111,6 +111,7 @@ public class WebSecurityConfiguration {
                 .requestMatchers("/api/{version}/{userId}/review/**").hasAnyAuthority("role:ADMIN", "role:REVIEWER")
                 .requestMatchers("/api/{version}/common/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/{version}/storages/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/{version}/files/{fileId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/{version}/admin/**").hasAnyAuthority("role:ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/{version}/{userId}/review").hasAnyAuthority("role:ADMIN", "role:REVIEWER")
                 .requestMatchers(HttpMethod.GET).permitAll()

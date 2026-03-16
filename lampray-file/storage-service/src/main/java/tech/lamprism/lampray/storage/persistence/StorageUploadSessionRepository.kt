@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage.persistence
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+import org.springframework.stereotype.Repository
+import tech.lamprism.lampray.common.data.CommonRepository
 
-description = "lampray-storage-service"
+/**
+ * @author RollW
+ */
+@Repository
+class StorageUploadSessionRepository(
+    storageUploadSessionDao: StorageUploadSessionDao,
+) : CommonRepository<StorageUploadSessionEntity, String>(storageUploadSessionDao)

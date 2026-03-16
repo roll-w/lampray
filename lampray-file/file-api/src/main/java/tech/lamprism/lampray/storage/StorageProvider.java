@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,23 @@ package tech.lamprism.lampray.storage;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * @author RollW
  */
 public interface StorageProvider {
-    FileSummary saveFile(InputStream inputStream) throws IOException;
+    FileStorage saveFile(InputStream inputStream) throws IOException;
 
-    void getFile(String fileId, OutputStream outputStream) throws IOException;
+    StorageUploadSession createUploadSession(StorageUploadRequest request,
+                                             Long userId) throws IOException;
 
-    void getFile(String fileId, OutputStream outputStream,
-                 long startBytes, long endBytes) throws IOException;
+    FileStorage uploadFileContent(String uploadId,
+                                  InputStream inputStream,
+                                  Long userId) throws IOException;
 
-    FileStorage getFileStorage(String fileId);
+    FileStorage completeUpload(String uploadId,
+                               Long userId) throws IOException;
+
+    StorageDownloadResult resolveDownload(String fileId,
+                                          Long userId) throws IOException;
 }

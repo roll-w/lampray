@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage.builtin;
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+import tech.lamprism.lampray.storage.FileStorage;
+import tech.lamprism.lampray.storage.StorageDownloadSource;
 
-description = "lampray-storage-service"
+/**
+ * @author RollW
+ */
+public interface BuiltinStorageRegistry {
+    boolean contains(String fileId);
+
+    BuiltinStorageResource get(String fileId);
+
+    record BuiltinStorageResource(
+            FileStorage fileStorage,
+            StorageDownloadSource content
+    ) {
+    }
+}

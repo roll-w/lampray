@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,20 @@
 
 package tech.lamprism.lampray.web.controller.storage;
 
-import com.google.common.base.Strings;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpRange;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.FileType;
-import tech.lamprism.lampray.storage.StorageProvider;
+import tech.lamprism.lampray.storage.StorageDownloadMode;
+import tech.lamprism.lampray.storage.StorageDownloadResult;
+import tech.lamprism.lampray.storage.StorageDownloadSource;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author RollW
@@ -37,78 +37,112 @@ import java.util.List;
 public final class DownloadHelper {
     public static final String ACCEPT_TYPE = "X-Accept-Type";
     public static final String DISPOSITION_TYPE = "X-Disposition-Type";
+    private static final String DISPOSITION_ATTACHMENT = "attachment";
+    private static final String DISPOSITION_INLINE = "inline";
 
-    private static final Logger logger = LoggerFactory.getLogger(DownloadHelper.class);
-
-    private static String getEncodedFileName(String fileName) {
-        return URLEncoder.encode(fileName, StandardCharsets.UTF_8)
-                .replace("+", "%20");
-    }
-
-    private static String getResponseType(String mimeType,
-                                          HttpServletRequest request) {
-        String contentType = request.getHeader(ACCEPT_TYPE);
-        if (Strings.isNullOrEmpty(contentType)) {
-            return mimeType;
+    public static void writeDownload(StorageDownloadResult downloadResult,
+                                     HttpServletRequest request,
+                                     HttpServletResponse response) throws IOException {
+        if (downloadResult.getMode() != StorageDownloadMode.PROXY) {
+            throw new IllegalArgumentException("Download helper only supports proxy download responses.");
         }
-        return contentType;
-    }
 
-    private static String getDispositionType(HttpServletRequest request) {
-        String dispositionType = request.getHeader(DISPOSITION_TYPE);
-        String param = request.getParameter("disposition");
-        if (Strings.isNullOrEmpty(dispositionType)) {
-            dispositionType = param;
+        StorageDownloadSource content = downloadResult.getContent();
+        if (content == null) {
+            throw new IllegalStateException("Proxy download is missing content source.");
         }
-        if (Strings.isNullOrEmpty(dispositionType)) {
-            return "attachment";
-        }
-        return dispositionType;
-    }
 
-    /**
-     * @deprecated This method is deprecated
-     */
-    @Deprecated
-    public static void downloadFile(FileStorage storage,
-                                    String name,
-                                    HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    StorageProvider storageProvider) throws IOException {
-        String dispositionType = getDispositionType(request);
-        String contentType = getResponseType(storage.getMimeType(), request);
+        FileStorage fileStorage = downloadResult.getFileStorage();
+        String contentType = resolveResponseType(fileStorage.getMimeType(), request);
+        String dispositionType = resolveDispositionType(fileStorage, request);
+        long length = fileStorage.getFileSize();
+
         response.setContentType(contentType);
-
-        if (storage.getFileType() == FileType.TEXT) {
-            response.setCharacterEncoding("utf-8");
-        }
-        List<HttpRange> ranges = HttpRangeUtils.tryGetsRange(request);
         response.setHeader("Accept-Ranges", "bytes");
+        response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("X-Frame-Options", "SAMEORIGIN");
         response.setHeader("Content-Security-Policy", "frame-ancestors 'self' localhost:* 127.0.0.1:*");
-        response.setHeader("Content-Disposition",
-                dispositionType + ";filename*=utf-8''" + getEncodedFileName(name));
-        long length = storage.getFileSize();
+        response.setHeader(
+                "Content-Disposition",
+                dispositionType + "; filename=\"" + toAsciiFileName(fileStorage.getFileName())
+                        + "\"; filename*=UTF-8''" + encodeFileName(fileStorage.getFileName())
+        );
+        if (fileStorage.getFileType() == FileType.TEXT) {
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        }
 
-        if (!ranges.isEmpty()) {
+        List<HttpRange> ranges = HttpRangeUtils.tryGetsRange(request);
+        if (!ranges.isEmpty() && length > 0) {
             HttpRange range = ranges.get(0);
             long start = range.getRangeStart(length);
             long end = range.getRangeEnd(length);
             response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
             response.setHeader("Content-Range", "bytes " + start + "-" + end + "/" + length);
             response.setHeader("Content-Length", String.valueOf(end - start + 1));
-            storageProvider.getFile(
-                    storage.getFileId(),
-                    response.getOutputStream(),
-                    start,
-                    end
-            );
+            content.writeTo(response.getOutputStream(), start, end);
             return;
         }
+
         if (length > 0) {
             response.setHeader("Content-Length", String.valueOf(length));
         }
-        storageProvider.getFile(storage.getFileId(), response.getOutputStream());
+        content.writeTo(response.getOutputStream());
+    }
+
+    private static String resolveResponseType(String mimeType,
+                                              HttpServletRequest request) {
+        String requestedType = request.getHeader(ACCEPT_TYPE);
+        if (hasText(requestedType)) {
+            return requestedType;
+        }
+        return mimeType;
+    }
+
+    private static String resolveDispositionType(FileStorage fileStorage,
+                                                 HttpServletRequest request) {
+        String requestedDisposition = request.getHeader(DISPOSITION_TYPE);
+        if (!hasText(requestedDisposition)) {
+            requestedDisposition = request.getParameter("disposition");
+        }
+        if (hasText(requestedDisposition)) {
+            String normalized = requestedDisposition.trim().toLowerCase(Locale.ROOT);
+            if (DISPOSITION_INLINE.equals(normalized)) {
+                return DISPOSITION_INLINE;
+            }
+            if (DISPOSITION_ATTACHMENT.equals(normalized)) {
+                return DISPOSITION_ATTACHMENT;
+            }
+        }
+        return prefersInline(fileStorage.getFileType()) ? DISPOSITION_INLINE : DISPOSITION_ATTACHMENT;
+    }
+
+    private static boolean prefersInline(FileType fileType) {
+        return fileType == FileType.IMAGE
+                || fileType == FileType.TEXT
+                || fileType == FileType.AUDIO
+                || fileType == FileType.VIDEO;
+    }
+
+    private static String encodeFileName(String fileName) {
+        return URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+    }
+
+    private static String toAsciiFileName(String fileName) {
+        StringBuilder builder = new StringBuilder(fileName.length());
+        for (int i = 0; i < fileName.length(); i++) {
+            char current = fileName.charAt(i);
+            if (current <= 31 || current == '"' || current == '\\' || current == '/' || current == ';' || current > 126) {
+                builder.append('_');
+                continue;
+            }
+            builder.append(current);
+        }
+        String normalized = builder.toString().trim();
+        return normalized.isEmpty() ? "download" : normalized;
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     private DownloadHelper() {

@@ -14,18 +14,27 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage.store;
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+import tech.lamprism.lampray.storage.StorageDownloadSource;
 
-description = "lampray-storage-service"
+import java.io.IOException;
+import java.io.InputStream;
+
+/**
+ * @author RollW
+ */
+public interface BlobStore {
+    String getBackendName();
+
+    BlobObject store(BlobWriteRequest request,
+                     InputStream inputStream) throws IOException;
+
+    StorageDownloadSource openDownload(String key) throws IOException;
+
+    BlobObject describe(String key) throws IOException;
+
+    boolean exists(String key) throws IOException;
+
+    boolean delete(String key) throws IOException;
+}

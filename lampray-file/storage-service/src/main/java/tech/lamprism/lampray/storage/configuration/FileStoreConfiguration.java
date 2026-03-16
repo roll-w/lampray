@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,18 @@ package tech.lamprism.lampray.storage.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import tech.lamprism.lampray.storage.FileStoreGroup;
-import tech.lamprism.lampray.storage.FileStoreManager;
-import tech.lamprism.lampray.storage.GroupedFileStoreManager;
-import tech.lamprism.lampray.storage.fs.ClassPathResourceFileStore;
-import tech.lamprism.lampray.storage.fs.LocalFileStore;
+import tech.lamprism.lampray.storage.StorageBackendType;
+import tech.lamprism.lampray.storage.awss3.S3BlobStore;
+import tech.lamprism.lampray.storage.local.LocalBlobStore;
+import tech.lamprism.lampray.storage.store.BlobStore;
+import tech.lamprism.lampray.storage.store.BlobStoreRegistry;
+import tech.lamprism.lampray.storage.store.DefaultBlobStoreRegistry;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author RollW
@@ -32,28 +37,33 @@ import java.util.List;
 @Configuration
 public class FileStoreConfiguration {
     @Bean
-    public LocalFileStore defaultLocalFileStore() {
-        return new LocalFileStore("temp");
+    public StorageTopology storageTopology(StorageTopologyResolver storageTopologyResolver) {
+        return storageTopologyResolver.resolve();
     }
 
-    @Bean
-    public ClassPathResourceFileStore classPathResourceFileStore() {
-        return new ClassPathResourceFileStore();
-    }
-
-    @Bean
-    public FileStoreManager fileStoreManager(ClassPathResourceFileStore classPathResourceFileStore,
-                                             LocalFileStore localFileStore) {
-        return new GroupedFileStoreManager(
-                List.of(createDefaultGroup(classPathResourceFileStore, localFileStore))
-        );
-    }
-
-    private FileStoreGroup createDefaultGroup(ClassPathResourceFileStore classPathResourceFileStore,
-                                              LocalFileStore localFileStore) {
-        FileStoreGroup defaultGroup = new FileStoreGroup("DEFAULT");
-        defaultGroup.addFileStore(classPathResourceFileStore, 1);
-        defaultGroup.addFileStore(localFileStore, 2);
-        return defaultGroup;
+    @Bean(destroyMethod = "close")
+    public BlobStoreRegistry blobStoreRegistry(StorageTopology storageTopology) throws IOException {
+        List<BlobStore> blobStores = new ArrayList<>();
+        for (StorageBackendSettings backendSettings : storageTopology.getBackends().values()) {
+            if (backendSettings.getType() == StorageBackendType.LOCAL) {
+                blobStores.add(new LocalBlobStore(
+                        backendSettings.getName(),
+                        Path.of(Objects.requireNonNull(backendSettings.getRootPath())),
+                        backendSettings.getRootPrefix()
+                ));
+                continue;
+            }
+            blobStores.add(new S3BlobStore(
+                    backendSettings.getName(),
+                    backendSettings.getEndpoint(),
+                    backendSettings.getRegion(),
+                    backendSettings.getBucket(),
+                    backendSettings.getRootPrefix(),
+                    backendSettings.getPathStyleAccess(),
+                    backendSettings.getAccessKey(),
+                    backendSettings.getSecretKey()
+            ));
+        }
+        return new DefaultBlobStoreRegistry(blobStores);
     }
 }

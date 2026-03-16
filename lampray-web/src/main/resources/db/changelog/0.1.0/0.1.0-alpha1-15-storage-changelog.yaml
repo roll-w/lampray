@@ -1,0 +1,289 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0.1.0-alpha1-15-storage_blob
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            tableName: storage_blob
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_storage_blob
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: blob_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: checksum_sha256
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: file_size
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: mime_type
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: file_type
+                  type: VARCHAR(40)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: primary_backend
+                  type: VARCHAR(80)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: primary_object_key
+                  type: VARCHAR(512)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+        - addUniqueConstraint:
+            columnNames: blob_id
+            constraintName: uc_storage_blob_resource
+            tableName: storage_blob
+        - addUniqueConstraint:
+            columnNames: checksum_sha256
+            constraintName: uc_storage_blob_checksum
+            tableName: storage_blob
+  - changeSet:
+      id: 0.1.0-alpha1-16-storage_blob_placement
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            tableName: storage_blob_placement
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_storage_blob_placement
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: placement_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: blob_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: backend_name
+                  type: VARCHAR(80)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: object_key
+                  type: VARCHAR(512)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+        - addUniqueConstraint:
+            columnNames: placement_id
+            constraintName: uc_storage_blob_placement_resource
+            tableName: storage_blob_placement
+        - addUniqueConstraint:
+            columnNames: blob_id, backend_name
+            constraintName: uc_storage_blob_backend
+            tableName: storage_blob_placement
+  - changeSet:
+      id: 0.1.0-alpha1-17-storage_file
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            tableName: storage_file
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_storage_file
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: file_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: blob_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: group_name
+                  type: VARCHAR(80)
+              - column:
+                  name: owner_user_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: file_name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: file_size
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: mime_type
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: file_type
+                  type: VARCHAR(40)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: visibility
+                  type: VARCHAR(20)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+        - addUniqueConstraint:
+            columnNames: file_id
+            constraintName: uc_storage_file_resource
+            tableName: storage_file
+  - changeSet:
+      id: 0.1.0-alpha1-18-storage_upload_session
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            tableName: storage_upload_session
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_storage_upload_session
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: upload_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: file_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: group_name
+                  type: VARCHAR(80)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: file_name
+                  type: VARCHAR(255)
+              - column:
+                  name: file_size
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: mime_type
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: file_type
+                  type: VARCHAR(40)
+              - column:
+                  name: checksum_sha256
+                  type: VARCHAR(64)
+              - column:
+                  name: owner_user_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: primary_backend
+                  type: VARCHAR(80)
+              - column:
+                  name: object_key
+                  type: VARCHAR(512)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: upload_mode
+                  type: VARCHAR(40)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(20)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expires_at
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME
+        - addUniqueConstraint:
+            columnNames: upload_id
+            constraintName: uc_storage_upload_session_resource
+            tableName: storage_upload_session

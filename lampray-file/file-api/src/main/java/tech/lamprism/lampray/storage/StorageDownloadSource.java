@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage;
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+import java.io.IOException;
+import java.io.OutputStream;
 
-description = "lampray-storage-service"
+/**
+ * @author RollW
+ */
+public interface StorageDownloadSource {
+    void writeTo(OutputStream outputStream) throws IOException;
+
+    void writeTo(OutputStream outputStream,
+                 long startBytes,// TODO: replace with class Range
+                 long endBytes) throws IOException;
+}

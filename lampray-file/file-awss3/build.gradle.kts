@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ plugins {
 
 dependencies {
     api(project(":lampray-file:file-api"))
+    implementation(platform("software.amazon.awssdk:bom:2.30.38"))
+    implementation("software.amazon.awssdk:s3")
 }
 
 description = "lampray-file-awss3"

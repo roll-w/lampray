@@ -14,18 +14,25 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage.store;
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+import java.util.Map;
+import java.util.Objects;
 
-description = "lampray-storage-service"
+/**
+ * @author RollW
+ */
+public record BlobWriteRequest(
+        String key,
+        long size,
+        String contentType,
+        Map<String, String> metadata
+) {
+    public BlobWriteRequest {
+        Objects.requireNonNull(key, "key must not be null");
+        if (size < 0) {
+            throw new IllegalArgumentException("size must not be negative");
+        }
+        metadata = metadata == null || metadata.isEmpty() ? Map.of() : Map.copyOf(metadata);
+    }
+}

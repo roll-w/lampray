@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage.domain
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+import tech.lamprism.lampray.storage.FileType
+import java.time.OffsetDateTime
 
-description = "lampray-storage-service"
+/**
+ * @author RollW
+ */
+data class StorageBlobSnapshot(
+    val id: Long,
+    val blobId: String,
+    val checksumSha256: String,
+    val fileSize: Long,
+    val mimeType: String,
+    val fileType: FileType,
+    val primaryBackend: String,
+    val primaryObjectKey: String,
+    val createTime: OffsetDateTime,
+    val updateTime: OffsetDateTime,
+)

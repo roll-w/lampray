@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package tech.lamprism.lampray.storage;
 
+import java.util.Set;
+
 /**
  * @author RollW
  */
@@ -24,6 +26,19 @@ public class DefaultStorageIds {
     public static final String DEFAULT_USER_COVER_ID = "user-cover";
     public static final String DEFAULT_ARTICLE_COVER_ID = "article-cover";
     public static final String DEFAULT_CATEGORY_COVER_ID = "category-cover";
+    public static final String DEFAULT_LOGO_ID = "logo";
+
+    private static final Set<String> BUILTIN_IDS = Set.of(
+            DEFAULT_AVATAR_ID,
+            DEFAULT_USER_COVER_ID,
+            DEFAULT_ARTICLE_COVER_ID,
+            DEFAULT_CATEGORY_COVER_ID,
+            DEFAULT_LOGO_ID
+    );
+
+    public static boolean isBuiltin(String storageId) {
+        return BUILTIN_IDS.contains(storageId);
+    }
 
     private DefaultStorageIds() {
     }

@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage.configuration
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+/**
+ * @author RollW
+ */
+data class StorageTopology(
+    val defaultGroup: String,
+    val backends: Map<String, StorageBackendSettings>,
+    val groups: Map<String, StorageGroupSettings>,
+) {
+    fun getBackend(name: String): StorageBackendSettings =
+        backends[name] ?: throw IllegalArgumentException("Unknown storage backend: $name")
 
-description = "lampray-storage-service"
+    fun getGroup(name: String): StorageGroupSettings =
+        groups[name] ?: throw IllegalArgumentException("Unknown storage group: $name")
+}

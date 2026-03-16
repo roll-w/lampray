@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage.store;
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+import java.util.Collection;
 
-description = "lampray-storage-service"
+/**
+ * @author RollW
+ */
+public interface BlobStoreRegistry extends AutoCloseable {
+    BlobStore get(String backendName);
+
+    boolean contains(String backendName);
+
+    Collection<BlobStore> all();
+
+    @Override
+    void close() throws Exception;
+}

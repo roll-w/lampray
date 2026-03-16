@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage.configuration
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+/**
+ * @author RollW
+ */
+enum class StorageGroupRedundancyMode {
+    SINGLE,
+    ASYNC_REPLICA,
+    ;
 
-description = "lampray-storage-service"
+    companion object {
+        @JvmStatic
+        fun from(raw: String?): StorageGroupRedundancyMode {
+            return entries.firstOrNull { it.name.equals(raw, ignoreCase = true) } ?: SINGLE
+        }
+    }
+}

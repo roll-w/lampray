@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage.configuration
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+import tech.lamprism.lampray.storage.FileType
+import tech.lamprism.lampray.storage.StorageVisibility
 
-description = "lampray-storage-service"
+/**
+ * @author RollW
+ */
+data class StorageGroupSettings(
+    val name: String,
+    val primaryBackend: String,
+    val replicaBackends: Set<String>,
+    val visibility: StorageVisibility,
+    val downloadPolicy: StorageGroupDownloadPolicy,
+    val redundancyMode: StorageGroupRedundancyMode,
+    val maxSizeBytes: Long?,
+    val allowedFileTypes: Set<FileType>,
+)

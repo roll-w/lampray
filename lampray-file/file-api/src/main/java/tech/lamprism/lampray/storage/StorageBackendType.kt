@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+/**
+ * @author RollW
+ */
+enum class StorageBackendType {
+    LOCAL,
+    S3,
+    ;
 
-description = "lampray-storage-service"
+    companion object {
+        @JvmStatic
+        fun from(raw: String?): StorageBackendType? {
+            if (raw.isNullOrBlank()) {
+                return null
+            }
+            return entries.firstOrNull { it.name.equals(raw, ignoreCase = true) }
+        }
+    }
+}

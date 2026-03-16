@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,20 @@ import java.util.Objects;
  */
 public class FileStorage implements DataEntity<String> {
     private final String fileId;
+    private final String fileName;
     private final long fileSize;
     private final String mimeType;
     private final FileType fileType;
     private final OffsetDateTime createTime;
 
     public FileStorage(String fileId,
+                       String fileName,
                        long fileSize,
                        String mimeType,
                        FileType fileType,
                        OffsetDateTime createTime) {
         this.fileId = fileId;
+        this.fileName = fileName;
         this.fileSize = fileSize;
         this.mimeType = mimeType;
         this.fileType = fileType;
@@ -48,6 +51,10 @@ public class FileStorage implements DataEntity<String> {
 
     public String getFileId() {
         return fileId;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 
     public long getFileSize() {
@@ -87,18 +94,20 @@ public class FileStorage implements DataEntity<String> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FileStorage that)) return false;
-        return fileSize == that.fileSize && createTime == that.createTime && Objects.equals(fileId, that.fileId);
+        return fileSize == that.fileSize && Objects.equals(fileId, that.fileId)
+                && Objects.equals(fileName, that.fileName) && Objects.equals(createTime, that.createTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fileId, fileSize, createTime);
+        return Objects.hash(fileId, fileName, fileSize, createTime);
     }
 
     @Override
     public String toString() {
         return "FileStorage{" +
                 "fileId='" + fileId + '\'' +
+                ", fileName='" + fileName + '\'' +
                 ", fileSize=" + fileSize +
                 ", createTime=" + createTime +
                 '}';
@@ -116,6 +125,7 @@ public class FileStorage implements DataEntity<String> {
 
     public static final class Builder implements EntityBuilder<FileStorage, String> {
         private String fileId;
+        private String fileName;
         private long fileSize;
         private String mimeType;
         private FileType fileType;
@@ -126,6 +136,7 @@ public class FileStorage implements DataEntity<String> {
 
         public Builder(FileStorage fileStorage) {
             this.fileId = fileStorage.fileId;
+            this.fileName = fileStorage.fileName;
             this.fileSize = fileStorage.fileSize;
             this.mimeType = fileStorage.mimeType;
             this.fileType = fileStorage.fileType;
@@ -139,6 +150,11 @@ public class FileStorage implements DataEntity<String> {
 
         public Builder setFileId(String fileId) {
             this.fileId = fileId;
+            return this;
+        }
+
+        public Builder setFileName(String fileName) {
+            this.fileName = fileName;
             return this;
         }
 
@@ -163,7 +179,7 @@ public class FileStorage implements DataEntity<String> {
         }
 
         public FileStorage build() {
-            return new FileStorage(fileId, fileSize, mimeType, fileType, createTime);
+            return new FileStorage(fileId, fileName, fileSize, mimeType, fileType, createTime);
         }
     }
 }

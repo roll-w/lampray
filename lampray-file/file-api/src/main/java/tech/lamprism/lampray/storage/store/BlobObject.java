@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.storage.store;
 
-dependencies {
-    api(project(":lampray-file:file-api"))
-    implementation(project(":lampray-common-data"))
-    implementation(project(":lampray-system:setting-api"))
-    implementation(project(":lampray-file:file-awss3"))
-    api(project(":lampray-user:user-api"))
-    // spring web mvc
-    implementation("org.springframework:spring-webmvc")
-}
+import java.time.OffsetDateTime;
+import java.util.Map;
 
-description = "lampray-storage-service"
+/**
+ * @author RollW
+ */
+public record BlobObject(
+        String backendName,
+        String key,
+        long size,
+        String contentType,
+        String etag,
+        OffsetDateTime lastModified,
+        Map<String, String> metadata
+) {
+}
