@@ -16,16 +16,27 @@
 
 package tech.lamprism.lampray.storage.store;
 
+import tech.lamprism.lampray.storage.StorageAccessRequest;
 import tech.lamprism.lampray.storage.StorageDownloadSource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
+import java.util.Set;
 
 /**
  * @author RollW
  */
 public interface BlobStore {
     String getBackendName();
+
+    default Set<BlobStoreCapability> getCapabilities() {
+        return Set.of();
+    }
+
+    default boolean supports(BlobStoreCapability capability) {
+        return getCapabilities().contains(capability);
+    }
 
     BlobObject store(BlobWriteRequest request,
                      InputStream inputStream) throws IOException;
@@ -37,4 +48,24 @@ public interface BlobStore {
     boolean exists(String key) throws IOException;
 
     boolean delete(String key) throws IOException;
+
+    default StorageAccessRequest createDirectUpload(BlobWriteRequest request,
+                                                    Duration duration) throws IOException {
+        throw new UnsupportedOperationException(
+                "Blob store backend does not support direct upload: " + getBackendName()
+        );
+    }
+
+    default StorageAccessRequest createDirectDownload(BlobDownloadRequest request,
+                                                      Duration duration) throws IOException {
+        throw new UnsupportedOperationException(
+                "Blob store backend does not support direct download: " + getBackendName()
+        );
+    }
+
+    default String createPublicDownloadUrl(BlobDownloadRequest request) throws IOException {
+        throw new UnsupportedOperationException(
+                "Blob store backend does not support public download urls: " + getBackendName()
+        );
+    }
 }

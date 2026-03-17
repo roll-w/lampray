@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.net.URLConnection;
 
 /**
  * @author RollW
@@ -35,14 +35,49 @@ public class ResourceController {
     @GetMapping("/static/{*path}")
     public void getResource(@PathVariable("path") String path,
                             HttpServletResponse response) throws IOException {
+        String normalizedPath = normalizeStaticPath(path);
+        if (normalizedPath == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
         ClassPathResource classPathResource =
-                new ClassPathResource("/static" + path);
-        String mimeType = Files.probeContentType(classPathResource.getFile().toPath());
+                new ClassPathResource("static" + normalizedPath);
+        if (!classPathResource.exists()) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        String mimeType = URLConnection.guessContentTypeFromName(classPathResource.getFilename());
+        if (mimeType == null) {
+            mimeType = "application/octet-stream";
+        }
 
         response.setStatus(200);
         response.setContentType(mimeType);
         ServletOutputStream outputStream = response.getOutputStream();
-        classPathResource.getInputStream().transferTo(outputStream);
+        try (var inputStream = classPathResource.getInputStream()) {
+            inputStream.transferTo(outputStream);
+        }
+    }
+
+    private String normalizeStaticPath(String path) {
+        if (path == null || path.isBlank() || path.indexOf('\\') >= 0) {
+            return null;
+        }
+
+        String normalizedPath = path.startsWith("/") ? path.substring(1) : path;
+        String[] segments = normalizedPath.split("/");
+        StringBuilder builder = new StringBuilder();
+        for (String segment : segments) {
+            if (segment.isEmpty()) {
+                continue;
+            }
+            if (".".equals(segment) || "..".equals(segment)) {
+                return null;
+            }
+            builder.append('/').append(segment);
+        }
+        return builder.length() == 0 ? null : builder.toString();
     }
 
 }

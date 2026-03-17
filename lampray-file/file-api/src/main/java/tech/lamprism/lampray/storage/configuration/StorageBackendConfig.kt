@@ -14,11 +14,23 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
+package tech.lamprism.lampray.storage.configuration
 
+import tech.lamprism.lampray.storage.StorageBackendType
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
-}
+data class StorageBackendConfig(
+    val name: String,
+    val type: StorageBackendType,
+    val endpoint: String?,
+    val publicEndpoint: String?,
+    val region: String?,
+    val bucket: String?,
+    val rootPrefix: String,
+    val pathStyleAccess: Boolean,
+    val accessKey: String?,
+    val secretKey: String?,
+    val rootPath: String?,
+)

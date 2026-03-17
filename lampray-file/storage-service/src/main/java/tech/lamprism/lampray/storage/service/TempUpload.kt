@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
+package tech.lamprism.lampray.storage.service
 
+import java.nio.file.Path
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+data class TempUpload(
+    val path: Path,
+    val size: Long,
+    val checksumSha256: String,
+) {
+    fun path(): Path = path
+
+    fun size(): Long = size
+
+    fun checksumSha256(): String = checksumSha256
 }

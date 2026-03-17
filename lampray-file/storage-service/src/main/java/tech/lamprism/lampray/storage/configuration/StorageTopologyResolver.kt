@@ -21,6 +21,13 @@ import tech.lamprism.lampray.setting.ConfigReader
 import tech.lamprism.lampray.storage.FileType
 import tech.lamprism.lampray.storage.StorageBackendType
 import tech.lamprism.lampray.storage.StorageVisibility
+import tech.lamprism.lampray.storage.configuration.StorageBackendConfig
+import tech.lamprism.lampray.storage.configuration.StorageGroupBackend
+import tech.lamprism.lampray.storage.configuration.StorageGroupDownloadPolicy
+import tech.lamprism.lampray.storage.configuration.StorageGroupLoadBalanceMode
+import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode
+import tech.lamprism.lampray.storage.configuration.StorageGroupConfig
+import tech.lamprism.lampray.storage.configuration.StorageTopology
 
 /**
  * @author RollW
@@ -28,16 +35,16 @@ import tech.lamprism.lampray.storage.StorageVisibility
 @Component
 class StorageTopologyResolver(
     private val configReader: ConfigReader,
-    private val runtimeSettings: StorageRuntimeSettings,
+    private val runtimeSettings: StorageRuntimeConfig,
 ) {
     fun resolve(): StorageTopology {
         val backendNames = configReader[StorageConfigKeys.STORAGE_BACKENDS, emptySet()] ?: emptySet()
-        if (backendNames.isEmpty()) {
+        val configuredGroups = configReader[StorageConfigKeys.STORAGE_GROUPS, emptySet()] ?: emptySet()
+        if (backendNames.isEmpty() && configuredGroups.isEmpty()) {
             return defaultTopology()
         }
 
         val backends = backendNames.associateWith(::resolveBackend)
-        val configuredGroups = configReader[StorageConfigKeys.STORAGE_GROUPS, emptySet()] ?: emptySet()
         val groupNames = configuredGroups.ifEmpty { setOf(runtimeSettings.defaultGroup()) }
         val groups = groupNames.associateWith { resolveGroup(it, backends) }
         val defaultGroup = runtimeSettings.defaultGroup()
@@ -46,10 +53,11 @@ class StorageTopologyResolver(
     }
 
     private fun defaultTopology(): StorageTopology {
-        val backend = StorageBackendSettings(
+        val backend = StorageBackendConfig(
             name = "local-default",
             type = StorageBackendType.LOCAL,
             endpoint = null,
+            publicEndpoint = null,
             region = null,
             bucket = null,
             rootPrefix = "blob",
@@ -58,28 +66,30 @@ class StorageTopologyResolver(
             secretKey = null,
             rootPath = "temp/storage",
         )
-        val group = StorageGroupSettings(
+        val group = StorageGroupConfig(
             name = runtimeSettings.defaultGroup(),
-            primaryBackend = backend.name,
-            replicaBackends = emptySet(),
+            backends = listOf(StorageGroupBackend(backend.name)),
             visibility = StorageVisibility.PRIVATE,
             downloadPolicy = StorageGroupDownloadPolicy.PROXY,
-            redundancyMode = StorageGroupRedundancyMode.SINGLE,
+            placementMode = StorageGroupPlacementMode.SINGLE,
+            loadBalanceMode = StorageGroupLoadBalanceMode.ORDERED,
             maxSizeBytes = null,
             allowedFileTypes = emptySet(),
         )
         return StorageTopology(group.name, mapOf(backend.name to backend), mapOf(group.name to group))
     }
 
-    private fun resolveBackend(name: String): StorageBackendSettings {
+    private fun resolveBackend(name: String): StorageBackendConfig {
+        // TODO(RollW): Replace manual prefix-based reads with strongly typed config binding.
         val prefix = "storage.backend.$name."
         val type = StorageBackendType.from(configReader[prefix + "type"])
             ?: throw IllegalArgumentException("Storage backend type is required for $name")
         return when (type) {
-            StorageBackendType.LOCAL -> StorageBackendSettings(
+            StorageBackendType.LOCAL -> StorageBackendConfig(
                 name = name,
                 type = type,
                 endpoint = null,
+                publicEndpoint = null,
                 region = null,
                 bucket = null,
                 rootPrefix = configReader[prefix + "root-prefix"] ?: "blob",
@@ -89,10 +99,11 @@ class StorageTopologyResolver(
                 rootPath = configReader[prefix + "root-path"] ?: "temp/storage/$name",
             )
 
-            StorageBackendType.S3 -> StorageBackendSettings(
+            StorageBackendType.S3 -> StorageBackendConfig(
                 name = name,
                 type = type,
                 endpoint = configReader[prefix + "endpoint"],
+                publicEndpoint = configReader[prefix + "public-endpoint"],
                 region = configReader[prefix + "region"] ?: "us-east-1",
                 bucket = configReader[prefix + "bucket"]
                     ?: throw IllegalArgumentException("Storage backend bucket is required for $name"),
@@ -107,32 +118,57 @@ class StorageTopologyResolver(
 
     private fun resolveGroup(
         name: String,
-        backends: Map<String, StorageBackendSettings>,
-    ): StorageGroupSettings {
+        backends: Map<String, StorageBackendConfig>,
+    ): StorageGroupConfig {
+        // TODO(RollW): Replace manual prefix-based reads with strongly typed config binding.
         val prefix = "storage.group.$name."
-        val primaryBackend = configReader[prefix + "primary-backend"] ?: backends.keys.firstOrNull()
-        ?: throw IllegalArgumentException("No storage backend available for group $name")
-        require(backends.containsKey(primaryBackend)) {
-            "Group $name references unknown backend $primaryBackend"
-        }
-        val replicaBackends = readStringSet(prefix + "replica-backends")
-            .filter { it != primaryBackend }
-            .onEach {
-                require(backends.containsKey(it)) { "Group $name references unknown replica backend $it" }
-            }
-            .toSet()
-        return StorageGroupSettings(
+        val resolvedBackends = resolveGroupBackends(prefix, backends)
+        return StorageGroupConfig(
             name = name,
-            primaryBackend = primaryBackend,
-            replicaBackends = replicaBackends,
+            backends = resolvedBackends,
             visibility = StorageVisibility.from(configReader[prefix + "visibility"]) ?: StorageVisibility.PRIVATE,
             downloadPolicy = StorageGroupDownloadPolicy.from(configReader[prefix + "download-mode"]),
-            redundancyMode = StorageGroupRedundancyMode.from(configReader[prefix + "redundancy"]),
+            placementMode = StorageGroupPlacementMode.from(
+                configReader[prefix + "placement-mode"] ?: configReader[prefix + "redundancy"]
+            ),
+            loadBalanceMode = StorageGroupLoadBalanceMode.from(configReader[prefix + "load-balance"]),
             maxSizeBytes = configReader[prefix + "max-size-bytes"]?.toLongOrNull(),
             allowedFileTypes = readStringSet(prefix + "allowed-file-types")
                 .mapNotNull(FileType::from)
                 .toSet(),
         )
+    }
+
+    private fun resolveGroupBackends(
+        prefix: String,
+        backends: Map<String, StorageBackendConfig>,
+    ): List<StorageGroupBackend> {
+        val rawExplicitBackends = configReader[prefix + "backends"]
+        if (rawExplicitBackends != null) {
+            val explicitBackends = readWeightedBackends(prefix + "backends")
+            explicitBackends.forEach {
+                require(backends.containsKey(it.backendName)) {
+                    "Group ${prefix.removePrefix("storage.group.").removeSuffix(".")} references unknown backend ${it.backendName}"
+                }
+            }
+            return explicitBackends
+        }
+
+        val primaryBackend = configReader[prefix + "primary-backend"] ?: backends.keys.firstOrNull()
+        ?: throw IllegalArgumentException("No storage backend available for group ${prefix.removePrefix("storage.group.").removeSuffix(".")}")
+        require(backends.containsKey(primaryBackend)) {
+            "Group ${prefix.removePrefix("storage.group.").removeSuffix(".")} references unknown backend $primaryBackend"
+        }
+        val members = mutableListOf(StorageGroupBackend(primaryBackend))
+        readStringSet(prefix + "replica-backends")
+            .filter { it != primaryBackend }
+            .forEach {
+                require(backends.containsKey(it)) {
+                    "Group ${prefix.removePrefix("storage.group.").removeSuffix(".")} references unknown replica backend $it"
+                }
+                members.add(StorageGroupBackend(it))
+            }
+        return members
     }
 
     private fun readStringSet(key: String): Set<String> {
@@ -143,5 +179,17 @@ class StorageTopologyResolver(
             .map { it.trim().trim('"', '\'') }
             .filter { it.isNotBlank() }
             .toSet()
+    }
+
+    private fun readWeightedBackends(key: String): List<StorageGroupBackend> {
+        return readStringSet(key).map {
+            val separatorIndex = it.lastIndexOf(':')
+            if (separatorIndex <= 0 || separatorIndex == it.length - 1) {
+                return@map StorageGroupBackend(it)
+            }
+            val backendName = it.substring(0, separatorIndex).trim()
+            val weight = it.substring(separatorIndex + 1).trim().toIntOrNull() ?: 1
+            StorageGroupBackend(backendName, weight)
+        }
     }
 }

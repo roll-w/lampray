@@ -22,6 +22,7 @@ dependencies {
     api(project(":lampray-file:file-api"))
     implementation(platform("software.amazon.awssdk:bom:2.30.38"))
     implementation("software.amazon.awssdk:s3")
+    compileOnly("org.springframework:spring-context")
 }
 
 description = "lampray-file-awss3"

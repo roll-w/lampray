@@ -14,11 +14,33 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
+package tech.lamprism.lampray.storage.store
 
+import java.time.OffsetDateTime
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+data class BlobObject(
+    val backendName: String,
+    val key: String,
+    val size: Long,
+    val contentType: String,
+    val etag: String?,
+    val lastModified: OffsetDateTime,
+    val metadata: Map<String, String>,
+) {
+    fun backendName(): String = backendName
+
+    fun key(): String = key
+
+    fun size(): Long = size
+
+    fun contentType(): String = contentType
+
+    fun etag(): String? = etag
+
+    fun lastModified(): OffsetDateTime = lastModified
+
+    fun metadata(): Map<String, String> = metadata
 }

@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
-
+package tech.lamprism.lampray.storage.configuration
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+data class StorageGroupBackend(
+    val backendName: String,
+    val weight: Int = 1,
+) {
+    init {
+        require(backendName.isNotBlank()) { "backendName must not be blank" }
+        require(weight > 0) { "weight must be positive" }
+    }
 }

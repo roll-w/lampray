@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.store;
+package tech.lamprism.lampray.storage.service;
 
-import tech.lamprism.lampray.storage.StorageAccessRequest;
-
-import java.io.IOException;
-import java.time.Duration;
+import org.springframework.stereotype.Component;
 
 /**
  * @author RollW
  */
-public interface DirectDownloadSupport {
-    StorageAccessRequest createDirectDownload(BlobDownloadRequest request,
-                                              Duration duration) throws IOException;
+@Component
+public class ChecksumBlobObjectKeyFactory implements BlobObjectKeyFactory {
+    @Override
+    public String createKey(String checksumSha256) {
+        return checksumSha256.substring(0, 2) + "/" + checksumSha256.substring(2, 4) + "/" + checksumSha256;
+    }
 }

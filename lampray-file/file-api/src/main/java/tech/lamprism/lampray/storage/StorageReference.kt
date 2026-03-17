@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.configuration
+package tech.lamprism.lampray.storage
 
-import tech.lamprism.lampray.storage.FileType
-import tech.lamprism.lampray.storage.StorageVisibility
+import java.time.OffsetDateTime
 
 /**
  * @author RollW
  */
-data class StorageGroupSettings(
-    val name: String,
-    val primaryBackend: String,
-    val replicaBackends: Set<String>,
-    val visibility: StorageVisibility,
-    val downloadPolicy: StorageGroupDownloadPolicy,
-    val redundancyMode: StorageGroupRedundancyMode,
-    val maxSizeBytes: Long?,
-    val allowedFileTypes: Set<FileType>,
+data class StorageReference(
+    val url: String,
+    val mode: StorageDownloadMode,
+    val source: StorageReferenceSource,
+    val headers: Map<String, String> = emptyMap(),
+    val expiresAt: OffsetDateTime? = null,
 )

@@ -14,11 +14,23 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
-
+package tech.lamprism.lampray.storage.configuration
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+enum class StorageGroupPlacementMode {
+    SINGLE,
+    MIRROR,
+    ;
+
+    companion object {
+        @JvmStatic
+        fun from(raw: String?): StorageGroupPlacementMode {
+            if (raw.equals("ASYNC_REPLICA", ignoreCase = true) || raw.equals("SYNC_REPLICA", ignoreCase = true)) {
+                return MIRROR
+            }
+            return entries.firstOrNull { it.name.equals(raw, ignoreCase = true) } ?: SINGLE
+        }
+    }
 }

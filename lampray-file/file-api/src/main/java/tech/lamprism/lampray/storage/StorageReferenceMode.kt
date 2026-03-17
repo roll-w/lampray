@@ -14,22 +14,13 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.configuration
-
-import tech.lamprism.lampray.storage.StorageBackendType
+package tech.lamprism.lampray.storage
 
 /**
  * @author RollW
  */
-data class StorageBackendSettings(
-    val name: String,
-    val type: StorageBackendType,
-    val endpoint: String?,
-    val region: String?,
-    val bucket: String?,
-    val rootPrefix: String,
-    val pathStyleAccess: Boolean,
-    val accessKey: String?,
-    val secretKey: String?,
-    val rootPath: String?,
-)
+enum class StorageReferenceMode {
+    PROXY,
+    DIRECT,
+    AUTO,
+}

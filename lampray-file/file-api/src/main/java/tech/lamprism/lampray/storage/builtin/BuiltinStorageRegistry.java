@@ -16,9 +16,6 @@
 
 package tech.lamprism.lampray.storage.builtin;
 
-import tech.lamprism.lampray.storage.FileStorage;
-import tech.lamprism.lampray.storage.StorageDownloadSource;
-
 /**
  * @author RollW
  */
@@ -26,10 +23,4 @@ public interface BuiltinStorageRegistry {
     boolean contains(String fileId);
 
     BuiltinStorageResource get(String fileId);
-
-    record BuiltinStorageResource(
-            FileStorage fileStorage,
-            StorageDownloadSource content
-    ) {
-    }
 }

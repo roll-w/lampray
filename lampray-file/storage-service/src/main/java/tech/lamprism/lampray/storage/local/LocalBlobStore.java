@@ -67,7 +67,7 @@ public class LocalBlobStore implements BlobStore {
     @Override
     public StorageDownloadSource openDownload(String key) throws IOException {
         Path resolved = resolve(key);
-        return new InputStreamDownloadSource(() -> Files.newInputStream(resolved));
+        return InputStreamDownloadSource.fromPath(resolved);
     }
 
     @Override

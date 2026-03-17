@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.store;
+package tech.lamprism.lampray.storage;
 
-import java.time.OffsetDateTime;
-import java.util.Map;
+import java.io.IOException;
 
 /**
  * @author RollW
  */
-public record BlobObject(
-        String backendName,
-        String key,
-        long size,
-        String contentType,
-        String etag,
-        OffsetDateTime lastModified,
-        Map<String, String> metadata
-) {
+public interface StorageDownloadProvider {
+    StorageDownloadResult resolveDownload(String fileId,
+                                          Long userId) throws IOException;
 }

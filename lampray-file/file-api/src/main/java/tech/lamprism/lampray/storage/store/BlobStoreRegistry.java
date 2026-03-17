@@ -17,12 +17,21 @@
 package tech.lamprism.lampray.storage.store;
 
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * @author RollW
  */
 public interface BlobStoreRegistry extends AutoCloseable {
+    void register(BlobStoreRegistration registration);
+
+    Optional<BlobStoreRegistration> unregister(String backendName);
+
+    Optional<BlobStore> find(String backendName);
+
     BlobStore get(String backendName);
+
+    Collection<BlobStoreRegistration> registrations();
 
     boolean contains(String backendName);
 

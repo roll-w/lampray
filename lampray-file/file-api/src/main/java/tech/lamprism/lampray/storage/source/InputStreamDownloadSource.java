@@ -21,6 +21,11 @@ import tech.lamprism.lampray.storage.StorageDownloadSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
 /**
@@ -31,6 +36,23 @@ public final class InputStreamDownloadSource implements StorageDownloadSource {
 
     private final InputStreamOpener inputStreamOpener;
     private final RangeInputStreamOpener rangeInputStreamOpener;
+
+    public static InputStreamDownloadSource from(InputStreamOpener inputStreamOpener) {
+        return new InputStreamDownloadSource(inputStreamOpener);
+    }
+
+    public static InputStreamDownloadSource rangeAware(InputStreamOpener inputStreamOpener,
+                                                       RangeInputStreamOpener rangeInputStreamOpener) {
+        return new InputStreamDownloadSource(inputStreamOpener, rangeInputStreamOpener);
+    }
+
+    public static InputStreamDownloadSource fromPath(Path path) {
+        Objects.requireNonNull(path, "path must not be null");
+        return new InputStreamDownloadSource(
+                () -> Files.newInputStream(path),
+                (startBytes, endBytes) -> openRange(path, startBytes, endBytes)
+        );
+    }
 
     public InputStreamDownloadSource(InputStreamOpener inputStreamOpener) {
         this(inputStreamOpener, null);
@@ -104,6 +126,14 @@ public final class InputStreamDownloadSource implements StorageDownloadSource {
         }
     }
 
+    private static InputStream openRange(Path path,
+                                         long startBytes,
+                                         long endBytes) throws IOException {
+        SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ);
+        channel.position(startBytes);
+        return new RangeChannelInputStream(channel, endBytes - startBytes + 1);
+    }
+
     @FunctionalInterface
     public interface InputStreamOpener {
         InputStream open() throws IOException;
@@ -113,5 +143,49 @@ public final class InputStreamDownloadSource implements StorageDownloadSource {
     public interface RangeInputStreamOpener {
         InputStream open(long startBytes,
                          long endBytes) throws IOException;
+    }
+
+    private static final class RangeChannelInputStream extends InputStream {
+        private final SeekableByteChannel channel;
+        private final InputStream delegate;
+        private long remaining;
+
+        private RangeChannelInputStream(SeekableByteChannel channel,
+                                        long remaining) {
+            this.channel = channel;
+            this.delegate = Channels.newInputStream(channel);
+            this.remaining = remaining;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (remaining <= 0) {
+                return -1;
+            }
+            int value = delegate.read();
+            if (value != -1) {
+                remaining--;
+            }
+            return value;
+        }
+
+        @Override
+        public int read(byte[] buffer,
+                        int offset,
+                        int length) throws IOException {
+            if (remaining <= 0) {
+                return -1;
+            }
+            int read = delegate.read(buffer, offset, (int) Math.min(length, remaining));
+            if (read > 0) {
+                remaining -= read;
+            }
+            return read;
+        }
+
+        @Override
+        public void close() throws IOException {
+            channel.close();
+        }
     }
 }

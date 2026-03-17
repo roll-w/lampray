@@ -19,17 +19,18 @@ package tech.lamprism.lampray.storage.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.lamprism.lampray.storage.StorageBackendType;
-import tech.lamprism.lampray.storage.awss3.S3BlobStore;
-import tech.lamprism.lampray.storage.local.LocalBlobStore;
-import tech.lamprism.lampray.storage.store.BlobStore;
+import tech.lamprism.lampray.storage.configuration.StorageBackendConfig;
+import tech.lamprism.lampray.storage.configuration.StorageTopology;
+import tech.lamprism.lampray.storage.store.BlobStoreFactory;
+import tech.lamprism.lampray.storage.store.BlobStoreRegistration;
 import tech.lamprism.lampray.storage.store.BlobStoreRegistry;
-import tech.lamprism.lampray.storage.store.DefaultBlobStoreRegistry;
+import tech.lamprism.lampray.storage.store.DynamicBlobStoreRegistry;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 /**
  * @author RollW
@@ -42,28 +43,25 @@ public class FileStoreConfiguration {
     }
 
     @Bean(destroyMethod = "close")
-    public BlobStoreRegistry blobStoreRegistry(StorageTopology storageTopology) throws IOException {
-        List<BlobStore> blobStores = new ArrayList<>();
-        for (StorageBackendSettings backendSettings : storageTopology.getBackends().values()) {
-            if (backendSettings.getType() == StorageBackendType.LOCAL) {
-                blobStores.add(new LocalBlobStore(
-                        backendSettings.getName(),
-                        Path.of(Objects.requireNonNull(backendSettings.getRootPath())),
-                        backendSettings.getRootPrefix()
-                ));
-                continue;
+    public BlobStoreRegistry blobStoreRegistry(StorageTopology storageTopology,
+                                               List<BlobStoreFactory> blobStoreFactories) throws IOException {
+        Map<StorageBackendType, BlobStoreFactory> factoriesByType = new LinkedHashMap<>();
+        for (BlobStoreFactory blobStoreFactory : blobStoreFactories) {
+            BlobStoreFactory previous = factoriesByType.put(blobStoreFactory.getBackendType(), blobStoreFactory);
+            if (previous != null) {
+                throw new IllegalStateException("Duplicate blob store factory for backend type: "
+                        + blobStoreFactory.getBackendType());
             }
-            blobStores.add(new S3BlobStore(
-                    backendSettings.getName(),
-                    backendSettings.getEndpoint(),
-                    backendSettings.getRegion(),
-                    backendSettings.getBucket(),
-                    backendSettings.getRootPrefix(),
-                    backendSettings.getPathStyleAccess(),
-                    backendSettings.getAccessKey(),
-                    backendSettings.getSecretKey()
-            ));
         }
-        return new DefaultBlobStoreRegistry(blobStores);
+        List<BlobStoreRegistration> registrations = new ArrayList<>();
+        for (StorageBackendConfig backendConfig : storageTopology.getBackends().values()) {
+            BlobStoreFactory blobStoreFactory = factoriesByType.get(backendConfig.getType());
+            if (blobStoreFactory == null) {
+                throw new IllegalArgumentException("No blob store factory available for backend type: "
+                        + backendConfig.getType());
+            }
+            registrations.add(new BlobStoreRegistration(blobStoreFactory.create(backendConfig), Map.of()));
+        }
+        return new DynamicBlobStoreRegistry(registrations);
     }
 }

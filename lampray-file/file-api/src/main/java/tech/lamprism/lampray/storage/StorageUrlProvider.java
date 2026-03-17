@@ -16,9 +16,22 @@
 
 package tech.lamprism.lampray.storage;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
 /**
  * @author RollW
  */
 public interface StorageUrlProvider {
-    String getUrlOfStorage(String id);
+    StorageReference resolveStorageReference(String id,
+                                             StorageReferenceRequest request,
+                                             Long userId) throws IOException;
+
+    default String getUrlOfStorage(String id) {
+        try {
+            return resolveStorageReference(id, StorageReferenceRequest.proxy(), null).getUrl();
+        } catch (IOException exception) {
+            throw new UncheckedIOException("Failed to resolve storage url: " + id, exception);
+        }
+    }
 }

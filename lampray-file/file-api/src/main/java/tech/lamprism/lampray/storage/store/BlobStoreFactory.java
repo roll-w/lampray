@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
+package tech.lamprism.lampray.storage.store;
 
+import tech.lamprism.lampray.storage.StorageBackendType;
+import tech.lamprism.lampray.storage.configuration.StorageBackendConfig;
+
+import java.io.IOException;
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+public interface BlobStoreFactory {
+    StorageBackendType getBackendType();
+
+    BlobStore create(StorageBackendConfig config) throws IOException;
 }

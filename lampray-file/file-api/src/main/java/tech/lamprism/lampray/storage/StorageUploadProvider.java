@@ -16,9 +16,22 @@
 
 package tech.lamprism.lampray.storage;
 
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+public interface StorageUploadProvider {
+    FileStorage saveFile(InputStream inputStream) throws IOException;
+
+    StorageUploadSession createUploadSession(StorageUploadRequest request,
+                                             Long userId) throws IOException;
+
+    FileStorage uploadFileContent(String uploadId,
+                                  InputStream inputStream,
+                                  Long userId) throws IOException;
+
+    FileStorage completeUpload(String uploadId,
+                               Long userId) throws IOException;
 }

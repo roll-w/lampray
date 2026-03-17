@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.store;
-
-import java.util.Map;
-import java.util.Objects;
+package tech.lamprism.lampray.storage.store
 
 /**
  * @author RollW
  */
-public record BlobWriteRequest(
-        String key,
-        long size,
-        String contentType,
-        Map<String, String> metadata
+data class BlobDownloadRequest(
+    val key: String,
+    val fileName: String?,
+    val contentType: String?,
 ) {
-    public BlobWriteRequest {
-        Objects.requireNonNull(key, "key must not be null");
-        if (size < 0) {
-            throw new IllegalArgumentException("size must not be negative");
-        }
-        metadata = metadata == null || metadata.isEmpty() ? Map.of() : Map.copyOf(metadata);
+    init {
+        require(key.isNotBlank()) { "key must not be blank" }
     }
+
+    fun key(): String = key
+
+    fun fileName(): String? = fileName
+
+    fun contentType(): String? = contentType
 }

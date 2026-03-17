@@ -46,9 +46,8 @@ import tech.lamprism.lampray.storage.source.InputStreamDownloadSource;
 import tech.lamprism.lampray.storage.store.BlobDownloadRequest;
 import tech.lamprism.lampray.storage.store.BlobObject;
 import tech.lamprism.lampray.storage.store.BlobStore;
+import tech.lamprism.lampray.storage.store.BlobStoreCapability;
 import tech.lamprism.lampray.storage.store.BlobWriteRequest;
-import tech.lamprism.lampray.storage.store.DirectDownloadSupport;
-import tech.lamprism.lampray.storage.store.DirectUploadSupport;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,15 +57,18 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author RollW
  */
-public class S3BlobStore implements BlobStore, DirectUploadSupport, DirectDownloadSupport, AutoCloseable {
+public class S3BlobStore implements BlobStore, AutoCloseable {
     private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
     private static final Duration DEFAULT_ACCESS_DURATION = Duration.ofMinutes(5);
     private static final Duration MAX_ACCESS_DURATION = Duration.ofDays(7);
@@ -74,11 +76,14 @@ public class S3BlobStore implements BlobStore, DirectUploadSupport, DirectDownlo
     private final String backendName;
     private final String bucket;
     private final String rootPrefix;
+    private final URI publicEndpoint;
+    private final boolean pathStyleAccess;
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
 
     public S3BlobStore(String backendName,
                        String endpoint,
+                       String publicEndpoint,
                        String region,
                        String bucket,
                        String rootPrefix,
@@ -88,6 +93,8 @@ public class S3BlobStore implements BlobStore, DirectUploadSupport, DirectDownlo
         this.backendName = requireText(backendName, "backendName");
         this.bucket = requireText(bucket, "bucket");
         this.rootPrefix = normalizeRootPrefix(rootPrefix);
+        this.publicEndpoint = resolveEndpoint(publicEndpoint);
+        this.pathStyleAccess = pathStyleAccess;
 
         AwsCredentialsProvider credentialsProvider = resolveCredentialsProvider(accessKey, secretKey);
         Region awsRegion = Region.of(normalizeRegion(region));
@@ -123,6 +130,8 @@ public class S3BlobStore implements BlobStore, DirectUploadSupport, DirectDownlo
         this.backendName = requireText(backendName, "backendName");
         this.bucket = requireText(bucket, "bucket");
         this.rootPrefix = normalizeRootPrefix(rootPrefix);
+        this.publicEndpoint = null;
+        this.pathStyleAccess = false;
         this.s3Client = Objects.requireNonNull(s3Client, "s3Client must not be null");
         this.s3Presigner = Objects.requireNonNull(s3Presigner, "s3Presigner must not be null");
     }
@@ -130,6 +139,17 @@ public class S3BlobStore implements BlobStore, DirectUploadSupport, DirectDownlo
     @Override
     public String getBackendName() {
         return backendName;
+    }
+
+    @Override
+    public Set<BlobStoreCapability> getCapabilities() {
+        Set<BlobStoreCapability> capabilities = new LinkedHashSet<>();
+        capabilities.add(BlobStoreCapability.DIRECT_UPLOAD);
+        capabilities.add(BlobStoreCapability.DIRECT_DOWNLOAD);
+        if (publicEndpoint != null) {
+            capabilities.add(BlobStoreCapability.PUBLIC_DOWNLOAD_URL);
+        }
+        return Set.copyOf(capabilities);
     }
 
     @Override
@@ -290,6 +310,16 @@ public class S3BlobStore implements BlobStore, DirectUploadSupport, DirectDownlo
     }
 
     @Override
+    public String createPublicDownloadUrl(BlobDownloadRequest request) {
+        if (publicEndpoint == null) {
+            throw new UnsupportedOperationException(
+                    "Blob store backend does not support public download urls: " + getBackendName()
+            );
+        }
+        return buildPublicObjectUrl(normalizeObjectKey(request.key()));
+    }
+
+    @Override
     public void close() {
         s3Client.close();
         s3Presigner.close();
@@ -368,7 +398,15 @@ public class S3BlobStore implements BlobStore, DirectUploadSupport, DirectDownlo
         }
 
         try {
-            return URI.create(endpoint.trim());
+            URI uri = URI.create(endpoint.trim());
+            if (!uri.isAbsolute() || !hasText(uri.getScheme()) || !hasText(uri.getHost())) {
+                throw new IllegalArgumentException("Endpoint URI must be an absolute http or https URL: " + endpoint);
+            }
+            String scheme = uri.getScheme().trim().toLowerCase(java.util.Locale.ROOT);
+            if (!"http".equals(scheme) && !"https".equals(scheme)) {
+                throw new IllegalArgumentException("Endpoint URI scheme must be http or https: " + endpoint);
+            }
+            return uri;
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Invalid endpoint URI: " + endpoint, exception);
         }
@@ -407,6 +445,84 @@ public class S3BlobStore implements BlobStore, DirectUploadSupport, DirectDownlo
             throw new IllegalArgumentException("key must not be blank");
         }
         return normalized;
+    }
+
+    private String buildPublicObjectUrl(String key) {
+        String host = publicEndpoint.getHost();
+        if (shouldPrefixBucketHost()) {
+            host = bucket + "." + host;
+        }
+
+        String path = buildPublicPath(toStorageKey(key));
+        try {
+            return new URI(
+                    publicEndpoint.getScheme(),
+                    publicEndpoint.getUserInfo(),
+                    host,
+                    publicEndpoint.getPort(),
+                    path,
+                    null,
+                    null
+            ).toASCIIString();
+        } catch (Exception exception) {
+            throw new IllegalStateException("Failed to build public S3 object url.", exception);
+        }
+    }
+
+    private String buildPublicPath(String storageKey) {
+        List<String> segments = new ArrayList<>();
+        appendPathSegments(segments, publicEndpoint.getPath());
+        if (pathStyleAccess) {
+            segments.add(bucket);
+        }
+        appendPathSegments(segments, storageKey);
+        if (segments.isEmpty()) {
+            return "/";
+        }
+        return "/" + String.join("/", segments.stream().map(S3BlobStore::encodePathSegment).toList());
+    }
+
+    private boolean shouldPrefixBucketHost() {
+        if (pathStyleAccess || publicEndpoint == null || !hasText(publicEndpoint.getHost())) {
+            return false;
+        }
+        if (hasText(publicEndpoint.getPath()) && !"/".equals(publicEndpoint.getPath().trim())) {
+            return false;
+        }
+        String normalizedHost = publicEndpoint.getHost().trim().toLowerCase(java.util.Locale.ROOT);
+        String bucketPrefix = bucket.toLowerCase(java.util.Locale.ROOT) + ".";
+        return !normalizedHost.equals(bucket.toLowerCase(java.util.Locale.ROOT))
+                && !normalizedHost.startsWith(bucketPrefix);
+    }
+
+    private static void appendPathSegments(List<String> segments,
+                                           String path) {
+        if (!hasText(path)) {
+            return;
+        }
+
+        int start = 0;
+        while (start < path.length()) {
+            while (start < path.length() && path.charAt(start) == '/') {
+                start++;
+            }
+            if (start >= path.length()) {
+                return;
+            }
+            int end = start;
+            while (end < path.length() && path.charAt(end) != '/') {
+                end++;
+            }
+            String segment = path.substring(start, end).trim();
+            if (!segment.isEmpty()) {
+                segments.add(segment);
+            }
+            start = end + 1;
+        }
+    }
+
+    private static String encodePathSegment(String segment) {
+        return URLEncoder.encode(segment, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     private String toStorageKey(String key) {

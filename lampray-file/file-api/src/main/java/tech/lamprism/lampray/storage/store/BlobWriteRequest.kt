@@ -14,11 +14,29 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
-
+package tech.lamprism.lampray.storage.store
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+data class BlobWriteRequest(
+    val key: String,
+    val size: Long,
+    val contentType: String?,
+    val metadata: Map<String, String> = emptyMap(),
+) {
+    init {
+        require(key.isNotBlank()) { "key must not be blank" }
+        require(size >= 0) { "size must not be negative" }
+    }
+
+    val normalizedMetadata: Map<String, String> = metadata.takeIf { it.isNotEmpty() }?.toMap() ?: emptyMap()
+
+    fun key(): String = key
+
+    fun size(): Long = size
+
+    fun contentType(): String? = contentType
+
+    fun metadata(): Map<String, String> = normalizedMetadata
 }

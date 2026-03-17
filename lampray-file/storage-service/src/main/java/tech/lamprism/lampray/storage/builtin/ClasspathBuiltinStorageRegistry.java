@@ -41,15 +41,45 @@ public class ClasspathBuiltinStorageRegistry implements BuiltinStorageRegistry {
     public ClasspathBuiltinStorageRegistry() {
         this.resources = Map.of(
                 DefaultStorageIds.DEFAULT_AVATAR_ID,
-                create("storage/builtin/default-avatar.svg", DefaultStorageIds.DEFAULT_AVATAR_ID, "default-avatar.svg"),
+                create(
+                        "storage/builtin/default-avatar.svg",
+                        DefaultStorageIds.DEFAULT_AVATAR_ID,
+                        "default-avatar.svg",
+                        "static/images/default-avatar.svg",
+                        "/static/images/default-avatar.svg"
+                ),
                 DefaultStorageIds.DEFAULT_USER_COVER_ID,
-                create("storage/builtin/default-cover.svg", DefaultStorageIds.DEFAULT_USER_COVER_ID, "default-user-cover.svg"),
+                create(
+                        "storage/builtin/default-cover.svg",
+                        DefaultStorageIds.DEFAULT_USER_COVER_ID,
+                        "default-user-cover.svg",
+                        "static/images/default-cover.svg",
+                        "/static/images/default-cover.svg"
+                ),
                 DefaultStorageIds.DEFAULT_ARTICLE_COVER_ID,
-                create("storage/builtin/default-cover.svg", DefaultStorageIds.DEFAULT_ARTICLE_COVER_ID, "default-article-cover.svg"),
+                create(
+                        "storage/builtin/default-cover.svg",
+                        DefaultStorageIds.DEFAULT_ARTICLE_COVER_ID,
+                        "default-article-cover.svg",
+                        "static/images/default-cover.svg",
+                        "/static/images/default-cover.svg"
+                ),
                 DefaultStorageIds.DEFAULT_CATEGORY_COVER_ID,
-                create("storage/builtin/default-cover.svg", DefaultStorageIds.DEFAULT_CATEGORY_COVER_ID, "default-category-cover.svg"),
+                create(
+                        "storage/builtin/default-cover.svg",
+                        DefaultStorageIds.DEFAULT_CATEGORY_COVER_ID,
+                        "default-category-cover.svg",
+                        "static/images/default-cover.svg",
+                        "/static/images/default-cover.svg"
+                ),
                 DefaultStorageIds.DEFAULT_LOGO_ID,
-                create("storage/builtin/default-logo.svg", DefaultStorageIds.DEFAULT_LOGO_ID, "default-logo.svg")
+                create(
+                        "storage/builtin/default-logo.svg",
+                        DefaultStorageIds.DEFAULT_LOGO_ID,
+                        "default-logo.svg",
+                        "static/images/default-logo.svg",
+                        "/static/images/default-logo.svg"
+                )
         );
     }
 
@@ -69,7 +99,9 @@ public class ClasspathBuiltinStorageRegistry implements BuiltinStorageRegistry {
 
     private BuiltinStorageResource create(String classPathLocation,
                                           String fileId,
-                                          String fileName) {
+                                          String fileName,
+                                          String staticClassPathLocation,
+                                          String publicUrlPath) {
         Resource resource = new ClassPathResource(classPathLocation);
         if (!resource.exists()) {
             throw new IllegalStateException("Missing builtin storage resource: " + classPathLocation);
@@ -83,8 +115,23 @@ public class ClasspathBuiltinStorageRegistry implements BuiltinStorageRegistry {
                         .setFileType(FileType.IMAGE)
                         .setCreateTime(TimeAttributed.NONE_TIME)
                         .build(),
-                new InputStreamDownloadSource(resource::getInputStream)
+                createDownloadSource(resource),
+                resolvePublicUrlPath(staticClassPathLocation, publicUrlPath)
         );
+    }
+
+    private InputStreamDownloadSource createDownloadSource(Resource resource) {
+        try {
+            return InputStreamDownloadSource.fromPath(resource.getFile().toPath());
+        } catch (IOException exception) {
+            return InputStreamDownloadSource.from(resource::getInputStream);
+        }
+    }
+
+    private String resolvePublicUrlPath(String classPathLocation,
+                                        String publicUrlPath) {
+        Resource resource = new ClassPathResource(classPathLocation);
+        return resource.exists() ? publicUrlPath : null;
     }
 
     private long resolveSize(Resource resource) {

@@ -14,11 +14,23 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
+package tech.lamprism.lampray.storage.routing
 
+import tech.lamprism.lampray.storage.configuration.StorageGroupConfig
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+data class StorageWritePlan(
+    val groupConfig: StorageGroupConfig,
+    val primaryBackend: String,
+    val mirrorBackends: List<String>,
+) {
+    fun groupConfig(): StorageGroupConfig = groupConfig
+
+    fun groupSettings(): StorageGroupConfig = groupConfig
+
+    fun primaryBackend(): String = primaryBackend
+
+    fun mirrorBackends(): List<String> = mirrorBackends
 }

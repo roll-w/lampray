@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
-
+package tech.lamprism.lampray.storage
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+enum class StorageDirectAccessMode {
+    AUTO,
+    PUBLIC,
+    SIGNED,
 }

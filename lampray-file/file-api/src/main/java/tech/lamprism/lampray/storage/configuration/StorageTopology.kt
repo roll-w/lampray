@@ -21,12 +21,12 @@ package tech.lamprism.lampray.storage.configuration
  */
 data class StorageTopology(
     val defaultGroup: String,
-    val backends: Map<String, StorageBackendSettings>,
-    val groups: Map<String, StorageGroupSettings>,
+    val backends: Map<String, StorageBackendConfig>,
+    val groups: Map<String, StorageGroupConfig>,
 ) {
-    fun getBackend(name: String): StorageBackendSettings =
+    fun getBackend(name: String): StorageBackendConfig =
         backends[name] ?: throw IllegalArgumentException("Unknown storage backend: $name")
 
-    fun getGroup(name: String): StorageGroupSettings =
+    fun getGroup(name: String): StorageGroupConfig =
         groups[name] ?: throw IllegalArgumentException("Unknown storage group: $name")
 }

@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.configuration
+package tech.lamprism.lampray.storage.builtin
+
+import tech.lamprism.lampray.storage.FileStorage
+import tech.lamprism.lampray.storage.StorageDownloadSource
 
 /**
  * @author RollW
  */
-enum class StorageGroupRedundancyMode {
-    SINGLE,
-    ASYNC_REPLICA,
-    ;
+data class BuiltinStorageResource(
+    val fileStorage: FileStorage,
+    val content: StorageDownloadSource,
+    val publicUrlPath: String? = null,
+) {
+    fun fileStorage(): FileStorage = fileStorage
 
-    companion object {
-        @JvmStatic
-        fun from(raw: String?): StorageGroupRedundancyMode {
-            return entries.firstOrNull { it.name.equals(raw, ignoreCase = true) } ?: SINGLE
-        }
-    }
+    fun content(): StorageDownloadSource = content
+
+    fun publicUrlPath(): String? = publicUrlPath
 }

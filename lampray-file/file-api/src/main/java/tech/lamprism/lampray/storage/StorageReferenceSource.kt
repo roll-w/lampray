@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.store;
-
-import java.util.Objects;
+package tech.lamprism.lampray.storage
 
 /**
  * @author RollW
  */
-public record BlobDownloadRequest(
-        String key,
-        String fileName,
-        String contentType
-) {
-    public BlobDownloadRequest {
-        Objects.requireNonNull(key, "key must not be null");
-    }
+enum class StorageReferenceSource {
+    API,
+    BLOB_PUBLIC,
+    BLOB_SIGNED,
+    CLASSPATH_STATIC,
 }

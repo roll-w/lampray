@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
+package tech.lamprism.lampray.storage.routing;
 
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+public interface StorageGroupRouter {
+    StorageWritePlan selectWritePlan(String groupName);
+
+    String selectReadBackend(String groupName,
+                             Collection<String> availableBackends);
+
+    List<String> resolveActiveBackends(String groupName);
 }

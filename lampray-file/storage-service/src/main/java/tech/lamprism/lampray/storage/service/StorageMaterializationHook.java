@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.store;
-
-import tech.lamprism.lampray.storage.StorageAccessRequest;
-
-import java.io.IOException;
-import java.time.Duration;
+package tech.lamprism.lampray.storage.service;
 
 /**
  * @author RollW
  */
-public interface DirectUploadSupport {
-    StorageAccessRequest createDirectUpload(BlobWriteRequest request,
-                                            Duration duration) throws IOException;
+public interface StorageMaterializationHook {
+    void afterMaterialized(StorageMaterializationContext context);
 }

@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
+package tech.lamprism.lampray.storage.configuration
 
+import tech.lamprism.lampray.storage.FileType
+import tech.lamprism.lampray.storage.StorageVisibility
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
-}
+data class StorageGroupConfig(
+    val name: String,
+    val backends: List<StorageGroupBackend>,
+    val visibility: StorageVisibility,
+    val downloadPolicy: StorageGroupDownloadPolicy,
+    val placementMode: StorageGroupPlacementMode,
+    val loadBalanceMode: StorageGroupLoadBalanceMode,
+    val maxSizeBytes: Long?,
+    val allowedFileTypes: Set<FileType>,
+)

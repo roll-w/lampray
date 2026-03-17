@@ -23,7 +23,7 @@ import tech.lamprism.lampray.setting.ConfigReader
  * @author RollW
  */
 @Component
-class StorageRuntimeSettings(
+class StorageRuntimeConfig(
     private val configReader: ConfigReader,
 ) {
     fun defaultGroup(): String =

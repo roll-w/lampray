@@ -14,11 +14,24 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
+package tech.lamprism.lampray.storage.service
 
+import tech.lamprism.lampray.storage.FileStorage
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+data class StorageMaterializationContext(
+    val fileStorage: FileStorage,
+    val blobId: String,
+    val groupName: String,
+    val ownerUserId: Long?,
+) {
+    fun fileStorage(): FileStorage = fileStorage
+
+    fun blobId(): String = blobId
+
+    fun groupName(): String = groupName
+
+    fun ownerUserId(): Long? = ownerUserId
 }

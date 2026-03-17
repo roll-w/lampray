@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage;
-
+package tech.lamprism.lampray.storage.service;
 
 /**
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {
+public interface BlobObjectKeyFactory {
+    String createKey(String checksumSha256);
 }
