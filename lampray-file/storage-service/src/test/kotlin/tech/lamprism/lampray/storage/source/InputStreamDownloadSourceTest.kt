@@ -16,11 +16,14 @@
 
 package tech.lamprism.lampray.storage.source
 
+import tech.lamprism.lampray.storage.StorageByteRange
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 /**
  * @author RollW
@@ -32,11 +35,10 @@ class InputStreamDownloadSourceTest {
         try {
             Files.writeString(path, "0123456789")
             val source = InputStreamDownloadSource.fromPath(path)
-            val output = ByteArrayOutputStream()
 
-            source.writeTo(output, 2, 5)
-
-            assertContentEquals("2345".toByteArray(), output.toByteArray())
+            source.openStream(StorageByteRange(2, 5)).use { inputStream ->
+                assertContentEquals("2345".toByteArray(), inputStream.readBytes())
+            }
         } finally {
             Files.deleteIfExists(path)
         }
@@ -45,15 +47,30 @@ class InputStreamDownloadSourceTest {
     @Test
     fun `range aware factory uses custom opener`() {
         val source = InputStreamDownloadSource.rangeAware(
-            inputStreamOpener = { "fallback".byteInputStream() },
-            rangeInputStreamOpener = { startBytes, endBytes ->
-                "$startBytes-$endBytes".byteInputStream()
+            { "fallback".byteInputStream() },
+            { range ->
+                "${range.startBytes()}-${range.endBytes()}".byteInputStream()
             },
         )
-        val output = ByteArrayOutputStream()
 
-        source.writeTo(output, 3, 7)
+        val output = ByteArrayOutputStream()
+        source.openStream(StorageByteRange(3, 7)).use { inputStream ->
+            inputStream.transferTo(output)
+        }
 
         assertEquals("3-7", output.toString())
+    }
+
+    @Test
+    fun `range read fails when requested bytes exceed source size`() {
+        val source = InputStreamDownloadSource.from {
+            "abc".byteInputStream()
+        }
+
+        assertFailsWith<IOException> {
+            source.openStream(StorageByteRange(1, 5)).use { inputStream ->
+                inputStream.readBytes()
+            }
+        }
     }
 }

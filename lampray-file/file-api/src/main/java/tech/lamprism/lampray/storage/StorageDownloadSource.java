@@ -17,15 +17,34 @@
 package tech.lamprism.lampray.storage;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 
 /**
+ * Streaming source for proxy downloads.
+ *
+ * <p>Callers may either open the stream directly or let the source transfer its data to an
+ * {@link OutputStream}. Range-aware downloads use {@link StorageByteRange} so higher layers do not
+ * leak transport-specific details into storage backends.</p>
+ *
  * @author RollW
  */
 public interface StorageDownloadSource {
-    void writeTo(OutputStream outputStream) throws IOException;
+    InputStream openStream() throws IOException;
 
-    void writeTo(OutputStream outputStream,
-                 long startBytes,// TODO: replace with class Range
-                 long endBytes) throws IOException;
+    InputStream openStream(StorageByteRange range) throws IOException;
+
+    default void transferTo(OutputStream outputStream) throws IOException {
+        try (InputStream inputStream = openStream()) {
+            inputStream.transferTo(Objects.requireNonNull(outputStream, "outputStream must not be null"));
+        }
+    }
+
+    default void transferTo(OutputStream outputStream,
+                            StorageByteRange range) throws IOException {
+        try (InputStream inputStream = openStream(Objects.requireNonNull(range, "range must not be null"))) {
+            inputStream.transferTo(Objects.requireNonNull(outputStream, "outputStream must not be null"));
+        }
+    }
 }

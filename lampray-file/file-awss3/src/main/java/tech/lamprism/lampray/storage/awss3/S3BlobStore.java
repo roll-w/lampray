@@ -41,6 +41,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 import tech.lamprism.lampray.storage.StorageAccessRequest;
+import tech.lamprism.lampray.storage.StorageByteRange;
 import tech.lamprism.lampray.storage.StorageDownloadSource;
 import tech.lamprism.lampray.storage.source.InputStreamDownloadSource;
 import tech.lamprism.lampray.storage.store.BlobDownloadRequest;
@@ -58,8 +59,8 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -174,9 +175,9 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
         String normalizedKey = normalizeObjectKey(key);
         return new InputStreamDownloadSource(
                 () -> openObjectStream(normalizedKey, null),
-                (startBytes, endBytes) -> {
-                    validateRange(startBytes, endBytes);
-                    return openObjectStream(normalizedKey, "bytes=" + startBytes + "-" + endBytes);
+                range -> {
+                    validateRange(range);
+                    return openObjectStream(normalizedKey, "bytes=" + range.startBytes() + "-" + range.endBytes());
                 }
         );
     }
@@ -553,13 +554,8 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
         }
     }
 
-    private static void validateRange(long startBytes, long endBytes) {
-        if (startBytes < 0) {
-            throw new IllegalArgumentException("startBytes must be non-negative");
-        }
-        if (endBytes < startBytes) {
-            throw new IllegalArgumentException("endBytes must be greater than or equal to startBytes");
-        }
+    private static void validateRange(StorageByteRange range) {
+        Objects.requireNonNull(range, "range must not be null");
     }
 
     private static Duration normalizeAccessDuration(Duration duration) {

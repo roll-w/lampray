@@ -55,6 +55,7 @@ import tech.rollw.common.web.DataErrorCode;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -417,9 +418,9 @@ public class StorageProviderImpl implements StorageProvider {
                         "No placement found for blob: " + blobEntity.getBlobId())));
         Path tempFile = Files.createTempFile("lampray-replica-", ".bin");
         try {
-            try (var outputStream = Files.newOutputStream(tempFile, StandardOpenOption.TRUNCATE_EXISTING)) {
+            try (OutputStream outputStream = Files.newOutputStream(tempFile, StandardOpenOption.TRUNCATE_EXISTING)) {
                 requireBlobStore(sourcePlacement.getBackendName()).openDownload(sourcePlacement.getObjectKey())
-                        .writeTo(outputStream);
+                        .transferTo(outputStream);
             }
             putTempToBackend(targetBackend, targetObjectKey, tempFile, size, mimeType);
             savePlacement(blobEntity.getBlobId(), targetBackend, targetObjectKey, OffsetDateTime.now());

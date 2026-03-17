@@ -21,6 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpRange;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.FileType;
+import tech.lamprism.lampray.storage.StorageByteRange;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageDownloadSource;
@@ -71,22 +72,78 @@ public final class DownloadHelper {
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         }
 
-        List<HttpRange> ranges = HttpRangeUtils.tryGetsRange(request);
-        if (!ranges.isEmpty() && length > 0) {
-            HttpRange range = ranges.get(0);
-            long start = range.getRangeStart(length);
-            long end = range.getRangeEnd(length);
+        RangeRequestResolution rangeResolution = resolveRange(request, response, length);
+        if (rangeResolution.isRejected()) {
+            return;
+        }
+
+        StorageByteRange resolvedRange = rangeResolution.range();
+        if (resolvedRange != null) {
             response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
-            response.setHeader("Content-Range", "bytes " + start + "-" + end + "/" + length);
-            response.setHeader("Content-Length", String.valueOf(end - start + 1));
-            content.writeTo(response.getOutputStream(), start, end);
+            response.setHeader(
+                    "Content-Range",
+                    "bytes " + resolvedRange.startBytes() + "-" + resolvedRange.endBytes() + "/" + length
+            );
+            response.setHeader("Content-Length", String.valueOf(resolvedRange.length()));
+            content.transferTo(response.getOutputStream(), resolvedRange);
             return;
         }
 
         if (length > 0) {
             response.setHeader("Content-Length", String.valueOf(length));
         }
-        content.writeTo(response.getOutputStream());
+        content.transferTo(response.getOutputStream());
+    }
+
+    private static RangeRequestResolution resolveRange(HttpServletRequest request,
+                                                       HttpServletResponse response,
+                                                       long length) {
+        List<HttpRange> ranges;
+        try {
+            ranges = HttpRangeUtils.tryGetsRange(request);
+        } catch (IllegalArgumentException exception) {
+            return rejectRange(response, length);
+        }
+        if (ranges.isEmpty()) {
+            return RangeRequestResolution.none();
+        }
+        if (length <= 0) {
+            return rejectRange(response, length);
+        }
+
+        HttpRange range = ranges.get(0);
+        try {
+            long start = range.getRangeStart(length);
+            long end = range.getRangeEnd(length);
+            if (start >= length || end >= length) {
+                return rejectRange(response, length);
+            }
+            return RangeRequestResolution.resolved(new StorageByteRange(start, end));
+        } catch (IllegalArgumentException exception) {
+            return rejectRange(response, length);
+        }
+    }
+
+    private static RangeRequestResolution rejectRange(HttpServletResponse response,
+                                                      long length) {
+        response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+        response.setHeader("Content-Range", "bytes */" + Math.max(length, 0));
+        response.setHeader("Content-Length", "0");
+        return RangeRequestResolution.rejected();
+    }
+
+    private record RangeRequestResolution(StorageByteRange range, boolean isRejected) {
+        private static RangeRequestResolution none() {
+            return new RangeRequestResolution(null, false);
+        }
+
+        private static RangeRequestResolution resolved(StorageByteRange range) {
+            return new RangeRequestResolution(range, false);
+        }
+
+        private static RangeRequestResolution rejected() {
+            return new RangeRequestResolution(null, true);
+        }
     }
 
     private static String resolveResponseType(String mimeType,

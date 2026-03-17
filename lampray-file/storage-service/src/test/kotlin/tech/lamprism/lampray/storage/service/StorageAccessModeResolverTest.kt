@@ -16,8 +16,6 @@
 
 package tech.lamprism.lampray.storage.service
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
 import tech.lamprism.lampray.storage.StorageDownloadMode
 import tech.lamprism.lampray.storage.StorageUploadMode
 import tech.lamprism.lampray.storage.StorageUploadRequest
@@ -31,6 +29,8 @@ import tech.lamprism.lampray.storage.store.BlobStoreCapability
 import tech.lamprism.lampray.storage.support.MapConfigReader
 import tech.lamprism.lampray.storage.support.TestBlobStore
 import tech.lamprism.lampray.storage.support.testFileStorage
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * @author RollW
@@ -49,8 +49,8 @@ class StorageAccessModeResolverTest {
 
         val mode = resolver.resolveUploadMode(
             request,
-            checksum = "f".repeat(64),
-            blobStore = TestBlobStore("s3", setOf(BlobStoreCapability.DIRECT_UPLOAD)),
+            "f".repeat(64),
+            TestBlobStore("s3", setOf(BlobStoreCapability.DIRECT_UPLOAD)),
         )
 
         assertEquals(StorageUploadMode.DIRECT, mode)
@@ -69,8 +69,8 @@ class StorageAccessModeResolverTest {
 
         val mode = resolver.resolveUploadMode(
             request,
-            checksum = null,
-            blobStore = TestBlobStore("local"),
+            null,
+            TestBlobStore("local"),
         )
 
         assertEquals(StorageUploadMode.PROXY, mode)
