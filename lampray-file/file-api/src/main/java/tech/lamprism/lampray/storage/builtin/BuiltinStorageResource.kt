@@ -20,6 +20,8 @@ import tech.lamprism.lampray.storage.FileStorage
 import tech.lamprism.lampray.storage.StorageDownloadSource
 
 /**
+ * Built-in storage resource backed by packaged content.
+ *
  * @author RollW
  */
 data class BuiltinStorageResource(

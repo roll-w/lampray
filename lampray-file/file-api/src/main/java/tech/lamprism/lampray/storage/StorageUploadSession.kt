@@ -19,6 +19,8 @@ package tech.lamprism.lampray.storage
 import java.time.OffsetDateTime
 
 /**
+ * Metadata returned when an upload session is created.
+ *
  * @author RollW
  */
 data class StorageUploadSession(

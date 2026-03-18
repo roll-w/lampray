@@ -17,6 +17,8 @@
 package tech.lamprism.lampray.storage
 
 /**
+ * Parameters used to create an upload session.
+ *
  * @author RollW
  */
 data class StorageUploadRequest(

@@ -162,6 +162,7 @@ class TopologyStorageGroupRouterTest {
         type = StorageBackendType.LOCAL,
         endpoint = null,
         publicEndpoint = null,
+        nativeChecksumEnabled = false,
         region = null,
         bucket = null,
         rootPrefix = "blob",

@@ -107,21 +107,24 @@ public class StorageAccessService implements StorageDownloadProvider, StorageUrl
         }
 
         ResolvedDownloadTarget target = resolveStoredTarget(fileId, userId);
+        String mimeType = normalizeMimeType(target.fileStorage.getMimeType());
         StorageDownloadMode mode = storageAccessModeResolver.resolveDownloadMode(
                 target.fileStorage,
                 target.groupConfig,
                 target.blobStore
         );
-        if (mode == StorageDownloadMode.DIRECT) {
+        if (mode == StorageDownloadMode.DIRECT && !isUnsafeDirectMimeType(mimeType)) {
             StorageAccessRequest directRequest = target.blobStore.createDirectDownload(
                     new BlobDownloadRequest(
                             target.placementEntity.getObjectKey(),
                             target.fileStorage.getFileName(),
-                            target.fileStorage.getMimeType()
+                            mimeType
                     ),
                     Duration.ofSeconds(runtimeSettings.directAccessTtlSeconds())
             );
-            return new StorageDownloadResult(target.fileStorage, StorageDownloadMode.DIRECT, directRequest, null);
+            if (isSimpleDirectDownload(directRequest)) {
+                return new StorageDownloadResult(target.fileStorage, StorageDownloadMode.DIRECT, directRequest, null);
+            }
         }
 
         return new StorageDownloadResult(
@@ -237,14 +240,18 @@ public class StorageAccessService implements StorageDownloadProvider, StorageUrl
     }
 
     private StorageReference resolvePublicReference(ResolvedDownloadTarget target) throws IOException {
+        String mimeType = normalizeMimeType(target.fileStorage.getMimeType());
         if (target.visibility != StorageVisibility.PUBLIC) {
             return null;
         }
         if (!target.blobStore.supports(BlobStoreCapability.PUBLIC_DOWNLOAD_URL)) {
             return null;
         }
+        if (isUnsafeDirectMimeType(mimeType)) {
+            return null;
+        }
         String url = target.blobStore.createPublicDownloadUrl(
-                new BlobDownloadRequest(target.placementEntity.getObjectKey(), null, target.fileStorage.getMimeType())
+                new BlobDownloadRequest(target.placementEntity.getObjectKey(), target.fileStorage.getFileName(), mimeType)
         );
         return new StorageReference(
                 url,
@@ -257,11 +264,19 @@ public class StorageAccessService implements StorageDownloadProvider, StorageUrl
 
     private StorageReference resolveSignedReference(ResolvedDownloadTarget target,
                                                     Long ttlSeconds) throws IOException {
+        String mimeType = normalizeMimeType(target.fileStorage.getMimeType());
         if (!target.blobStore.supports(BlobStoreCapability.DIRECT_DOWNLOAD)) {
             return null;
         }
+        if (isUnsafeDirectMimeType(mimeType)) {
+            return null;
+        }
         StorageAccessRequest accessRequest = target.blobStore.createDirectDownload(
-                new BlobDownloadRequest(target.placementEntity.getObjectKey(), null, target.fileStorage.getMimeType()),
+                new BlobDownloadRequest(
+                        target.placementEntity.getObjectKey(),
+                        target.fileStorage.getFileName(),
+                        mimeType
+                ),
                 Duration.ofSeconds(normalizeReferenceTtlSeconds(ttlSeconds))
         );
         return new StorageReference(
@@ -378,6 +393,36 @@ public class StorageAccessService implements StorageDownloadProvider, StorageUrl
         String normalizedEndpoint = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
         String normalizedPath = path.startsWith("/") ? path : "/" + path;
         return normalizedEndpoint + normalizedPath;
+    }
+
+    private boolean isSimpleDirectDownload(StorageAccessRequest request) {
+        return request != null
+                && "GET".equalsIgnoreCase(request.getMethod())
+                && request.getHeaders().isEmpty();
+    }
+
+    private String normalizeMimeType(String mimeType) {
+        if (!StringUtils.hasText(mimeType)) {
+            return "application/octet-stream";
+        }
+        String normalized = mimeType.trim().toLowerCase(java.util.Locale.ROOT);
+        int parameterIndex = normalized.indexOf(';');
+        if (parameterIndex >= 0) {
+            normalized = normalized.substring(0, parameterIndex).trim();
+        }
+        return normalized.isEmpty() ? "application/octet-stream" : normalized;
+    }
+
+    private boolean isUnsafeDirectMimeType(String mimeType) {
+        return "text/html".equals(mimeType)
+                || "application/xhtml+xml".equals(mimeType)
+                || "image/svg+xml".equals(mimeType)
+                || "text/xml".equals(mimeType)
+                || "application/xml".equals(mimeType)
+                || mimeType.endsWith("+xml")
+                || "text/javascript".equals(mimeType)
+                || "application/javascript".equals(mimeType)
+                || "application/json".equals(mimeType);
     }
 
     private static final class ResolvedDownloadTarget {

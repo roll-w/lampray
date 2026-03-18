@@ -19,6 +19,8 @@ package tech.lamprism.lampray.storage
 import java.time.OffsetDateTime
 
 /**
+ * Resolved storage reference with delivery mode, headers, and expiry.
+ *
  * @author RollW
  */
 data class StorageReference(

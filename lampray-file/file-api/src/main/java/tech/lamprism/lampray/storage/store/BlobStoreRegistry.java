@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.Optional;
 
 /**
+ * Registry of blob stores available at runtime.
+ *
  * @author RollW
  */
 public interface BlobStoreRegistry extends AutoCloseable {

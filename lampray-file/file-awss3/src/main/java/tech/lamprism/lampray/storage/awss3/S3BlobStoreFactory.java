@@ -40,6 +40,7 @@ public class S3BlobStoreFactory implements BlobStoreFactory {
                 config.getName(),
                 config.getEndpoint(),
                 config.getPublicEndpoint(),
+                config.getNativeChecksumEnabled(),
                 config.getRegion(),
                 Objects.requireNonNull(config.getBucket()),
                 config.getRootPrefix(),

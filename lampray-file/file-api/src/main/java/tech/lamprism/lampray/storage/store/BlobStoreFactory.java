@@ -22,6 +22,8 @@ import tech.lamprism.lampray.storage.configuration.StorageBackendConfig;
 import java.io.IOException;
 
 /**
+ * Factory for creating blob store backends from runtime configuration.
+ *
  * @author RollW
  */
 public interface BlobStoreFactory {

@@ -19,6 +19,8 @@ package tech.lamprism.lampray.storage
 import java.time.OffsetDateTime
 
 /**
+ * Direct HTTP request details for accessing a storage backend.
+ *
  * @author RollW
  */
 data class StorageAccessRequest(

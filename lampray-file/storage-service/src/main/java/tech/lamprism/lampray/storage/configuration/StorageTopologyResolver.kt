@@ -58,6 +58,7 @@ class StorageTopologyResolver(
             type = StorageBackendType.LOCAL,
             endpoint = null,
             publicEndpoint = null,
+            nativeChecksumEnabled = false,
             region = null,
             bucket = null,
             rootPrefix = "blob",
@@ -84,12 +85,17 @@ class StorageTopologyResolver(
         val prefix = "storage.backend.$name."
         val type = StorageBackendType.from(configReader[prefix + "type"])
             ?: throw IllegalArgumentException("Storage backend type is required for $name")
+        val endpoint = configReader[prefix + "endpoint"]?.trim()?.takeIf { it.isNotEmpty() }
+        val nativeChecksumEnabled = configReader[prefix + "native-checksum-enabled"]
+            ?.toBooleanStrictOrNull()
+            ?: (endpoint == null)
         return when (type) {
             StorageBackendType.LOCAL -> StorageBackendConfig(
                 name = name,
                 type = type,
                 endpoint = null,
                 publicEndpoint = null,
+                nativeChecksumEnabled = false,
                 region = null,
                 bucket = null,
                 rootPrefix = configReader[prefix + "root-prefix"] ?: "blob",
@@ -102,8 +108,9 @@ class StorageTopologyResolver(
             StorageBackendType.S3 -> StorageBackendConfig(
                 name = name,
                 type = type,
-                endpoint = configReader[prefix + "endpoint"],
+                endpoint = endpoint,
                 publicEndpoint = configReader[prefix + "public-endpoint"],
+                nativeChecksumEnabled = nativeChecksumEnabled,
                 region = configReader[prefix + "region"] ?: "us-east-1",
                 bucket = configReader[prefix + "bucket"]
                     ?: throw IllegalArgumentException("Storage backend bucket is required for $name"),

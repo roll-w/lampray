@@ -25,6 +25,8 @@ import java.time.Duration;
 import java.util.Set;
 
 /**
+ * Backend abstraction for storing and retrieving binary blobs.
+ *
  * @author RollW
  */
 public interface BlobStore {
@@ -49,6 +51,9 @@ public interface BlobStore {
 
     boolean delete(String key) throws IOException;
 
+    /**
+     * Creates a direct upload request when the backend supports it.
+     */
     default StorageAccessRequest createDirectUpload(BlobWriteRequest request,
                                                     Duration duration) throws IOException {
         throw new UnsupportedOperationException(
@@ -56,6 +61,9 @@ public interface BlobStore {
         );
     }
 
+    /**
+     * Creates a direct download request when the backend supports it.
+     */
     default StorageAccessRequest createDirectDownload(BlobDownloadRequest request,
                                                       Duration duration) throws IOException {
         throw new UnsupportedOperationException(
@@ -63,6 +71,9 @@ public interface BlobStore {
         );
     }
 
+    /**
+     * Returns a public download URL when the backend supports it.
+     */
     default String createPublicDownloadUrl(BlobDownloadRequest request) throws IOException {
         throw new UnsupportedOperationException(
                 "Blob store backend does not support public download urls: " + getBackendName()

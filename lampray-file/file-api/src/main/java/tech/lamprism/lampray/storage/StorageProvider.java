@@ -18,6 +18,8 @@ package tech.lamprism.lampray.storage;
 
 
 /**
+ * Main storage facade combining upload and download operations.
+ *
  * @author RollW
  */
 public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider {

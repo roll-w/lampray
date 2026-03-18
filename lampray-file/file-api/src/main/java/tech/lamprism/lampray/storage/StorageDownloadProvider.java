@@ -19,9 +19,14 @@ package tech.lamprism.lampray.storage;
 import java.io.IOException;
 
 /**
+ * Download operations exposed by the storage module.
+ *
  * @author RollW
  */
 public interface StorageDownloadProvider {
+    /**
+     * Resolves how the caller should download the requested file.
+     */
     StorageDownloadResult resolveDownload(String fileId,
                                           Long userId) throws IOException;
 }

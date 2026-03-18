@@ -26,6 +26,7 @@ data class StorageBackendConfig(
     val type: StorageBackendType,
     val endpoint: String?,
     val publicEndpoint: String?,
+    val nativeChecksumEnabled: Boolean,
     val region: String?,
     val bucket: String?,
     val rootPrefix: String,

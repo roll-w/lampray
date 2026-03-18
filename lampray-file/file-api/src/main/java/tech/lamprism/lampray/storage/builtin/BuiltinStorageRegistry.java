@@ -17,6 +17,8 @@
 package tech.lamprism.lampray.storage.builtin;
 
 /**
+ * Looks up built-in storage resources bundled with the application.
+ *
  * @author RollW
  */
 public interface BuiltinStorageRegistry {

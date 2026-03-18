@@ -28,6 +28,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.ChecksumAlgorithm;
+import software.amazon.awssdk.services.s3.model.ChecksumMode;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
@@ -58,6 +60,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Base64;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -79,12 +82,14 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
     private final String rootPrefix;
     private final URI publicEndpoint;
     private final boolean pathStyleAccess;
+    private final boolean nativeChecksumEnabled;
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
 
     public S3BlobStore(String backendName,
                        String endpoint,
                        String publicEndpoint,
+                       boolean nativeChecksumEnabled,
                        String region,
                        String bucket,
                        String rootPrefix,
@@ -96,6 +101,7 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
         this.rootPrefix = normalizeRootPrefix(rootPrefix);
         this.publicEndpoint = resolveEndpoint(publicEndpoint);
         this.pathStyleAccess = pathStyleAccess;
+        this.nativeChecksumEnabled = nativeChecksumEnabled;
 
         AwsCredentialsProvider credentialsProvider = resolveCredentialsProvider(accessKey, secretKey);
         Region awsRegion = Region.of(normalizeRegion(region));
@@ -133,6 +139,7 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
         this.rootPrefix = normalizeRootPrefix(rootPrefix);
         this.publicEndpoint = null;
         this.pathStyleAccess = false;
+        this.nativeChecksumEnabled = true;
         this.s3Client = Objects.requireNonNull(s3Client, "s3Client must not be null");
         this.s3Presigner = Objects.requireNonNull(s3Presigner, "s3Presigner must not be null");
     }
@@ -185,13 +192,8 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
     @Override
     public BlobObject describe(String key) throws IOException {
         String normalizedKey = normalizeObjectKey(key);
-        HeadObjectRequest request = HeadObjectRequest.builder()
-                .bucket(bucket)
-                .key(toStorageKey(normalizedKey))
-                .build();
-
         try {
-            HeadObjectResponse response = s3Client.headObject(request);
+            HeadObjectResponse response = headObject(normalizedKey, nativeChecksumEnabled);
             return toBlobObject(normalizedKey, response);
         } catch (NoSuchKeyException exception) {
             throw new IOException("S3 object does not exist: " + normalizedKey, exception);
@@ -199,9 +201,37 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
             if (isObjectNotFound(exception)) {
                 throw new IOException("S3 object does not exist: " + normalizedKey, exception);
             }
-            throw toIOException("stat", normalizedKey, exception);
+            if (!nativeChecksumEnabled) {
+                throw toIOException("stat", normalizedKey, exception);
+            }
+            try {
+                return toBlobObject(normalizedKey, headObject(normalizedKey, false));
+            } catch (NoSuchKeyException fallbackException) {
+                throw new IOException("S3 object does not exist: " + normalizedKey, fallbackException);
+            } catch (S3Exception fallbackException) {
+                if (isObjectNotFound(fallbackException)) {
+                    throw new IOException("S3 object does not exist: " + normalizedKey, fallbackException);
+                }
+                throw toIOException("stat", normalizedKey, exception);
+            } catch (SdkException fallbackException) {
+                throw toIOException("stat", normalizedKey, exception);
+            }
         } catch (SdkException exception) {
-            throw toIOException("stat", normalizedKey, exception);
+            if (!nativeChecksumEnabled) {
+                throw toIOException("stat", normalizedKey, exception);
+            }
+            try {
+                return toBlobObject(normalizedKey, headObject(normalizedKey, false));
+            } catch (NoSuchKeyException fallbackException) {
+                throw new IOException("S3 object does not exist: " + normalizedKey, fallbackException);
+            } catch (S3Exception fallbackException) {
+                if (isObjectNotFound(fallbackException)) {
+                    throw new IOException("S3 object does not exist: " + normalizedKey, fallbackException);
+                }
+                throw toIOException("stat", normalizedKey, exception);
+            } catch (SdkException fallbackException) {
+                throw toIOException("stat", normalizedKey, exception);
+            }
         }
     }
 
@@ -361,9 +391,21 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
                 size,
                 contentType,
                 response.eTag(),
+                resolveChecksumSha256(response),
                 lastModified,
                 normalizeMetadata(response.metadata())
         );
+    }
+
+    private HeadObjectResponse headObject(String normalizedKey,
+                                          boolean includeChecksumMode) {
+        HeadObjectRequest.Builder requestBuilder = HeadObjectRequest.builder()
+                .bucket(bucket)
+                .key(toStorageKey(normalizedKey));
+        if (includeChecksumMode) {
+            requestBuilder.checksumMode(ChecksumMode.ENABLED);
+        }
+        return s3Client.headObject(requestBuilder.build());
     }
 
     private PutObjectRequest buildPutObjectRequest(String normalizedKey,
@@ -376,7 +418,53 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
         if (hasText(request.contentType())) {
             requestBuilder.contentType(request.contentType().trim());
         }
+        if (nativeChecksumEnabled && hasText(request.checksumSha256())) {
+            requestBuilder.checksumAlgorithm(ChecksumAlgorithm.SHA256);
+            requestBuilder.checksumSHA256(hexToBase64Checksum(request.checksumSha256().trim()));
+        }
         return requestBuilder.build();
+    }
+
+    private String resolveChecksumSha256(HeadObjectResponse response) {
+        if (hasText(response.checksumSHA256())) {
+            return base64ToHexChecksum(response.checksumSHA256());
+        }
+        Map<String, String> metadata = normalizeMetadata(response.metadata());
+        String metadataChecksum = metadata.get("checksum-sha256");
+        return hasText(metadataChecksum) ? metadataChecksum.trim().toLowerCase(java.util.Locale.ROOT) : null;
+    }
+
+    private String hexToBase64Checksum(String checksumSha256) {
+        return Base64.getEncoder().encodeToString(hexToBytes(checksumSha256));
+    }
+
+    private String base64ToHexChecksum(String base64Checksum) {
+        return toHex(Base64.getDecoder().decode(base64Checksum));
+    }
+
+    private byte[] hexToBytes(String hexValue) {
+        if (hexValue.length() % 2 != 0) {
+            throw new IllegalArgumentException("Checksum must have an even number of characters.");
+        }
+        byte[] bytes = new byte[hexValue.length() / 2];
+        for (int i = 0; i < hexValue.length(); i += 2) {
+            int high = Character.digit(hexValue.charAt(i), 16);
+            int low = Character.digit(hexValue.charAt(i + 1), 16);
+            if (high < 0 || low < 0) {
+                throw new IllegalArgumentException("Checksum must be a hexadecimal string.");
+            }
+            bytes[i / 2] = (byte) ((high << 4) + low);
+        }
+        return bytes;
+    }
+
+    private String toHex(byte[] bytes) {
+        StringBuilder builder = new StringBuilder(bytes.length * 2);
+        for (byte current : bytes) {
+            builder.append(Character.forDigit((current >> 4) & 0xF, 16));
+            builder.append(Character.forDigit(current & 0xF, 16));
+        }
+        return builder.toString();
     }
 
     private static AwsCredentialsProvider resolveCredentialsProvider(String accessKey, String secretKey) {

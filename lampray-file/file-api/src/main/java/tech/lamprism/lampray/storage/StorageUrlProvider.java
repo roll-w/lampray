@@ -20,13 +20,21 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 /**
+ * Resolves proxy or direct references for stored content.
+ *
  * @author RollW
  */
 public interface StorageUrlProvider {
+    /**
+     * Resolves a storage reference using the requested access mode.
+     */
     StorageReference resolveStorageReference(String id,
                                              StorageReferenceRequest request,
                                              Long userId) throws IOException;
 
+    /**
+     * Returns the default proxy URL for a storage id.
+     */
     default String getUrlOfStorage(String id) {
         try {
             return resolveStorageReference(id, StorageReferenceRequest.proxy(), null).getUrl();

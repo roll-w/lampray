@@ -36,7 +36,6 @@ import java.util.Locale;
  * @author RollW
  */
 public final class DownloadHelper {
-    public static final String ACCEPT_TYPE = "X-Accept-Type";
     public static final String DISPOSITION_TYPE = "X-Disposition-Type";
     private static final String DISPOSITION_ATTACHMENT = "attachment";
     private static final String DISPOSITION_INLINE = "inline";
@@ -54,8 +53,8 @@ public final class DownloadHelper {
         }
 
         FileStorage fileStorage = downloadResult.getFileStorage();
-        String contentType = resolveResponseType(fileStorage.getMimeType(), request);
-        String dispositionType = resolveDispositionType(fileStorage, request);
+        String contentType = normalizeMimeType(fileStorage.getMimeType());
+        String dispositionType = resolveDispositionType(fileStorage, contentType, request);
         long length = fileStorage.getFileSize();
 
         response.setContentType(contentType);
@@ -146,42 +145,69 @@ public final class DownloadHelper {
         }
     }
 
-    private static String resolveResponseType(String mimeType,
-                                              HttpServletRequest request) {
-        String requestedType = request.getHeader(ACCEPT_TYPE);
-        if (hasText(requestedType)) {
-            return requestedType;
-        }
-        return mimeType;
-    }
-
     private static String resolveDispositionType(FileStorage fileStorage,
+                                                 String mimeType,
                                                  HttpServletRequest request) {
         String requestedDisposition = request.getHeader(DISPOSITION_TYPE);
         if (!hasText(requestedDisposition)) {
             requestedDisposition = request.getParameter("disposition");
         }
+        boolean inlineAllowed = supportsInlinePreview(fileStorage.getFileType(), mimeType);
         if (hasText(requestedDisposition)) {
             String normalized = requestedDisposition.trim().toLowerCase(Locale.ROOT);
-            if (DISPOSITION_INLINE.equals(normalized)) {
+            if (DISPOSITION_INLINE.equals(normalized) && inlineAllowed) {
                 return DISPOSITION_INLINE;
             }
             if (DISPOSITION_ATTACHMENT.equals(normalized)) {
                 return DISPOSITION_ATTACHMENT;
             }
         }
-        return prefersInline(fileStorage.getFileType()) ? DISPOSITION_INLINE : DISPOSITION_ATTACHMENT;
+        return inlineAllowed ? DISPOSITION_INLINE : DISPOSITION_ATTACHMENT;
     }
 
-    private static boolean prefersInline(FileType fileType) {
-        return fileType == FileType.IMAGE
-                || fileType == FileType.TEXT
-                || fileType == FileType.AUDIO
-                || fileType == FileType.VIDEO;
+    private static boolean supportsInlinePreview(FileType fileType,
+                                                 String mimeType) {
+        if (isUnsafeInlineMimeType(mimeType)) {
+            return false;
+        }
+        if (fileType == FileType.IMAGE) {
+            return mimeType.startsWith("image/");
+        }
+        if (fileType == FileType.AUDIO) {
+            return mimeType.startsWith("audio/");
+        }
+        if (fileType == FileType.VIDEO) {
+            return mimeType.startsWith("video/");
+        }
+        return "text/plain".equals(mimeType);
+    }
+
+    private static boolean isUnsafeInlineMimeType(String mimeType) {
+        return "text/html".equals(mimeType)
+                || "application/xhtml+xml".equals(mimeType)
+                || "image/svg+xml".equals(mimeType)
+                || "text/xml".equals(mimeType)
+                || "application/xml".equals(mimeType)
+                || mimeType.endsWith("+xml")
+                || "text/javascript".equals(mimeType)
+                || "application/javascript".equals(mimeType)
+                || "application/json".equals(mimeType);
     }
 
     private static String encodeFileName(String fileName) {
         return URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+    }
+
+    private static String normalizeMimeType(String mimeType) {
+        if (!hasText(mimeType)) {
+            return "application/octet-stream";
+        }
+        String normalized = mimeType.trim().toLowerCase(Locale.ROOT);
+        int parameterIndex = normalized.indexOf(';');
+        if (parameterIndex >= 0) {
+            normalized = normalized.substring(0, parameterIndex).trim();
+        }
+        return normalized.isEmpty() ? "application/octet-stream" : normalized;
     }
 
     private static String toAsciiFileName(String fileName) {

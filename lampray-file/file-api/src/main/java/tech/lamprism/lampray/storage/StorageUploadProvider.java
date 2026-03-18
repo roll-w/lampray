@@ -20,18 +20,32 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
+ * Upload operations exposed by the storage module.
+ *
  * @author RollW
  */
 public interface StorageUploadProvider {
+    /**
+     * Stores content through the default upload flow.
+     */
     FileStorage saveFile(InputStream inputStream) throws IOException;
 
+    /**
+     * Creates an upload session for proxy or direct uploads.
+     */
     StorageUploadSession createUploadSession(StorageUploadRequest request,
                                              Long userId) throws IOException;
 
+    /**
+     * Streams content into a pending proxy upload session.
+     */
     FileStorage uploadFileContent(String uploadId,
                                   InputStream inputStream,
                                   Long userId) throws IOException;
 
+    /**
+     * Finalizes a pending direct upload session.
+     */
     FileStorage completeUpload(String uploadId,
                                Long userId) throws IOException;
 }

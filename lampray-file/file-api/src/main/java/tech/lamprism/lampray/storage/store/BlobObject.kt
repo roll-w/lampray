@@ -27,6 +27,7 @@ data class BlobObject(
     val size: Long,
     val contentType: String,
     val etag: String?,
+    val checksumSha256: String?,
     val lastModified: OffsetDateTime,
     val metadata: Map<String, String>,
 ) {
@@ -39,6 +40,8 @@ data class BlobObject(
     fun contentType(): String = contentType
 
     fun etag(): String? = etag
+
+    fun checksumSha256(): String? = checksumSha256
 
     fun lastModified(): OffsetDateTime = lastModified
 

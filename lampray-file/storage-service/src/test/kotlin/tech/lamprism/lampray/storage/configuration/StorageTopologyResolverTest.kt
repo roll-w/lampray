@@ -89,4 +89,23 @@ class StorageTopologyResolverTest {
 
         assertEquals("https://cdn.example.com/public", topology.getBackend("s3-a").publicEndpoint)
     }
+
+    @Test
+    fun `blank s3 endpoint keeps native checksum enabled by default`() {
+        val configReader = MapConfigReader(
+            mapOf(
+                "storage.backends" to setOf("s3-a"),
+                "storage.default-group" to "default",
+                "storage.backend.s3-a.type" to "S3",
+                "storage.backend.s3-a.endpoint" to "   ",
+                "storage.backend.s3-a.bucket" to "lampray-assets",
+            )
+        )
+
+        val topology = StorageTopologyResolver(configReader, StorageRuntimeConfig(configReader)).resolve()
+        val backend = topology.getBackend("s3-a")
+
+        assertEquals(null, backend.endpoint)
+        assertEquals(true, backend.nativeChecksumEnabled)
+    }
 }

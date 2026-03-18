@@ -17,6 +17,8 @@
 package tech.lamprism.lampray.storage
 
 /**
+ * Options used to resolve a proxy or direct storage reference.
+ *
  * @author RollW
  */
 data class StorageReferenceRequest(

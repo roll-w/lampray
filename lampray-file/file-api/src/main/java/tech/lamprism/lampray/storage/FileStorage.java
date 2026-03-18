@@ -25,6 +25,8 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 /**
+ * Metadata for a file managed by the storage module.
+ *
  * @author RollW
  */
 public class FileStorage implements DataEntity<String> {

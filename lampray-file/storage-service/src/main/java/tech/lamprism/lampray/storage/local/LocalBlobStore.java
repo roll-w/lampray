@@ -61,7 +61,13 @@ public class LocalBlobStore implements BlobStore {
             Files.createDirectories(resolved.getParent());
         }
         Files.copy(inputStream, resolved, StandardCopyOption.REPLACE_EXISTING);
-        return describeInternal(resolved, request.key(), request.contentType(), request.metadata());
+        return describeInternal(
+                resolved,
+                request.key(),
+                request.contentType(),
+                request.metadata(),
+                request.checksumSha256()
+        );
     }
 
     @Override
@@ -73,7 +79,7 @@ public class LocalBlobStore implements BlobStore {
     @Override
     public BlobObject describe(String key) throws IOException {
         Path resolved = resolve(key);
-        return describeInternal(resolved, key, Files.probeContentType(resolved), java.util.Map.of());
+        return describeInternal(resolved, key, Files.probeContentType(resolved), java.util.Map.of(), null);
     }
 
     @Override
@@ -118,7 +124,8 @@ public class LocalBlobStore implements BlobStore {
     private BlobObject describeInternal(Path path,
                                         String key,
                                         String contentType,
-                                        java.util.Map<String, String> metadata) throws IOException {
+                                        java.util.Map<String, String> metadata,
+                                        String checksumSha256) throws IOException {
         if (!Files.exists(path)) {
             throw new IOException("Blob does not exist: " + key);
         }
@@ -129,6 +136,7 @@ public class LocalBlobStore implements BlobStore {
                 Files.size(path),
                 contentType != null ? contentType : "application/octet-stream",
                 null,
+                checksumSha256,
                 OffsetDateTime.ofInstant(fileTime.toInstant(), ZoneOffset.UTC),
                 metadata
         );

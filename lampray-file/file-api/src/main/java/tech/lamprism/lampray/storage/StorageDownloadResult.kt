@@ -17,6 +17,8 @@
 package tech.lamprism.lampray.storage
 
 /**
+ * Resolved download result with either proxy content or direct access.
+ *
  * @author RollW
  */
 data class StorageDownloadResult(
