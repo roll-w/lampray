@@ -16,7 +16,6 @@
 
 package tech.lamprism.lampray.storage.service;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
@@ -35,13 +34,9 @@ import tech.lamprism.lampray.storage.StorageUploadMode;
 import tech.lamprism.lampray.storage.StorageUploadRequest;
 import tech.lamprism.lampray.storage.StorageUploadSession;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
-import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.configuration.StorageTopology;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
-import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementEntity;
-import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
-import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
 import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
 import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
@@ -59,7 +54,6 @@ import tech.rollw.common.web.DataErrorCode;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -67,14 +61,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * @author RollW
@@ -88,14 +77,14 @@ public class StorageProviderImpl implements StorageProvider {
     private final StorageRuntimeConfig runtimeSettings;
     private final BlobStoreRegistry blobStoreRegistry;
     private final StorageFileRepository storageFileRepository;
-    private final StorageBlobRepository storageBlobRepository;
-    private final StorageBlobPlacementRepository storageBlobPlacementRepository;
     private final StorageUploadSessionRepository storageUploadSessionRepository;
     private final ResourceIdGenerator resourceIdGenerator;
     private final StorageGroupRouter storageGroupRouter;
-    private final StorageAccessModeResolver storageAccessModeResolver;
-    private final StorageAccessService storageAccessService;
+    private final StorageAccessModePolicy storageAccessModePolicy;
+    private final StorageAccessResolver storageAccessResolver;
     private final BlobObjectKeyFactory blobObjectKeyFactory;
+    private final StorageUploadValidator storageUploadValidator;
+    private final StorageBlobMaterializer storageBlobMaterializer;
     private final List<StorageMaterializationHook> storageMaterializationHooks;
     private final TransactionTemplate transactionTemplate;
 
@@ -103,28 +92,28 @@ public class StorageProviderImpl implements StorageProvider {
                                StorageRuntimeConfig runtimeSettings,
                                BlobStoreRegistry blobStoreRegistry,
                                StorageFileRepository storageFileRepository,
-                               StorageBlobRepository storageBlobRepository,
-                               StorageBlobPlacementRepository storageBlobPlacementRepository,
                                StorageUploadSessionRepository storageUploadSessionRepository,
                                ResourceIdGenerator resourceIdGenerator,
                                StorageGroupRouter storageGroupRouter,
-                               StorageAccessModeResolver storageAccessModeResolver,
-                               StorageAccessService storageAccessService,
+                               StorageAccessModePolicy storageAccessModePolicy,
+                               StorageAccessResolver storageAccessResolver,
                                BlobObjectKeyFactory blobObjectKeyFactory,
+                               StorageUploadValidator storageUploadValidator,
+                               StorageBlobMaterializer storageBlobMaterializer,
                                PlatformTransactionManager transactionManager,
                                List<StorageMaterializationHook> storageMaterializationHooks) {
         this.storageTopology = storageTopology;
         this.runtimeSettings = runtimeSettings;
         this.blobStoreRegistry = blobStoreRegistry;
         this.storageFileRepository = storageFileRepository;
-        this.storageBlobRepository = storageBlobRepository;
-        this.storageBlobPlacementRepository = storageBlobPlacementRepository;
         this.storageUploadSessionRepository = storageUploadSessionRepository;
         this.resourceIdGenerator = resourceIdGenerator;
         this.storageGroupRouter = storageGroupRouter;
-        this.storageAccessModeResolver = storageAccessModeResolver;
-        this.storageAccessService = storageAccessService;
+        this.storageAccessModePolicy = storageAccessModePolicy;
+        this.storageAccessResolver = storageAccessResolver;
         this.blobObjectKeyFactory = blobObjectKeyFactory;
+        this.storageUploadValidator = storageUploadValidator;
+        this.storageBlobMaterializer = storageBlobMaterializer;
         this.storageMaterializationHooks = List.copyOf(storageMaterializationHooks);
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
@@ -156,18 +145,18 @@ public class StorageProviderImpl implements StorageProvider {
                                                     Long userId) throws IOException {
         String groupName = resolveGroupName(request.getGroupName());
         StorageGroupConfig groupSettings = storageTopology.getGroup(groupName);
-        String fileName = normalizeFileName(request.getFileName());
-        String mimeType = requireMimeType(request.getMimeType());
+        String fileName = storageUploadValidator.normalizeFileName(request.getFileName());
+        String mimeType = storageUploadValidator.requireMimeType(request.getMimeType());
         FileType fileType = FileType.fromMimeType(mimeType);
-        validateUploadRequest(request, groupSettings, fileType);
+        storageUploadValidator.validateUploadRequest(request, groupSettings, fileType);
 
-        String checksum = normalizeChecksum(request.getChecksumSha256());
+        String checksum = storageUploadValidator.normalizeChecksum(request.getChecksumSha256());
         String uploadId = newId();
         String fileId = newId();
         StorageWritePlan writePlan = selectWritePlan(groupName);
         String primaryBackend = writePlan.primaryBackend();
         BlobStore primaryBlobStore = requireBlobStore(primaryBackend);
-        StorageUploadMode uploadMode = storageAccessModeResolver.resolveUploadMode(request, checksum, primaryBlobStore);
+        StorageUploadMode uploadMode = storageAccessModePolicy.resolveUploadMode(request, checksum, primaryBlobStore);
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime expiresAt = now.plusSeconds(runtimeSettings.pendingUploadExpireSeconds());
 
@@ -233,7 +222,7 @@ public class StorageProviderImpl implements StorageProvider {
         StorageGroupConfig groupSettings = storageTopology.getGroup(uploadSession.getGroupName());
         TempUpload tempUpload = writeTempUpload(inputStream, groupSettings.getMaxSizeBytes());
         try {
-            validateUploadedContent(uploadSession, tempUpload, groupSettings);
+            storageUploadValidator.validateUploadedContent(uploadSession, tempUpload, groupSettings);
             return finalizeProxyUpload(uploadSession, tempUpload);
         } finally {
             Files.deleteIfExists(tempUpload.path());
@@ -254,7 +243,7 @@ public class StorageProviderImpl implements StorageProvider {
                     "Upload session requires proxy upload: " + uploadId);
         }
 
-        String checksum = normalizeChecksum(uploadSession.getChecksumSha256());
+        String checksum = storageUploadValidator.normalizeChecksum(uploadSession.getChecksumSha256());
         if (checksum == null) {
             throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
                     "Direct uploads require a checksum.");
@@ -263,14 +252,7 @@ public class StorageProviderImpl implements StorageProvider {
         BlobStore primaryBlobStore = requireBlobStore(uploadSession.getPrimaryBackend());
         BlobObject uploadedObject = primaryBlobStore.describe(Objects.requireNonNull(uploadSession.getObjectKey()));
         StorageGroupConfig groupSettings = storageTopology.getGroup(uploadSession.getGroupName());
-        if (groupSettings.getMaxSizeBytes() != null && uploadedObject.size() > groupSettings.getMaxSizeBytes()) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                    "Uploaded file size exceeds the configured group limit.");
-        }
-        if (uploadSession.getFileSize() != null && uploadSession.getFileSize() != uploadedObject.size()) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                    "Uploaded file size does not match declared size.");
-        }
+        storageUploadValidator.validateUploadedObject(uploadSession, uploadedObject, groupSettings);
 
         String actualChecksum = verifyUploadedChecksum(primaryBlobStore, uploadedObject, checksum);
         return finalizeDirectUpload(uploadSession, actualChecksum, uploadedObject);
@@ -279,12 +261,12 @@ public class StorageProviderImpl implements StorageProvider {
     @Override
     public StorageDownloadResult resolveDownload(String fileId,
                                                  Long userId) throws IOException {
-        return storageAccessService.resolveDownload(fileId, userId);
+        return storageAccessResolver.resolveDownload(fileId, userId);
     }
 
     private FileStorage finalizeProxyUpload(StorageUploadSessionEntity uploadSession,
                                             TempUpload tempUpload) throws IOException {
-        PreparedBlobMaterialization preparedBlob = prepareBlobMaterialization(
+        PreparedBlobMaterialization preparedBlob = storageBlobMaterializer.prepareBlobMaterialization(
                 uploadSession.getGroupName(),
                 uploadSession.getMimeType(),
                 uploadSession.getFileType(),
@@ -300,7 +282,7 @@ public class StorageProviderImpl implements StorageProvider {
     private FileStorage finalizeDirectUpload(StorageUploadSessionEntity uploadSession,
                                              String checksum,
                                              BlobObject uploadedObject) throws IOException {
-        PreparedBlobMaterialization preparedBlob = prepareBlobMaterialization(
+        PreparedBlobMaterialization preparedBlob = storageBlobMaterializer.prepareBlobMaterialization(
                 uploadSession.getGroupName(),
                 uploadSession.getMimeType(),
                 uploadSession.getFileType(),
@@ -313,225 +295,12 @@ public class StorageProviderImpl implements StorageProvider {
         return persistMaterializedUpload(uploadSession, preparedBlob);
     }
 
-    private PreparedBlobMaterialization prepareBlobMaterialization(String groupName,
-                                                                  String mimeType,
-                                                                  FileType fileType,
-                                                                  long size,
-                                                                  String checksum,
-                                                                  Path tempPath,
-                                                                  String primaryBackend,
-                                                                  BlobObject existingUploadedObject) throws IOException {
-        StorageGroupConfig groupSettings = storageTopology.getGroup(groupName);
-        Optional<StorageBlobEntity> existingBlob = runtimeSettings.deduplicationEnabled()
-                ? storageBlobRepository.findByChecksumSha256(checksum)
-                : Optional.empty();
-        if (existingBlob.isPresent()) {
-            StorageBlobEntity blobEntity = existingBlob.get();
-            return PreparedBlobMaterialization.existing(
-                    blobEntity,
-                    size,
-                    ensureRequiredPlacements(
-                            blobEntity,
-                            groupSettings,
-                            mimeType,
-                            size,
-                            checksum,
-                            tempPath,
-                            existingUploadedObject,
-                            primaryBackend,
-                            groupName
-                    )
-            );
-        }
-
-        String primaryObjectKey = existingUploadedObject != null
-                ? existingUploadedObject.key()
-                : blobObjectKeyFactory.createKey(checksum);
-        Map<String, String> materializedPlacements = new LinkedHashMap<>();
-        try {
-            if (existingUploadedObject == null) {
-                putTempToBackend(primaryBackend, primaryObjectKey, tempPath, size, mimeType, checksum);
-            }
-            materializedPlacements.put(primaryBackend, primaryObjectKey);
-
-            if (groupSettings.getPlacementMode() == StorageGroupPlacementMode.MIRROR) {
-                materializeMirrorPlacements(
-                        materializedPlacements,
-                        primaryBackend,
-                        primaryObjectKey,
-                        resolveMirrorBackends(groupName, primaryBackend),
-                        size,
-                        mimeType,
-                        checksum,
-                        tempPath
-                );
-            }
-        } catch (IOException | RuntimeException exception) {
-            cleanupMaterializedPlacements(
-                    materializedPlacements,
-                    existingUploadedObject != null ? primaryBackend : null,
-                    existingUploadedObject != null ? primaryObjectKey : null
-            );
-            throw exception;
-        }
-        return PreparedBlobMaterialization.newBlob(
-                checksum,
-                size,
-                mimeType,
-                fileType,
-                primaryBackend,
-                primaryObjectKey,
-                materializedPlacements
-        );
-    }
-
     private FileStorage persistMaterializedUpload(StorageUploadSessionEntity uploadSession,
                                                   PreparedBlobMaterialization preparedBlob) {
         return Objects.requireNonNull(transactionTemplate.execute(status -> {
-            StorageBlobEntity blobEntity = persistBlobMaterialization(preparedBlob);
+            StorageBlobEntity blobEntity = storageBlobMaterializer.persistBlobMaterialization(preparedBlob);
             return createFileEntity(uploadSession, blobEntity, preparedBlob.size());
         }));
-    }
-
-    private StorageBlobEntity persistBlobMaterialization(PreparedBlobMaterialization preparedBlob) {
-        StorageBlobEntity blobEntity = preparedBlob.existingBlob();
-        if (blobEntity == null) {
-            OffsetDateTime now = OffsetDateTime.now();
-            StorageBlobEntity candidate = StorageBlobEntity.builder()
-                    .setBlobId(newId())
-                    .setChecksumSha256(preparedBlob.checksum())
-                    .setFileSize(preparedBlob.size())
-                    .setMimeType(preparedBlob.mimeType())
-                    .setFileType(preparedBlob.fileType())
-                    .setPrimaryBackend(preparedBlob.primaryBackend())
-                    .setPrimaryObjectKey(preparedBlob.primaryObjectKey())
-                    .setCreateTime(now)
-                    .setUpdateTime(now)
-                    .build();
-            try {
-                blobEntity = storageBlobRepository.save(candidate);
-            } catch (DataIntegrityViolationException exception) {
-                blobEntity = storageBlobRepository.findByChecksumSha256(preparedBlob.checksum())
-                        .orElseThrow(() -> exception);
-            }
-        }
-
-        OffsetDateTime now = OffsetDateTime.now();
-        for (Map.Entry<String, String> entry : preparedBlob.placementsToPersist().entrySet()) {
-            savePlacement(blobEntity.getBlobId(), entry.getKey(), entry.getValue(), now);
-        }
-        return blobEntity;
-    }
-
-    private Map<String, String> ensureRequiredPlacements(StorageBlobEntity blobEntity,
-                                                         StorageGroupConfig groupSettings,
-                                                         String mimeType,
-                                                         long size,
-                                                         String checksum,
-                                                         Path tempPath,
-                                                         BlobObject existingUploadedObject,
-                                                         String primaryBackend,
-                                                         String groupName) throws IOException {
-        Map<String, String> placementsToPersist = new LinkedHashMap<>();
-        Set<String> requiredBackends = new LinkedHashSet<>();
-        requiredBackends.add(primaryBackend);
-        if (groupSettings.getPlacementMode() == StorageGroupPlacementMode.MIRROR) {
-            requiredBackends.addAll(resolveMirrorBackends(groupName, primaryBackend));
-        }
-
-        String sourceBackend = existingUploadedObject != null ? primaryBackend : blobEntity.getPrimaryBackend();
-        String sourceObjectKey = existingUploadedObject != null ? existingUploadedObject.key() : blobEntity.getPrimaryObjectKey();
-
-        try {
-            for (String backendName : requiredBackends) {
-                if (storageBlobPlacementRepository.findByBlobIdAndBackendName(blobEntity.getBlobId(), backendName).isPresent()) {
-                    continue;
-                }
-
-                String objectKey = backendName.equals(sourceBackend)
-                        ? sourceObjectKey
-                        : blobObjectKeyFactory.createKey(checksum);
-                if (backendName.equals(sourceBackend)) {
-                    placementsToPersist.put(backendName, objectKey);
-                    continue;
-                }
-
-                if (tempPath != null) {
-                    putTempToBackend(backendName, objectKey, tempPath, size, mimeType, checksum);
-                    placementsToPersist.put(backendName, objectKey);
-                    continue;
-                }
-
-                replicateBetweenBackends(sourceBackend, sourceObjectKey, backendName, objectKey, size, mimeType, checksum);
-                placementsToPersist.put(backendName, objectKey);
-            }
-        } catch (IOException | RuntimeException exception) {
-            cleanupMaterializedPlacements(placementsToPersist, sourceBackend, sourceObjectKey);
-            throw exception;
-        }
-        return placementsToPersist;
-    }
-
-    private void materializeMirrorPlacements(Map<String, String> materializedPlacements,
-                                             String primaryBackend,
-                                             String primaryObjectKey,
-                                             List<String> mirrorBackends,
-                                             long size,
-                                             String mimeType,
-                                             String checksum,
-                                             Path tempPath) throws IOException {
-        for (String mirrorBackend : mirrorBackends) {
-            if (materializedPlacements.containsKey(mirrorBackend)) {
-                continue;
-            }
-            String objectKey = blobObjectKeyFactory.createKey(checksum);
-            if (tempPath != null) {
-                putTempToBackend(mirrorBackend, objectKey, tempPath, size, mimeType, checksum);
-                materializedPlacements.put(mirrorBackend, objectKey);
-                continue;
-            }
-            replicateBetweenBackends(primaryBackend, primaryObjectKey, mirrorBackend, objectKey, size, mimeType, checksum);
-            materializedPlacements.put(mirrorBackend, objectKey);
-        }
-    }
-
-    private void replicateBetweenBackends(String sourceBackend,
-                                          String sourceObjectKey,
-                                          String targetBackend,
-                                          String targetObjectKey,
-                                          long size,
-                                          String mimeType,
-                                          String checksum) throws IOException {
-        Path tempFile = Files.createTempFile("lampray-replica-", ".bin");
-        try {
-            try (OutputStream outputStream = Files.newOutputStream(tempFile, StandardOpenOption.TRUNCATE_EXISTING)) {
-                requireBlobStore(sourceBackend).openDownload(sourceObjectKey)
-                        .transferTo(outputStream);
-            }
-            putTempToBackend(targetBackend, targetObjectKey, tempFile, size, mimeType, checksum);
-        } finally {
-            Files.deleteIfExists(tempFile);
-        }
-    }
-
-    private void putTempToBackend(String backendName,
-                                  String objectKey,
-                                  Path tempPath,
-                                  long size,
-                                  String mimeType,
-                                  String checksumSha256) throws IOException {
-        try (InputStream inputStream = Files.newInputStream(Objects.requireNonNull(tempPath))) {
-            requireBlobStore(backendName).store(
-                    new BlobWriteRequest(
-                            objectKey,
-                            size,
-                            mimeType,
-                            buildBlobMetadata(checksumSha256),
-                            checksumSha256
-                    ),
-                    inputStream
-            );
-        }
     }
 
     private FileStorage createFileEntity(StorageUploadSessionEntity uploadSession,
@@ -559,67 +328,6 @@ public class StorageProviderImpl implements StorageProvider {
         FileStorage fileStorage = savedFileEntity.lock();
         notifyMaterializationHooks(fileStorage, blobEntity.getBlobId(), uploadSession.getGroupName(), uploadSession.getOwnerUserId());
         return fileStorage;
-    }
-
-    private void savePlacement(String blobId,
-                               String backendName,
-                                String objectKey,
-                                OffsetDateTime now) {
-        if (storageBlobPlacementRepository.findByBlobIdAndBackendName(blobId, backendName).isPresent()) {
-            return;
-        }
-        StorageBlobPlacementEntity placementEntity = StorageBlobPlacementEntity.builder()
-                .setPlacementId(newId())
-                .setBlobId(blobId)
-                .setBackendName(backendName)
-                .setObjectKey(objectKey)
-                .setCreateTime(now)
-                .setUpdateTime(now)
-                .build();
-        try {
-            storageBlobPlacementRepository.save(placementEntity);
-        } catch (DataIntegrityViolationException exception) {
-            if (storageBlobPlacementRepository.findByBlobIdAndBackendName(blobId, backendName).isPresent()) {
-                return;
-            }
-            throw exception;
-        }
-    }
-
-    private void validateUploadRequest(StorageUploadRequest request,
-                                       StorageGroupConfig groupSettings,
-                                       FileType fileType) {
-        if (request.getSize() != null && request.getSize() < 0) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "File size cannot be negative.");
-        }
-        if (groupSettings.getMaxSizeBytes() != null
-                && request.getSize() != null
-                && request.getSize() > groupSettings.getMaxSizeBytes()) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                    "File size exceeds the configured group limit.");
-        }
-        if (!groupSettings.getAllowedFileTypes().isEmpty() && !groupSettings.getAllowedFileTypes().contains(fileType)) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                    "File type is not allowed for this storage group.");
-        }
-    }
-
-    private void validateUploadedContent(StorageUploadSessionEntity uploadSession,
-                                         TempUpload tempUpload,
-                                         StorageGroupConfig groupSettings) {
-        if (groupSettings.getMaxSizeBytes() != null && tempUpload.size() > groupSettings.getMaxSizeBytes()) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                    "Uploaded file size exceeds the configured group limit.");
-        }
-        if (uploadSession.getFileSize() != null && uploadSession.getFileSize() != tempUpload.size()) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                    "Uploaded file size does not match declared size.");
-        }
-        String expectedChecksum = normalizeChecksum(uploadSession.getChecksumSha256());
-        if (expectedChecksum != null && !expectedChecksum.equals(tempUpload.checksumSha256())) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                    "Uploaded file checksum does not match declared checksum.");
-        }
     }
 
     private TempUpload writeTempUpload(InputStream inputStream,
@@ -663,57 +371,6 @@ public class StorageProviderImpl implements StorageProvider {
         return requestedGroupName.trim();
     }
 
-    private String normalizeChecksum(String checksumSha256) {
-        if (!StringUtils.hasText(checksumSha256)) {
-            return null;
-        }
-        String normalized = checksumSha256.trim().toLowerCase(Locale.ROOT);
-        if (normalized.length() != 64) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                    "Checksum must be a 64-character SHA-256 hex string.");
-        }
-        for (int i = 0; i < normalized.length(); i++) {
-            char current = normalized.charAt(i);
-            boolean numeric = current >= '0' && current <= '9';
-            boolean alphabetic = current >= 'a' && current <= 'f';
-            if (!numeric && !alphabetic) {
-                throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                        "Checksum must be a lowercase SHA-256 hex string.");
-            }
-        }
-        return normalized;
-    }
-
-    private String normalizeFileName(String fileName) {
-        if (!StringUtils.hasText(fileName)) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "File name is required.");
-        }
-        String normalized = fileName.trim();
-        int slashIndex = normalized.lastIndexOf('/');
-        int backslashIndex = normalized.lastIndexOf('\\');
-        int separatorIndex = Math.max(slashIndex, backslashIndex);
-        if (separatorIndex >= 0 && separatorIndex < normalized.length() - 1) {
-            normalized = normalized.substring(separatorIndex + 1);
-        }
-        if (normalized.isBlank() || ".".equals(normalized) || "..".equals(normalized)) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "File name is invalid.");
-        }
-        for (int i = 0; i < normalized.length(); i++) {
-            char current = normalized.charAt(i);
-            if (current == '\r' || current == '\n') {
-                throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "File name is invalid.");
-            }
-        }
-        return normalized;
-    }
-
-    private String requireMimeType(String mimeType) {
-        if (!StringUtils.hasText(mimeType)) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "MIME type is required.");
-        }
-        return mimeType.trim();
-    }
-
     private StorageUploadSessionEntity requireActiveUploadSession(String uploadId,
                                                                   Long userId) {
         return requireActiveUploadSession(requireUploadSession(uploadId), userId);
@@ -725,10 +382,9 @@ public class StorageProviderImpl implements StorageProvider {
             throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
                     "Upload session is not pending: " + uploadSession.getUploadId());
         }
-        if (uploadSession.getExpiresAt().isBefore(OffsetDateTime.now())) {
-            uploadSession.setStatus(UploadSessionStatus.EXPIRED);
-            uploadSession.setUpdateTime(OffsetDateTime.now());
-            transactionTemplate.executeWithoutResult(status -> storageUploadSessionRepository.save(uploadSession));
+        OffsetDateTime now = OffsetDateTime.now();
+        if (uploadSession.getExpiresAt().isBefore(now)) {
+            transactionTemplate.executeWithoutResult(status -> expireUploadSession(uploadSession, now));
             throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
                     "Upload session has expired: " + uploadSession.getUploadId());
         }
@@ -748,11 +404,14 @@ public class StorageProviderImpl implements StorageProvider {
     private void expirePendingUploadSession(String uploadId) {
         transactionTemplate.executeWithoutResult(status -> storageUploadSessionRepository.findById(uploadId)
                 .filter(uploadSession -> uploadSession.getStatus() == UploadSessionStatus.PENDING)
-                .ifPresent(uploadSession -> {
-                    uploadSession.setStatus(UploadSessionStatus.EXPIRED);
-                    uploadSession.setUpdateTime(OffsetDateTime.now());
-                    storageUploadSessionRepository.save(uploadSession);
-                }));
+                .ifPresent(uploadSession -> expireUploadSession(uploadSession, OffsetDateTime.now())));
+    }
+
+    private void expireUploadSession(StorageUploadSessionEntity uploadSession,
+                                     OffsetDateTime now) {
+        uploadSession.setStatus(UploadSessionStatus.EXPIRED);
+        uploadSession.setUpdateTime(now);
+        storageUploadSessionRepository.save(uploadSession);
     }
 
     private StorageFileEntity requireFileEntity(String fileId) {
@@ -773,13 +432,6 @@ public class StorageProviderImpl implements StorageProvider {
         return blobStoreRegistry.find(backendName)
                 .orElseThrow(() -> new StorageException(DataErrorCode.ERROR_DATA_NOT_EXIST,
                         "Storage backend is not available: " + backendName));
-    }
-
-    private List<String> resolveMirrorBackends(String groupName,
-                                               String primaryBackend) {
-        return storageGroupRouter.resolveActiveBackends(groupName).stream()
-                .filter(candidate -> !candidate.equals(primaryBackend))
-                .toList();
     }
 
     private void notifyMaterializationHooks(FileStorage fileStorage,
@@ -825,16 +477,13 @@ public class StorageProviderImpl implements StorageProvider {
         if (!StringUtils.hasText(actualChecksum)) {
             String metadataChecksum = uploadedObject.metadata().get("checksum-sha256");
             if (StringUtils.hasText(metadataChecksum)) {
-                actualChecksum = normalizeChecksum(metadataChecksum);
+                actualChecksum = storageUploadValidator.normalizeChecksum(metadataChecksum);
             }
         }
         if (!StringUtils.hasText(actualChecksum)) {
             actualChecksum = calculateChecksum(blobStore, uploadedObject.key());
         }
-        if (!expectedChecksum.equals(actualChecksum)) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                    "Uploaded file checksum does not match declared checksum.");
-        }
+        storageUploadValidator.validateChecksumMatch(expectedChecksum, actualChecksum);
         return actualChecksum;
     }
 
@@ -851,64 +500,4 @@ public class StorageProviderImpl implements StorageProvider {
         return toHex(digest.digest());
     }
 
-    private void cleanupMaterializedPlacements(Map<String, String> placements,
-                                               String protectedBackend,
-                                               String protectedObjectKey) {
-        for (Map.Entry<String, String> entry : placements.entrySet()) {
-            boolean isProtected = protectedBackend != null
-                    && protectedBackend.equals(entry.getKey())
-                    && Objects.equals(protectedObjectKey, entry.getValue());
-            if (isProtected) {
-                continue;
-            }
-            try {
-                BlobStore blobStore = requireBlobStore(entry.getKey());
-                blobStore.delete(entry.getValue());
-            } catch (IOException ignored) {
-            }
-        }
-    }
-
-    private record PreparedBlobMaterialization(StorageBlobEntity existingBlob,
-                                               String checksum,
-                                               long size,
-                                               String mimeType,
-                                               FileType fileType,
-                                               String primaryBackend,
-                                               String primaryObjectKey,
-                                               Map<String, String> placementsToPersist) {
-        private static PreparedBlobMaterialization existing(StorageBlobEntity blobEntity,
-                                                            long size,
-                                                            Map<String, String> placementsToPersist) {
-            return new PreparedBlobMaterialization(
-                    blobEntity,
-                    blobEntity.getChecksumSha256(),
-                    size,
-                    blobEntity.getMimeType(),
-                    blobEntity.getFileType(),
-                    blobEntity.getPrimaryBackend(),
-                    blobEntity.getPrimaryObjectKey(),
-                    Map.copyOf(placementsToPersist)
-            );
-        }
-
-        private static PreparedBlobMaterialization newBlob(String checksum,
-                                                           long size,
-                                                           String mimeType,
-                                                           FileType fileType,
-                                                           String primaryBackend,
-                                                           String primaryObjectKey,
-                                                           Map<String, String> placementsToPersist) {
-            return new PreparedBlobMaterialization(
-                    null,
-                    checksum,
-                    size,
-                    mimeType,
-                    fileType,
-                    primaryBackend,
-                    primaryObjectKey,
-                    Map.copyOf(placementsToPersist)
-            );
-        }
-    }
 }

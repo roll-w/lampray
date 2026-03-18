@@ -21,8 +21,8 @@ import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
 import tech.lamprism.lampray.storage.StorageUploadMode;
 import tech.lamprism.lampray.storage.StorageUploadRequest;
-import tech.lamprism.lampray.storage.configuration.StorageGroupDownloadPolicy;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
+import tech.lamprism.lampray.storage.configuration.StorageGroupDownloadPolicy;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.store.BlobStore;
 import tech.lamprism.lampray.storage.store.BlobStoreCapability;
@@ -31,13 +31,14 @@ import tech.lamprism.lampray.storage.store.BlobStoreCapability;
  * @author RollW
  */
 @Component
-public class StorageAccessModeResolver {
+public class StorageAccessModeResolver implements StorageAccessModePolicy {
     private final StorageRuntimeConfig runtimeSettings;
 
     public StorageAccessModeResolver(StorageRuntimeConfig runtimeSettings) {
         this.runtimeSettings = runtimeSettings;
     }
 
+    @Override
     public StorageUploadMode resolveUploadMode(StorageUploadRequest request,
                                                String checksum,
                                                BlobStore blobStore) {
@@ -50,9 +51,10 @@ public class StorageAccessModeResolver {
         return checksum != null ? StorageUploadMode.DIRECT : StorageUploadMode.PROXY;
     }
 
+    @Override
     public StorageDownloadMode resolveDownloadMode(FileStorage fileStorage,
-                                                    StorageGroupConfig groupSettings,
-                                                    BlobStore blobStore) {
+                                                   StorageGroupConfig groupSettings,
+                                                   BlobStore blobStore) {
         if (!runtimeSettings.directAccessEnabled() || !blobStore.supports(BlobStoreCapability.DIRECT_DOWNLOAD)) {
             return StorageDownloadMode.PROXY;
         }

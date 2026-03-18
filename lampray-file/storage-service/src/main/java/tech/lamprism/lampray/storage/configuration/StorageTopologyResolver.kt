@@ -21,13 +21,6 @@ import tech.lamprism.lampray.setting.ConfigReader
 import tech.lamprism.lampray.storage.FileType
 import tech.lamprism.lampray.storage.StorageBackendType
 import tech.lamprism.lampray.storage.StorageVisibility
-import tech.lamprism.lampray.storage.configuration.StorageBackendConfig
-import tech.lamprism.lampray.storage.configuration.StorageGroupBackend
-import tech.lamprism.lampray.storage.configuration.StorageGroupDownloadPolicy
-import tech.lamprism.lampray.storage.configuration.StorageGroupLoadBalanceMode
-import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode
-import tech.lamprism.lampray.storage.configuration.StorageGroupConfig
-import tech.lamprism.lampray.storage.configuration.StorageTopology
 
 /**
  * @author RollW
@@ -82,10 +75,10 @@ class StorageTopologyResolver(
 
     private fun resolveBackend(name: String): StorageBackendConfig {
         // TODO(RollW): Replace manual prefix-based reads with strongly typed config binding.
-        val prefix = "storage.backend.$name."
+        val prefix = backendPrefix(name)
         val type = StorageBackendType.from(configReader[prefix + "type"])
             ?: throw IllegalArgumentException("Storage backend type is required for $name")
-        val endpoint = configReader[prefix + "endpoint"]?.trim()?.takeIf { it.isNotEmpty() }
+        val endpoint = readTrimmedValue(prefix + "endpoint")
         val nativeChecksumEnabled = configReader[prefix + "native-checksum-enabled"]
             ?.toBooleanStrictOrNull()
             ?: (endpoint == null)
@@ -128,7 +121,7 @@ class StorageTopologyResolver(
         backends: Map<String, StorageBackendConfig>,
     ): StorageGroupConfig {
         // TODO(RollW): Replace manual prefix-based reads with strongly typed config binding.
-        val prefix = "storage.group.$name."
+        val prefix = groupPrefix(name)
         val resolvedBackends = resolveGroupBackends(prefix, backends)
         return StorageGroupConfig(
             name = name,
@@ -150,32 +143,48 @@ class StorageTopologyResolver(
         prefix: String,
         backends: Map<String, StorageBackendConfig>,
     ): List<StorageGroupBackend> {
+        val groupName = groupName(prefix)
         val rawExplicitBackends = configReader[prefix + "backends"]
         if (rawExplicitBackends != null) {
             val explicitBackends = readWeightedBackends(prefix + "backends")
             explicitBackends.forEach {
-                require(backends.containsKey(it.backendName)) {
-                    "Group ${prefix.removePrefix("storage.group.").removeSuffix(".")} references unknown backend ${it.backendName}"
-                }
+                requireKnownBackend(groupName, it.backendName, backends)
             }
             return explicitBackends
         }
 
         val primaryBackend = configReader[prefix + "primary-backend"] ?: backends.keys.firstOrNull()
-        ?: throw IllegalArgumentException("No storage backend available for group ${prefix.removePrefix("storage.group.").removeSuffix(".")}")
-        require(backends.containsKey(primaryBackend)) {
-            "Group ${prefix.removePrefix("storage.group.").removeSuffix(".")} references unknown backend $primaryBackend"
-        }
+        ?: throw IllegalArgumentException("No storage backend available for group $groupName")
+        requireKnownBackend(groupName, primaryBackend, backends)
         val members = mutableListOf(StorageGroupBackend(primaryBackend))
         readStringSet(prefix + "replica-backends")
             .filter { it != primaryBackend }
             .forEach {
-                require(backends.containsKey(it)) {
-                    "Group ${prefix.removePrefix("storage.group.").removeSuffix(".")} references unknown replica backend $it"
-                }
+                requireKnownBackend(groupName, it, backends, "replica")
                 members.add(StorageGroupBackend(it))
             }
         return members
+    }
+
+    private fun backendPrefix(name: String): String = "storage.backend.$name."
+
+    private fun groupPrefix(name: String): String = "storage.group.$name."
+
+    private fun groupName(prefix: String): String = prefix.removePrefix("storage.group.").removeSuffix(".")
+
+    private fun readTrimmedValue(key: String): String? =
+        configReader[key]?.trim()?.takeIf { it.isNotEmpty() }
+
+    private fun requireKnownBackend(
+        groupName: String,
+        backendName: String,
+        backends: Map<String, StorageBackendConfig>,
+        qualifier: String = "",
+    ) {
+        require(backends.containsKey(backendName)) {
+            val resolvedQualifier = if (qualifier.isBlank()) "" else "$qualifier "
+            "Group $groupName references unknown ${resolvedQualifier}backend $backendName"
+        }
     }
 
     private fun readStringSet(key: String): Set<String> {

@@ -23,14 +23,12 @@ import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.StorageAccessRequest;
 import tech.lamprism.lampray.storage.StorageDirectAccessMode;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
-import tech.lamprism.lampray.storage.StorageDownloadProvider;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
 import tech.lamprism.lampray.storage.StorageReferenceSource;
-import tech.lamprism.lampray.storage.StorageUrlProvider;
 import tech.lamprism.lampray.storage.StorageVisibility;
 import tech.lamprism.lampray.storage.builtin.BuiltinStorageRegistry;
 import tech.lamprism.lampray.storage.builtin.BuiltinStorageResource;
@@ -62,7 +60,7 @@ import java.util.Map;
  */
 @Service
 @Transactional(readOnly = true)
-public class StorageAccessService implements StorageDownloadProvider, StorageUrlProvider {
+public class StorageAccessService implements StorageAccessResolver {
     private final StorageTopology storageTopology;
     private final StorageRuntimeConfig runtimeSettings;
     private final BlobStoreRegistry blobStoreRegistry;
@@ -71,7 +69,7 @@ public class StorageAccessService implements StorageDownloadProvider, StorageUrl
     private final ExternalEndpointProvider externalEndpointProvider;
     private final BuiltinStorageRegistry builtinStorageRegistry;
     private final StorageGroupRouter storageGroupRouter;
-    private final StorageAccessModeResolver storageAccessModeResolver;
+    private final StorageAccessModePolicy storageAccessModePolicy;
 
     public StorageAccessService(StorageTopology storageTopology,
                                 StorageRuntimeConfig runtimeSettings,
@@ -81,7 +79,7 @@ public class StorageAccessService implements StorageDownloadProvider, StorageUrl
                                 ExternalEndpointProvider externalEndpointProvider,
                                 BuiltinStorageRegistry builtinStorageRegistry,
                                 StorageGroupRouter storageGroupRouter,
-                                StorageAccessModeResolver storageAccessModeResolver) {
+                                StorageAccessModePolicy storageAccessModePolicy) {
         this.storageTopology = storageTopology;
         this.runtimeSettings = runtimeSettings;
         this.blobStoreRegistry = blobStoreRegistry;
@@ -90,7 +88,7 @@ public class StorageAccessService implements StorageDownloadProvider, StorageUrl
         this.externalEndpointProvider = externalEndpointProvider;
         this.builtinStorageRegistry = builtinStorageRegistry;
         this.storageGroupRouter = storageGroupRouter;
-        this.storageAccessModeResolver = storageAccessModeResolver;
+        this.storageAccessModePolicy = storageAccessModePolicy;
     }
 
     @Override
@@ -108,7 +106,7 @@ public class StorageAccessService implements StorageDownloadProvider, StorageUrl
 
         ResolvedDownloadTarget target = resolveStoredTarget(fileId, userId);
         String mimeType = normalizeMimeType(target.fileStorage.getMimeType());
-        StorageDownloadMode mode = storageAccessModeResolver.resolveDownloadMode(
+        StorageDownloadMode mode = storageAccessModePolicy.resolveDownloadMode(
                 target.fileStorage,
                 target.groupConfig,
                 target.blobStore
@@ -191,7 +189,7 @@ public class StorageAccessService implements StorageDownloadProvider, StorageUrl
         }
 
         if (request.getMode() == StorageReferenceMode.AUTO) {
-            StorageDownloadMode autoMode = storageAccessModeResolver.resolveDownloadMode(
+            StorageDownloadMode autoMode = storageAccessModePolicy.resolveDownloadMode(
                     target.fileStorage,
                     target.groupConfig,
                     target.blobStore

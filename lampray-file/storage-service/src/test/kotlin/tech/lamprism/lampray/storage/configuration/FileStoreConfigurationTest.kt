@@ -16,12 +16,12 @@
 
 package tech.lamprism.lampray.storage.configuration
 
-import kotlin.test.Test
-import kotlin.test.assertFailsWith
 import tech.lamprism.lampray.storage.StorageBackendType
 import tech.lamprism.lampray.storage.store.BlobStore
 import tech.lamprism.lampray.storage.store.BlobStoreFactory
 import tech.lamprism.lampray.storage.support.TestBlobStore
+import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 /**
  * @author RollW
@@ -59,6 +59,35 @@ class FileStoreConfigurationTest {
                     TestFactory("second"),
                 )
             )
+        }
+    }
+
+    @Test
+    fun `missing factory for backend type fails fast`() {
+        val configuration = FileStoreConfiguration()
+        val topology = StorageTopology(
+            defaultGroup = "upload",
+            backends = mapOf(
+                "local-a" to StorageBackendConfig(
+                    name = "local-a",
+                    type = StorageBackendType.LOCAL,
+                    endpoint = null,
+                    publicEndpoint = null,
+                    nativeChecksumEnabled = false,
+                    region = null,
+                    bucket = null,
+                    rootPrefix = "blob",
+                    pathStyleAccess = false,
+                    accessKey = null,
+                    secretKey = null,
+                    rootPath = "/tmp/a",
+                )
+            ),
+            groups = emptyMap(),
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            configuration.blobStoreRegistry(topology, emptyList())
         }
     }
 
