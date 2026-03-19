@@ -31,10 +31,10 @@ import tech.lamprism.lampray.storage.store.BlobStoreCapability;
  * @author RollW
  */
 @Component
-public class StorageAccessModeResolver implements StorageAccessModePolicy {
+public class DefaultStorageTransferPolicy implements StorageTransferPolicy {
     private final StorageRuntimeConfig runtimeSettings;
 
-    public StorageAccessModeResolver(StorageRuntimeConfig runtimeSettings) {
+    public DefaultStorageTransferPolicy(StorageRuntimeConfig runtimeSettings) {
         this.runtimeSettings = runtimeSettings;
     }
 

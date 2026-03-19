@@ -25,6 +25,9 @@ import java.util.List;
 public interface StorageGroupRouter {
     StorageWritePlan selectWritePlan(String groupName);
 
+    StorageWritePlan restoreWritePlan(String groupName,
+                                      String primaryBackend);
+
     String selectReadBackend(String groupName,
                              Collection<String> availableBackends);
 

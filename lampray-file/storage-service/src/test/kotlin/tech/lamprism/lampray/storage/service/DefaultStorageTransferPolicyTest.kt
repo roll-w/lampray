@@ -35,10 +35,10 @@ import kotlin.test.assertEquals
 /**
  * @author RollW
  */
-class StorageAccessModeResolverTest {
+class DefaultStorageTransferPolicyTest {
     @Test
     fun `large upload with checksum uses direct mode when backend supports it`() {
-        val resolver = StorageAccessModeResolver(runtimeSettings())
+        val resolver = DefaultStorageTransferPolicy(runtimeSettings())
         val request = StorageUploadRequest(
             groupName = "upload",
             fileName = "video.mp4",
@@ -58,7 +58,7 @@ class StorageAccessModeResolverTest {
 
     @Test
     fun `small or unsupported upload falls back to proxy`() {
-        val resolver = StorageAccessModeResolver(runtimeSettings())
+        val resolver = DefaultStorageTransferPolicy(runtimeSettings())
         val request = StorageUploadRequest(
             groupName = "upload",
             fileName = "avatar.png",
@@ -78,7 +78,7 @@ class StorageAccessModeResolverTest {
 
     @Test
     fun `download policy respects capability and threshold`() {
-        val resolver = StorageAccessModeResolver(runtimeSettings())
+        val resolver = DefaultStorageTransferPolicy(runtimeSettings())
         val hybridGroup = StorageGroupConfig(
             name = "download",
             backends = emptyList(),

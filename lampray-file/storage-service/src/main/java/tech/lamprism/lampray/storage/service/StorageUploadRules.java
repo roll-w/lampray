@@ -34,8 +34,7 @@ import java.util.Locale;
  * @author RollW
  */
 @Component
-public class StorageUploadValidationSupport implements StorageUploadValidator {
-    @Override
+public class StorageUploadRules {
     public void validateUploadRequest(StorageUploadRequest request,
                                       StorageGroupConfig groupSettings,
                                       FileType fileType) {
@@ -52,7 +51,6 @@ public class StorageUploadValidationSupport implements StorageUploadValidator {
         }
     }
 
-    @Override
     public void validateUploadedContent(StorageUploadSessionEntity uploadSession,
                                         TempUpload tempUpload,
                                         StorageGroupConfig groupSettings) {
@@ -64,7 +62,6 @@ public class StorageUploadValidationSupport implements StorageUploadValidator {
         }
     }
 
-    @Override
     public void validateUploadedObject(StorageUploadSessionEntity uploadSession,
                                        BlobObject uploadedObject,
                                        StorageGroupConfig groupSettings) {
@@ -72,7 +69,6 @@ public class StorageUploadValidationSupport implements StorageUploadValidator {
         validateDeclaredSize(uploadSession.getFileSize(), uploadedObject.size());
     }
 
-    @Override
     public void validateChecksumMatch(String expectedChecksum,
                                       String actualChecksum) {
         if (!expectedChecksum.equals(actualChecksum)) {
@@ -81,7 +77,6 @@ public class StorageUploadValidationSupport implements StorageUploadValidator {
         }
     }
 
-    @Override
     public String normalizeChecksum(String checksumSha256) {
         if (!StringUtils.hasText(checksumSha256)) {
             return null;
@@ -103,7 +98,6 @@ public class StorageUploadValidationSupport implements StorageUploadValidator {
         return normalized;
     }
 
-    @Override
     public String normalizeFileName(String fileName) {
         if (!StringUtils.hasText(fileName)) {
             throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "File name is required.");
@@ -125,14 +119,6 @@ public class StorageUploadValidationSupport implements StorageUploadValidator {
             }
         }
         return normalized;
-    }
-
-    @Override
-    public String requireMimeType(String mimeType) {
-        if (!StringUtils.hasText(mimeType)) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "MIME type is required.");
-        }
-        return mimeType.trim();
     }
 
     private void validateGroupSizeLimit(Long maxSizeBytes,

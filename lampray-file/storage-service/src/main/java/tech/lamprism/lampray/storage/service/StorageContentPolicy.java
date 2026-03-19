@@ -16,8 +16,19 @@
 
 package tech.lamprism.lampray.storage.service;
 
-import tech.lamprism.lampray.storage.StorageDownloadProvider;
-import tech.lamprism.lampray.storage.StorageUrlProvider;
+import tech.lamprism.lampray.storage.FileType;
 
-public interface StorageAccessResolver extends StorageDownloadProvider, StorageUrlProvider {
+/**
+ * Contract for storage content normalization and delivery safety rules.
+ *
+ * @author RollW
+ */
+public interface StorageContentPolicy {
+    String requireMimeType(String mimeType);
+
+    String normalizeMimeType(String mimeType);
+
+    FileType resolveFileType(String mimeType);
+
+    boolean isUnsafeDirectMimeType(String mimeType);
 }

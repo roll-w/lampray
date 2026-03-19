@@ -54,13 +54,14 @@ public class TopologyStorageGroupRouter implements StorageGroupRouter {
         List<StorageGroupBackend> activeBackends = resolveActiveGroupBackends(groupConfig);
         StorageGroupBackend primaryBackend = selectMember(groupName + "#write", activeBackends,
                 groupConfig.getLoadBalanceMode());
-        List<String> mirrors = groupConfig.getPlacementMode() == StorageGroupPlacementMode.MIRROR
-                ? activeBackends.stream()
-                .map(StorageGroupBackend::getBackendName)
-                .filter(candidate -> !candidate.equals(primaryBackend.getBackendName()))
-                .toList()
-                : List.of();
-        return new StorageWritePlan(groupConfig, primaryBackend.getBackendName(), mirrors);
+        return restoreWritePlan(groupConfig, activeBackends, primaryBackend.getBackendName());
+    }
+
+    @Override
+    public StorageWritePlan restoreWritePlan(String groupName,
+                                             String primaryBackend) {
+        StorageGroupConfig groupConfig = storageTopology.getGroup(groupName);
+        return restoreWritePlan(groupConfig, resolveAvailableGroupBackends(groupConfig), primaryBackend);
     }
 
     @Override
@@ -93,6 +94,14 @@ public class TopologyStorageGroupRouter implements StorageGroupRouter {
     }
 
     private List<StorageGroupBackend> resolveActiveGroupBackends(StorageGroupConfig groupConfig) {
+        List<StorageGroupBackend> availableBackends = resolveAvailableGroupBackends(groupConfig);
+        if (availableBackends.isEmpty()) {
+            throw new IllegalStateException("No active blob store backends available for group: " + groupConfig.getName());
+        }
+        return availableBackends;
+    }
+
+    private List<StorageGroupBackend> resolveAvailableGroupBackends(StorageGroupConfig groupConfig) {
         Map<String, Integer> weights = new LinkedHashMap<>();
         for (StorageGroupBackend backend : groupConfig.getBackends()) {
             if (blobStoreRegistry.contains(backend.getBackendName())) {
@@ -105,10 +114,6 @@ public class TopologyStorageGroupRouter implements StorageGroupRouter {
                 continue;
             }
             weights.putIfAbsent(registration.backendName(), weight);
-        }
-
-        if (weights.isEmpty()) {
-            throw new IllegalStateException("No active blob store backends available for group: " + groupConfig.getName());
         }
         return weights.entrySet().stream()
                 .map(entry -> new StorageGroupBackend(entry.getKey(), entry.getValue()))
@@ -135,5 +140,17 @@ public class TopologyStorageGroupRouter implements StorageGroupRouter {
             }
         }
         return expanded.isEmpty() ? backends : List.copyOf(expanded);
+    }
+
+    private StorageWritePlan restoreWritePlan(StorageGroupConfig groupConfig,
+                                              List<StorageGroupBackend> activeBackends,
+                                              String primaryBackend) {
+        List<String> mirrors = groupConfig.getPlacementMode() == StorageGroupPlacementMode.MIRROR
+                ? activeBackends.stream()
+                .map(StorageGroupBackend::getBackendName)
+                .filter(candidate -> !candidate.equals(primaryBackend))
+                .toList()
+                : List.of();
+        return new StorageWritePlan(groupConfig, primaryBackend, mirrors);
     }
 }

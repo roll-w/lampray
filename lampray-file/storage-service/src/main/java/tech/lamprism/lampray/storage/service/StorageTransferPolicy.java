@@ -23,7 +23,12 @@ import tech.lamprism.lampray.storage.StorageUploadRequest;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.store.BlobStore;
 
-public interface StorageAccessModePolicy {
+/**
+ * Domain policy for selecting how storage content should be transferred.
+ *
+ * @author RollW
+ */
+public interface StorageTransferPolicy {
     StorageUploadMode resolveUploadMode(StorageUploadRequest request,
                                         String checksum,
                                         BlobStore blobStore);
