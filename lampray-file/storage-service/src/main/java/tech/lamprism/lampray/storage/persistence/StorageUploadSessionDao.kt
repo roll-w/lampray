@@ -18,9 +18,24 @@ package tech.lamprism.lampray.storage.persistence
 
 import tech.lamprism.lampray.common.data.CommonDao
 import tech.lamprism.lampray.common.data.Dao
+import java.time.OffsetDateTime
 
 /**
  * @author RollW
  */
 @Dao
-interface StorageUploadSessionDao : CommonDao<StorageUploadSessionEntity, String>
+interface StorageUploadSessionDao : CommonDao<StorageUploadSessionEntity, String> {
+    fun findAllByStatus(
+        status: UploadSessionStatus,
+    ): List<StorageUploadSessionEntity>
+
+    fun findAllByStatusAndExpiresAtBefore(
+        status: UploadSessionStatus,
+        expiresAt: OffsetDateTime,
+    ): List<StorageUploadSessionEntity>
+
+    fun findAllByStatusAndUpdateTimeBefore(
+        status: UploadSessionStatus,
+        updateTime: OffsetDateTime,
+    ): List<StorageUploadSessionEntity>
+}

@@ -23,7 +23,7 @@ data class BlobWriteRequest(
     val key: String,
     val size: Long,
     val contentType: String?,
-    val metadata: Map<String, String> = emptyMap(),
+    metadata: Map<String, String> = emptyMap(),
     val checksumSha256: String? = null,
 ) {
     init {
@@ -31,15 +31,5 @@ data class BlobWriteRequest(
         require(size >= 0) { "size must not be negative" }
     }
 
-    val normalizedMetadata: Map<String, String> = metadata.takeIf { it.isNotEmpty() }?.toMap() ?: emptyMap()
-
-    fun key(): String = key
-
-    fun size(): Long = size
-
-    fun contentType(): String? = contentType
-
-    fun metadata(): Map<String, String> = normalizedMetadata
-
-    fun checksumSha256(): String? = checksumSha256
+    val metadata: Map<String, String> = metadata.takeIf { it.isNotEmpty() }?.toMap() ?: emptyMap()
 }

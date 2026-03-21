@@ -22,5 +22,8 @@ package tech.lamprism.lampray.storage;
  *
  * @author RollW
  */
-public interface StorageProvider extends StorageUploadProvider, StorageDownloadProvider, StorageUrlProvider {
+public interface StorageProvider extends StorageUploadProvider,
+        StorageUploadSessionQueryProvider,
+        StorageDownloadProvider,
+        StorageUrlProvider {
 }

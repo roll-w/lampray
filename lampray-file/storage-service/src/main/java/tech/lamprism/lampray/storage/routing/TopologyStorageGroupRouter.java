@@ -22,8 +22,8 @@ import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageGroupLoadBalanceMode;
 import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode;
 import tech.lamprism.lampray.storage.configuration.StorageTopology;
-import tech.lamprism.lampray.storage.store.BlobStoreRegistration;
-import tech.lamprism.lampray.storage.store.BlobStoreRegistry;
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistration;
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
 
 import java.util.ArrayList;
 import java.util.Collection;

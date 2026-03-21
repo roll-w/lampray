@@ -26,24 +26,47 @@ import tech.lamprism.lampray.setting.ConfigReader
 class StorageRuntimeConfig(
     private val configReader: ConfigReader,
 ) {
-    fun defaultGroup(): String =
+    val defaultGroup: String
+        get() =
         configReader[StorageConfigKeys.DEFAULT_GROUP, "default"]
 
-    fun deduplicationEnabled(): Boolean =
+    val deduplicationEnabled: Boolean
+        get() =
         configReader[StorageConfigKeys.DEDUPLICATION_ENABLED, true]
 
-    fun directAccessEnabled(): Boolean =
+    val directAccessEnabled: Boolean
+        get() =
         configReader[StorageConfigKeys.DIRECT_ACCESS_ENABLED, true]
 
-    fun directAccessTtlSeconds(): Long =
+    val directAccessTtlSeconds: Long
+        get() =
         configReader[StorageConfigKeys.DIRECT_ACCESS_TTL_SECONDS, 300L]
 
-    fun uploadProxyThresholdBytes(): Long =
+    val uploadProxyThresholdBytes: Long
+        get() =
         configReader[StorageConfigKeys.UPLOAD_PROXY_THRESHOLD_BYTES, 8L * 1024L * 1024L]
 
-    fun downloadProxyThresholdBytes(): Long =
+    val downloadProxyThresholdBytes: Long
+        get() =
         configReader[StorageConfigKeys.DOWNLOAD_PROXY_THRESHOLD_BYTES, 16L * 1024L * 1024L]
 
-    fun pendingUploadExpireSeconds(): Long =
+    val pendingUploadExpireSeconds: Long
+        get() =
         configReader[StorageConfigKeys.PENDING_UPLOAD_EXPIRE_SECONDS, 1800L]
+
+    val cleanupOrphanUploadExpireSeconds: Long
+        get() =
+        configReader[StorageConfigKeys.CLEANUP_ORPHAN_UPLOAD_EXPIRE_SECONDS, 86400L]
+
+    val cleanupExpiredUploadRetainSeconds: Long
+        get() =
+        configReader[StorageConfigKeys.CLEANUP_EXPIRED_UPLOAD_RETAIN_SECONDS, 86400L]
+
+    val cleanupCompletedUploadRetainSeconds: Long
+        get() =
+        configReader[StorageConfigKeys.CLEANUP_COMPLETED_UPLOAD_RETAIN_SECONDS, 604800L]
+
+    val cleanupIntervalSeconds: Long
+        get() =
+        configReader[StorageConfigKeys.CLEANUP_INTERVAL_SECONDS, 600L]
 }

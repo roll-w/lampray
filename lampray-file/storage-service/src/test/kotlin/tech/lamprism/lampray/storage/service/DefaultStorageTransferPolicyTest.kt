@@ -25,6 +25,7 @@ import tech.lamprism.lampray.storage.configuration.StorageGroupDownloadPolicy
 import tech.lamprism.lampray.storage.configuration.StorageGroupLoadBalanceMode
 import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig
+import tech.lamprism.lampray.storage.policy.DefaultStorageTransferPolicy
 import tech.lamprism.lampray.storage.store.BlobStoreCapability
 import tech.lamprism.lampray.storage.support.MapConfigReader
 import tech.lamprism.lampray.storage.support.TestBlobStore

@@ -16,8 +16,11 @@
 
 package tech.lamprism.lampray.storage.persistence
 
+import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
+import tech.rollw.common.web.page.Page
 
 /**
  * @author RollW
@@ -25,4 +28,11 @@ import tech.lamprism.lampray.common.data.CommonRepository
 @Repository
 class StorageFileRepository(
     storageFileDao: StorageFileDao,
-) : CommonRepository<StorageFileEntity, String>(storageFileDao)
+) : CommonRepository<StorageFileEntity, String>(storageFileDao) {
+    fun findAll(
+        pageable: Pageable,
+        specification: Specification<StorageFileEntity>,
+    ): Page<StorageFileEntity> {
+        return super.findAll(pageable, specification)
+    }
+}

@@ -1,0 +1,43 @@
+/*
+ * Copyright (C) 2023-2026 RollW
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package tech.lamprism.lampray.storage.session;
+
+import tech.lamprism.lampray.storage.StorageUploadRequest;
+import tech.lamprism.lampray.storage.StorageUploadSession;
+import tech.lamprism.lampray.storage.StorageUploadSessionDetails;
+import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
+
+import java.io.IOException;
+import java.time.OffsetDateTime;
+
+public interface StorageUploadSessionService {
+    StorageUploadSession createUploadSession(StorageUploadRequest request,
+                                             Long userId) throws IOException;
+
+    StorageUploadSessionEntity requireUploadSession(String uploadId);
+
+    StorageUploadSessionEntity requireActiveUploadSession(String uploadId,
+                                                          Long userId);
+
+    StorageUploadSessionDetails getUploadSession(String uploadId,
+                                                 Long userId);
+
+    void expirePendingUploadSession(String uploadId);
+
+    void markCompleted(StorageUploadSessionEntity uploadSession,
+                       OffsetDateTime now);
+}

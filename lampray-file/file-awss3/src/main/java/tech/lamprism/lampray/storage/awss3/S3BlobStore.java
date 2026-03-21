@@ -164,13 +164,13 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
     public BlobObject store(BlobWriteRequest request,
                             InputStream inputStream) throws IOException {
         Objects.requireNonNull(inputStream, "inputStream must not be null");
-        validateContentLength(request.size());
+        validateContentLength(request.getSize());
 
-        String normalizedKey = normalizeObjectKey(request.key());
+        String normalizedKey = normalizeObjectKey(request.getKey());
         PutObjectRequest objectRequest = buildPutObjectRequest(normalizedKey, request);
 
         try {
-            s3Client.putObject(objectRequest, RequestBody.fromInputStream(inputStream, request.size()));
+            s3Client.putObject(objectRequest, RequestBody.fromInputStream(inputStream, request.getSize()));
             return describe(normalizedKey);
         } catch (SdkException exception) {
             throw toIOException("put", normalizedKey, exception);
@@ -283,8 +283,8 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
     @Override
     public StorageAccessRequest createDirectUpload(BlobWriteRequest request,
                                                    Duration duration) throws IOException {
-        validateContentLength(request.size());
-        String normalizedKey = normalizeObjectKey(request.key());
+        validateContentLength(request.getSize());
+        String normalizedKey = normalizeObjectKey(request.getKey());
         PutObjectRequest objectRequest = buildPutObjectRequest(normalizedKey, request);
 
         PutObjectPresignRequest putRequestToSign = PutObjectPresignRequest.builder()
@@ -308,18 +308,18 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
     @Override
     public StorageAccessRequest createDirectDownload(BlobDownloadRequest request,
                                                      Duration duration) throws IOException {
-        String normalizedKey = normalizeObjectKey(request.key());
+        String normalizedKey = normalizeObjectKey(request.getKey());
 
         GetObjectRequest.Builder objectRequestBuilder = GetObjectRequest.builder()
                 .bucket(bucket)
                 .key(toStorageKey(normalizedKey));
 
-        if (hasText(request.contentType())) {
-            objectRequestBuilder.responseContentType(request.contentType().trim());
+        if (hasText(request.getContentType())) {
+            objectRequestBuilder.responseContentType(request.getContentType().trim());
         }
 
-        if (hasText(request.fileName())) {
-            objectRequestBuilder.responseContentDisposition(buildContentDisposition(request.fileName()));
+        if (hasText(request.getFileName())) {
+            objectRequestBuilder.responseContentDisposition(buildContentDisposition(request.getFileName()));
         }
 
         GetObjectPresignRequest getRequestToSign = GetObjectPresignRequest.builder()
@@ -347,7 +347,7 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
                     "Blob store backend does not support public download urls: " + getBackendName()
             );
         }
-        return buildPublicObjectUrl(normalizeObjectKey(request.key()));
+        return buildPublicObjectUrl(normalizeObjectKey(request.getKey()));
     }
 
     @Override
@@ -413,14 +413,14 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
         PutObjectRequest.Builder requestBuilder = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(toStorageKey(normalizedKey))
-                .contentLength(request.size())
-                .metadata(normalizeMetadata(request.metadata()));
-        if (hasText(request.contentType())) {
-            requestBuilder.contentType(request.contentType().trim());
+                .contentLength(request.getSize())
+                .metadata(normalizeMetadata(request.getMetadata()));
+        if (hasText(request.getContentType())) {
+            requestBuilder.contentType(request.getContentType().trim());
         }
-        if (nativeChecksumEnabled && hasText(request.checksumSha256())) {
+        if (nativeChecksumEnabled && hasText(request.getChecksumSha256())) {
             requestBuilder.checksumAlgorithm(ChecksumAlgorithm.SHA256);
-            requestBuilder.checksumSHA256(hexToBase64Checksum(request.checksumSha256().trim()));
+            requestBuilder.checksumSHA256(hexToBase64Checksum(request.getChecksumSha256().trim()));
         }
         return requestBuilder.build();
     }

@@ -23,5 +23,5 @@ enum class StorageReferenceSource {
     API,
     BLOB_PUBLIC,
     BLOB_SIGNED,
-    CLASSPATH_STATIC,
+    STATIC_PUBLIC,
 }

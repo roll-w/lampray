@@ -30,20 +30,4 @@ data class BlobObject(
     val checksumSha256: String?,
     val lastModified: OffsetDateTime,
     val metadata: Map<String, String>,
-) {
-    fun backendName(): String = backendName
-
-    fun key(): String = key
-
-    fun size(): Long = size
-
-    fun contentType(): String = contentType
-
-    fun etag(): String? = etag
-
-    fun checksumSha256(): String? = checksumSha256
-
-    fun lastModified(): OffsetDateTime = lastModified
-
-    fun metadata(): Map<String, String> = metadata
-}
+)

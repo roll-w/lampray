@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.storage.configuration
 
 import tech.lamprism.lampray.storage.StorageBackendType
+import tech.lamprism.lampray.storage.monitoring.StorageTrafficRecorder
 import tech.lamprism.lampray.storage.store.BlobStore
 import tech.lamprism.lampray.storage.store.BlobStoreFactory
 import tech.lamprism.lampray.storage.support.TestBlobStore
@@ -52,8 +53,7 @@ class FileStoreConfigurationTest {
         )
 
         assertFailsWith<IllegalStateException> {
-            configuration.blobStoreRegistry(
-                topology,
+            configuration.blobStoreFactoryProvider(
                 listOf(
                     TestFactory("first"),
                     TestFactory("second"),
@@ -87,7 +87,11 @@ class FileStoreConfigurationTest {
         )
 
         assertFailsWith<IllegalArgumentException> {
-            configuration.blobStoreRegistry(topology, emptyList())
+            configuration.blobStoreRegistry(
+                topology,
+                configuration.blobStoreFactoryProvider(emptyList()),
+                StorageTrafficRecorder(),
+            )
         }
     }
 

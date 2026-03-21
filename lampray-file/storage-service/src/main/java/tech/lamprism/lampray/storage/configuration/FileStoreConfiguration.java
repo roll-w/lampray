@@ -18,15 +18,18 @@ package tech.lamprism.lampray.storage.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import tech.lamprism.lampray.storage.StorageBackendType;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import tech.lamprism.lampray.storage.backend.BlobStoreFactoryProvider;
+import tech.lamprism.lampray.storage.backend.DefaultBlobStoreFactoryProvider;
+import tech.lamprism.lampray.storage.backend.DynamicBlobStoreRegistry;
+import tech.lamprism.lampray.storage.backend.MonitoringBlobStore;
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistration;
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
+import tech.lamprism.lampray.storage.monitoring.StorageTrafficRecorder;
 import tech.lamprism.lampray.storage.store.BlobStoreFactory;
-import tech.lamprism.lampray.storage.store.BlobStoreRegistration;
-import tech.lamprism.lampray.storage.store.BlobStoreRegistry;
-import tech.lamprism.lampray.storage.store.DynamicBlobStoreRegistry;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,42 +37,30 @@ import java.util.Map;
  * @author RollW
  */
 @Configuration
+@EnableScheduling
 public class FileStoreConfiguration {
     @Bean
     public StorageTopology storageTopology(StorageTopologyResolver storageTopologyResolver) {
         return storageTopologyResolver.resolve();
     }
 
+    @Bean
+    public BlobStoreFactoryProvider blobStoreFactoryProvider(List<BlobStoreFactory> blobStoreFactories) {
+        return new DefaultBlobStoreFactoryProvider(blobStoreFactories);
+    }
+
     @Bean(destroyMethod = "close")
     public BlobStoreRegistry blobStoreRegistry(StorageTopology storageTopology,
-                                               List<BlobStoreFactory> blobStoreFactories) throws IOException {
-        Map<StorageBackendType, BlobStoreFactory> factoriesByType = indexFactoriesByType(blobStoreFactories);
+                                               BlobStoreFactoryProvider blobStoreFactoryProvider,
+                                               StorageTrafficRecorder storageTrafficRecorder) throws IOException {
         List<BlobStoreRegistration> registrations = new ArrayList<>();
         for (StorageBackendConfig backendConfig : storageTopology.getBackends().values()) {
-            BlobStoreFactory blobStoreFactory = requireFactory(factoriesByType, backendConfig.getType());
-            registrations.add(new BlobStoreRegistration(blobStoreFactory.create(backendConfig), Map.of()));
+            BlobStoreFactory blobStoreFactory = blobStoreFactoryProvider.requireFactory(backendConfig.getType());
+            registrations.add(new BlobStoreRegistration(
+                    new MonitoringBlobStore(blobStoreFactory.create(backendConfig), storageTrafficRecorder),
+                    Map.of()
+            ));
         }
         return new DynamicBlobStoreRegistry(registrations);
-    }
-
-    private Map<StorageBackendType, BlobStoreFactory> indexFactoriesByType(List<BlobStoreFactory> blobStoreFactories) {
-        Map<StorageBackendType, BlobStoreFactory> factoriesByType = new LinkedHashMap<>();
-        for (BlobStoreFactory blobStoreFactory : blobStoreFactories) {
-            BlobStoreFactory previous = factoriesByType.put(blobStoreFactory.getBackendType(), blobStoreFactory);
-            if (previous != null) {
-                throw new IllegalStateException("Duplicate blob store factory for backend type: "
-                        + blobStoreFactory.getBackendType());
-            }
-        }
-        return factoriesByType;
-    }
-
-    private BlobStoreFactory requireFactory(Map<StorageBackendType, BlobStoreFactory> factoriesByType,
-                                            StorageBackendType backendType) {
-        BlobStoreFactory blobStoreFactory = factoriesByType.get(backendType);
-        if (blobStoreFactory == null) {
-            throw new IllegalArgumentException("No blob store factory available for backend type: " + backendType);
-        }
-        return blobStoreFactory;
     }
 }

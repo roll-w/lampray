@@ -38,9 +38,9 @@ class StorageTopologyResolver(
         }
 
         val backends = backendNames.associateWith(::resolveBackend)
-        val groupNames = configuredGroups.ifEmpty { setOf(runtimeSettings.defaultGroup()) }
+        val groupNames = configuredGroups.ifEmpty { setOf(runtimeSettings.defaultGroup) }
         val groups = groupNames.associateWith { resolveGroup(it, backends) }
-        val defaultGroup = runtimeSettings.defaultGroup()
+        val defaultGroup = runtimeSettings.defaultGroup
         require(groups.containsKey(defaultGroup)) { "Default storage group not configured: $defaultGroup" }
         return StorageTopology(defaultGroup, backends, groups)
     }
@@ -61,7 +61,7 @@ class StorageTopologyResolver(
             rootPath = "temp/storage",
         )
         val group = StorageGroupConfig(
-            name = runtimeSettings.defaultGroup(),
+            name = runtimeSettings.defaultGroup,
             backends = listOf(StorageGroupBackend(backend.name)),
             visibility = StorageVisibility.PRIVATE,
             downloadPolicy = StorageGroupDownloadPolicy.PROXY,

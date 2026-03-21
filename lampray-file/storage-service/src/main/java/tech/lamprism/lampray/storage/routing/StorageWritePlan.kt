@@ -26,11 +26,6 @@ data class StorageWritePlan(
     val primaryBackend: String,
     val mirrorBackends: List<String>,
 ) {
-    fun groupConfig(): StorageGroupConfig = groupConfig
-
-    fun groupSettings(): StorageGroupConfig = groupConfig
-
-    fun primaryBackend(): String = primaryBackend
-
-    fun mirrorBackends(): List<String> = mirrorBackends
+    val groupSettings: StorageGroupConfig
+        get() = groupConfig
 }

@@ -16,6 +16,8 @@
 
 package tech.lamprism.lampray.storage.store
 
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistration
+import tech.lamprism.lampray.storage.backend.DynamicBlobStoreRegistry
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

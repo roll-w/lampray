@@ -128,6 +128,30 @@ public class StorageConfigKeys implements SettingSpecificationSupplier {
                     .setSupportedSources(SettingSource.VALUES)
                     .build();
 
+    public static final AttributedSettingSpecification<Long, Long> CLEANUP_EXPIRED_UPLOAD_RETAIN_SECONDS =
+            new SettingSpecificationBuilder<>(SettingKey.ofLong(PREFIX + "cleanup.expired-upload-retain-seconds"))
+                    .setTextDescription("Retention period in seconds before expired upload sessions are deleted.")
+                    .setDefaultValue(86400L)
+                    .setRequired(true)
+                    .setSupportedSources(SettingSource.VALUES)
+                    .build();
+
+    public static final AttributedSettingSpecification<Long, Long> CLEANUP_COMPLETED_UPLOAD_RETAIN_SECONDS =
+            new SettingSpecificationBuilder<>(SettingKey.ofLong(PREFIX + "cleanup.completed-upload-retain-seconds"))
+                    .setTextDescription("Retention period in seconds before completed upload sessions are deleted.")
+                    .setDefaultValue(604800L)
+                    .setRequired(true)
+                    .setSupportedSources(SettingSource.VALUES)
+                    .build();
+
+    public static final AttributedSettingSpecification<Long, Long> CLEANUP_INTERVAL_SECONDS =
+            new SettingSpecificationBuilder<>(SettingKey.ofLong(PREFIX + "cleanup.interval-seconds"))
+                    .setTextDescription("Interval in seconds between upload session cleanup runs.")
+                    .setDefaultValue(600L)
+                    .setRequired(true)
+                    .setSupportedSources(SettingSource.VALUES)
+                    .build();
+
     public static final StorageConfigKeys INSTANCE = new StorageConfigKeys();
 
     private static final List<AttributedSettingSpecification<?, ?>> SPECIFICATIONS = List.of(
@@ -142,7 +166,10 @@ public class StorageConfigKeys implements SettingSpecificationSupplier {
             MULTIPART_THRESHOLD_BYTES,
             MULTIPART_PART_SIZE_BYTES,
             PENDING_UPLOAD_EXPIRE_SECONDS,
-            CLEANUP_ORPHAN_UPLOAD_EXPIRE_SECONDS
+            CLEANUP_ORPHAN_UPLOAD_EXPIRE_SECONDS,
+            CLEANUP_EXPIRED_UPLOAD_RETAIN_SECONDS,
+            CLEANUP_COMPLETED_UPLOAD_RETAIN_SECONDS,
+            CLEANUP_INTERVAL_SECONDS
     );
 
     @NonNull

@@ -16,13 +16,46 @@
 
 package tech.lamprism.lampray.storage.persistence
 
+import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
+import tech.rollw.common.web.page.Page
+import java.time.OffsetDateTime
 
 /**
  * @author RollW
  */
 @Repository
 class StorageUploadSessionRepository(
-    storageUploadSessionDao: StorageUploadSessionDao,
-) : CommonRepository<StorageUploadSessionEntity, String>(storageUploadSessionDao)
+    uploadSessionDao: StorageUploadSessionDao,
+) : CommonRepository<StorageUploadSessionEntity, String>(uploadSessionDao) {
+    private val storageUploadSessionDao: StorageUploadSessionDao = uploadSessionDao
+
+    fun findAll(
+        pageable: Pageable,
+        specification: Specification<StorageUploadSessionEntity>,
+    ): Page<StorageUploadSessionEntity> {
+        return super.findAll(pageable, specification)
+    }
+
+    fun findAllByStatus(
+        status: UploadSessionStatus,
+    ): List<StorageUploadSessionEntity> {
+        return storageUploadSessionDao.findAllByStatus(status)
+    }
+
+    fun findAllByStatusAndExpiresAtBefore(
+        status: UploadSessionStatus,
+        expiresAt: OffsetDateTime,
+    ): List<StorageUploadSessionEntity> {
+        return storageUploadSessionDao.findAllByStatusAndExpiresAtBefore(status, expiresAt)
+    }
+
+    fun findAllByStatusAndUpdateTimeBefore(
+        status: UploadSessionStatus,
+        updateTime: OffsetDateTime,
+    ): List<StorageUploadSessionEntity> {
+        return storageUploadSessionDao.findAllByStatusAndUpdateTimeBefore(status, updateTime)
+    }
+}

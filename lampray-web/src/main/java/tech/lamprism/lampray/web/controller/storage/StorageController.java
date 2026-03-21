@@ -29,11 +29,13 @@ import tech.lamprism.lampray.storage.StorageDownloadMode;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageProvider;
 import tech.lamprism.lampray.storage.StorageUploadRequest;
+import tech.lamprism.lampray.storage.StorageUploadSessionDetails;
 import tech.lamprism.lampray.storage.StorageUploadSession;
 import tech.lamprism.lampray.web.common.ApiContext;
 import tech.lamprism.lampray.web.controller.Api;
 import tech.lamprism.lampray.web.controller.storage.model.StorageFileSummaryResponse;
 import tech.lamprism.lampray.web.controller.storage.model.StorageUploadCreateRequest;
+import tech.lamprism.lampray.web.controller.storage.model.StorageUploadSessionDetailsResponse;
 import tech.lamprism.lampray.web.controller.storage.model.StorageUploadSessionResponse;
 import tech.rollw.common.web.AuthErrorCode;
 import tech.rollw.common.web.HttpResponseEntity;
@@ -87,6 +89,14 @@ public class StorageController {
         Long userId = requireUserId();
         FileStorage fileStorage = storageProvider.completeUpload(uploadId, userId);
         return HttpResponseEntity.success(StorageFileSummaryResponse.from(fileStorage));
+    }
+
+    @GetMapping("/files/uploads/{uploadId}")
+    public HttpResponseEntity<StorageUploadSessionDetailsResponse> getUploadSession(
+            @PathVariable String uploadId) {
+        Long userId = requireUserId();
+        StorageUploadSessionDetails uploadSession = storageProvider.getUploadSession(uploadId, userId);
+        return HttpResponseEntity.success(StorageUploadSessionDetailsResponse.from(uploadSession));
     }
 
     @GetMapping("/files/{fileId}")

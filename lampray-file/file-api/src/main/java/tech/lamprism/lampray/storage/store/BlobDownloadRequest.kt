@@ -27,10 +27,4 @@ data class BlobDownloadRequest(
     init {
         require(key.isNotBlank()) { "key must not be blank" }
     }
-
-    fun key(): String = key
-
-    fun fileName(): String? = fileName
-
-    fun contentType(): String? = contentType
 }
