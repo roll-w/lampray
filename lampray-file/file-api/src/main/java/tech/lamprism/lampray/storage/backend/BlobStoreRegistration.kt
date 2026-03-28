@@ -18,6 +18,11 @@ package tech.lamprism.lampray.storage.backend
 
 import tech.lamprism.lampray.storage.store.BlobStore
 
+/**
+ * Runtime registration of a blob store and its group weights.
+ *
+ * @author RollW
+ */
 data class BlobStoreRegistration(
     val blobStore: BlobStore,
     rawGroupWeights: Map<String, Int> = emptyMap(),

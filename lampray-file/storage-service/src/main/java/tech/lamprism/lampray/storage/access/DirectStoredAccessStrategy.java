@@ -30,17 +30,22 @@ import tech.lamprism.lampray.storage.store.BlobDownloadRequest;
 import java.io.IOException;
 import java.time.Duration;
 
+/**
+ * Implements direct access for stored files.
+ *
+ * @author RollW
+ */
 @Component
-class DirectStoredAccessStrategy implements StoredAccessStrategy {
+public class DirectStoredAccessStrategy implements StoredAccessStrategy {
     private static final StorageContentRules contentRules = StorageContentRules.INSTANCE;
 
     private final StorageRuntimeConfig runtimeSettings;
     private final DirectStorageReferenceResolver directStorageReferenceResolver;
     private final StorageTrafficPublisher storageTrafficPublisher;
 
-    DirectStoredAccessStrategy(StorageRuntimeConfig runtimeSettings,
-                               DirectStorageReferenceResolver directStorageReferenceResolver,
-                               StorageTrafficPublisher storageTrafficPublisher) {
+    public DirectStoredAccessStrategy(StorageRuntimeConfig runtimeSettings,
+                                      DirectStorageReferenceResolver directStorageReferenceResolver,
+                                      StorageTrafficPublisher storageTrafficPublisher) {
         this.runtimeSettings = runtimeSettings;
         this.directStorageReferenceResolver = directStorageReferenceResolver;
         this.storageTrafficPublisher = storageTrafficPublisher;

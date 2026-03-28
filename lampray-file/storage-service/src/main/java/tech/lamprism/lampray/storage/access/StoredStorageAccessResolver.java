@@ -33,24 +33,29 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Resolves access for persisted storage files.
+ *
+ * @author RollW
+ */
 @Component
-class StoredStorageAccessResolver {
+public class StoredStorageAccessResolver {
     private final StorageRuntimeConfig runtimeSettings;
     private final StorageTransferModeResolver transferModeResolver;
     private final StoredDownloadTargetResolver storedDownloadTargetResolver;
     private final Map<StorageDownloadMode, StoredAccessStrategy> accessStrategies;
 
-    StoredStorageAccessResolver(StorageRuntimeConfig runtimeSettings,
-                                 StoredDownloadTargetResolver storedDownloadTargetResolver,
-                                 List<StoredAccessStrategy> accessStrategies) {
+    public StoredStorageAccessResolver(StorageRuntimeConfig runtimeSettings,
+                                       StoredDownloadTargetResolver storedDownloadTargetResolver,
+                                       List<StoredAccessStrategy> accessStrategies) {
         this.runtimeSettings = runtimeSettings;
         this.transferModeResolver = new StorageTransferModeResolver(runtimeSettings);
         this.storedDownloadTargetResolver = storedDownloadTargetResolver;
         this.accessStrategies = Maps.uniqueIndex(accessStrategies, StoredAccessStrategy::mode);
     }
 
-    StorageDownloadResult resolveDownload(String fileId,
-                                          Long userId) throws IOException {
+    public StorageDownloadResult resolveDownload(String fileId,
+                                                 Long userId) throws IOException {
         StoredDownloadTarget target = storedDownloadTargetResolver.resolve(fileId, userId);
         StorageDownloadMode mode = transferModeResolver.resolveDownloadMode(
                 target.getFileStorage(),
@@ -65,9 +70,9 @@ class StoredStorageAccessResolver {
         return accessStrategy(StorageDownloadMode.PROXY).resolveDownload(target);
     }
 
-    StorageReference resolveReference(String fileId,
-                                      StorageReferenceRequest request,
-                                      Long userId) throws IOException {
+    public StorageReference resolveReference(String fileId,
+                                             StorageReferenceRequest request,
+                                             Long userId) throws IOException {
         StoredDownloadTarget target = storedDownloadTargetResolver.resolve(fileId, userId);
         StorageDownloadMode resolvedMode = transferModeResolver.resolveDownloadMode(
                 target.getFileStorage(),
@@ -115,7 +120,7 @@ class StoredStorageAccessResolver {
         );
     }
 
-    StorageReference proxyReference(String fileId) {
+    public StorageReference proxyReference(String fileId) {
         return accessStrategy(StorageDownloadMode.PROXY).resolveReference(fileId, null, new StorageReferenceRequest());
     }
 

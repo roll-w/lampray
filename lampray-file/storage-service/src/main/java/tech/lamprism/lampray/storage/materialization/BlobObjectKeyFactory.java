@@ -17,8 +17,13 @@
 package tech.lamprism.lampray.storage.materialization;
 
 /**
+ * Creates object keys for blob storage.
+ *
  * @author RollW
  */
 public interface BlobObjectKeyFactory {
+    /**
+     * Creates the object key for a checksum.
+     */
     String createKey(String checksumSha256);
 }

@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.backend;
+package tech.lamprism.lampray.storage.builtin;
 
-import tech.lamprism.lampray.storage.StorageBackendType;
-import tech.lamprism.lampray.storage.store.BlobStoreFactory;
+/**
+ * Looks up built-in storage resources bundled with the application.
+ *
+ * @author RollW
+ */
+public interface BuiltinStorageRegistry {
+    public boolean contains(String fileId);
 
-public interface BlobStoreFactoryProvider {
-    BlobStoreFactory requireFactory(StorageBackendType backendType);
+    public BuiltinStorageResource get(String fileId);
 }

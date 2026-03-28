@@ -19,10 +19,22 @@ package tech.lamprism.lampray.storage.session;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 
+/**
+ * Cleans up expired and completed upload sessions.
+ */
 public interface StorageUploadSessionCleanupService {
+    /**
+     * Marks overdue pending sessions as expired.
+     */
     int expireOverdueSessions(OffsetDateTime now);
 
+    /**
+     * Removes expired sessions and any orphaned uploads.
+     */
     int purgeExpiredSessions(OffsetDateTime now) throws IOException;
 
+    /**
+     * Removes completed sessions past their retention window.
+     */
     int purgeCompletedSessions(OffsetDateTime now);
 }

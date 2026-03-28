@@ -25,15 +25,20 @@ import tech.lamprism.lampray.web.ExternalEndpointProvider;
 
 import java.util.Map;
 
+/**
+ * Creates proxy storage references for API-based downloads.
+ *
+ * @author RollW
+ */
 @Component
-class ProxyStorageReferenceFactory {
+public class ProxyStorageReferenceFactory {
     private final ExternalEndpointProvider externalEndpointProvider;
 
-    ProxyStorageReferenceFactory(ExternalEndpointProvider externalEndpointProvider) {
+    public ProxyStorageReferenceFactory(ExternalEndpointProvider externalEndpointProvider) {
         this.externalEndpointProvider = externalEndpointProvider;
     }
 
-    StorageReference create(String fileId) {
+    public StorageReference create(String fileId) {
         return new StorageReference(
                 StringUtils.removeEnd(externalEndpointProvider.getExternalApiEndpoint(), "/")
                         + StringUtils.prependIfMissing("/api/v1/files/" + fileId, "/"),

@@ -16,24 +16,31 @@
 
 package tech.lamprism.lampray.storage.backend;
 
-import org.springframework.stereotype.Component;
-import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.store.BlobStore;
-import tech.rollw.common.web.DataErrorCode;
 
-@Component
-public class BlobStoreLocator {
-    private final BlobStoreRegistry blobStoreRegistry;
+import java.util.Collection;
+import java.util.Optional;
 
-    public BlobStoreLocator(BlobStoreRegistry blobStoreRegistry) {
-        this.blobStoreRegistry = blobStoreRegistry;
-    }
+/**
+ * Tracks blob stores that are available at runtime.
+ *
+ * @author RollW
+ */
+public interface BlobStoreRegistry extends AutoCloseable {
+    public void register(BlobStoreRegistration registration);
 
-    public BlobStore require(String backendName) {
-        return blobStoreRegistry.find(backendName)
-                .orElseThrow(() -> new StorageException(
-                        DataErrorCode.ERROR_DATA_NOT_EXIST,
-                        "Storage backend is not available: " + backendName
-                ));
-    }
+    public Optional<BlobStoreRegistration> unregister(String backendName);
+
+    public Optional<BlobStore> find(String backendName);
+
+    public BlobStore get(String backendName);
+
+    public Collection<BlobStoreRegistration> registrations();
+
+    public boolean contains(String backendName);
+
+    public Collection<BlobStore> all();
+
+    @Override
+    public void close() throws Exception;
 }

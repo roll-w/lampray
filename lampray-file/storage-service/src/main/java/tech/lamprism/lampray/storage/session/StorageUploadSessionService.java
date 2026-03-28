@@ -24,23 +24,47 @@ import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 
+/**
+ * Manages upload-session lifecycle operations.
+ */
 public interface StorageUploadSessionService {
+    /**
+     * Creates a new upload session.
+     */
     StorageUploadSession createUploadSession(StorageUploadRequest request,
-                                             Long userId) throws IOException;
+                                              Long userId) throws IOException;
 
+    /**
+     * Loads an upload session by id.
+     */
     StorageUploadSessionEntity requireUploadSession(String uploadId);
 
+    /**
+     * Loads an upload session and verifies access.
+     */
     StorageUploadSessionEntity requireUploadSessionAuthorized(String uploadId,
                                                              Long userId);
 
+    /**
+     * Loads an active upload session and verifies access.
+     */
     StorageUploadSessionEntity requireActiveUploadSession(String uploadId,
                                                           Long userId);
 
+    /**
+     * Returns upload-session details for querying.
+     */
     StorageUploadSessionDetails getUploadSession(String uploadId,
-                                                 Long userId);
+                                                  Long userId);
 
+    /**
+     * Expires a pending upload session.
+     */
     void expirePendingUploadSession(String uploadId);
 
+    /**
+     * Marks an upload session as completed.
+     */
     void markCompleted(StorageUploadSessionEntity uploadSession,
                        OffsetDateTime now);
 }

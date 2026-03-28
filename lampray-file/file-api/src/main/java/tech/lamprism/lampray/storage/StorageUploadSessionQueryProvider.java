@@ -16,7 +16,13 @@
 
 package tech.lamprism.lampray.storage;
 
+/**
+ * Provides read access to upload-session details.
+ */
 public interface StorageUploadSessionQueryProvider {
+    /**
+     * Loads the upload-session details visible to the caller.
+     */
     StorageUploadSessionDetails getUploadSession(String uploadId,
-                                                 Long userId);
+                                                  Long userId);
 }

@@ -37,23 +37,28 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 
+/**
+ * Resolves direct storage references for stored files.
+ *
+ * @author RollW
+ */
 @Component
-class DirectStorageReferenceResolver {
+public class DirectStorageReferenceResolver {
     private static final StorageContentRules contentRules = StorageContentRules.INSTANCE;
 
     private final StorageRuntimeConfig runtimeSettings;
     private final StorageTransferModeResolver transferModeResolver;
     private final StorageTrafficPublisher storageTrafficPublisher;
 
-    DirectStorageReferenceResolver(StorageRuntimeConfig runtimeSettings,
-                                   StorageTrafficPublisher storageTrafficPublisher) {
+    public DirectStorageReferenceResolver(StorageRuntimeConfig runtimeSettings,
+                                          StorageTrafficPublisher storageTrafficPublisher) {
         this.runtimeSettings = runtimeSettings;
         this.transferModeResolver = new StorageTransferModeResolver(runtimeSettings);
         this.storageTrafficPublisher = storageTrafficPublisher;
     }
 
-    StorageReference resolve(StoredDownloadTarget target,
-                             StorageReferenceRequest request) throws IOException {
+    public StorageReference resolve(StoredDownloadTarget target,
+                                    StorageReferenceRequest request) throws IOException {
         if (!runtimeSettings.getDirectAccessEnabled()) {
             return null;
         }

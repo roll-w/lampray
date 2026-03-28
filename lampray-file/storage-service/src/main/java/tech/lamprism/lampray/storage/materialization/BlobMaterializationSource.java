@@ -27,13 +27,22 @@ import java.io.IOException;
  * @author RollW
  */
 public interface BlobMaterializationSource {
+    /**
+     * Resolves the primary object key for materialization.
+     */
     String resolvePrimaryObjectKey(BlobObjectKeyFactory blobObjectKeyFactory,
                                    String checksum);
 
+    /**
+     * Materializes the primary blob object.
+     */
     void materializePrimary(BlobPlacementWriter writer,
                             BlobMaterializationRequest request,
                             String primaryObjectKey) throws IOException;
 
+    /**
+     * Materializes a replica placement.
+     */
     void materializeReplica(BlobPlacementWriter writer,
                             BlobMaterializationRequest request,
                             String targetBackend,
@@ -41,12 +50,21 @@ public interface BlobMaterializationSource {
                             String sourceBackend,
                             String sourceObjectKey) throws IOException;
 
+    /**
+     * Resolves the backend used as the source of truth.
+     */
     String resolveSourceBackend(StorageBlobEntity blobEntity,
                                 BlobMaterializationRequest request);
 
+    /**
+     * Resolves the source object key used for replication.
+     */
     String resolveSourceObjectKey(StorageBlobEntity blobEntity,
                                   BlobMaterializationRequest request,
                                   String primaryObjectKey);
 
+    /**
+     * Indicates whether the primary placement must be preserved on failure.
+     */
     boolean protectsPrimaryPlacement();
 }

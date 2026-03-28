@@ -22,10 +22,10 @@ import tech.lamprism.lampray.storage.configuration.StorageGroupConfig
 import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementEntity
 import tech.lamprism.lampray.storage.store.BlobStore
 
-data class StoredDownloadTarget(
-    val fileStorage: FileStorage,
-    val visibility: StorageVisibility,
-    val groupConfig: StorageGroupConfig,
-    val placementEntity: StorageBlobPlacementEntity,
-    val blobStore: BlobStore,
+public data class StoredDownloadTarget(
+    public val fileStorage: FileStorage,
+    public val visibility: StorageVisibility,
+    public val groupConfig: StorageGroupConfig,
+    public val placementEntity: StorageBlobPlacementEntity,
+    public val blobStore: BlobStore,
 )

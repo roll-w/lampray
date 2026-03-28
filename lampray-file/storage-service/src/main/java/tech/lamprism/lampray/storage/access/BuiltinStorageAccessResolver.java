@@ -27,18 +27,23 @@ import tech.lamprism.lampray.storage.builtin.BuiltinStorageRegistry;
 import tech.lamprism.lampray.storage.builtin.BuiltinStorageResource;
 import tech.rollw.common.web.CommonErrorCode;
 
+/**
+ * Resolves access for builtin storage resources.
+ *
+ * @author RollW
+ */
 @Component
-class BuiltinStorageAccessResolver {
+public class BuiltinStorageAccessResolver {
     private final BuiltinStorageRegistry builtinStorageRegistry;
     private final ProxyStorageReferenceFactory proxyStorageReferenceFactory;
 
-    BuiltinStorageAccessResolver(BuiltinStorageRegistry builtinStorageRegistry,
-                                 ProxyStorageReferenceFactory proxyStorageReferenceFactory) {
+    public BuiltinStorageAccessResolver(BuiltinStorageRegistry builtinStorageRegistry,
+                                        ProxyStorageReferenceFactory proxyStorageReferenceFactory) {
         this.builtinStorageRegistry = builtinStorageRegistry;
         this.proxyStorageReferenceFactory = proxyStorageReferenceFactory;
     }
 
-    StorageDownloadResult resolveDownload(String fileId) {
+    public StorageDownloadResult resolveDownload(String fileId) {
         BuiltinStorageResource builtinResource = findBuiltinResource(fileId);
         if (builtinResource == null) {
             return null;
@@ -51,8 +56,8 @@ class BuiltinStorageAccessResolver {
         );
     }
 
-    StorageReference resolveReference(String fileId,
-                                      StorageReferenceRequest request) {
+    public StorageReference resolveReference(String fileId,
+                                            StorageReferenceRequest request) {
         BuiltinStorageResource builtinResource = findBuiltinResource(fileId);
         if (builtinResource == null) {
             return null;
@@ -66,7 +71,7 @@ class BuiltinStorageAccessResolver {
         );
     }
 
-    StorageReference proxyReference(String fileId) {
+    public StorageReference proxyReference(String fileId) {
         return proxyStorageReferenceFactory.create(fileId);
     }
 

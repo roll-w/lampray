@@ -26,13 +26,18 @@ import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher;
 
 import java.io.IOException;
 
+/**
+ * Implements proxied access for stored files.
+ *
+ * @author RollW
+ */
 @Component
-class ProxyStoredAccessStrategy implements StoredAccessStrategy {
+public class ProxyStoredAccessStrategy implements StoredAccessStrategy {
     private final ProxyStorageReferenceFactory proxyStorageReferenceFactory;
     private final StorageTrafficPublisher storageTrafficPublisher;
 
-    ProxyStoredAccessStrategy(ProxyStorageReferenceFactory proxyStorageReferenceFactory,
-                              StorageTrafficPublisher storageTrafficPublisher) {
+    public ProxyStoredAccessStrategy(ProxyStorageReferenceFactory proxyStorageReferenceFactory,
+                                     StorageTrafficPublisher storageTrafficPublisher) {
         this.proxyStorageReferenceFactory = proxyStorageReferenceFactory;
         this.storageTrafficPublisher = storageTrafficPublisher;
     }

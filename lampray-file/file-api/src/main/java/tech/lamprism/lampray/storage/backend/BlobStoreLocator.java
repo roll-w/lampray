@@ -18,29 +18,11 @@ package tech.lamprism.lampray.storage.backend;
 
 import tech.lamprism.lampray.storage.store.BlobStore;
 
-import java.util.Collection;
-import java.util.Optional;
-
 /**
- * Registry of blob stores available at runtime.
+ * Resolves blob stores by backend name.
  *
  * @author RollW
  */
-public interface BlobStoreRegistry extends AutoCloseable {
-    void register(BlobStoreRegistration registration);
-
-    Optional<BlobStoreRegistration> unregister(String backendName);
-
-    Optional<BlobStore> find(String backendName);
-
-    BlobStore get(String backendName);
-
-    Collection<BlobStoreRegistration> registrations();
-
-    boolean contains(String backendName);
-
-    Collection<BlobStore> all();
-
-    @Override
-    void close() throws Exception;
+public interface BlobStoreLocator {
+    public BlobStore require(String backendName);
 }

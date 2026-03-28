@@ -20,16 +20,30 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * Resolves read and write routing for storage groups.
+ *
  * @author RollW
  */
 public interface StorageGroupRouter {
+    /**
+     * Selects the write plan for a group.
+     */
     StorageWritePlan selectWritePlan(String groupName);
 
+    /**
+     * Restores the write plan for an existing session or object.
+     */
     StorageWritePlan restoreWritePlan(String groupName,
                                       String primaryBackend);
 
+    /**
+     * Selects the backend used for reads.
+     */
     String selectReadBackend(String groupName,
                              Collection<String> availableBackends);
 
+    /**
+     * Lists currently active backends for the group.
+     */
     List<String> resolveActiveBackends(String groupName);
 }

@@ -23,16 +23,21 @@ import tech.lamprism.lampray.storage.StorageReferenceRequest;
 
 import java.io.IOException;
 
-interface StoredAccessStrategy {
-    StorageDownloadMode mode();
+/**
+ * Strategy contract for stored-file access modes.
+ *
+ * @author RollW
+ */
+public interface StoredAccessStrategy {
+    public StorageDownloadMode mode();
 
-    default StorageDownloadResult resolveDownload(StoredDownloadTarget target) throws IOException {
+    public default StorageDownloadResult resolveDownload(StoredDownloadTarget target) throws IOException {
         throw new UnsupportedOperationException("Download is not supported for mode: " + mode());
     }
 
-    default StorageReference resolveReference(String fileId,
-                                             StoredDownloadTarget target,
-                                             StorageReferenceRequest request) throws IOException {
+    public default StorageReference resolveReference(String fileId,
+                                                     StoredDownloadTarget target,
+                                                     StorageReferenceRequest request) throws IOException {
         throw new UnsupportedOperationException("Reference is not supported for mode: " + mode());
     }
 }

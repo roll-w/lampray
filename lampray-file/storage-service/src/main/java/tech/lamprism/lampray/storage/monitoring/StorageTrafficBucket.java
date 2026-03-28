@@ -18,13 +18,18 @@ package tech.lamprism.lampray.storage.monitoring;
 
 import java.util.concurrent.atomic.LongAdder;
 
-final class StorageTrafficBucket {
+/**
+ * Aggregates storage traffic counters for a scope.
+ *
+ * @author RollW
+ */
+public final class StorageTrafficBucket {
     private final TransferCounter upload = new TransferCounter();
     private final TransferCounter download = new TransferCounter();
     private final RequestCounter directUpload = new RequestCounter();
     private final RequestCounter directDownload = new RequestCounter();
 
-    void record(StorageTrafficEvent event) {
+    public void record(StorageTrafficEvent event) {
         switch (event.getType()) {
             case UPLOAD_REQUEST -> upload.incrementRequests();
             case UPLOAD_BYTES -> upload.addBytes(event.getAmount());
@@ -35,7 +40,7 @@ final class StorageTrafficBucket {
         }
     }
 
-    StorageTrafficSnapshot snapshot() {
+    public StorageTrafficSnapshot snapshot() {
         return new StorageTrafficSnapshot(
                 upload.bytes(),
                 upload.requests(),

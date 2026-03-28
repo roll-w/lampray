@@ -35,19 +35,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Resolves the stored blob target selected for download access.
+ *
+ * @author RollW
+ */
 @Component
-class StoredDownloadTargetResolver {
+public class StoredDownloadTargetResolver {
     private final StorageTopology storageTopology;
     private final BlobStoreLocator blobStoreLocator;
     private final StorageFileRepository storageFileRepository;
     private final StorageBlobPlacementRepository storageBlobPlacementRepository;
     private final StorageGroupRouter storageGroupRouter;
 
-    StoredDownloadTargetResolver(StorageTopology storageTopology,
-                                 BlobStoreLocator blobStoreLocator,
-                                 StorageFileRepository storageFileRepository,
-                                 StorageBlobPlacementRepository storageBlobPlacementRepository,
-                                 StorageGroupRouter storageGroupRouter) {
+    public StoredDownloadTargetResolver(StorageTopology storageTopology,
+                                        BlobStoreLocator blobStoreLocator,
+                                        StorageFileRepository storageFileRepository,
+                                        StorageBlobPlacementRepository storageBlobPlacementRepository,
+                                        StorageGroupRouter storageGroupRouter) {
         this.storageTopology = storageTopology;
         this.blobStoreLocator = blobStoreLocator;
         this.storageFileRepository = storageFileRepository;
@@ -55,8 +60,8 @@ class StoredDownloadTargetResolver {
         this.storageGroupRouter = storageGroupRouter;
     }
 
-    StoredDownloadTarget resolve(String fileId,
-                                 Long userId) {
+    public StoredDownloadTarget resolve(String fileId,
+                                        Long userId) {
         StorageFileEntity fileEntity = requireFileEntity(fileId);
         ensureDownloadAuthorized(fileEntity, userId);
         StorageGroupConfig groupConfig = storageTopology.getGroup(fileEntity.getGroupName());

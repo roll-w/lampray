@@ -19,7 +19,13 @@ package tech.lamprism.lampray.storage.materialization.placement;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * Writes blob placements to storage backends.
+ */
 public interface BlobPlacementWriter {
+    /**
+     * Uploads a temporary file to a backend.
+     */
     void putTempToBackend(String backendName,
                           String objectKey,
                           Path tempPath,
@@ -27,6 +33,9 @@ public interface BlobPlacementWriter {
                           String mimeType,
                           String checksumSha256) throws IOException;
 
+    /**
+     * Replicates an object from one backend to another.
+     */
     void replicateBetweenBackends(String sourceBackend,
                                   String sourceObjectKey,
                                   String targetBackend,

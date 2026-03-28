@@ -21,10 +21,19 @@ import tech.lamprism.lampray.storage.FileType;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
 
+/**
+ * Persists materialized files and binds them to storage metadata.
+ */
 public interface StorageFilePersistenceService {
+    /**
+     * Persists a file produced by an upload session.
+     */
     FileStorage persistSessionUpload(StorageUploadSessionEntity uploadSession,
                                      PreparedBlobMaterialization preparedBlob);
 
+    /**
+     * Persists a trusted upload outside of an upload session.
+     */
     FileStorage persistTrustedUpload(String groupName,
                                      String fileName,
                                      String mimeType,

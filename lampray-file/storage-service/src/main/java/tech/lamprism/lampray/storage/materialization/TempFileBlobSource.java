@@ -23,15 +23,16 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
 
-final class TempFileBlobSource implements BlobMaterializationSource {
+/**
+ * Materializes a blob from a staged temporary file.
+ *
+ * @author RollW
+ */
+public final class TempFileBlobSource implements BlobMaterializationSource {
     private final Path tempPath;
 
-    TempFileBlobSource(Path tempPath) {
+    public TempFileBlobSource(Path tempPath) {
         this.tempPath = Objects.requireNonNull(tempPath, "tempPath must not be null");
-    }
-
-    Path tempPath() {
-        return tempPath;
     }
 
     @Override

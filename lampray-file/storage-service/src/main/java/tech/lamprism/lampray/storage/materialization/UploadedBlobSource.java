@@ -23,15 +23,16 @@ import tech.lamprism.lampray.storage.store.BlobObject;
 import java.io.IOException;
 import java.util.Objects;
 
-final class UploadedBlobSource implements BlobMaterializationSource {
+/**
+ * Materializes a blob that already exists in the primary backend.
+ *
+ * @author RollW
+ */
+public final class UploadedBlobSource implements BlobMaterializationSource {
     private final BlobObject uploadedObject;
 
-    UploadedBlobSource(BlobObject uploadedObject) {
+    public UploadedBlobSource(BlobObject uploadedObject) {
         this.uploadedObject = Objects.requireNonNull(uploadedObject, "uploadedObject must not be null");
-    }
-
-    BlobObject uploadedObject() {
-        return uploadedObject;
     }
 
     @Override
