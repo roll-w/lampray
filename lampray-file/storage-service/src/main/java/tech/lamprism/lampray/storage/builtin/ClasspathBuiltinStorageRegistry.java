@@ -107,14 +107,14 @@ public class ClasspathBuiltinStorageRegistry implements BuiltinStorageRegistry {
             throw new IllegalStateException("Missing builtin storage resource: " + classPathLocation);
         }
         return new BuiltinStorageResource(
-                FileStorage.builder()
-                        .setFileId(fileId)
-                        .setFileName(fileName)
-                        .setFileSize(resolveSize(resource))
-                        .setMimeType(MIME_TYPE_SVG)
-                        .setFileType(FileType.IMAGE)
-                        .setCreateTime(TimeAttributed.NONE_TIME)
-                        .build(),
+                new FileStorage(
+                        fileId,
+                        fileName,
+                        resolveSize(resource),
+                        MIME_TYPE_SVG,
+                        FileType.IMAGE,
+                        TimeAttributed.NONE_TIME
+                ),
                 createDownloadSource(resource),
                 resolvePublicUrlPath(staticClassPathLocation, publicUrlPath)
         );

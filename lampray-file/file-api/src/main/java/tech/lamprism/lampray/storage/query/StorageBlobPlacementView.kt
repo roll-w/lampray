@@ -24,14 +24,4 @@ data class StorageBlobPlacementView(
     val objectKey: String,
     val createTime: OffsetDateTime,
     val updateTime: OffsetDateTime,
-) {
-    fun placementId(): String = placementId
-
-    fun backendName(): String = backendName
-
-    fun objectKey(): String = objectKey
-
-    fun createTime(): OffsetDateTime = createTime
-
-    fun updateTime(): OffsetDateTime = updateTime
-}
+)

@@ -33,26 +33,4 @@ data class StorageSessionView(
     val expiresAt: OffsetDateTime,
     val createTime: OffsetDateTime,
     val updateTime: OffsetDateTime,
-) {
-    fun uploadId(): String = uploadId
-
-    fun fileId(): String = fileId
-
-    fun groupName(): String = groupName
-
-    fun fileName(): String = fileName
-
-    fun ownerUserId(): Long? = ownerUserId
-
-    fun primaryBackend(): String = primaryBackend
-
-    fun mode(): StorageUploadMode = mode
-
-    fun trackedState(): StorageUploadSessionState = trackedState
-
-    fun expiresAt(): OffsetDateTime = expiresAt
-
-    fun createTime(): OffsetDateTime = createTime
-
-    fun updateTime(): OffsetDateTime = updateTime
-}
+)

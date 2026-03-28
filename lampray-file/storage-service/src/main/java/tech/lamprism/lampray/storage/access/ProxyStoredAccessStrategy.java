@@ -22,19 +22,19 @@ import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
 import tech.lamprism.lampray.storage.monitoring.MonitoringStorageDownloadSource;
-import tech.lamprism.lampray.storage.monitoring.StorageTrafficRecorder;
+import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher;
 
 import java.io.IOException;
 
 @Component
 class ProxyStoredAccessStrategy implements StoredAccessStrategy {
     private final ProxyStorageReferenceFactory proxyStorageReferenceFactory;
-    private final StorageTrafficRecorder storageTrafficRecorder;
+    private final StorageTrafficPublisher storageTrafficPublisher;
 
     ProxyStoredAccessStrategy(ProxyStorageReferenceFactory proxyStorageReferenceFactory,
-                              StorageTrafficRecorder storageTrafficRecorder) {
+                              StorageTrafficPublisher storageTrafficPublisher) {
         this.proxyStorageReferenceFactory = proxyStorageReferenceFactory;
-        this.storageTrafficRecorder = storageTrafficRecorder;
+        this.storageTrafficPublisher = storageTrafficPublisher;
     }
 
     @Override
@@ -45,14 +45,13 @@ class ProxyStoredAccessStrategy implements StoredAccessStrategy {
     @Override
     public StorageDownloadResult resolveDownload(StoredDownloadTarget target) throws IOException {
         return new StorageDownloadResult(
-                target.fileStorage(),
+                target.getFileStorage(),
                 StorageDownloadMode.PROXY,
                 null,
                 new MonitoringStorageDownloadSource(
-                        target.blobStore().openDownload(target.placementEntity().getObjectKey()),
-                        storageTrafficRecorder,
-                        target.groupConfig().getName(),
-                        target.placementEntity().getBackendName()
+                        target.getBlobStore().openDownload(target.getPlacementEntity().getObjectKey()),
+                        storageTrafficPublisher,
+                        target.getGroupConfig().getName()
                 )
         );
     }

@@ -19,7 +19,7 @@ package tech.lamprism.lampray.storage.access;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageVisibility;
-import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
+import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageTopology;
 import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementEntity;
@@ -38,18 +38,18 @@ import java.util.Map;
 @Component
 class StoredDownloadTargetResolver {
     private final StorageTopology storageTopology;
-    private final BlobStoreRegistry blobStoreRegistry;
+    private final BlobStoreLocator blobStoreLocator;
     private final StorageFileRepository storageFileRepository;
     private final StorageBlobPlacementRepository storageBlobPlacementRepository;
     private final StorageGroupRouter storageGroupRouter;
 
     StoredDownloadTargetResolver(StorageTopology storageTopology,
-                                 BlobStoreRegistry blobStoreRegistry,
+                                 BlobStoreLocator blobStoreLocator,
                                  StorageFileRepository storageFileRepository,
                                  StorageBlobPlacementRepository storageBlobPlacementRepository,
                                  StorageGroupRouter storageGroupRouter) {
         this.storageTopology = storageTopology;
-        this.blobStoreRegistry = blobStoreRegistry;
+        this.blobStoreLocator = blobStoreLocator;
         this.storageFileRepository = storageFileRepository;
         this.storageBlobPlacementRepository = storageBlobPlacementRepository;
         this.storageGroupRouter = storageGroupRouter;
@@ -61,7 +61,7 @@ class StoredDownloadTargetResolver {
         ensureDownloadAuthorized(fileEntity, userId);
         StorageGroupConfig groupConfig = storageTopology.getGroup(fileEntity.getGroupName());
         StorageBlobPlacementEntity placementEntity = resolvePlacement(fileEntity.getBlobId(), groupConfig);
-        BlobStore blobStore = requireBlobStore(placementEntity.getBackendName());
+        BlobStore blobStore = blobStoreLocator.require(placementEntity.getBackendName());
         return new StoredDownloadTarget(fileEntity.lock(), fileEntity.getVisibility(), groupConfig, placementEntity, blobStore);
     }
 
@@ -70,14 +70,6 @@ class StoredDownloadTargetResolver {
                 .orElseThrow(() -> new StorageException(
                         DataErrorCode.ERROR_DATA_NOT_EXIST,
                         "File not found: " + fileId
-                ));
-    }
-
-    private BlobStore requireBlobStore(String backendName) {
-        return blobStoreRegistry.find(backendName)
-                .orElseThrow(() -> new StorageException(
-                        DataErrorCode.ERROR_DATA_NOT_EXIST,
-                        "Storage backend is not available: " + backendName
                 ));
     }
 

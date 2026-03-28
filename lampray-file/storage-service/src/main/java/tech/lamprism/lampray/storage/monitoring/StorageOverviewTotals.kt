@@ -24,18 +24,4 @@ data class StorageOverviewTotals(
     val placementCount: Long,
     val physicalBytes: Long,
     val sessionCounts: Map<String, Long>,
-) {
-    fun fileCount(): Long = fileCount
-
-    fun logicalBytes(): Long = logicalBytes
-
-    fun blobCount(): Long = blobCount
-
-    fun uniqueBytes(): Long = uniqueBytes
-
-    fun placementCount(): Long = placementCount
-
-    fun physicalBytes(): Long = physicalBytes
-
-    fun sessionCounts(): Map<String, Long> = sessionCounts
-}
+)

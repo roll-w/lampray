@@ -30,24 +30,4 @@ data class StorageBackendMonitoringView(
     val uniqueBytes: Long,
     val physicalBytes: Long,
     val backendTraffic: StorageTrafficSnapshot,
-) {
-    fun backendName(): String = backendName
-
-    fun backendType(): StorageBackendType? = backendType
-
-    fun active(): Boolean = active
-
-    fun capabilities(): Set<BlobStoreCapability> = capabilities
-
-    fun groupWeights(): Map<String, Int> = groupWeights
-
-    fun primaryBlobCount(): Long = primaryBlobCount
-
-    fun placementCount(): Long = placementCount
-
-    fun uniqueBytes(): Long = uniqueBytes
-
-    fun physicalBytes(): Long = physicalBytes
-
-    fun backendTraffic(): StorageTrafficSnapshot = backendTraffic
-}
+)

@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.storage.access;
 
+import com.google.common.collect.Maps;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageAccessRequest;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
@@ -25,38 +26,36 @@ import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
-import tech.lamprism.lampray.storage.policy.StorageTransferPolicy;
+import tech.lamprism.lampray.storage.policy.StorageTransferModeResolver;
 import tech.rollw.common.web.CommonErrorCode;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @Component
 class StoredStorageAccessResolver {
     private final StorageRuntimeConfig runtimeSettings;
-    private final StorageTransferPolicy storageTransferPolicy;
+    private final StorageTransferModeResolver transferModeResolver;
     private final StoredDownloadTargetResolver storedDownloadTargetResolver;
     private final Map<StorageDownloadMode, StoredAccessStrategy> accessStrategies;
 
     StoredStorageAccessResolver(StorageRuntimeConfig runtimeSettings,
-                                StorageTransferPolicy storageTransferPolicy,
-                                StoredDownloadTargetResolver storedDownloadTargetResolver,
-                                List<StoredAccessStrategy> accessStrategies) {
+                                 StoredDownloadTargetResolver storedDownloadTargetResolver,
+                                 List<StoredAccessStrategy> accessStrategies) {
         this.runtimeSettings = runtimeSettings;
-        this.storageTransferPolicy = storageTransferPolicy;
+        this.transferModeResolver = new StorageTransferModeResolver(runtimeSettings);
         this.storedDownloadTargetResolver = storedDownloadTargetResolver;
-        this.accessStrategies = indexStrategies(accessStrategies);
+        this.accessStrategies = Maps.uniqueIndex(accessStrategies, StoredAccessStrategy::mode);
     }
 
     StorageDownloadResult resolveDownload(String fileId,
                                           Long userId) throws IOException {
         StoredDownloadTarget target = storedDownloadTargetResolver.resolve(fileId, userId);
-        StorageDownloadMode mode = storageTransferPolicy.resolveDownloadMode(
-                target.fileStorage(),
-                target.groupConfig(),
-                target.blobStore()
+        StorageDownloadMode mode = transferModeResolver.resolveDownloadMode(
+                target.getFileStorage(),
+                target.getGroupConfig(),
+                target.getBlobStore()
         );
         StoredAccessStrategy strategy = accessStrategy(mode);
         StorageDownloadResult directOrProxy = strategy.resolveDownload(target);
@@ -70,10 +69,10 @@ class StoredStorageAccessResolver {
                                       StorageReferenceRequest request,
                                       Long userId) throws IOException {
         StoredDownloadTarget target = storedDownloadTargetResolver.resolve(fileId, userId);
-        StorageDownloadMode resolvedMode = storageTransferPolicy.resolveDownloadMode(
-                target.fileStorage(),
-                target.groupConfig(),
-                target.blobStore()
+        StorageDownloadMode resolvedMode = transferModeResolver.resolveDownloadMode(
+                target.getFileStorage(),
+                target.getGroupConfig(),
+                target.getBlobStore()
         );
         if (!runtimeSettings.getDirectAccessEnabled()) {
             if (request.getFallbackToProxy() || request.getMode() == StorageReferenceMode.AUTO) {
@@ -117,7 +116,7 @@ class StoredStorageAccessResolver {
     }
 
     StorageReference proxyReference(String fileId) {
-        return accessStrategy(StorageDownloadMode.PROXY).resolveReference(fileId, null, StorageReferenceRequest.proxy());
+        return accessStrategy(StorageDownloadMode.PROXY).resolveReference(fileId, null, new StorageReferenceRequest());
     }
 
     private StoredAccessStrategy accessStrategy(StorageDownloadMode mode) {
@@ -127,17 +126,6 @@ class StoredStorageAccessResolver {
                     "Unsupported storage access mode: " + mode);
         }
         return strategy;
-    }
-
-    private Map<StorageDownloadMode, StoredAccessStrategy> indexStrategies(List<StoredAccessStrategy> strategies) {
-        Map<StorageDownloadMode, StoredAccessStrategy> indexed = new LinkedHashMap<>();
-        for (StoredAccessStrategy strategy : strategies) {
-            StoredAccessStrategy previous = indexed.put(strategy.mode(), strategy);
-            if (previous != null) {
-                throw new IllegalStateException("Duplicate stored access strategy for mode: " + strategy.mode());
-            }
-        }
-        return Map.copyOf(indexed);
     }
 
 }

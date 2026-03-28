@@ -95,11 +95,11 @@ class TestBlobStore(
     override fun delete(key: String): Boolean = false
 }
 
-fun testFileStorage(fileSize: Long): FileStorage = FileStorage.builder()
-    .setFileId("file-1")
-    .setFileName("demo.bin")
-    .setFileSize(fileSize)
-    .setMimeType("application/octet-stream")
-    .setFileType(FileType.OTHER)
-    .setCreateTime(OffsetDateTime.now())
-    .build()
+fun testFileStorage(fileSize: Long): FileStorage = FileStorage(
+    fileId = "file-1",
+    fileName = "demo.bin",
+    fileSize = fileSize,
+    mimeType = "application/octet-stream",
+    fileType = FileType.OTHER,
+    createTime = OffsetDateTime.now(),
+)

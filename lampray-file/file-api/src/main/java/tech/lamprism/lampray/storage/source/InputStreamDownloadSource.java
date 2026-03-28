@@ -100,8 +100,8 @@ public final class InputStreamDownloadSource implements StorageDownloadSource {
         public InputStream openStream(StorageByteRange range) throws IOException {
             InputStream inputStream = inputStreamOpener.open();
             try {
-                skipExactly(inputStream, range.startBytes());
-                return new BoundedInputStream(inputStream, range.length());
+                skipExactly(inputStream, range.getStartBytes());
+                return new BoundedInputStream(inputStream, range.getLength());
             } catch (IOException | RuntimeException exception) {
                 inputStream.close();
                 throw exception;
@@ -149,8 +149,8 @@ public final class InputStreamDownloadSource implements StorageDownloadSource {
         public InputStream openStream(StorageByteRange range) throws IOException {
             SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ);
             try {
-                channel.position(range.startBytes());
-                return new BoundedInputStream(Channels.newInputStream(channel), range.length());
+                channel.position(range.getStartBytes());
+                return new BoundedInputStream(Channels.newInputStream(channel), range.getLength());
             } catch (IOException | RuntimeException exception) {
                 channel.close();
                 throw exception;

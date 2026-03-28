@@ -19,28 +19,27 @@ package tech.lamprism.lampray.storage.backend;
 import tech.lamprism.lampray.storage.StorageAccessRequest;
 import tech.lamprism.lampray.storage.StorageDownloadSource;
 import tech.lamprism.lampray.storage.monitoring.BackendMonitoringDownloadSource;
-import tech.lamprism.lampray.storage.monitoring.StorageTrafficRecorder;
+import tech.lamprism.lampray.storage.monitoring.CountingInputStream;
+import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher;
 import tech.lamprism.lampray.storage.store.BlobDownloadRequest;
 import tech.lamprism.lampray.storage.store.BlobObject;
 import tech.lamprism.lampray.storage.store.BlobStore;
 import tech.lamprism.lampray.storage.store.BlobStoreCapability;
 import tech.lamprism.lampray.storage.store.BlobWriteRequest;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class MonitoringBlobStore implements BlobStore, AutoCloseable {
     private final BlobStore delegate;
-    private final StorageTrafficRecorder trafficRecorder;
+    private final StorageTrafficPublisher trafficPublisher;
 
     public MonitoringBlobStore(BlobStore delegate,
-                               StorageTrafficRecorder trafficRecorder) {
+                               StorageTrafficPublisher trafficPublisher) {
         this.delegate = delegate;
-        this.trafficRecorder = trafficRecorder;
+        this.trafficPublisher = trafficPublisher;
     }
 
     @Override
@@ -56,19 +55,16 @@ public class MonitoringBlobStore implements BlobStore, AutoCloseable {
     @Override
     public BlobObject store(BlobWriteRequest request,
                             InputStream inputStream) throws IOException {
-        AtomicLong bytes = new AtomicLong();
-        try {
-            return delegate.store(request, new CountingInputStream(inputStream, bytes));
-        } finally {
-            if (bytes.get() > 0) {
-                trafficRecorder.recordBackendUpload(getBackendName(), bytes.get());
-            }
-        }
+        trafficPublisher.publishBackendUploadRequest(getBackendName());
+        return delegate.store(
+                request,
+                new CountingInputStream(inputStream, bytes -> trafficPublisher.publishBackendUpload(getBackendName(), bytes))
+        );
     }
 
     @Override
     public StorageDownloadSource openDownload(String key) throws IOException {
-        return new BackendMonitoringDownloadSource(delegate.openDownload(key), trafficRecorder, getBackendName());
+        return new BackendMonitoringDownloadSource(delegate.openDownload(key), trafficPublisher, getBackendName());
     }
 
     @Override
@@ -107,36 +103,6 @@ public class MonitoringBlobStore implements BlobStore, AutoCloseable {
     public void close() throws Exception {
         if (delegate instanceof AutoCloseable closeable) {
             closeable.close();
-        }
-    }
-
-    private static final class CountingInputStream extends FilterInputStream {
-        private final AtomicLong bytes;
-
-        private CountingInputStream(InputStream inputStream,
-                                    AtomicLong bytes) {
-            super(inputStream);
-            this.bytes = bytes;
-        }
-
-        @Override
-        public int read() throws IOException {
-            int read = super.read();
-            if (read >= 0) {
-                bytes.incrementAndGet();
-            }
-            return read;
-        }
-
-        @Override
-        public int read(byte[] bytes,
-                        int offset,
-                        int length) throws IOException {
-            int read = super.read(bytes, offset, length);
-            if (read > 0) {
-                this.bytes.addAndGet(read);
-            }
-            return read;
         }
     }
 }

@@ -71,8 +71,8 @@ public class StorageStatisticsEngine {
             String backendName = stringValue(row[0]);
             StorageBackendTotals previous = result.getOrDefault(backendName, new StorageBackendTotals(0L, 0L, 0L, 0L));
             result.put(backendName, new StorageBackendTotals(
-                    previous.primaryBlobCount(),
-                    previous.uniqueBytes(),
+                    previous.getPrimaryBlobCount(),
+                    previous.getUniqueBytes(),
                     longValue(row[1]),
                     longValue(row[2])
             ));
@@ -101,9 +101,9 @@ public class StorageStatisticsEngine {
             String groupName = stringValue(row[0]);
             StorageGroupTotals previous = result.getOrDefault(groupName, new StorageGroupTotals(0L, 0L, 0L, 0L));
             result.put(groupName, new StorageGroupTotals(
-                    previous.fileCount(),
-                    previous.logicalBytes(),
-                    previous.distinctBlobCount(),
+                    previous.getFileCount(),
+                    previous.getLogicalBytes(),
+                    previous.getDistinctBlobCount(),
                     longValue(row[1])
             ));
         }

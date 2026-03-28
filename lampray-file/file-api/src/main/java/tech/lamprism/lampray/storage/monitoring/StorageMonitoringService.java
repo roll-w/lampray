@@ -21,6 +21,12 @@ import java.util.List;
 public interface StorageMonitoringService {
     StorageMonitoringOverview getOverview();
 
+    StorageTrafficSnapshot getTrafficSnapshot();
+
+    StorageTrafficSnapshot getTrafficSnapshotForBackend(String backendName);
+
+    StorageTrafficSnapshot getTrafficSnapshotForGroup(String groupName);
+
     List<StorageBackendMonitoringView> listBackendMonitoring();
 
     List<StorageGroupMonitoringView> listGroupMonitoring();

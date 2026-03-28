@@ -25,20 +25,4 @@ data class StorageGroupMonitoringView(
     val uniqueBytes: Long,
     val backends: List<String>,
     val groupTraffic: StorageTrafficSnapshot,
-) {
-    fun groupName(): String = groupName
-
-    fun maxSizeBytes(): Long? = maxSizeBytes
-
-    fun fileCount(): Long = fileCount
-
-    fun logicalBytes(): Long = logicalBytes
-
-    fun distinctBlobCount(): Long = distinctBlobCount
-
-    fun uniqueBytes(): Long = uniqueBytes
-
-    fun backends(): List<String> = backends
-
-    fun groupTraffic(): StorageTrafficSnapshot = groupTraffic
-}
+)

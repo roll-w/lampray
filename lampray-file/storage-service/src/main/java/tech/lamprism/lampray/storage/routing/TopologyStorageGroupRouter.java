@@ -109,11 +109,11 @@ public class TopologyStorageGroupRouter implements StorageGroupRouter {
             }
         }
         for (BlobStoreRegistration registration : blobStoreRegistry.registrations()) {
-            Integer weight = registration.groupWeights().get(groupConfig.getName());
+            Integer weight = registration.getGroupWeights().get(groupConfig.getName());
             if (weight == null || weight <= 0) {
                 continue;
             }
-            weights.putIfAbsent(registration.backendName(), weight);
+            weights.putIfAbsent(registration.getBackendName(), weight);
         }
         return weights.entrySet().stream()
                 .map(entry -> new StorageGroupBackend(entry.getKey(), entry.getValue()))

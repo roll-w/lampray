@@ -30,6 +30,9 @@ public interface StorageUploadSessionService {
 
     StorageUploadSessionEntity requireUploadSession(String uploadId);
 
+    StorageUploadSessionEntity requireUploadSessionAuthorized(String uploadId,
+                                                             Long userId);
+
     StorageUploadSessionEntity requireActiveUploadSession(String uploadId,
                                                           Long userId);
 

@@ -37,38 +37,4 @@ data class StorageBackendView(
     val placementCount: Long,
     val uniqueBytes: Long,
     val physicalBytes: Long,
-) {
-    fun backendName(): String = backendName
-
-    fun backendType(): StorageBackendType? = backendType
-
-    fun active(): Boolean = active
-
-    fun capabilities(): Set<BlobStoreCapability> = capabilities
-
-    fun groupWeights(): Map<String, Int> = groupWeights
-
-    fun endpoint(): String? = endpoint
-
-    fun publicEndpoint(): String? = publicEndpoint
-
-    fun region(): String? = region
-
-    fun bucket(): String? = bucket
-
-    fun rootPrefix(): String? = rootPrefix
-
-    fun rootPath(): String? = rootPath
-
-    fun nativeChecksumEnabled(): Boolean = nativeChecksumEnabled
-
-    fun pathStyleAccess(): Boolean = pathStyleAccess
-
-    fun primaryBlobCount(): Long = primaryBlobCount
-
-    fun placementCount(): Long = placementCount
-
-    fun uniqueBytes(): Long = uniqueBytes
-
-    fun physicalBytes(): Long = physicalBytes
-}
+)

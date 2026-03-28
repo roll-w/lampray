@@ -21,12 +21,4 @@ data class StorageGroupTotals(
     val logicalBytes: Long,
     val distinctBlobCount: Long,
     val uniqueBytes: Long,
-) {
-    fun fileCount(): Long = fileCount
-
-    fun logicalBytes(): Long = logicalBytes
-
-    fun distinctBlobCount(): Long = distinctBlobCount
-
-    fun uniqueBytes(): Long = uniqueBytes
-}
+)

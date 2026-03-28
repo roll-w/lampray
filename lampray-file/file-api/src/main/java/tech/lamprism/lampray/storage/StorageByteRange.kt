@@ -25,9 +25,6 @@ data class StorageByteRange(
         require(endBytes >= startBytes) { "endBytes must be greater than or equal to startBytes" }
     }
 
-    fun startBytes(): Long = startBytes
-
-    fun endBytes(): Long = endBytes
-
-    fun length(): Long = Math.addExact(endBytes - startBytes, 1L)
+    val length: Long
+        get() = Math.addExact(endBytes - startBytes, 1L)
 }

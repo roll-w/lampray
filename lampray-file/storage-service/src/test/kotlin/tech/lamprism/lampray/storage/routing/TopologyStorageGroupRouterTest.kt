@@ -66,7 +66,7 @@ class TopologyStorageGroupRouterTest {
 
         val router = TopologyStorageGroupRouter(topology, registry)
 
-        val sequence = (1..5).map { router.selectWritePlan("upload").primaryBackend() }
+        val sequence = (1..5).map { router.selectWritePlan("upload").primaryBackend }
 
         assertEquals(listOf("a", "b", "c", "c", "c"), sequence)
         assertEquals(listOf("b", "c"), router.selectWritePlan("upload").mirrorBackends())
@@ -99,7 +99,7 @@ class TopologyStorageGroupRouterTest {
 
         val router = TopologyStorageGroupRouter(topology, registry)
 
-        assertEquals("a", router.selectWritePlan("download").primaryBackend())
+        assertEquals("a", router.selectWritePlan("download").primaryBackend)
         assertEquals("a", router.selectReadBackend("download", setOf("a", "b")))
     }
 
@@ -129,7 +129,7 @@ class TopologyStorageGroupRouterTest {
 
         val router = TopologyStorageGroupRouter(topology, registry)
 
-        assertEquals("dyn-a", router.selectWritePlan("dynamic").primaryBackend())
+        assertEquals("dyn-a", router.selectWritePlan("dynamic").primaryBackend)
     }
 
     @Test

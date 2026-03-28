@@ -28,14 +28,4 @@ data class StoredDownloadTarget(
     val groupConfig: StorageGroupConfig,
     val placementEntity: StorageBlobPlacementEntity,
     val blobStore: BlobStore,
-) {
-    fun fileStorage(): FileStorage = fileStorage
-
-    fun visibility(): StorageVisibility = visibility
-
-    fun groupConfig(): StorageGroupConfig = groupConfig
-
-    fun placementEntity(): StorageBlobPlacementEntity = placementEntity
-
-    fun blobStore(): BlobStore = blobStore
-}
+)

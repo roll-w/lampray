@@ -40,14 +40,14 @@ public class DynamicBlobStoreRegistry implements BlobStoreRegistry {
 
     @Override
     public void register(BlobStoreRegistration registration) {
-        if (retiredRegistrations.containsKey(registration.backendName())) {
+        if (retiredRegistrations.containsKey(registration.getBackendName())) {
             throw new IllegalStateException(
-                    "Blob store backend is retired and cannot be re-registered yet: " + registration.backendName()
+                    "Blob store backend is retired and cannot be re-registered yet: " + registration.getBackendName()
             );
         }
-        BlobStoreRegistration previous = registrations.putIfAbsent(registration.backendName(), registration);
+        BlobStoreRegistration previous = registrations.putIfAbsent(registration.getBackendName(), registration);
         if (previous != null) {
-            throw new IllegalArgumentException("Duplicate blob store backend: " + registration.backendName());
+            throw new IllegalArgumentException("Duplicate blob store backend: " + registration.getBackendName());
         }
     }
 
@@ -67,7 +67,7 @@ public class DynamicBlobStoreRegistry implements BlobStoreRegistry {
             registration = retiredRegistrations.get(backendName);
         }
         return Optional.ofNullable(registration)
-                .map(BlobStoreRegistration::blobStore);
+                .map(BlobStoreRegistration::getBlobStore);
     }
 
     @Override
@@ -89,17 +89,21 @@ public class DynamicBlobStoreRegistry implements BlobStoreRegistry {
     @Override
     public Collection<BlobStore> all() {
         return registrations().stream()
-                .map(BlobStoreRegistration::blobStore)
+                .map(BlobStoreRegistration::getBlobStore)
                 .toList();
     }
 
     @Override
     public void close() throws Exception {
+        Exception closeFailure = null;
         for (BlobStoreRegistration registration : registrations()) {
-            closeQuietly(registration.blobStore());
+            closeFailure = closeAndCollect(registration.getBlobStore(), closeFailure);
         }
         for (BlobStoreRegistration registration : retiredRegistrations.values()) {
-            closeQuietly(registration.blobStore());
+            closeFailure = closeAndCollect(registration.getBlobStore(), closeFailure);
+        }
+        if (closeFailure != null) {
+            throw closeFailure;
         }
     }
 
@@ -107,16 +111,22 @@ public class DynamicBlobStoreRegistry implements BlobStoreRegistry {
         return Map.copyOf(new LinkedHashMap<>(registrations));
     }
 
-    private void closeQuietly(BlobStore blobStore) {
+    private Exception closeAndCollect(BlobStore blobStore,
+                                      Exception existingFailure) {
         if (blobStore instanceof AutoCloseable closeable) {
             try {
                 closeable.close();
             } catch (Exception exception) {
-                throw new IllegalStateException(
+                IllegalStateException failure = new IllegalStateException(
                         "Failed to close blob store backend: " + blobStore.getBackendName(),
                         exception
                 );
+                if (existingFailure == null) {
+                    return failure;
+                }
+                existingFailure.addSuppressed(failure);
             }
         }
+        return existingFailure;
     }
 }

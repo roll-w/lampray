@@ -29,35 +29,21 @@ data class PreparedBlobMaterialization private constructor(
     val primaryObjectKey: String,
     val placementsToPersist: Map<String, String>,
 ) {
-    fun existingBlob(): StorageBlobEntity? = existingBlob
-
-    fun checksum(): String = checksum
-
-    fun size(): Long = size
-
-    fun mimeType(): String = mimeType
-
-    fun fileType(): FileType = fileType
-
-    fun primaryBackend(): String = primaryBackend
-
-    fun primaryObjectKey(): String = primaryObjectKey
-
-    fun placementsToPersist(): Map<String, String> = placementsToPersist
-
     companion object {
         @JvmStatic
         fun existing(
             blobEntity: StorageBlobEntity,
             size: Long,
+            mimeType: String,
+            fileType: FileType,
             placementsToPersist: Map<String, String>,
         ): PreparedBlobMaterialization {
             return PreparedBlobMaterialization(
                 blobEntity,
                 blobEntity.checksumSha256,
                 size,
-                blobEntity.mimeType,
-                blobEntity.fileType,
+                mimeType,
+                fileType,
                 blobEntity.primaryBackend,
                 blobEntity.primaryObjectKey,
                 placementsToPersist.toMap(),

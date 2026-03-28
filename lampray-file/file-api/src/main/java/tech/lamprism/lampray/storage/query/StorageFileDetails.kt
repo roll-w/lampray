@@ -19,8 +19,4 @@ package tech.lamprism.lampray.storage.query
 data class StorageFileDetails(
     val file: StorageFileView,
     val blob: StorageBlobView,
-) {
-    fun file(): StorageFileView = file
-
-    fun blob(): StorageBlobView = blob
-}
+)

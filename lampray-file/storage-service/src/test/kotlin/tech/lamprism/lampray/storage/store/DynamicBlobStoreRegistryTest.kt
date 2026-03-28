@@ -40,9 +40,9 @@ class DynamicBlobStoreRegistryTest {
 
         registry.register(BlobStoreRegistration(TestBlobStore("local-b"), mapOf("upload" to 3)))
 
-        val registration = registry.registrations().firstOrNull { it.backendName() == "local-b" }
+        val registration = registry.registrations().firstOrNull { it.backendName == "local-b" }
         assertNotNull(registration)
-        assertEquals(3, registration.groupWeights()["upload"])
+        assertEquals(3, registration.groupWeights["upload"])
 
         val removed = registry.unregister("local-b")
         assertTrue(removed.isPresent)

@@ -20,12 +20,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import tech.lamprism.lampray.storage.backend.BlobStoreFactoryProvider;
-import tech.lamprism.lampray.storage.backend.DefaultBlobStoreFactoryProvider;
 import tech.lamprism.lampray.storage.backend.DynamicBlobStoreRegistry;
+import tech.lamprism.lampray.storage.backend.MapBackedBlobStoreFactoryProvider;
 import tech.lamprism.lampray.storage.backend.MonitoringBlobStore;
 import tech.lamprism.lampray.storage.backend.BlobStoreRegistration;
 import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
-import tech.lamprism.lampray.storage.monitoring.StorageTrafficRecorder;
+import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher;
 import tech.lamprism.lampray.storage.store.BlobStoreFactory;
 
 import java.io.IOException;
@@ -46,18 +46,18 @@ public class FileStoreConfiguration {
 
     @Bean
     public BlobStoreFactoryProvider blobStoreFactoryProvider(List<BlobStoreFactory> blobStoreFactories) {
-        return new DefaultBlobStoreFactoryProvider(blobStoreFactories);
+        return new MapBackedBlobStoreFactoryProvider(blobStoreFactories);
     }
 
     @Bean(destroyMethod = "close")
     public BlobStoreRegistry blobStoreRegistry(StorageTopology storageTopology,
                                                BlobStoreFactoryProvider blobStoreFactoryProvider,
-                                               StorageTrafficRecorder storageTrafficRecorder) throws IOException {
+                                               StorageTrafficPublisher storageTrafficPublisher) throws IOException {
         List<BlobStoreRegistration> registrations = new ArrayList<>();
         for (StorageBackendConfig backendConfig : storageTopology.getBackends().values()) {
             BlobStoreFactory blobStoreFactory = blobStoreFactoryProvider.requireFactory(backendConfig.getType());
             registrations.add(new BlobStoreRegistration(
-                    new MonitoringBlobStore(blobStoreFactory.create(backendConfig), storageTrafficRecorder),
+                    new MonitoringBlobStore(blobStoreFactory.create(backendConfig), storageTrafficPublisher),
                     Map.of()
             ));
         }

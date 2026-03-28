@@ -17,7 +17,7 @@
 package tech.lamprism.lampray.storage.configuration
 
 import tech.lamprism.lampray.storage.StorageBackendType
-import tech.lamprism.lampray.storage.monitoring.StorageTrafficRecorder
+import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher
 import tech.lamprism.lampray.storage.store.BlobStore
 import tech.lamprism.lampray.storage.store.BlobStoreFactory
 import tech.lamprism.lampray.storage.support.TestBlobStore
@@ -90,7 +90,7 @@ class FileStoreConfigurationTest {
             configuration.blobStoreRegistry(
                 topology,
                 configuration.blobStoreFactoryProvider(emptyList()),
-                StorageTrafficRecorder(),
+                StorageTrafficPublisher(),
             )
         }
     }

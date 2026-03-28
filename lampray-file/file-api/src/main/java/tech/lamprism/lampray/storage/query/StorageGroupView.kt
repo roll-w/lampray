@@ -35,28 +35,4 @@ data class StorageGroupView(
     val logicalBytes: Long,
     val distinctBlobCount: Long,
     val uniqueBytes: Long,
-) {
-    fun groupName(): String = groupName
-
-    fun visibility(): StorageVisibility? = visibility
-
-    fun downloadPolicy(): StorageGroupDownloadPolicy? = downloadPolicy
-
-    fun placementMode(): StorageGroupPlacementMode? = placementMode
-
-    fun loadBalanceMode(): StorageGroupLoadBalanceMode? = loadBalanceMode
-
-    fun maxSizeBytes(): Long? = maxSizeBytes
-
-    fun allowedFileTypes(): Set<FileType> = allowedFileTypes
-
-    fun backends(): List<String> = backends
-
-    fun fileCount(): Long = fileCount
-
-    fun logicalBytes(): Long = logicalBytes
-
-    fun distinctBlobCount(): Long = distinctBlobCount
-
-    fun uniqueBytes(): Long = uniqueBytes
-}
+)

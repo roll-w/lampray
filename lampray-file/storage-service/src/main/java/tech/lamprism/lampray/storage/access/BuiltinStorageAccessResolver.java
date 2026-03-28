@@ -23,23 +23,19 @@ import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
-import tech.lamprism.lampray.storage.StorageReferenceSource;
 import tech.lamprism.lampray.storage.builtin.BuiltinStorageRegistry;
 import tech.lamprism.lampray.storage.builtin.BuiltinStorageResource;
-import tech.lamprism.lampray.web.ExternalEndpointProvider;
 import tech.rollw.common.web.CommonErrorCode;
-
-import java.util.Map;
 
 @Component
 class BuiltinStorageAccessResolver {
     private final BuiltinStorageRegistry builtinStorageRegistry;
-    private final ExternalEndpointProvider externalEndpointProvider;
+    private final ProxyStorageReferenceFactory proxyStorageReferenceFactory;
 
     BuiltinStorageAccessResolver(BuiltinStorageRegistry builtinStorageRegistry,
-                                 ExternalEndpointProvider externalEndpointProvider) {
+                                 ProxyStorageReferenceFactory proxyStorageReferenceFactory) {
         this.builtinStorageRegistry = builtinStorageRegistry;
-        this.externalEndpointProvider = externalEndpointProvider;
+        this.proxyStorageReferenceFactory = proxyStorageReferenceFactory;
     }
 
     StorageDownloadResult resolveDownload(String fileId) {
@@ -71,13 +67,7 @@ class BuiltinStorageAccessResolver {
     }
 
     StorageReference proxyReference(String fileId) {
-        return new StorageReference(
-                joinUrl(externalEndpointProvider.getExternalApiEndpoint(), "/api/v1/files/" + fileId),
-                StorageDownloadMode.PROXY,
-                StorageReferenceSource.API,
-                Map.of(),
-                null
-        );
+        return proxyStorageReferenceFactory.create(fileId);
     }
 
     private BuiltinStorageResource findBuiltinResource(String fileId) {
@@ -85,12 +75,5 @@ class BuiltinStorageAccessResolver {
             return null;
         }
         return builtinStorageRegistry.get(fileId);
-    }
-
-    private String joinUrl(String endpoint,
-                           String path) {
-        String normalizedEndpoint = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
-        String normalizedPath = path.startsWith("/") ? path : "/" + path;
-        return normalizedEndpoint + normalizedPath;
     }
 }

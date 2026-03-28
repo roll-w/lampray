@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.storage.access;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
 import tech.lamprism.lampray.storage.StorageReference;
@@ -34,18 +35,12 @@ class ProxyStorageReferenceFactory {
 
     StorageReference create(String fileId) {
         return new StorageReference(
-                joinUrl(externalEndpointProvider.getExternalApiEndpoint(), "/api/v1/files/" + fileId),
+                StringUtils.removeEnd(externalEndpointProvider.getExternalApiEndpoint(), "/")
+                        + StringUtils.prependIfMissing("/api/v1/files/" + fileId, "/"),
                 StorageDownloadMode.PROXY,
                 StorageReferenceSource.API,
                 Map.of(),
                 null
         );
-    }
-
-    private String joinUrl(String endpoint,
-                           String path) {
-        String normalizedEndpoint = endpoint.endsWith("/") ? endpoint.substring(0, endpoint.length() - 1) : endpoint;
-        String normalizedPath = path.startsWith("/") ? path : "/" + path;
-        return normalizedEndpoint + normalizedPath;
     }
 }

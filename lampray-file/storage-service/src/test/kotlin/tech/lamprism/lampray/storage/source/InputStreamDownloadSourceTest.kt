@@ -49,7 +49,7 @@ class InputStreamDownloadSourceTest {
         val source = InputStreamDownloadSource.rangeAware(
             { "fallback".byteInputStream() },
             { range ->
-                "${range.startBytes()}-${range.endBytes()}".byteInputStream()
+                "${range.startBytes}-${range.endBytes}".byteInputStream()
             },
         )
 

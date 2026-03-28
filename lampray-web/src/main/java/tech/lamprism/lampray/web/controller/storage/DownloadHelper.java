@@ -81,9 +81,9 @@ public final class DownloadHelper {
             response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
             response.setHeader(
                     "Content-Range",
-                    "bytes " + resolvedRange.startBytes() + "-" + resolvedRange.endBytes() + "/" + length
+                    "bytes " + resolvedRange.getStartBytes() + "-" + resolvedRange.getEndBytes() + "/" + length
             );
-            response.setHeader("Content-Length", String.valueOf(resolvedRange.length()));
+            response.setHeader("Content-Length", String.valueOf(resolvedRange.getLength()));
             content.transferTo(response.getOutputStream(), resolvedRange);
             return;
         }

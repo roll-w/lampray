@@ -23,8 +23,8 @@ import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
-import tech.lamprism.lampray.storage.monitoring.StorageTrafficRecorder;
-import tech.lamprism.lampray.storage.policy.StorageContentPolicy;
+import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher;
+import tech.lamprism.lampray.storage.policy.StorageContentRules;
 import tech.lamprism.lampray.storage.store.BlobDownloadRequest;
 
 import java.io.IOException;
@@ -32,19 +32,18 @@ import java.time.Duration;
 
 @Component
 class DirectStoredAccessStrategy implements StoredAccessStrategy {
+    private static final StorageContentRules contentRules = StorageContentRules.INSTANCE;
+
     private final StorageRuntimeConfig runtimeSettings;
-    private final StorageContentPolicy storageContentPolicy;
     private final DirectStorageReferenceResolver directStorageReferenceResolver;
-    private final StorageTrafficRecorder storageTrafficRecorder;
+    private final StorageTrafficPublisher storageTrafficPublisher;
 
     DirectStoredAccessStrategy(StorageRuntimeConfig runtimeSettings,
-                               StorageContentPolicy storageContentPolicy,
                                DirectStorageReferenceResolver directStorageReferenceResolver,
-                               StorageTrafficRecorder storageTrafficRecorder) {
+                               StorageTrafficPublisher storageTrafficPublisher) {
         this.runtimeSettings = runtimeSettings;
-        this.storageContentPolicy = storageContentPolicy;
         this.directStorageReferenceResolver = directStorageReferenceResolver;
-        this.storageTrafficRecorder = storageTrafficRecorder;
+        this.storageTrafficPublisher = storageTrafficPublisher;
     }
 
     @Override
@@ -54,14 +53,14 @@ class DirectStoredAccessStrategy implements StoredAccessStrategy {
 
     @Override
     public StorageDownloadResult resolveDownload(StoredDownloadTarget target) throws IOException {
-        String mimeType = storageContentPolicy.normalizeMimeType(target.fileStorage().getMimeType());
-        if (storageContentPolicy.isUnsafeDirectMimeType(mimeType)) {
+        String mimeType = contentRules.normalizeMimeType(target.getFileStorage().getMimeType());
+        if (contentRules.isUnsafeDirectMimeType(mimeType)) {
             return null;
         }
-        StorageAccessRequest directRequest = target.blobStore().createDirectDownload(
+        StorageAccessRequest directRequest = target.getBlobStore().createDirectDownload(
                 new BlobDownloadRequest(
-                        target.placementEntity().getObjectKey(),
-                        target.fileStorage().getFileName(),
+                        target.getPlacementEntity().getObjectKey(),
+                        target.getFileStorage().getFileName(),
                         mimeType
                 ),
                 Duration.ofSeconds(runtimeSettings.getDirectAccessTtlSeconds())
@@ -69,9 +68,9 @@ class DirectStoredAccessStrategy implements StoredAccessStrategy {
         if (!isSimpleDirectDownload(directRequest)) {
             return null;
         }
-        storageTrafficRecorder.recordDirectDownloadRequest(target.groupConfig().getName(), target.placementEntity().getBackendName());
+        storageTrafficPublisher.publishDirectDownloadRequest(target.getGroupConfig().getName(), target.getPlacementEntity().getBackendName());
         return new StorageDownloadResult(
-                target.fileStorage(),
+                target.getFileStorage(),
                 StorageDownloadMode.DIRECT,
                 directRequest,
                 null

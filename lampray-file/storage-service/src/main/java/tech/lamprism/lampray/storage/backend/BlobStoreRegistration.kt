@@ -18,9 +18,6 @@ package tech.lamprism.lampray.storage.backend
 
 import tech.lamprism.lampray.storage.store.BlobStore
 
-/**
- * @author RollW
- */
 data class BlobStoreRegistration(
     val blobStore: BlobStore,
     rawGroupWeights: Map<String, Int> = emptyMap(),
@@ -39,9 +36,6 @@ data class BlobStoreRegistration(
         }
         .toMap()
 
-    fun blobStore(): BlobStore = blobStore
-
-    fun groupWeights(): Map<String, Int> = groupWeights
-
-    fun backendName(): String = blobStore.backendName
+    val backendName: String
+        get() = blobStore.backendName
 }

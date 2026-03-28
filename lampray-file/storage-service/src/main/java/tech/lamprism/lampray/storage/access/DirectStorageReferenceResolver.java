@@ -26,9 +26,9 @@ import tech.lamprism.lampray.storage.StorageReferenceRequest;
 import tech.lamprism.lampray.storage.StorageReferenceSource;
 import tech.lamprism.lampray.storage.StorageVisibility;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
-import tech.lamprism.lampray.storage.monitoring.StorageTrafficRecorder;
-import tech.lamprism.lampray.storage.policy.StorageContentPolicy;
-import tech.lamprism.lampray.storage.policy.StorageTransferPolicy;
+import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher;
+import tech.lamprism.lampray.storage.policy.StorageContentRules;
+import tech.lamprism.lampray.storage.policy.StorageTransferModeResolver;
 import tech.lamprism.lampray.storage.store.BlobDownloadRequest;
 import tech.lamprism.lampray.storage.store.BlobStoreCapability;
 import tech.rollw.common.web.CommonErrorCode;
@@ -39,19 +39,17 @@ import java.util.Map;
 
 @Component
 class DirectStorageReferenceResolver {
+    private static final StorageContentRules contentRules = StorageContentRules.INSTANCE;
+
     private final StorageRuntimeConfig runtimeSettings;
-    private final StorageTransferPolicy storageTransferPolicy;
-    private final StorageContentPolicy storageContentPolicy;
-    private final StorageTrafficRecorder storageTrafficRecorder;
+    private final StorageTransferModeResolver transferModeResolver;
+    private final StorageTrafficPublisher storageTrafficPublisher;
 
     DirectStorageReferenceResolver(StorageRuntimeConfig runtimeSettings,
-                                   StorageTransferPolicy storageTransferPolicy,
-                                   StorageContentPolicy storageContentPolicy,
-                                   StorageTrafficRecorder storageTrafficRecorder) {
+                                   StorageTrafficPublisher storageTrafficPublisher) {
         this.runtimeSettings = runtimeSettings;
-        this.storageTransferPolicy = storageTransferPolicy;
-        this.storageContentPolicy = storageContentPolicy;
-        this.storageTrafficRecorder = storageTrafficRecorder;
+        this.transferModeResolver = new StorageTransferModeResolver(runtimeSettings);
+        this.storageTrafficPublisher = storageTrafficPublisher;
     }
 
     StorageReference resolve(StoredDownloadTarget target,
@@ -61,10 +59,10 @@ class DirectStorageReferenceResolver {
         }
 
         if (request.getMode() == tech.lamprism.lampray.storage.StorageReferenceMode.AUTO) {
-            StorageDownloadMode autoMode = storageTransferPolicy.resolveDownloadMode(
-                    target.fileStorage(),
-                    target.groupConfig(),
-                    target.blobStore()
+            StorageDownloadMode autoMode = transferModeResolver.resolveDownloadMode(
+                    target.getFileStorage(),
+                    target.getGroupConfig(),
+                    target.getBlobStore()
             );
             if (autoMode != StorageDownloadMode.DIRECT) {
                 return null;
@@ -72,45 +70,32 @@ class DirectStorageReferenceResolver {
         }
 
         if (request.getDirectAccessMode() == StorageDirectAccessMode.PUBLIC) {
-            StorageReference reference = resolvePublicReference(target);
-            if (reference != null) {
-                storageTrafficRecorder.recordDirectDownloadRequest(target.groupConfig().getName(), target.placementEntity().getBackendName());
-            }
-            return reference;
+            return publishResolvedReference(target, resolvePublicReference(target));
         }
         if (request.getDirectAccessMode() == StorageDirectAccessMode.SIGNED) {
-            StorageReference reference = resolveSignedReference(target, request.getTtlSeconds());
-            if (reference != null) {
-                storageTrafficRecorder.recordDirectDownloadRequest(target.groupConfig().getName(), target.placementEntity().getBackendName());
-            }
-            return reference;
+            return publishResolvedReference(target, resolveSignedReference(target, request.getTtlSeconds()));
         }
 
-        StorageReference publicReference = resolvePublicReference(target);
-        if (publicReference != null) {
-            storageTrafficRecorder.recordDirectDownloadRequest(target.groupConfig().getName(), target.placementEntity().getBackendName());
-            return publicReference;
+        StorageReference reference = publishResolvedReference(target, resolvePublicReference(target));
+        if (reference != null) {
+            return reference;
         }
-        StorageReference signedReference = resolveSignedReference(target, request.getTtlSeconds());
-        if (signedReference != null) {
-            storageTrafficRecorder.recordDirectDownloadRequest(target.groupConfig().getName(), target.placementEntity().getBackendName());
-        }
-        return signedReference;
+        return publishResolvedReference(target, resolveSignedReference(target, request.getTtlSeconds()));
     }
 
     private StorageReference resolvePublicReference(StoredDownloadTarget target) throws IOException {
-        String mimeType = storageContentPolicy.normalizeMimeType(target.fileStorage().getMimeType());
-        if (target.visibility() != StorageVisibility.PUBLIC) {
+        String mimeType = contentRules.normalizeMimeType(target.getFileStorage().getMimeType());
+        if (target.getVisibility() != StorageVisibility.PUBLIC) {
             return null;
         }
-        if (!target.blobStore().supports(BlobStoreCapability.PUBLIC_DOWNLOAD_URL)) {
+        if (!target.getBlobStore().supports(BlobStoreCapability.PUBLIC_DOWNLOAD_URL)) {
             return null;
         }
-        if (storageContentPolicy.isUnsafeDirectMimeType(mimeType)) {
+        if (contentRules.isUnsafeDirectMimeType(mimeType)) {
             return null;
         }
-        String url = target.blobStore().createPublicDownloadUrl(
-                new BlobDownloadRequest(target.placementEntity().getObjectKey(), target.fileStorage().getFileName(), mimeType)
+        String url = target.getBlobStore().createPublicDownloadUrl(
+                new BlobDownloadRequest(target.getPlacementEntity().getObjectKey(), target.getFileStorage().getFileName(), mimeType)
         );
         return new StorageReference(
                 url,
@@ -123,29 +108,23 @@ class DirectStorageReferenceResolver {
 
     private StorageReference resolveSignedReference(StoredDownloadTarget target,
                                                     Long ttlSeconds) throws IOException {
-        String mimeType = storageContentPolicy.normalizeMimeType(target.fileStorage().getMimeType());
-        if (!target.blobStore().supports(BlobStoreCapability.DIRECT_DOWNLOAD)) {
+        String mimeType = contentRules.normalizeMimeType(target.getFileStorage().getMimeType());
+        if (!target.getBlobStore().supports(BlobStoreCapability.DIRECT_DOWNLOAD)) {
             return null;
         }
-        if (storageContentPolicy.isUnsafeDirectMimeType(mimeType)) {
+        if (contentRules.isUnsafeDirectMimeType(mimeType)) {
             return null;
         }
-        StorageAccessRequest accessRequest = target.blobStore().createDirectDownload(
+        StorageAccessRequest accessRequest = target.getBlobStore().createDirectDownload(
                 new BlobDownloadRequest(
-                        target.placementEntity().getObjectKey(),
-                        target.fileStorage().getFileName(),
+                        target.getPlacementEntity().getObjectKey(),
+                        target.getFileStorage().getFileName(),
                         mimeType
                 ),
                 Duration.ofSeconds(normalizeReferenceTtlSeconds(ttlSeconds))
         );
-        if (!isSimpleDirectDownload(accessRequest)) {
-            return new StorageReference(
-                    accessRequest.getUrl(),
-                    StorageDownloadMode.DIRECT,
-                    StorageReferenceSource.BLOB_SIGNED,
-                    accessRequest.getHeaders(),
-                    accessRequest.getExpiresAt()
-            );
+        if (accessRequest == null) {
+            return null;
         }
         return new StorageReference(
                 accessRequest.getUrl(),
@@ -156,17 +135,23 @@ class DirectStorageReferenceResolver {
         );
     }
 
+    private StorageReference publishResolvedReference(StoredDownloadTarget target,
+                                                     StorageReference reference) {
+        if (reference == null) {
+            return null;
+        }
+        storageTrafficPublisher.publishDirectDownloadRequest(
+                target.getGroupConfig().getName(),
+                target.getPlacementEntity().getBackendName()
+        );
+        return reference;
+    }
+
     private long normalizeReferenceTtlSeconds(Long ttlSeconds) {
         long resolved = ttlSeconds != null ? ttlSeconds : runtimeSettings.getDirectAccessTtlSeconds();
         if (resolved <= 0) {
             throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "Storage reference ttl must be positive.");
         }
         return resolved;
-    }
-
-    private boolean isSimpleDirectDownload(StorageAccessRequest request) {
-        return request != null
-                && "GET".equalsIgnoreCase(request.getMethod())
-                && request.getHeaders().isEmpty();
     }
 }

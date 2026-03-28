@@ -37,7 +37,7 @@ public interface StorageUrlProvider {
      */
     default String getUrlOfStorage(String id) {
         try {
-            return resolveStorageReference(id, StorageReferenceRequest.proxy(), null).getUrl();
+            return resolveStorageReference(id, new StorageReferenceRequest(), null).getUrl();
         } catch (IOException exception) {
             throw new UncheckedIOException("Failed to resolve storage url: " + id, exception);
         }

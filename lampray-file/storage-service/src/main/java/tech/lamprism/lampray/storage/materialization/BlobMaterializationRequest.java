@@ -103,7 +103,7 @@ public final class BlobMaterializationRequest {
         return checksum;
     }
 
-    BlobMaterializationSource source() {
+    public BlobMaterializationSource source() {
         return source;
     }
 

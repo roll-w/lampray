@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.storage.materialization;
 
+import tech.lamprism.lampray.storage.materialization.placement.BlobPlacementWriter;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
 
 import java.io.IOException;
@@ -25,7 +26,7 @@ import java.io.IOException;
  *
  * @author RollW
  */
-interface BlobMaterializationSource {
+public interface BlobMaterializationSource {
     String resolvePrimaryObjectKey(BlobObjectKeyFactory blobObjectKeyFactory,
                                    String checksum);
 

@@ -21,34 +21,9 @@ package tech.lamprism.lampray.storage
  *
  * @author RollW
  */
-data class StorageReferenceRequest(
+data class StorageReferenceRequest @JvmOverloads constructor(
     val mode: StorageReferenceMode = StorageReferenceMode.PROXY,
     val directAccessMode: StorageDirectAccessMode = StorageDirectAccessMode.AUTO,
     val ttlSeconds: Long? = null,
     val fallbackToProxy: Boolean = true,
-) {
-    companion object {
-        @JvmStatic
-        fun proxy(): StorageReferenceRequest = StorageReferenceRequest(
-            mode = StorageReferenceMode.PROXY,
-        )
-
-        @JvmStatic
-        fun auto(): StorageReferenceRequest = StorageReferenceRequest(
-            mode = StorageReferenceMode.AUTO,
-        )
-
-        @JvmStatic
-        fun signed(ttlSeconds: Long?): StorageReferenceRequest = StorageReferenceRequest(
-            mode = StorageReferenceMode.DIRECT,
-            directAccessMode = StorageDirectAccessMode.SIGNED,
-            ttlSeconds = ttlSeconds,
-        )
-
-        @JvmStatic
-        fun publicDirect(): StorageReferenceRequest = StorageReferenceRequest(
-            mode = StorageReferenceMode.DIRECT,
-            directAccessMode = StorageDirectAccessMode.PUBLIC,
-        )
-    }
-}
+)

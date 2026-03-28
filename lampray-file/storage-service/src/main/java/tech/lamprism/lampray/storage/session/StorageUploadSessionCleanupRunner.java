@@ -25,7 +25,7 @@ import java.time.OffsetDateTime;
 
 @Component
 public class StorageUploadSessionCleanupRunner {
-    private static final Logger log = LoggerFactory.getLogger(StorageUploadSessionCleanupRunner.class);
+    private static final Logger logger = LoggerFactory.getLogger(StorageUploadSessionCleanupRunner.class);
 
     private final StorageUploadSessionCleanupService cleanupService;
 
@@ -41,7 +41,7 @@ public class StorageUploadSessionCleanupRunner {
             int purgedExpired = cleanupService.purgeExpiredSessions(now);
             int purgedCompleted = cleanupService.purgeCompletedSessions(now);
             if (expired > 0 || purgedExpired > 0 || purgedCompleted > 0) {
-                log.info(
+                logger.info(
                         "Storage upload session cleanup finished: expired={}, purgedExpired={}, purgedCompleted={}",
                         expired,
                         purgedExpired,
@@ -49,7 +49,7 @@ public class StorageUploadSessionCleanupRunner {
                 );
             }
         } catch (IOException | RuntimeException exception) {
-            log.warn("Storage upload session cleanup failed", exception);
+            logger.warn("Storage upload session cleanup failed", exception);
         }
     }
 }

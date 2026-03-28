@@ -27,24 +27,4 @@ data class StorageMonitoringOverview(
     val groupCount: Int,
     val sessionCounts: Map<String, Long>,
     val backendTraffic: StorageTrafficSnapshot,
-) {
-    fun totalFiles(): Long = totalFiles
-
-    fun logicalBytes(): Long = logicalBytes
-
-    fun totalBlobs(): Long = totalBlobs
-
-    fun uniqueBytes(): Long = uniqueBytes
-
-    fun totalPlacements(): Long = totalPlacements
-
-    fun physicalBytes(): Long = physicalBytes
-
-    fun backendCount(): Int = backendCount
-
-    fun groupCount(): Int = groupCount
-
-    fun sessionCounts(): Map<String, Long> = sessionCounts
-
-    fun backendTraffic(): StorageTrafficSnapshot = backendTraffic
-}
+)

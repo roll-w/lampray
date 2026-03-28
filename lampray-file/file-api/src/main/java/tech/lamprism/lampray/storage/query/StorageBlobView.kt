@@ -31,24 +31,4 @@ data class StorageBlobView(
     val createTime: OffsetDateTime,
     val updateTime: OffsetDateTime,
     val placements: List<StorageBlobPlacementView>,
-) {
-    fun blobId(): String = blobId
-
-    fun checksumSha256(): String = checksumSha256
-
-    fun fileSize(): Long = fileSize
-
-    fun mimeType(): String = mimeType
-
-    fun fileType(): FileType = fileType
-
-    fun primaryBackend(): String = primaryBackend
-
-    fun primaryObjectKey(): String = primaryObjectKey
-
-    fun createTime(): OffsetDateTime = createTime
-
-    fun updateTime(): OffsetDateTime = updateTime
-
-    fun placements(): List<StorageBlobPlacementView> = placements
-}
+)

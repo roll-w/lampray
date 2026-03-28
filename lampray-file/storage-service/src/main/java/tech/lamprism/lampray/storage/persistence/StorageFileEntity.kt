@@ -105,14 +105,14 @@ class StorageFileEntity(
 
     fun toBuilder(): Builder = Builder(this)
 
-    fun lock(): FileStorage = FileStorage.builder()
-        .setFileId(fileId)
-        .setFileName(fileName)
-        .setFileSize(fileSize)
-        .setMimeType(mimeType)
-        .setFileType(fileType)
-        .setCreateTime(createTime)
-        .build()
+    fun lock(): FileStorage = FileStorage(
+        fileId = fileId,
+        fileName = fileName,
+        fileSize = fileSize,
+        mimeType = mimeType,
+        fileType = fileType,
+        createTime = createTime,
+    )
 
     class Builder {
         private var id: Long? = null

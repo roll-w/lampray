@@ -16,62 +16,17 @@
 
 package tech.lamprism.lampray.storage.monitoring;
 
-import tech.lamprism.lampray.storage.StorageByteRange;
 import tech.lamprism.lampray.storage.StorageDownloadSource;
 
-import java.io.FilterInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-public class MonitoringStorageDownloadSource implements StorageDownloadSource {
-    private final StorageDownloadSource delegate;
-    private final StorageTrafficRecorder trafficRecorder;
-    private final String groupName;
-    private final String backendName;
+public class MonitoringStorageDownloadSource extends CountingStorageDownloadSource {
 
     public MonitoringStorageDownloadSource(StorageDownloadSource delegate,
-                                           StorageTrafficRecorder trafficRecorder,
-                                           String groupName,
-                                           String backendName) {
-        this.delegate = delegate;
-        this.trafficRecorder = trafficRecorder;
-        this.groupName = groupName;
-        this.backendName = backendName;
-    }
-
-    @Override
-    public InputStream openStream() throws IOException {
-        trafficRecorder.recordProxyDownloadRequest(groupName, backendName);
-        return wrap(delegate.openStream());
-    }
-
-    @Override
-    public InputStream openStream(StorageByteRange range) throws IOException {
-        trafficRecorder.recordProxyDownloadRequest(groupName, backendName);
-        return wrap(delegate.openStream(range));
-    }
-
-    private InputStream wrap(InputStream inputStream) {
-        return new FilterInputStream(inputStream) {
-            @Override
-            public int read() throws IOException {
-                int read = super.read();
-                if (read >= 0) {
-                    trafficRecorder.recordProxyDownload(groupName, backendName, 1);
-                }
-                return read;
-            }
-
-            @Override
-            public int read(byte[] bytes,
-                            int offset,
-                            int length) throws IOException {
-                int read = super.read(bytes, offset, length);
-                if (read > 0) {
-                    trafficRecorder.recordProxyDownload(groupName, backendName, read);
-                }
-                return read;
-            }
-        };
+                                           StorageTrafficPublisher trafficPublisher,
+                                           String groupName) {
+        super(
+                delegate,
+                () -> trafficPublisher.publishProxyDownloadRequest(groupName),
+                bytes -> trafficPublisher.publishProxyDownload(groupName, bytes)
+        );
     }
 }

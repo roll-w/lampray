@@ -184,7 +184,7 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
                 () -> openObjectStream(normalizedKey, null),
                 range -> {
                     validateRange(range);
-                    return openObjectStream(normalizedKey, "bytes=" + range.startBytes() + "-" + range.endBytes());
+                    return openObjectStream(normalizedKey, "bytes=" + range.getStartBytes() + "-" + range.getEndBytes());
                 }
         );
     }

@@ -21,12 +21,4 @@ data class StorageBackendTotals(
     val uniqueBytes: Long,
     val placementCount: Long,
     val physicalBytes: Long,
-) {
-    fun primaryBlobCount(): Long = primaryBlobCount
-
-    fun uniqueBytes(): Long = uniqueBytes
-
-    fun placementCount(): Long = placementCount
-
-    fun physicalBytes(): Long = physicalBytes
-}
+)

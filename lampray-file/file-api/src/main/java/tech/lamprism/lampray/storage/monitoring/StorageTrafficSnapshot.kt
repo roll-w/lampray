@@ -25,20 +25,6 @@ data class StorageTrafficSnapshot(
     val directUploadDeclaredBytes: Long,
     val directDownloadRequestCount: Long,
 ) {
-    fun uploadBytes(): Long = uploadBytes
-
-    fun uploadCount(): Long = uploadCount
-
-    fun downloadBytes(): Long = downloadBytes
-
-    fun downloadCount(): Long = downloadCount
-
-    fun directUploadRequestCount(): Long = directUploadRequestCount
-
-    fun directUploadDeclaredBytes(): Long = directUploadDeclaredBytes
-
-    fun directDownloadRequestCount(): Long = directDownloadRequestCount
-
     companion object {
         @JvmStatic
         fun empty(): StorageTrafficSnapshot = StorageTrafficSnapshot(0, 0, 0, 0, 0, 0, 0)

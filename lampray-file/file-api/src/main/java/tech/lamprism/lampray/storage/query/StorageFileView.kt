@@ -33,26 +33,4 @@ data class StorageFileView(
     val visibility: StorageVisibility,
     val createTime: OffsetDateTime,
     val updateTime: OffsetDateTime,
-) {
-    fun fileId(): String = fileId
-
-    fun blobId(): String = blobId
-
-    fun groupName(): String = groupName
-
-    fun ownerUserId(): Long? = ownerUserId
-
-    fun fileName(): String = fileName
-
-    fun fileSize(): Long = fileSize
-
-    fun mimeType(): String = mimeType
-
-    fun fileType(): FileType = fileType
-
-    fun visibility(): StorageVisibility = visibility
-
-    fun createTime(): OffsetDateTime = createTime
-
-    fun updateTime(): OffsetDateTime = updateTime
-}
+)
