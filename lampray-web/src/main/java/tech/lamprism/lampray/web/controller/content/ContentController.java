@@ -47,6 +47,7 @@ import tech.rollw.common.web.system.SystemResource;
 import tech.rollw.common.web.system.SystemResourceOperatorProvider;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author RollW
@@ -88,7 +89,7 @@ public class ContentController {
             return HttpResponseEntity.of(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
         }
 
-        return HttpResponseEntity.success(contentVoConvert(details));
+        return HttpResponseEntity.success(contentVoConvertOrThrow(details));
     }
 
 
@@ -116,7 +117,10 @@ public class ContentController {
         );
 
         return HttpResponseEntity.success(
-                contents.stream().map(this::contentVoConvert).toList()
+                contents.stream()
+                        .map(this::contentVoConvert)
+                        .filter(Objects::nonNull)
+                        .toList()
         );
     }
 
@@ -142,7 +146,10 @@ public class ContentController {
                         contentAccessCredentials
                 );
         return HttpResponseEntity.success(
-                contents.stream().map(this::contentVoConvert).toList()
+                contents.stream()
+                        .map(this::contentVoConvert)
+                        .filter(Objects::nonNull)
+                        .toList()
         );
     }
 
@@ -180,6 +187,14 @@ public class ContentController {
     }
 
     private ContentVo contentVoConvert(ContentDetails details) {
-       return ContentViewHelper.toContentView(details);
+        return ContentViewHelper.toContentView(details);
+    }
+
+    private ContentVo contentVoConvertOrThrow(ContentDetails details) {
+        ContentVo contentVo = contentVoConvert(details);
+        if (contentVo == null) {
+            throw new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
+        }
+        return contentVo;
     }
 }

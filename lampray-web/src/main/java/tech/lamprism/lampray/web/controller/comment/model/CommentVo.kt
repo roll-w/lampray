@@ -53,11 +53,13 @@ data class CommentVo(
             if (metadata !is CommentDetailsMetadata) {
                 return null
             }
+            val content = contentDetails.content
+                ?: return null
             return CommentVo(
                 contentDetails.contentId,
                 contentDetails.userId,
                 metadata.parentId,
-                contentDetails.content!!,
+                content,
                 metadata.contentId,
                 metadata.contentType,
                 contentDetails.createTime,

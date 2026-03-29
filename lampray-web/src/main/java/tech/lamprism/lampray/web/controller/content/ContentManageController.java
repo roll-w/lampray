@@ -66,7 +66,11 @@ public class ContentManageController {
         if (contentMetadataDetails.getUserId() != userId) {
             return HttpResponseEntity.of(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
         }
-        return HttpResponseEntity.success(ContentViewHelper.toContentView(contentMetadataDetails.getContentDetails()));
+        ContentVo contentVo = ContentViewHelper.toContentView(contentMetadataDetails.getContentDetails());
+        if (contentVo == null) {
+            return HttpResponseEntity.of(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
+        }
+        return HttpResponseEntity.success(contentVo);
     }
 
     private ContentCollectionType getUserContentCollectionType(UrlContentType contentType) {

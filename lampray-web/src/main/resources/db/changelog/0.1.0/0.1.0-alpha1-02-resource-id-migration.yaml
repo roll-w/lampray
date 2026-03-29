@@ -10,8 +10,13 @@ databaseChangeLog:
               - column:
                   name: resource_id
                   type: VARCHAR(64)
-        - sql:
-            sql: UPDATE article SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - update:
+            tableName: article
+            columns:
+              - column:
+                  name: resource_id
+                  valueComputed: id
+            where: resource_id IS NULL
         - addNotNullConstraint:
             tableName: article
             columnName: resource_id
@@ -27,8 +32,13 @@ databaseChangeLog:
               - column:
                   name: resource_id
                   type: VARCHAR(64)
-        - sql:
-            sql: UPDATE comment SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - update:
+            tableName: comment
+            columns:
+              - column:
+                  name: resource_id
+                  valueComputed: id
+            where: resource_id IS NULL
         - modifyDataType:
             tableName: comment
             columnName: parent_id
@@ -37,8 +47,13 @@ databaseChangeLog:
             tableName: comment
             columnName: comment_on_id
             newDataType: VARCHAR(64)
-        - sql:
-            sql: UPDATE comment SET parent_id = '' WHERE parent_id = '0' OR parent_id IS NULL;
+        - update:
+            tableName: comment
+            columns:
+              - column:
+                  name: parent_id
+                  value: ""
+            where: parent_id = '0' OR parent_id IS NULL
         - addNotNullConstraint:
             tableName: comment
             columnName: resource_id
@@ -54,8 +69,13 @@ databaseChangeLog:
               - column:
                   name: resource_id
                   type: VARCHAR(64)
-        - sql:
-            sql: UPDATE content_metadata SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - update:
+            tableName: content_metadata
+            columns:
+              - column:
+                  name: resource_id
+                  valueComputed: id
+            where: resource_id IS NULL
         - modifyDataType:
             tableName: content_metadata
             columnName: content_id
@@ -75,8 +95,13 @@ databaseChangeLog:
               - column:
                   name: resource_id
                   type: VARCHAR(64)
-        - sql:
-            sql: UPDATE favorite_group SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - update:
+            tableName: favorite_group
+            columns:
+              - column:
+                  name: resource_id
+                  valueComputed: id
+            where: resource_id IS NULL
         - addNotNullConstraint:
             tableName: favorite_group
             columnName: resource_id
@@ -92,8 +117,13 @@ databaseChangeLog:
               - column:
                   name: resource_id
                   type: VARCHAR(64)
-        - sql:
-            sql: UPDATE favorite_item SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - update:
+            tableName: favorite_item
+            columns:
+              - column:
+                  name: resource_id
+                  valueComputed: id
+            where: resource_id IS NULL
         - modifyDataType:
             tableName: favorite_item
             columnName: group_id
@@ -117,8 +147,13 @@ databaseChangeLog:
               - column:
                   name: resource_id
                   type: VARCHAR(64)
-        - sql:
-            sql: UPDATE localized_message SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - update:
+            tableName: localized_message
+            columns:
+              - column:
+                  name: resource_id
+                  valueComputed: id
+            where: resource_id IS NULL
         - addNotNullConstraint:
             tableName: localized_message
             columnName: resource_id
@@ -134,8 +169,13 @@ databaseChangeLog:
               - column:
                   name: resource_id
                   type: VARCHAR(64)
-        - sql:
-            sql: UPDATE register_verification_token SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - update:
+            tableName: register_verification_token
+            columns:
+              - column:
+                  name: resource_id
+                  valueComputed: id
+            where: resource_id IS NULL
         - addNotNullConstraint:
             tableName: register_verification_token
             columnName: resource_id
@@ -156,8 +196,13 @@ databaseChangeLog:
               - column:
                   name: resource_id
                   type: VARCHAR(64)
-        - sql:
-            sql: UPDATE system_setting SET resource_id = CAST(id AS CHAR(64)) WHERE resource_id IS NULL;
+        - update:
+            tableName: system_setting
+            columns:
+              - column:
+                  name: resource_id
+                  valueComputed: id
+            where: resource_id IS NULL
         - addNotNullConstraint:
             tableName: system_setting
             columnName: resource_id
@@ -166,3 +211,49 @@ databaseChangeLog:
             tableName: system_setting
             columnNames: resource_id
             constraintName: uc_system_setting_resource_id
+
+  - changeSet:
+      id: 0.1.0-alpha1-16-user-personal-data-user-id
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      dbms: mysql,mariadb,postgresql,h2,oracle,sqlserver
+      preConditions:
+        - onFail: MARK_RAN
+        - columnExists:
+            tableName: user_personal_data
+            columnName: id
+        - not:
+            columnExists:
+              tableName: user_personal_data
+              columnName: user_id
+      changes:
+        - dropPrimaryKey:
+            tableName: user_personal_data
+        - renameColumn:
+            tableName: user_personal_data
+            oldColumnName: id
+            newColumnName: user_id
+            columnDataType: BIGINT
+        - addPrimaryKey:
+            tableName: user_personal_data
+            columnNames: user_id
+            constraintName: pk_user_personal_data
+
+  - changeSet:
+      id: 0.1.0-alpha1-18-user-personal-data-primary-key-recovery
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      dbms: mysql,mariadb,postgresql,h2,oracle,sqlserver
+      preConditions:
+        - onFail: MARK_RAN
+        - columnExists:
+            tableName: user_personal_data
+            columnName: user_id
+        - not:
+            - primaryKeyExists:
+                tableName: user_personal_data
+      changes:
+        - addPrimaryKey:
+            tableName: user_personal_data
+            columnNames: user_id
+            constraintName: pk_user_personal_data
