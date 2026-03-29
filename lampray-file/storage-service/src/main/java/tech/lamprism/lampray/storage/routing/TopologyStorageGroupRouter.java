@@ -17,13 +17,13 @@
 package tech.lamprism.lampray.storage.routing;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistration;
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
 import tech.lamprism.lampray.storage.configuration.StorageGroupBackend;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageGroupLoadBalanceMode;
 import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode;
 import tech.lamprism.lampray.storage.configuration.StorageTopology;
-import tech.lamprism.lampray.storage.backend.BlobStoreRegistration;
-import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -147,9 +147,9 @@ public class TopologyStorageGroupRouter implements StorageGroupRouter {
                                               String primaryBackend) {
         List<String> mirrors = groupConfig.getPlacementMode() == StorageGroupPlacementMode.MIRROR
                 ? activeBackends.stream()
-                .map(StorageGroupBackend::getBackendName)
-                .filter(candidate -> !candidate.equals(primaryBackend))
-                .toList()
+                  .map(StorageGroupBackend::getBackendName)
+                  .filter(candidate -> !candidate.equals(primaryBackend))
+                  .toList()
                 : List.of();
         return new StorageWritePlan(groupConfig, primaryBackend, mirrors);
     }

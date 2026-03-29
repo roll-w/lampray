@@ -20,11 +20,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import tech.lamprism.lampray.storage.backend.BlobStoreFactoryProvider;
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistration;
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
 import tech.lamprism.lampray.storage.backend.DynamicBlobStoreRegistry;
 import tech.lamprism.lampray.storage.backend.MapBackedBlobStoreFactoryProvider;
 import tech.lamprism.lampray.storage.backend.MonitoringBlobStore;
-import tech.lamprism.lampray.storage.backend.BlobStoreRegistration;
-import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
 import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher;
 import tech.lamprism.lampray.storage.store.BlobStoreFactory;
 

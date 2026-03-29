@@ -21,15 +21,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageUploadSessionState;
-import tech.lamprism.lampray.storage.query.StorageBlobPlacementView;
-import tech.lamprism.lampray.storage.query.StorageBlobView;
-import tech.lamprism.lampray.storage.query.StorageFileDetails;
-import tech.lamprism.lampray.storage.query.StorageFileView;
-import tech.lamprism.lampray.storage.query.StorageQueryProvider;
-import tech.lamprism.lampray.storage.query.StorageSessionDetails;
-import tech.lamprism.lampray.storage.query.StorageSessionView;
-import tech.lamprism.lampray.storage.query.StorageBackendView;
-import tech.lamprism.lampray.storage.query.StorageGroupView;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
 import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementEntity;
 import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
@@ -39,6 +30,15 @@ import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionRepository;
 import tech.lamprism.lampray.storage.persistence.specification.StorageEntitySpecifications;
+import tech.lamprism.lampray.storage.query.StorageBackendView;
+import tech.lamprism.lampray.storage.query.StorageBlobPlacementView;
+import tech.lamprism.lampray.storage.query.StorageBlobView;
+import tech.lamprism.lampray.storage.query.StorageFileDetails;
+import tech.lamprism.lampray.storage.query.StorageFileView;
+import tech.lamprism.lampray.storage.query.StorageGroupView;
+import tech.lamprism.lampray.storage.query.StorageQueryProvider;
+import tech.lamprism.lampray.storage.query.StorageSessionDetails;
+import tech.lamprism.lampray.storage.query.StorageSessionView;
 import tech.lamprism.lampray.storage.session.StorageUploadSessionStates;
 import tech.rollw.common.web.DataErrorCode;
 import tech.rollw.common.web.page.ImmutablePage;
@@ -112,19 +112,19 @@ public class StorageQueryService implements StorageQueryProvider {
 
     @Override
     public Page<StorageSessionView> listSessions(int page,
-                                                   int size,
-                                                   StorageUploadSessionState state,
-                                                   Long ownerUserId,
-                                                   String fileName) {
+                                                 int size,
+                                                 StorageUploadSessionState state,
+                                                 Long ownerUserId,
+                                                 String fileName) {
         int normalizedSize = Ints.constrainToRange(size, 1, 200);
         int normalizedPage = Math.max(page, 1);
         var now = java.time.OffsetDateTime.now();
         var pageable = PageRequest.of(normalizedPage - 1, normalizedSize);
         var entityPage = storageUploadSessionRepository.findAll(pageable, StorageEntitySpecifications.sessions(state, ownerUserId, fileName, now));
-        List<StorageSessionView> content = entityPage.getContent().stream()
+        List<StorageSessionView> content = entityPage.getData().stream()
                 .map(entity -> toSessionSummary(entity, now))
                 .toList();
-        return ImmutablePage.of(normalizedPage, normalizedSize, entityPage.getTotalPages(), content);
+        return ImmutablePage.of(normalizedPage, normalizedSize, (int) entityPage.getTotal(), content);
     }
 
     @Override

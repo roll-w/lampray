@@ -18,7 +18,6 @@ package tech.lamprism.lampray.storage.access;
 
 import com.google.common.collect.Maps;
 import org.springframework.stereotype.Component;
-import tech.lamprism.lampray.storage.StorageAccessRequest;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageException;
@@ -120,7 +119,7 @@ public class StoredStorageAccessResolver {
         );
     }
 
-    public StorageReference proxyReference(String fileId) {
+    public StorageReference proxyReference(String fileId) throws IOException {
         return accessStrategy(StorageDownloadMode.PROXY).resolveReference(fileId, null, new StorageReferenceRequest());
     }
 

@@ -25,11 +25,8 @@ import tech.lamprism.lampray.storage.store.BlobStore
  */
 data class BlobStoreRegistration(
     val blobStore: BlobStore,
-    rawGroupWeights: Map<String, Int> = emptyMap(),
+    val rawGroupWeights: Map<String, Int> = emptyMap(),
 ) {
-    init {
-        requireNotNull(blobStore) { "blobStore must not be null" }
-    }
 
     val groupWeights: Map<String, Int> = rawGroupWeights.entries
         .mapNotNull { (groupName, weight) ->

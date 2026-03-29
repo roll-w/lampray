@@ -141,7 +141,7 @@ public class DirectStorageReferenceResolver {
     }
 
     private StorageReference publishResolvedReference(StoredDownloadTarget target,
-                                                     StorageReference reference) {
+                                                      StorageReference reference) {
         if (reference == null) {
             return null;
         }

@@ -26,6 +26,7 @@ import java.time.OffsetDateTime;
 
 /**
  * Manages upload-session lifecycle operations.
+ *
  * @author RollW
  */
 public interface StorageUploadSessionService {
@@ -33,7 +34,7 @@ public interface StorageUploadSessionService {
      * Creates a new upload session.
      */
     StorageUploadSession createUploadSession(StorageUploadRequest request,
-                                              Long userId) throws IOException;
+                                             Long userId) throws IOException;
 
     /**
      * Loads an upload session by id.
@@ -44,7 +45,7 @@ public interface StorageUploadSessionService {
      * Loads an upload session and verifies access.
      */
     StorageUploadSessionEntity requireUploadSessionAuthorized(String uploadId,
-                                                             Long userId);
+                                                              Long userId);
 
     /**
      * Loads an active upload session and verifies access.
@@ -56,7 +57,7 @@ public interface StorageUploadSessionService {
      * Returns upload-session details for querying.
      */
     StorageUploadSessionDetails getUploadSession(String uploadId,
-                                                  Long userId);
+                                                 Long userId);
 
     /**
      * Expires a pending upload session.
