@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage
 
+/**
+ * @author RollW
+ */
 enum class StorageUploadSessionState {
     PENDING,
     COMPLETED,

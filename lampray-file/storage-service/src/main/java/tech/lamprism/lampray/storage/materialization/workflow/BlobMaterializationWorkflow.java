@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * @author RollW
+ */
 public class BlobMaterializationWorkflow implements Workflow<BlobMaterializationWorkflowContext, PreparedBlobMaterialization> {
     private final List<WorkflowStep<BlobMaterializationWorkflowContext>> steps;
 

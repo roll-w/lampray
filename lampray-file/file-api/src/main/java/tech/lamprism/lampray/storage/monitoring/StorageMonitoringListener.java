@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage.monitoring;
 
+/**
+ * @author RollW
+ */
 public interface StorageMonitoringListener {
     void onEvent(StorageTrafficEvent event);
 }

@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * @author RollW
+ */
 @Service
 public class BlobPlacementCleanupService {
     private final BlobStoreLocator blobStoreLocator;

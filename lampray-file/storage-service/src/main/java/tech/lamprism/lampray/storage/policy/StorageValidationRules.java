@@ -28,6 +28,9 @@ import tech.rollw.common.web.CommonErrorCode;
 
 import java.util.Locale;
 
+/**
+ * @author RollW
+ */
 public final class StorageValidationRules {
     public static final StorageValidationRules INSTANCE = new StorageValidationRules();
 

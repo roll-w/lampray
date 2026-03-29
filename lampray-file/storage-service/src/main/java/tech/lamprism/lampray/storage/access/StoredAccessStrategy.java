@@ -29,13 +29,13 @@ import java.io.IOException;
  * @author RollW
  */
 public interface StoredAccessStrategy {
-    public StorageDownloadMode mode();
+    StorageDownloadMode mode();
 
-    public default StorageDownloadResult resolveDownload(StoredDownloadTarget target) throws IOException {
+    default StorageDownloadResult resolveDownload(StoredDownloadTarget target) throws IOException {
         throw new UnsupportedOperationException("Download is not supported for mode: " + mode());
     }
 
-    public default StorageReference resolveReference(String fileId,
+    default StorageReference resolveReference(String fileId,
                                                      StoredDownloadTarget target,
                                                      StorageReferenceRequest request) throws IOException {
         throw new UnsupportedOperationException("Reference is not supported for mode: " + mode());

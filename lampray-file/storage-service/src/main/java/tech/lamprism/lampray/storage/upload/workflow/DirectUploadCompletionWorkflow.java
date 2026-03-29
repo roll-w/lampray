@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * @author RollW
+ */
 public class DirectUploadCompletionWorkflow implements Workflow<DirectUploadCompletionWorkflowContext, FileStorage> {
     private final List<WorkflowStep<DirectUploadCompletionWorkflowContext>> steps;
 

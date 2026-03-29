@@ -18,6 +18,7 @@ package tech.lamprism.lampray.storage;
 
 /**
  * Provides read access to upload-session details.
+ * @author RollW
  */
 public interface StorageUploadSessionQueryProvider {
     /**

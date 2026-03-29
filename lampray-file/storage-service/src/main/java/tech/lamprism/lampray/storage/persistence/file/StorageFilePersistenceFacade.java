@@ -27,6 +27,9 @@ import tech.lamprism.lampray.storage.persistence.file.workflow.PersistSessionUpl
 import tech.lamprism.lampray.storage.persistence.file.workflow.PersistTrustedUploadWorkflowContext;
 import tech.lamprism.lampray.storage.persistence.file.workflow.PersistTrustedUploadWorkflowFactory;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageFilePersistenceFacade implements StorageFilePersistenceService {
     private final PersistSessionUploadWorkflowFactory persistSessionUploadWorkflowFactory;

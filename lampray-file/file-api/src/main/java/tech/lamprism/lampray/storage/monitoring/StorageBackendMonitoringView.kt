@@ -19,6 +19,9 @@ package tech.lamprism.lampray.storage.monitoring
 import tech.lamprism.lampray.storage.StorageBackendType
 import tech.lamprism.lampray.storage.store.BlobStoreCapability
 
+/**
+ * @author RollW
+ */
 data class StorageBackendMonitoringView(
     val backendName: String,
     val backendType: StorageBackendType?,

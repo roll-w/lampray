@@ -3,6 +3,9 @@ package tech.lamprism.lampray.storage.upload.workflow
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity
 import java.io.InputStream
 
+/**
+ * @author RollW
+ */
 data class ProxyUploadWorkflowContext @JvmOverloads constructor(
     val uploadSession: StorageUploadSessionEntity,
     val inputStream: InputStream,

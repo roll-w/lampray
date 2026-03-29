@@ -13,6 +13,9 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageUploadOperationRouter {
     private final Map<StorageUploadMode, StorageUploadStrategy> uploadStrategies;

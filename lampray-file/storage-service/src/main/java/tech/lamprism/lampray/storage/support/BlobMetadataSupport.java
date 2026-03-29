@@ -18,6 +18,9 @@ package tech.lamprism.lampray.storage.support;
 
 import java.util.Map;
 
+/**
+ * @author RollW
+ */
 public final class BlobMetadataSupport {
     public static final String CHECKSUM_SHA256_KEY = "checksum-sha256";
 

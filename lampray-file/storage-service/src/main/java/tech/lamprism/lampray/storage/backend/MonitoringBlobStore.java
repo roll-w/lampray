@@ -32,6 +32,9 @@ import java.io.InputStream;
 import java.time.Duration;
 import java.util.Set;
 
+/**
+ * @author RollW
+ */
 public class MonitoringBlobStore implements BlobStore, AutoCloseable {
     private final BlobStore delegate;
     private final StorageTrafficPublisher trafficPublisher;

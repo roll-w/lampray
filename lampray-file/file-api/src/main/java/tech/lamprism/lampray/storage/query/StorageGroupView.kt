@@ -22,6 +22,9 @@ import tech.lamprism.lampray.storage.configuration.StorageGroupDownloadPolicy
 import tech.lamprism.lampray.storage.configuration.StorageGroupLoadBalanceMode
 import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode
 
+/**
+ * @author RollW
+ */
 data class StorageGroupView(
     val groupName: String,
     val visibility: StorageVisibility?,

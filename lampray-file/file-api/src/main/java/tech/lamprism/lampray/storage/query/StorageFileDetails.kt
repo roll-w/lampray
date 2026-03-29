@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage.query
 
+/**
+ * @author RollW
+ */
 data class StorageFileDetails(
     val file: StorageFileView,
     val blob: StorageBlobView,

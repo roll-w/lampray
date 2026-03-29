@@ -28,5 +28,5 @@ public interface BlobStoreFactoryProvider {
     /**
      * Returns the factory required to create the backend type.
      */
-    public BlobStoreFactory requireFactory(StorageBackendType backendType);
+    BlobStoreFactory requireFactory(StorageBackendType backendType);
 }

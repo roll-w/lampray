@@ -7,6 +7,9 @@ import tech.lamprism.lampray.storage.store.BlobStore;
 
 import java.io.IOException;
 
+/**
+ * @author RollW
+ */
 @Service
 public class UploadObjectCleaner {
     private final BlobStoreRegistry blobStoreRegistry;

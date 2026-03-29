@@ -10,6 +10,9 @@ import tech.lamprism.lampray.storage.routing.StorageWritePlan
 import tech.lamprism.lampray.storage.store.BlobStore
 import java.time.OffsetDateTime
 
+/**
+ * @author RollW
+ */
 data class CreateUploadSessionWorkflowState(
     var groupName: String? = null,
     var writePlan: StorageWritePlan? = null,

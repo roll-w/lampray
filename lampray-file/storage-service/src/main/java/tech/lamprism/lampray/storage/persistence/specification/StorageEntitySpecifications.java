@@ -27,6 +27,9 @@ import tech.lamprism.lampray.storage.persistence.UploadSessionStatus;
 
 import java.time.OffsetDateTime;
 
+/**
+ * @author RollW
+ */
 public final class StorageEntitySpecifications {
     private StorageEntitySpecifications() {
     }

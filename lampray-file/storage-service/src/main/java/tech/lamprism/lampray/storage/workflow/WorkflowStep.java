@@ -2,10 +2,11 @@ package tech.lamprism.lampray.storage.workflow;
 
 import java.io.IOException;
 
-@FunctionalInterface
 /**
  * Performs one workflow step against a shared context.
+ * @author RollW
  */
+@FunctionalInterface
 public interface WorkflowStep<C> {
     /**
      * Applies the step to the current workflow context.

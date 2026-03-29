@@ -21,6 +21,9 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * @author RollW
+ */
 @Component
 public class StorageTrafficAccumulator implements StorageMonitoringListener {
     private final StorageTrafficBucket overall = new StorageTrafficBucket();

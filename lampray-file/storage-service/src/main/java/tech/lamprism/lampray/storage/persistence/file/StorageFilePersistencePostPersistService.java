@@ -5,6 +5,9 @@ import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.materialization.hook.StorageMaterializationContext;
 import tech.lamprism.lampray.storage.materialization.hook.StorageMaterializationHookNotifier;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageFilePersistencePostPersistService {
     private final StorageMaterializationHookNotifier storageMaterializationHookNotifier;

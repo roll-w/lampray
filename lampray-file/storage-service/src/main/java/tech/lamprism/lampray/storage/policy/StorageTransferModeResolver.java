@@ -26,6 +26,9 @@ import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.store.BlobStore;
 import tech.lamprism.lampray.storage.store.BlobStoreCapability;
 
+/**
+ * @author RollW
+ */
 public final class StorageTransferModeResolver {
     private final StorageRuntimeConfig runtimeSettings;
 

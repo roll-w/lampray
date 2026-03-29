@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * @author RollW
+ */
 public class ProxyUploadWorkflow implements Workflow<ProxyUploadWorkflowContext, FileStorage> {
     private final List<WorkflowStep<ProxyUploadWorkflowContext>> steps;
 

@@ -19,6 +19,9 @@ package tech.lamprism.lampray.storage.materialization
 import tech.lamprism.lampray.storage.FileType
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity
 
+/**
+ * @author RollW
+ */
 data class PreparedBlobMaterialization private constructor(
     val existingBlob: StorageBlobEntity?,
     val checksum: String,

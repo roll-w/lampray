@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage
 
+/**
+ * @author RollW
+ */
 data class StorageByteRange(
     val startBytes: Long,
     val endBytes: Long,

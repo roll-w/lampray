@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage.monitoring
 
+/**
+ * @author RollW
+ */
 data class StorageOverviewTotals(
     val fileCount: Long,
     val logicalBytes: Long,

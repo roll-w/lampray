@@ -28,6 +28,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+/**
+ * @author RollW
+ */
 public final class TempUploads {
     private static final int BUFFER_SIZE = 8192;
     private static final String TEMP_FILE_PREFIX = "lampray-upload-";

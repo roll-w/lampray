@@ -28,10 +28,10 @@ import java.io.IOException;
  * @author RollW
  */
 public interface StorageAccessService {
-    public StorageDownloadResult resolveDownload(String fileId,
+    StorageDownloadResult resolveDownload(String fileId,
                                                  Long userId) throws IOException;
 
-    public StorageReference resolveStorageReference(String id,
+    StorageReference resolveStorageReference(String id,
                                                     StorageReferenceRequest request,
                                                     Long userId) throws IOException;
 }

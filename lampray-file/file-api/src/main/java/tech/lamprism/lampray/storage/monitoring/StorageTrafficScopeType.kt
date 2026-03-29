@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage.monitoring
 
+/**
+ * @author RollW
+ */
 enum class StorageTrafficScopeType {
     OVERALL,
     GROUP,

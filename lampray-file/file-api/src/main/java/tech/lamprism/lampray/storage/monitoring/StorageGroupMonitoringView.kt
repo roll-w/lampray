@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage.monitoring
 
+/**
+ * @author RollW
+ */
 data class StorageGroupMonitoringView(
     val groupName: String,
     val maxSizeBytes: Long?,

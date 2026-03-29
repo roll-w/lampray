@@ -4,6 +4,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageMaterializationHookNotifier {
     private final List<StorageMaterializationHook> storageMaterializationHooks;

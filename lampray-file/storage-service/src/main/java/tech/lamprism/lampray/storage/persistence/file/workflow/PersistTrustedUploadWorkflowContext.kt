@@ -5,6 +5,9 @@ import tech.lamprism.lampray.storage.FileType
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization
 import tech.lamprism.lampray.storage.persistence.file.PersistedMaterialization
 
+/**
+ * @author RollW
+ */
 data class PersistTrustedUploadWorkflowContext @JvmOverloads constructor(
     val groupName: String,
     val fileName: String,

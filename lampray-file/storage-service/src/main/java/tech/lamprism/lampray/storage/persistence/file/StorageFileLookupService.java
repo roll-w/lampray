@@ -6,6 +6,9 @@ import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
 import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
 import tech.rollw.common.web.DataErrorCode;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageFileLookupService {
     private final StorageFileRepository storageFileRepository;

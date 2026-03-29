@@ -46,6 +46,9 @@ import tech.rollw.common.web.page.Page;
 
 import java.util.List;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageQueryService implements StorageQueryProvider {
     private final StorageFileRepository storageFileRepository;

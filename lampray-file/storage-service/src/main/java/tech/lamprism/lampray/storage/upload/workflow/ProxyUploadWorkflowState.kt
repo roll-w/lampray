@@ -6,6 +6,9 @@ import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization
 import tech.lamprism.lampray.storage.materialization.TempUpload
 import tech.lamprism.lampray.storage.routing.StorageWritePlan
 
+/**
+ * @author RollW
+ */
 data class ProxyUploadWorkflowState(
     var writePlan: StorageWritePlan? = null,
     var groupSettings: StorageGroupConfig? = null,

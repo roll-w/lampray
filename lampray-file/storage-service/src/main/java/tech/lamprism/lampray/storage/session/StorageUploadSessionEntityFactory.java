@@ -8,6 +8,9 @@ import tech.lamprism.lampray.storage.persistence.UploadSessionStatus;
 
 import java.time.OffsetDateTime;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageUploadSessionEntityFactory {
     public StorageUploadSessionEntity createPendingSession(String uploadId,

@@ -31,6 +31,9 @@ import tech.lamprism.lampray.storage.upload.workflow.TrustedUploadWorkflowFactor
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageUploadManager {
     private final StorageFileLookupService storageFileLookupService;

@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage.monitoring
 
+/**
+ * @author RollW
+ */
 enum class StorageTrafficEventType {
     UPLOAD_REQUEST,
     UPLOAD_BYTES,

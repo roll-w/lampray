@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage.monitoring
 
+/**
+ * @author RollW
+ */
 data class StorageTrafficScope(
     val type: StorageTrafficScopeType,
     val name: String,

@@ -25,6 +25,9 @@ import tech.lamprism.lampray.storage.upload.workflow.DirectUploadCompletionWorkf
 
 import java.io.IOException;
 
+/**
+ * @author RollW
+ */
 @Component
 public class DirectStorageUploadStrategy implements StorageUploadStrategy {
     private final DirectUploadCompletionWorkflowFactory directUploadCompletionWorkflowFactory;

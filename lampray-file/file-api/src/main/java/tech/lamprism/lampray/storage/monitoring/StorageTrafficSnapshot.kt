@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage.monitoring
 
+/**
+ * @author RollW
+ */
 data class StorageTrafficSnapshot(
     val uploadBytes: Long,
     val uploadCount: Long,

@@ -23,6 +23,9 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 
+/**
+ * @author RollW
+ */
 @Component
 public class StorageUploadSessionCleanupRunner {
     private static final Logger logger = LoggerFactory.getLogger(StorageUploadSessionCleanupRunner.class);

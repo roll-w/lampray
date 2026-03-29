@@ -30,6 +30,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
+/**
+ * @author RollW
+ */
 @Service
 public class BlobStorePlacementWriter implements BlobPlacementWriter {
     private final BlobStoreLocator blobStoreLocator;

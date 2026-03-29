@@ -7,6 +7,9 @@ import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * @author RollW
+ */
 public class PersistTrustedUploadWorkflow implements Workflow<PersistTrustedUploadWorkflowContext, FileStorage> {
     private final List<WorkflowStep<PersistTrustedUploadWorkflowContext>> steps;
 

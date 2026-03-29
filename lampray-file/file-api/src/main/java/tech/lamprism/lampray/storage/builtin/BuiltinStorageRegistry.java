@@ -22,7 +22,7 @@ package tech.lamprism.lampray.storage.builtin;
  * @author RollW
  */
 public interface BuiltinStorageRegistry {
-    public boolean contains(String fileId);
+    boolean contains(String fileId);
 
-    public BuiltinStorageResource get(String fileId);
+    BuiltinStorageResource get(String fileId);
 }

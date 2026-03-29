@@ -27,6 +27,9 @@ import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 
+/**
+ * @author RollW
+ */
 @Service
 @Transactional(readOnly = true)
 public class StorageUploadSessionManager implements StorageUploadSessionService {

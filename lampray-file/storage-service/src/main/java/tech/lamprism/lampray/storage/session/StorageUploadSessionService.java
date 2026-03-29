@@ -26,6 +26,7 @@ import java.time.OffsetDateTime;
 
 /**
  * Manages upload-session lifecycle operations.
+ * @author RollW
  */
 public interface StorageUploadSessionService {
     /**

@@ -8,6 +8,9 @@ import tech.lamprism.lampray.storage.session.workflow.CreateUploadSessionWorkflo
 
 import java.io.IOException;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageUploadSessionCreationService {
     private final CreateUploadSessionWorkflowFactory createUploadSessionWorkflowFactory;

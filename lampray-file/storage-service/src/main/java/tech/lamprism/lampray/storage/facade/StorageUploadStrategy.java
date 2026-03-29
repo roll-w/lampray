@@ -23,6 +23,9 @@ import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * @author RollW
+ */
 public interface StorageUploadStrategy {
     StorageUploadMode mode();
 

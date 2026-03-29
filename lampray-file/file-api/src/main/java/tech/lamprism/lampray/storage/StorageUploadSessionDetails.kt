@@ -18,6 +18,9 @@ package tech.lamprism.lampray.storage
 
 import java.time.OffsetDateTime
 
+/**
+ * @author RollW
+ */
 data class StorageUploadSessionDetails(
     val uploadId: String,
     val mode: StorageUploadMode,

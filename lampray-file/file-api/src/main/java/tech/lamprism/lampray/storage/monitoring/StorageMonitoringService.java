@@ -18,6 +18,9 @@ package tech.lamprism.lampray.storage.monitoring;
 
 import java.util.List;
 
+/**
+ * @author RollW
+ */
 public interface StorageMonitoringService {
     StorageMonitoringOverview getOverview();
 

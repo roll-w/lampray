@@ -22,6 +22,9 @@ import tech.lamprism.lampray.storage.configuration.StorageGroupConfig
 import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementEntity
 import tech.lamprism.lampray.storage.store.BlobStore
 
+/**
+ * @author RollW
+ */
 public data class StoredDownloadTarget(
     public val fileStorage: FileStorage,
     public val visibility: StorageVisibility,

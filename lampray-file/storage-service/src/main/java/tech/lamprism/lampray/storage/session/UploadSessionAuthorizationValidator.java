@@ -5,6 +5,9 @@ import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
 import tech.rollw.common.web.AuthErrorCode;
 
+/**
+ * @author RollW
+ */
 @Service
 public class UploadSessionAuthorizationValidator {
     public void ensureAuthorized(StorageUploadSessionEntity uploadSession,

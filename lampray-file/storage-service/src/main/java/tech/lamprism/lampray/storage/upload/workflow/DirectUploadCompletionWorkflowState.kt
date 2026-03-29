@@ -7,6 +7,9 @@ import tech.lamprism.lampray.storage.routing.StorageWritePlan
 import tech.lamprism.lampray.storage.store.BlobObject
 import tech.lamprism.lampray.storage.store.BlobStore
 
+/**
+ * @author RollW
+ */
 data class DirectUploadCompletionWorkflowState(
     var writePlan: StorageWritePlan? = null,
     var groupSettings: StorageGroupConfig? = null,

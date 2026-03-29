@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * @author RollW
+ */
 public class TrustedUploadWorkflow implements Workflow<TrustedUploadWorkflowContext, FileStorage> {
     private final List<WorkflowStep<TrustedUploadWorkflowContext>> steps;
 

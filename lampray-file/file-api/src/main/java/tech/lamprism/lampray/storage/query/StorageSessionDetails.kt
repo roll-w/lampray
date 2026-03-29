@@ -22,6 +22,9 @@ import tech.lamprism.lampray.storage.StorageUploadSessionState
 
 import java.time.OffsetDateTime
 
+/**
+ * @author RollW
+ */
 data class StorageSessionDetails(
     val uploadId: String,
     val fileId: String,

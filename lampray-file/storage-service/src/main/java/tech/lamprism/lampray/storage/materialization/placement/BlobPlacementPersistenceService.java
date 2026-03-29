@@ -25,6 +25,9 @@ import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
 
 import java.time.OffsetDateTime;
 
+/**
+ * @author RollW
+ */
 @Service
 public class BlobPlacementPersistenceService {
     private final StorageBlobPlacementRepository storageBlobPlacementRepository;

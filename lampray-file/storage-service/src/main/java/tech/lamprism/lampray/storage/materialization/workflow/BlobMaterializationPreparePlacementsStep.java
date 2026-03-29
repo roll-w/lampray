@@ -1,90 +1,48 @@
-package tech.lamprism.lampray.storage.materialization.workflow.step;
+package tech.lamprism.lampray.storage.materialization.workflow;
 
-import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode;
-import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationRequest;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationSource;
 import tech.lamprism.lampray.storage.materialization.BlobObjectKeyFactory;
-import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
 import tech.lamprism.lampray.storage.materialization.placement.BlobPlacementCleanupService;
 import tech.lamprism.lampray.storage.materialization.placement.BlobPlacementWriter;
-import tech.lamprism.lampray.storage.materialization.workflow.BlobMaterializationWorkflowContext;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
 import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
-import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
+import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
-@Service
-public class BlobMaterializationWorkflowSteps {
-    private final StorageRuntimeConfig runtimeSettings;
-    private final StorageBlobRepository storageBlobRepository;
-    private final StorageBlobPlacementRepository storageBlobPlacementRepository;
+/**
+ * @author RollW
+ */
+final class BlobMaterializationPreparePlacementsStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
     private final BlobObjectKeyFactory blobObjectKeyFactory;
     private final BlobPlacementWriter blobPlacementWriter;
     private final BlobPlacementCleanupService blobPlacementCleanupService;
+    private final StorageBlobPlacementRepository storageBlobPlacementRepository;
 
-    public BlobMaterializationWorkflowSteps(StorageRuntimeConfig runtimeSettings,
-                                           StorageBlobRepository storageBlobRepository,
-                                           StorageBlobPlacementRepository storageBlobPlacementRepository,
-                                           BlobObjectKeyFactory blobObjectKeyFactory,
-                                           BlobPlacementWriter blobPlacementWriter,
-                                           BlobPlacementCleanupService blobPlacementCleanupService) {
-        this.runtimeSettings = runtimeSettings;
-        this.storageBlobRepository = storageBlobRepository;
-        this.storageBlobPlacementRepository = storageBlobPlacementRepository;
+    BlobMaterializationPreparePlacementsStep(BlobObjectKeyFactory blobObjectKeyFactory,
+                                            BlobPlacementWriter blobPlacementWriter,
+                                            BlobPlacementCleanupService blobPlacementCleanupService,
+                                            StorageBlobPlacementRepository storageBlobPlacementRepository) {
         this.blobObjectKeyFactory = blobObjectKeyFactory;
         this.blobPlacementWriter = blobPlacementWriter;
         this.blobPlacementCleanupService = blobPlacementCleanupService;
+        this.storageBlobPlacementRepository = storageBlobPlacementRepository;
     }
 
-    public void resolveSource(BlobMaterializationWorkflowContext context) {
-        context.getState().setSource(context.getRequest().source());
-    }
-
-    public void resolveExistingBlob(BlobMaterializationWorkflowContext context) {
-        Optional<StorageBlobEntity> existingBlob = runtimeSettings.getDeduplicationEnabled()
-                ? storageBlobRepository.findByChecksumSha256(context.getRequest().checksum())
-                : Optional.empty();
-        existingBlob.ifPresent(context.getState()::setExistingBlob);
-    }
-
-    public void preparePlacements(BlobMaterializationWorkflowContext context) throws IOException {
+    @Override
+    public void execute(BlobMaterializationWorkflowContext context) throws IOException {
         if (context.getState().getExistingBlob() != null) {
             context.getState().getMaterializedPlacements().putAll(ensureRequiredPlacements(context));
             return;
         }
         materializeNewBlob(context);
-    }
-
-    public void buildPreparedBlob(BlobMaterializationWorkflowContext context) {
-        BlobMaterializationRequest request = context.getRequest();
-        if (context.getState().getExistingBlob() != null) {
-            context.getState().setPreparedBlob(PreparedBlobMaterialization.existing(
-                    context.getState().getExistingBlob(),
-                    request.size(),
-                    request.mimeType(),
-                    request.fileType(),
-                    context.getState().getMaterializedPlacements()
-            ));
-            return;
-        }
-        context.getState().setPreparedBlob(PreparedBlobMaterialization.newBlob(
-                request.checksum(),
-                request.size(),
-                request.mimeType(),
-                request.fileType(),
-                request.primaryBackend(),
-                Objects.requireNonNull(context.getState().getPrimaryObjectKey(), "primaryObjectKey"),
-                context.getState().getMaterializedPlacements()
-        ));
     }
 
     private void materializeNewBlob(BlobMaterializationWorkflowContext context) throws IOException {

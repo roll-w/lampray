@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * @author RollW
+ */
 public class CreateUploadSessionWorkflow implements Workflow<CreateUploadSessionWorkflowContext, StorageUploadSession> {
     private final List<WorkflowStep<CreateUploadSessionWorkflowContext>> steps;
 

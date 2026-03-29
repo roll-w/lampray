@@ -26,6 +26,9 @@ import tech.lamprism.lampray.storage.upload.workflow.ProxyUploadWorkflowFactory;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * @author RollW
+ */
 @Component
 public class ProxyStorageUploadStrategy implements StorageUploadStrategy {
     private final ProxyUploadWorkflowFactory proxyUploadWorkflowFactory;

@@ -18,6 +18,9 @@ package tech.lamprism.lampray.storage.query
 
 import java.time.OffsetDateTime
 
+/**
+ * @author RollW
+ */
 data class StorageBlobPlacementView(
     val placementId: String,
     val backendName: String,

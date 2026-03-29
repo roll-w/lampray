@@ -21,6 +21,7 @@ import java.nio.file.Path;
 
 /**
  * Writes blob placements to storage backends.
+ * @author RollW
  */
 public interface BlobPlacementWriter {
     /**

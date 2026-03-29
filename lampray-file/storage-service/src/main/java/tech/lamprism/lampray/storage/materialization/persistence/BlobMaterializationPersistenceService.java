@@ -12,6 +12,9 @@ import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
+/**
+ * @author RollW
+ */
 @Service
 public class BlobMaterializationPersistenceService {
     private final StorageBlobRepository storageBlobRepository;

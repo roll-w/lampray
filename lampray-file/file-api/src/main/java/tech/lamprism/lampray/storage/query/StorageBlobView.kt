@@ -20,6 +20,9 @@ import tech.lamprism.lampray.storage.FileType
 
 import java.time.OffsetDateTime
 
+/**
+ * @author RollW
+ */
 data class StorageBlobView(
     val blobId: String,
     val checksumSha256: String,

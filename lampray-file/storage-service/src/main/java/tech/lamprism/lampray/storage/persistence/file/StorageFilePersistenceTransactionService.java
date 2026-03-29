@@ -15,6 +15,9 @@ import tech.lamprism.lampray.storage.session.StorageUploadSessionService;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageFilePersistenceTransactionService {
     private final StorageBlobMaterializationService storageBlobMaterializationService;

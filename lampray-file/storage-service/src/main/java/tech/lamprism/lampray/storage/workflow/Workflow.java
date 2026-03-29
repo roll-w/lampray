@@ -4,6 +4,7 @@ import java.io.IOException;
 
 /**
  * Executes a workflow against a context object.
+ * @author RollW
  */
 public interface Workflow<C, R> {
     /**

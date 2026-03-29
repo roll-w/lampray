@@ -24,5 +24,5 @@ import tech.lamprism.lampray.storage.store.BlobStore;
  * @author RollW
  */
 public interface BlobStoreLocator {
-    public BlobStore require(String backendName);
+    BlobStore require(String backendName);
 }

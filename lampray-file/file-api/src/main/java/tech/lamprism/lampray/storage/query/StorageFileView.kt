@@ -21,6 +21,9 @@ import tech.lamprism.lampray.storage.StorageVisibility
 
 import java.time.OffsetDateTime
 
+/**
+ * @author RollW
+ */
 data class StorageFileView(
     val fileId: String,
     val blobId: String,

@@ -18,6 +18,9 @@ package tech.lamprism.lampray.storage.persistence.file
 
 import tech.lamprism.lampray.storage.FileStorage
 
+/**
+ * @author RollW
+ */
 data class PersistedMaterialization(
     val fileStorage: FileStorage,
     val blobId: String,

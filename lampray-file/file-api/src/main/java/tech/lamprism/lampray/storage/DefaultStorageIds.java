@@ -18,6 +18,9 @@ package tech.lamprism.lampray.storage;
 
 import java.util.Set;
 
+/**
+ * @author RollW
+ */
 public final class DefaultStorageIds {
     public static final String DEFAULT_AVATAR_ID = "user";
     public static final String DEFAULT_USER_COVER_ID = "user-cover";

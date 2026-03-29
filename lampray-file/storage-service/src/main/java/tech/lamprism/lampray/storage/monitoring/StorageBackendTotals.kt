@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage.monitoring
 
+/**
+ * @author RollW
+ */
 data class StorageBackendTotals(
     val primaryBlobCount: Long,
     val uniqueBytes: Long,

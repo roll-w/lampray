@@ -21,6 +21,9 @@ import tech.rollw.common.web.page.Page;
 
 import java.util.List;
 
+/**
+ * @author RollW
+ */
 public interface StorageQueryProvider {
     Page<StorageFileView> listFiles(int page,
                                     int size,

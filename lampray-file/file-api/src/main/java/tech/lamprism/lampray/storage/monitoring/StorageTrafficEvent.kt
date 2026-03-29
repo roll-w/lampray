@@ -16,6 +16,9 @@
 
 package tech.lamprism.lampray.storage.monitoring
 
+/**
+ * @author RollW
+ */
 data class StorageTrafficEvent(
     val scope: StorageTrafficScope,
     val type: StorageTrafficEventType,

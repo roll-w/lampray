@@ -11,6 +11,9 @@ import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
 
 import java.time.OffsetDateTime;
 
+/**
+ * @author RollW
+ */
 @Service
 public class StorageFileEntityFactory {
     private final StorageTopology storageTopology;

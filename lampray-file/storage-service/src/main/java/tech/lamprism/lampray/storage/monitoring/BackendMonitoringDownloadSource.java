@@ -18,6 +18,9 @@ package tech.lamprism.lampray.storage.monitoring;
 
 import tech.lamprism.lampray.storage.StorageDownloadSource;
 
+/**
+ * @author RollW
+ */
 public class BackendMonitoringDownloadSource extends CountingStorageDownloadSource {
 
     public BackendMonitoringDownloadSource(StorageDownloadSource delegate,

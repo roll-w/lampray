@@ -7,6 +7,9 @@ import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization
 import tech.lamprism.lampray.storage.materialization.TempUpload
 import tech.lamprism.lampray.storage.routing.StorageWritePlan
 
+/**
+ * @author RollW
+ */
 data class TrustedUploadWorkflowState(
     var groupName: String? = null,
     var writePlan: StorageWritePlan? = null,

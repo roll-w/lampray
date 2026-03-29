@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.LongConsumer;
 
+/**
+ * @author RollW
+ */
 public class CountingInputStream extends FilterInputStream {
     private final LongConsumer onBytesRead;
 

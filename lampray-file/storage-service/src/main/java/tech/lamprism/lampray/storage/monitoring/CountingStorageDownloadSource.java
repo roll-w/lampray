@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.LongConsumer;
 
+/**
+ * @author RollW
+ */
 public class CountingStorageDownloadSource implements StorageDownloadSource {
     private final StorageDownloadSource delegate;
     private final Runnable onOpen;

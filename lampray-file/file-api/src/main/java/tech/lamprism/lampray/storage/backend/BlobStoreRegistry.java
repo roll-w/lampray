@@ -27,20 +27,20 @@ import java.util.Optional;
  * @author RollW
  */
 public interface BlobStoreRegistry extends AutoCloseable {
-    public void register(BlobStoreRegistration registration);
+    void register(BlobStoreRegistration registration);
 
-    public Optional<BlobStoreRegistration> unregister(String backendName);
+    Optional<BlobStoreRegistration> unregister(String backendName);
 
-    public Optional<BlobStore> find(String backendName);
+    Optional<BlobStore> find(String backendName);
 
-    public BlobStore get(String backendName);
+    BlobStore get(String backendName);
 
-    public Collection<BlobStoreRegistration> registrations();
+    Collection<BlobStoreRegistration> registrations();
 
-    public boolean contains(String backendName);
+    boolean contains(String backendName);
 
-    public Collection<BlobStore> all();
+    Collection<BlobStore> all();
 
     @Override
-    public void close() throws Exception;
+    void close() throws Exception;
 }
