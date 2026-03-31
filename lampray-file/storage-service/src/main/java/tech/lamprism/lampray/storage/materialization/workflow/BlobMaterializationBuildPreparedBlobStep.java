@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.materialization.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationRequest;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
@@ -9,7 +10,13 @@ import java.util.Objects;
 /**
  * @author RollW
  */
+@Component
 final class BlobMaterializationBuildPreparedBlobStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
+    @Override
+    public int getOrder() {
+        return 400;
+    }
+
     @Override
     public void execute(BlobMaterializationWorkflowContext context) {
         BlobMaterializationRequest request = context.getRequest();

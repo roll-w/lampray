@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.policy.StorageContentRules;
 import tech.lamprism.lampray.storage.routing.StorageWritePlan;
@@ -9,6 +10,7 @@ import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 /**
  * @author RollW
  */
+@Component
 final class TrustedUploadResolvePlanStep implements WorkflowStep<TrustedUploadWorkflowContext> {
     private static final StorageContentRules CONTENT_RULES = StorageContentRules.INSTANCE;
 
@@ -19,6 +21,11 @@ final class TrustedUploadResolvePlanStep implements WorkflowStep<TrustedUploadWo
                                  StorageRuntimeConfig runtimeSettings) {
         this.storageWritePlanResolver = storageWritePlanResolver;
         this.runtimeSettings = runtimeSettings;
+    }
+
+    @Override
+    public int getOrder() {
+        return 100;
     }
 
     @Override

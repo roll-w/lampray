@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.session.workflow;
 
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
@@ -12,6 +13,7 @@ import java.util.Objects;
 /**
  * @author RollW
  */
+@Component
 final class CreateUploadSessionPersistUploadSessionStep implements WorkflowStep<CreateUploadSessionWorkflowContext> {
     private final StorageUploadSessionEntityFactory storageUploadSessionEntityFactory;
     private final StorageUploadSessionRepository storageUploadSessionRepository;
@@ -23,6 +25,11 @@ final class CreateUploadSessionPersistUploadSessionStep implements WorkflowStep<
         this.storageUploadSessionEntityFactory = storageUploadSessionEntityFactory;
         this.storageUploadSessionRepository = storageUploadSessionRepository;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
+
+    @Override
+    public int getOrder() {
+        return 500;
     }
 
     @Override

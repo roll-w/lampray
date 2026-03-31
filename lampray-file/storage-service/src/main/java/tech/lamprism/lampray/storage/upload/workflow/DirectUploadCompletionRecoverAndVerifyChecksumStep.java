@@ -2,6 +2,7 @@ package tech.lamprism.lampray.storage.upload.workflow;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import tech.lamprism.lampray.storage.policy.StorageValidationRules;
 import tech.lamprism.lampray.storage.store.BlobObject;
@@ -16,9 +17,15 @@ import java.util.Objects;
 /**
  * @author RollW
  */
+@Component
 final class DirectUploadCompletionRecoverAndVerifyChecksumStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private static final int BUFFER_SIZE = 8192;
     private static final StorageValidationRules VALIDATION_RULES = StorageValidationRules.INSTANCE;
+
+    @Override
+    public int getOrder() {
+        return 400;
+    }
 
     @Override
     public void execute(DirectUploadCompletionWorkflowContext context) throws IOException {

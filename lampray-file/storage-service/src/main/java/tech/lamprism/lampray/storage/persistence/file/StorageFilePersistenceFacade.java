@@ -22,29 +22,29 @@ import tech.lamprism.lampray.storage.FileType;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
 import tech.lamprism.lampray.storage.facade.StorageFilePersistenceService;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
+import tech.lamprism.lampray.storage.persistence.file.workflow.PersistSessionUploadWorkflow;
 import tech.lamprism.lampray.storage.persistence.file.workflow.PersistSessionUploadWorkflowContext;
-import tech.lamprism.lampray.storage.persistence.file.workflow.PersistSessionUploadWorkflowFactory;
+import tech.lamprism.lampray.storage.persistence.file.workflow.PersistTrustedUploadWorkflow;
 import tech.lamprism.lampray.storage.persistence.file.workflow.PersistTrustedUploadWorkflowContext;
-import tech.lamprism.lampray.storage.persistence.file.workflow.PersistTrustedUploadWorkflowFactory;
 
 /**
  * @author RollW
  */
 @Service
 public class StorageFilePersistenceFacade implements StorageFilePersistenceService {
-    private final PersistSessionUploadWorkflowFactory persistSessionUploadWorkflowFactory;
-    private final PersistTrustedUploadWorkflowFactory persistTrustedUploadWorkflowFactory;
+    private final PersistSessionUploadWorkflow persistSessionUploadWorkflow;
+    private final PersistTrustedUploadWorkflow persistTrustedUploadWorkflow;
 
-    public StorageFilePersistenceFacade(PersistSessionUploadWorkflowFactory persistSessionUploadWorkflowFactory,
-                                        PersistTrustedUploadWorkflowFactory persistTrustedUploadWorkflowFactory) {
-        this.persistSessionUploadWorkflowFactory = persistSessionUploadWorkflowFactory;
-        this.persistTrustedUploadWorkflowFactory = persistTrustedUploadWorkflowFactory;
+    public StorageFilePersistenceFacade(PersistSessionUploadWorkflow persistSessionUploadWorkflow,
+                                        PersistTrustedUploadWorkflow persistTrustedUploadWorkflow) {
+        this.persistSessionUploadWorkflow = persistSessionUploadWorkflow;
+        this.persistTrustedUploadWorkflow = persistTrustedUploadWorkflow;
     }
 
     @Override
     public FileStorage persistSessionUpload(StorageUploadSessionEntity uploadSession,
                                             PreparedBlobMaterialization preparedBlob) {
-        return persistSessionUploadWorkflowFactory.create().execute(new PersistSessionUploadWorkflowContext(uploadSession, preparedBlob));
+        return persistSessionUploadWorkflow.execute(new PersistSessionUploadWorkflowContext(uploadSession, preparedBlob));
     }
 
     @Override
@@ -54,7 +54,7 @@ public class StorageFilePersistenceFacade implements StorageFilePersistenceServi
                                             FileType fileType,
                                             Long ownerUserId,
                                             PreparedBlobMaterialization preparedBlob) {
-        return persistTrustedUploadWorkflowFactory.create().execute(
+        return persistTrustedUploadWorkflow.execute(
                 new PersistTrustedUploadWorkflowContext(groupName, fileName, mimeType, fileType, ownerUserId, preparedBlob)
         );
     }

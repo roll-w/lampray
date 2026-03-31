@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.StorageUploadMode;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
+import tech.lamprism.lampray.storage.upload.workflow.ProxyUploadWorkflow;
 import tech.lamprism.lampray.storage.upload.workflow.ProxyUploadWorkflowContext;
-import tech.lamprism.lampray.storage.upload.workflow.ProxyUploadWorkflowFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,10 +31,10 @@ import java.io.InputStream;
  */
 @Component
 public class ProxyStorageUploadStrategy implements StorageUploadStrategy {
-    private final ProxyUploadWorkflowFactory proxyUploadWorkflowFactory;
+    private final ProxyUploadWorkflow proxyUploadWorkflow;
 
-    public ProxyStorageUploadStrategy(ProxyUploadWorkflowFactory proxyUploadWorkflowFactory) {
-        this.proxyUploadWorkflowFactory = proxyUploadWorkflowFactory;
+    public ProxyStorageUploadStrategy(ProxyUploadWorkflow proxyUploadWorkflow) {
+        this.proxyUploadWorkflow = proxyUploadWorkflow;
     }
 
     @Override
@@ -45,7 +45,7 @@ public class ProxyStorageUploadStrategy implements StorageUploadStrategy {
     @Override
     public FileStorage uploadContent(StorageUploadSessionEntity uploadSession,
                                      InputStream inputStream) throws IOException {
-        return proxyUploadWorkflowFactory.create().execute(new ProxyUploadWorkflowContext(uploadSession, inputStream));
+        return proxyUploadWorkflow.execute(new ProxyUploadWorkflowContext(uploadSession, inputStream));
     }
 
 }

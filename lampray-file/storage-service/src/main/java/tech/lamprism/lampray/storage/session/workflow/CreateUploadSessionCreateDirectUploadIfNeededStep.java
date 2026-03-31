@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.session.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageUploadMode;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.session.DirectUploadProvision;
@@ -12,6 +13,7 @@ import java.util.Objects;
 /**
  * @author RollW
  */
+@Component
 final class CreateUploadSessionCreateDirectUploadIfNeededStep implements WorkflowStep<CreateUploadSessionWorkflowContext> {
     private final StorageRuntimeConfig runtimeSettings;
     private final DirectUploadRequestCreator directUploadRequestCreator;
@@ -20,6 +22,11 @@ final class CreateUploadSessionCreateDirectUploadIfNeededStep implements Workflo
                                                       DirectUploadRequestCreator directUploadRequestCreator) {
         this.runtimeSettings = runtimeSettings;
         this.directUploadRequestCreator = directUploadRequestCreator;
+    }
+
+    @Override
+    public int getOrder() {
+        return 400;
     }
 
     @Override

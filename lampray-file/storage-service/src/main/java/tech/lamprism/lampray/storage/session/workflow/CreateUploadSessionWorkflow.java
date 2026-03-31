@@ -1,21 +1,26 @@
 package tech.lamprism.lampray.storage.session.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageUploadSession;
 import tech.lamprism.lampray.storage.workflow.Workflow;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * @author RollW
  */
+@Component
 public class CreateUploadSessionWorkflow implements Workflow<CreateUploadSessionWorkflowContext, StorageUploadSession> {
     private final List<WorkflowStep<CreateUploadSessionWorkflowContext>> steps;
 
     public CreateUploadSessionWorkflow(List<WorkflowStep<CreateUploadSessionWorkflowContext>> steps) {
-        this.steps = List.copyOf(steps);
+        this.steps = steps.stream()
+                .sorted(Comparator.comparingInt(WorkflowStep::getOrder))
+                .toList();
     }
 
     @Override

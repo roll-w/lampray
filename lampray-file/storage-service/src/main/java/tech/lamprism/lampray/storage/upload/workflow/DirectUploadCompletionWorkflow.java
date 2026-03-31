@@ -1,21 +1,26 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.workflow.Workflow;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * @author RollW
  */
+@Component
 public class DirectUploadCompletionWorkflow implements Workflow<DirectUploadCompletionWorkflowContext, FileStorage> {
     private final List<WorkflowStep<DirectUploadCompletionWorkflowContext>> steps;
 
     public DirectUploadCompletionWorkflow(List<WorkflowStep<DirectUploadCompletionWorkflowContext>> steps) {
-        this.steps = List.copyOf(steps);
+        this.steps = steps.stream()
+                .sorted(Comparator.comparingInt(WorkflowStep::getOrder))
+                .toList();
     }
 
     @Override

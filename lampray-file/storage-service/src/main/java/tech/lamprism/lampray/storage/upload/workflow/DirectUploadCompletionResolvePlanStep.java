@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.policy.StorageValidationRules;
 import tech.lamprism.lampray.storage.routing.StorageWritePlan;
@@ -10,6 +11,7 @@ import tech.rollw.common.web.CommonErrorCode;
 /**
  * @author RollW
  */
+@Component
 final class DirectUploadCompletionResolvePlanStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private static final StorageValidationRules VALIDATION_RULES = StorageValidationRules.INSTANCE;
 
@@ -17,6 +19,11 @@ final class DirectUploadCompletionResolvePlanStep implements WorkflowStep<Direct
 
     DirectUploadCompletionResolvePlanStep(StorageWritePlanResolver storageWritePlanResolver) {
         this.storageWritePlanResolver = storageWritePlanResolver;
+    }
+
+    @Override
+    public int getOrder() {
+        return 100;
     }
 
     @Override

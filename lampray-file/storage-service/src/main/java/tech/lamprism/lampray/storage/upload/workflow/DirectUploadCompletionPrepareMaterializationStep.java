@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationRequest;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
 import tech.lamprism.lampray.storage.materialization.StorageBlobMaterializationService;
@@ -11,11 +12,17 @@ import java.util.Objects;
 /**
  * @author RollW
  */
+@Component
 final class DirectUploadCompletionPrepareMaterializationStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private final StorageBlobMaterializationService storageBlobMaterializationService;
 
     DirectUploadCompletionPrepareMaterializationStep(StorageBlobMaterializationService storageBlobMaterializationService) {
         this.storageBlobMaterializationService = storageBlobMaterializationService;
+    }
+
+    @Override
+    public int getOrder() {
+        return 500;
     }
 
     @Override

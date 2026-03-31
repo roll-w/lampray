@@ -18,8 +18,8 @@ package tech.lamprism.lampray.storage.materialization;
 
 import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.storage.materialization.persistence.BlobMaterializationPersistenceService;
+import tech.lamprism.lampray.storage.materialization.workflow.BlobMaterializationWorkflow;
 import tech.lamprism.lampray.storage.materialization.workflow.BlobMaterializationWorkflowContext;
-import tech.lamprism.lampray.storage.materialization.workflow.BlobMaterializationWorkflowFactory;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
 
 /**
@@ -27,18 +27,18 @@ import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
  */
 @Service
 public class StorageBlobMaterializationFacade implements StorageBlobMaterializationService {
-    private final BlobMaterializationWorkflowFactory blobMaterializationWorkflowFactory;
+    private final BlobMaterializationWorkflow blobMaterializationWorkflow;
     private final BlobMaterializationPersistenceService blobMaterializationPersistenceService;
 
-    public StorageBlobMaterializationFacade(BlobMaterializationWorkflowFactory blobMaterializationWorkflowFactory,
+    public StorageBlobMaterializationFacade(BlobMaterializationWorkflow blobMaterializationWorkflow,
                                             BlobMaterializationPersistenceService blobMaterializationPersistenceService) {
-        this.blobMaterializationWorkflowFactory = blobMaterializationWorkflowFactory;
+        this.blobMaterializationWorkflow = blobMaterializationWorkflow;
         this.blobMaterializationPersistenceService = blobMaterializationPersistenceService;
     }
 
     @Override
     public PreparedBlobMaterialization prepareBlobMaterialization(BlobMaterializationRequest request) throws java.io.IOException {
-        return blobMaterializationWorkflowFactory.create().execute(new BlobMaterializationWorkflowContext(request));
+        return blobMaterializationWorkflow.execute(new BlobMaterializationWorkflowContext(request));
     }
 
     @Override

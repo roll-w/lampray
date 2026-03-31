@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageUploadRequest;
 import tech.lamprism.lampray.storage.materialization.TempUpload;
 import tech.lamprism.lampray.storage.policy.StorageValidationRules;
@@ -10,8 +11,14 @@ import java.util.Objects;
 /**
  * @author RollW
  */
+@Component
 final class TrustedUploadValidateUploadStep implements WorkflowStep<TrustedUploadWorkflowContext> {
     private static final StorageValidationRules VALIDATION_RULES = StorageValidationRules.INSTANCE;
+
+    @Override
+    public int getOrder() {
+        return 500;
+    }
 
     @Override
     public void execute(TrustedUploadWorkflowContext context) {

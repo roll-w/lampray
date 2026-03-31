@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.StorageUploadMode;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
+import tech.lamprism.lampray.storage.upload.workflow.DirectUploadCompletionWorkflow;
 import tech.lamprism.lampray.storage.upload.workflow.DirectUploadCompletionWorkflowContext;
-import tech.lamprism.lampray.storage.upload.workflow.DirectUploadCompletionWorkflowFactory;
 
 import java.io.IOException;
 
@@ -30,10 +30,10 @@ import java.io.IOException;
  */
 @Component
 public class DirectStorageUploadStrategy implements StorageUploadStrategy {
-    private final DirectUploadCompletionWorkflowFactory directUploadCompletionWorkflowFactory;
+    private final DirectUploadCompletionWorkflow directUploadCompletionWorkflow;
 
-    public DirectStorageUploadStrategy(DirectUploadCompletionWorkflowFactory directUploadCompletionWorkflowFactory) {
-        this.directUploadCompletionWorkflowFactory = directUploadCompletionWorkflowFactory;
+    public DirectStorageUploadStrategy(DirectUploadCompletionWorkflow directUploadCompletionWorkflow) {
+        this.directUploadCompletionWorkflow = directUploadCompletionWorkflow;
     }
 
     @Override
@@ -43,6 +43,6 @@ public class DirectStorageUploadStrategy implements StorageUploadStrategy {
 
     @Override
     public FileStorage completeUpload(StorageUploadSessionEntity uploadSession) throws IOException {
-        return directUploadCompletionWorkflowFactory.create().execute(new DirectUploadCompletionWorkflowContext(uploadSession));
+        return directUploadCompletionWorkflow.execute(new DirectUploadCompletionWorkflowContext(uploadSession));
     }
 }

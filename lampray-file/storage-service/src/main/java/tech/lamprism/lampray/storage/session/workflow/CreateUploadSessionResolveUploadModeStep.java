@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.session.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.storage.StorageResourceKind;
 import tech.lamprism.lampray.storage.StorageUploadMode;
@@ -15,6 +16,7 @@ import java.util.Objects;
 /**
  * @author RollW
  */
+@Component
 final class CreateUploadSessionResolveUploadModeStep implements WorkflowStep<CreateUploadSessionWorkflowContext> {
     private final StorageRuntimeConfig runtimeSettings;
     private final BlobStoreLocator blobStoreLocator;
@@ -28,6 +30,11 @@ final class CreateUploadSessionResolveUploadModeStep implements WorkflowStep<Cre
         this.blobStoreLocator = blobStoreLocator;
         this.resourceIdGenerator = resourceIdGenerator;
         this.transferModeResolver = new StorageTransferModeResolver(runtimeSettings);
+    }
+
+    @Override
+    public int getOrder() {
+        return 300;
     }
 
     @Override

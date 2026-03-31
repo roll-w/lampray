@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.session.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.FileType;
 import tech.lamprism.lampray.storage.StorageUploadRequest;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
@@ -12,9 +13,15 @@ import java.util.Objects;
 /**
  * @author RollW
  */
+@Component
 final class CreateUploadSessionNormalizeAndValidateRequestStep implements WorkflowStep<CreateUploadSessionWorkflowContext> {
     private static final StorageContentRules CONTENT_RULES = StorageContentRules.INSTANCE;
     private static final StorageValidationRules VALIDATION_RULES = StorageValidationRules.INSTANCE;
+
+    @Override
+    public int getOrder() {
+        return 200;
+    }
 
     @Override
     public void execute(CreateUploadSessionWorkflowContext context) {

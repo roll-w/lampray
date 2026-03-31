@@ -26,7 +26,7 @@ import tech.lamprism.lampray.storage.persistence.UploadSessionStatus;
 import tech.lamprism.lampray.storage.persistence.file.StorageFileLookupService;
 import tech.lamprism.lampray.storage.session.StorageUploadSessionService;
 import tech.lamprism.lampray.storage.upload.workflow.TrustedUploadWorkflowContext;
-import tech.lamprism.lampray.storage.upload.workflow.TrustedUploadWorkflowFactory;
+import tech.lamprism.lampray.storage.upload.workflow.TrustedUploadWorkflow;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,21 +38,21 @@ import java.io.InputStream;
 public class StorageUploadManager {
     private final StorageFileLookupService storageFileLookupService;
     private final StorageUploadSessionService storageUploadSessionService;
-    private final TrustedUploadWorkflowFactory trustedUploadWorkflowFactory;
+    private final TrustedUploadWorkflow trustedUploadWorkflow;
     private final StorageUploadOperationRouter storageUploadOperationRouter;
 
     public StorageUploadManager(StorageFileLookupService storageFileLookupService,
                                 StorageUploadSessionService storageUploadSessionService,
-                                TrustedUploadWorkflowFactory trustedUploadWorkflowFactory,
+                                TrustedUploadWorkflow trustedUploadWorkflow,
                                 StorageUploadOperationRouter storageUploadOperationRouter) {
         this.storageFileLookupService = storageFileLookupService;
         this.storageUploadSessionService = storageUploadSessionService;
-        this.trustedUploadWorkflowFactory = trustedUploadWorkflowFactory;
+        this.trustedUploadWorkflow = trustedUploadWorkflow;
         this.storageUploadOperationRouter = storageUploadOperationRouter;
     }
 
     public FileStorage saveFile(InputStream inputStream) throws IOException {
-        return trustedUploadWorkflowFactory.create().execute(new TrustedUploadWorkflowContext(inputStream));
+        return trustedUploadWorkflow.execute(new TrustedUploadWorkflowContext(inputStream));
     }
 
     public StorageUploadSession createUploadSession(StorageUploadRequest request,

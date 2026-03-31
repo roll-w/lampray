@@ -1,6 +1,7 @@
 package tech.lamprism.lampray.storage.session.workflow;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.routing.StorageWritePlan;
 import tech.lamprism.lampray.storage.routing.StorageWritePlanResolver;
@@ -9,6 +10,7 @@ import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 /**
  * @author RollW
  */
+@Component
 final class CreateUploadSessionResolvePlanStep implements WorkflowStep<CreateUploadSessionWorkflowContext> {
     private final StorageRuntimeConfig runtimeSettings;
     private final StorageWritePlanResolver storageWritePlanResolver;
@@ -17,6 +19,11 @@ final class CreateUploadSessionResolvePlanStep implements WorkflowStep<CreateUpl
                                        StorageWritePlanResolver storageWritePlanResolver) {
         this.runtimeSettings = runtimeSettings;
         this.storageWritePlanResolver = storageWritePlanResolver;
+    }
+
+    @Override
+    public int getOrder() {
+        return 100;
     }
 
     @Override

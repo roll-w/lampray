@@ -6,8 +6,9 @@ import java.io.IOException;
  * Performs one workflow step against a shared context.
  * @author RollW
  */
-@FunctionalInterface
 public interface WorkflowStep<C> {
+    int getOrder();
+
     /**
      * Applies the step to the current workflow context.
      */

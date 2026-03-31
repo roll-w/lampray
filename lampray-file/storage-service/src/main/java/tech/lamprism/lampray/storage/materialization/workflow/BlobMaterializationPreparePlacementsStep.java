@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.materialization.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationRequest;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationSource;
@@ -20,6 +21,7 @@ import java.util.Set;
 /**
  * @author RollW
  */
+@Component
 final class BlobMaterializationPreparePlacementsStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
     private final BlobObjectKeyFactory blobObjectKeyFactory;
     private final BlobPlacementWriter blobPlacementWriter;
@@ -34,6 +36,11 @@ final class BlobMaterializationPreparePlacementsStep implements WorkflowStep<Blo
         this.blobPlacementWriter = blobPlacementWriter;
         this.blobPlacementCleanupService = blobPlacementCleanupService;
         this.storageBlobPlacementRepository = storageBlobPlacementRepository;
+    }
+
+    @Override
+    public int getOrder() {
+        return 300;
     }
 
     @Override

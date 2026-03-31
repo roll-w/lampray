@@ -1,5 +1,6 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
+import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.materialization.TempUpload;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
@@ -8,7 +9,13 @@ import java.util.Objects;
 /**
  * @author RollW
  */
+@Component
 final class TrustedUploadAssignDefaultFileNameStep implements WorkflowStep<TrustedUploadWorkflowContext> {
+    @Override
+    public int getOrder() {
+        return 300;
+    }
+
     @Override
     public void execute(TrustedUploadWorkflowContext context) {
         TempUpload tempUpload = Objects.requireNonNull(context.getState().getTempUpload(), "tempUpload");
