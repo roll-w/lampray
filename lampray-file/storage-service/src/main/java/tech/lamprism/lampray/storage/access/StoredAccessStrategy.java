@@ -36,8 +36,8 @@ public interface StoredAccessStrategy {
     }
 
     default StorageReference resolveReference(String fileId,
-                                                     StoredDownloadTarget target,
-                                                     StorageReferenceRequest request) throws IOException {
+                                              StoredDownloadTarget target,
+                                              StorageReferenceRequest request) throws IOException {
         throw new UnsupportedOperationException("Reference is not supported for mode: " + mode());
     }
 }

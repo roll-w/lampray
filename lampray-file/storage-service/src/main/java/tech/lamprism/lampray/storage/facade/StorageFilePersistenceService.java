@@ -23,6 +23,7 @@ import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
 
 /**
  * Persists materialized files and binds them to storage metadata.
+ *
  * @author RollW
  */
 public interface StorageFilePersistenceService {

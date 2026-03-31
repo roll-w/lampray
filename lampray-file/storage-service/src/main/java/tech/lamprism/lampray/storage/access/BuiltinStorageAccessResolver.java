@@ -57,7 +57,7 @@ public class BuiltinStorageAccessResolver {
     }
 
     public StorageReference resolveReference(String fileId,
-                                            StorageReferenceRequest request) {
+                                             StorageReferenceRequest request) {
         BuiltinStorageResource builtinResource = findBuiltinResource(fileId);
         if (builtinResource == null) {
             return null;

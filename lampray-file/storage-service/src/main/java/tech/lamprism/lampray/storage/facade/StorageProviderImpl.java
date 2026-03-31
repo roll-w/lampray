@@ -19,7 +19,6 @@ package tech.lamprism.lampray.storage.facade;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import tech.lamprism.lampray.storage.access.StorageAccessService;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageProvider;
@@ -28,6 +27,7 @@ import tech.lamprism.lampray.storage.StorageReferenceRequest;
 import tech.lamprism.lampray.storage.StorageUploadRequest;
 import tech.lamprism.lampray.storage.StorageUploadSession;
 import tech.lamprism.lampray.storage.StorageUploadSessionDetails;
+import tech.lamprism.lampray.storage.access.StorageAccessService;
 
 import java.io.IOException;
 import java.io.InputStream;

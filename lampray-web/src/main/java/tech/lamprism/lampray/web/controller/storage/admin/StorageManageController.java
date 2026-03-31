@@ -19,8 +19,8 @@ package tech.lamprism.lampray.web.controller.storage.admin;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import tech.lamprism.lampray.storage.StorageUploadSessionState;
 import tech.lamprism.lampray.storage.StorageException;
+import tech.lamprism.lampray.storage.StorageUploadSessionState;
 import tech.lamprism.lampray.storage.query.StorageBackendView;
 import tech.lamprism.lampray.storage.query.StorageFileDetails;
 import tech.lamprism.lampray.storage.query.StorageFileView;
@@ -33,7 +33,6 @@ import tech.lamprism.lampray.web.controller.storage.model.StorageAdminFileListRe
 import tech.lamprism.lampray.web.controller.storage.model.StorageAdminSessionListRequest;
 import tech.rollw.common.web.CommonErrorCode;
 import tech.rollw.common.web.HttpResponseEntity;
-import tech.rollw.common.web.page.Page;
 
 import java.util.List;
 import java.util.Locale;
@@ -47,7 +46,7 @@ public class StorageManageController {
     }
 
     @GetMapping("/storage/files")
-    public HttpResponseEntity<Page<StorageFileView>> listFiles(@Valid StorageAdminFileListRequest request) {
+    public HttpResponseEntity<List<StorageFileView>> listFiles(@Valid StorageAdminFileListRequest request) {
         return HttpResponseEntity.success(storageQueryProvider.listFiles(
                 request.getPage(),
                 request.getSize(),
@@ -63,7 +62,7 @@ public class StorageManageController {
     }
 
     @GetMapping("/storage/sessions")
-    public HttpResponseEntity<Page<StorageSessionView>> listSessions(@Valid StorageAdminSessionListRequest request) {
+    public HttpResponseEntity<List<StorageSessionView>> listSessions(@Valid StorageAdminSessionListRequest request) {
         return HttpResponseEntity.success(storageQueryProvider.listSessions(
                 request.getPage(),
                 request.getSize(),

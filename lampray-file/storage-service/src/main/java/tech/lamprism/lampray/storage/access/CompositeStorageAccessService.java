@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageReference;
+import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
 
 import java.io.IOException;
@@ -51,10 +52,10 @@ public class CompositeStorageAccessService implements StorageAccessService {
 
     @Override
     public StorageReference resolveStorageReference(String id,
-                                                     StorageReferenceRequest request,
-                                                     Long userId) throws IOException {
+                                                    StorageReferenceRequest request,
+                                                    Long userId) throws IOException {
         StorageReferenceRequest normalizedRequest = request != null ? request : new StorageReferenceRequest();
-        if (normalizedRequest.getMode() == tech.lamprism.lampray.storage.StorageReferenceMode.PROXY) {
+        if (normalizedRequest.getMode() == StorageReferenceMode.PROXY) {
             return storedStorageAccessResolver.proxyReference(id);
         }
 

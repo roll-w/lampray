@@ -28,45 +28,45 @@ class StorageRuntimeConfig(
 ) {
     val defaultGroup: String
         get() =
-        configReader[StorageConfigKeys.DEFAULT_GROUP, "default"]
+            configReader[StorageConfigKeys.DEFAULT_GROUP, "default"]
 
     val deduplicationEnabled: Boolean
         get() =
-        configReader[StorageConfigKeys.DEDUPLICATION_ENABLED, true]
+            configReader[StorageConfigKeys.DEDUPLICATION_ENABLED, true]
 
     val directAccessEnabled: Boolean
         get() =
-        configReader[StorageConfigKeys.DIRECT_ACCESS_ENABLED, true]
+            configReader[StorageConfigKeys.DIRECT_ACCESS_ENABLED, true]
 
     val directAccessTtlSeconds: Long
         get() =
-        configReader[StorageConfigKeys.DIRECT_ACCESS_TTL_SECONDS, 300L]
+            configReader[StorageConfigKeys.DIRECT_ACCESS_TTL_SECONDS, 300L]
 
     val uploadProxyThresholdBytes: Long
         get() =
-        configReader[StorageConfigKeys.UPLOAD_PROXY_THRESHOLD_BYTES, 8L * 1024L * 1024L]
+            configReader[StorageConfigKeys.UPLOAD_PROXY_THRESHOLD_BYTES, 8L * 1024L * 1024L]
 
     val downloadProxyThresholdBytes: Long
         get() =
-        configReader[StorageConfigKeys.DOWNLOAD_PROXY_THRESHOLD_BYTES, 16L * 1024L * 1024L]
+            configReader[StorageConfigKeys.DOWNLOAD_PROXY_THRESHOLD_BYTES, 16L * 1024L * 1024L]
 
     val pendingUploadExpireSeconds: Long
         get() =
-        configReader[StorageConfigKeys.PENDING_UPLOAD_EXPIRE_SECONDS, 1800L]
+            configReader[StorageConfigKeys.PENDING_UPLOAD_EXPIRE_SECONDS, 1800L]
 
     val cleanupOrphanUploadExpireSeconds: Long
         get() =
-        configReader[StorageConfigKeys.CLEANUP_ORPHAN_UPLOAD_EXPIRE_SECONDS, 86400L]
+            configReader[StorageConfigKeys.CLEANUP_ORPHAN_UPLOAD_EXPIRE_SECONDS, 86400L]
 
     val cleanupExpiredUploadRetainSeconds: Long
         get() =
-        configReader[StorageConfigKeys.CLEANUP_EXPIRED_UPLOAD_RETAIN_SECONDS, 86400L]
+            configReader[StorageConfigKeys.CLEANUP_EXPIRED_UPLOAD_RETAIN_SECONDS, 86400L]
 
     val cleanupCompletedUploadRetainSeconds: Long
         get() =
-        configReader[StorageConfigKeys.CLEANUP_COMPLETED_UPLOAD_RETAIN_SECONDS, 604800L]
+            configReader[StorageConfigKeys.CLEANUP_COMPLETED_UPLOAD_RETAIN_SECONDS, 604800L]
 
     val cleanupIntervalSeconds: Long
         get() =
-        configReader[StorageConfigKeys.CLEANUP_INTERVAL_SECONDS, 600L]
+            configReader[StorageConfigKeys.CLEANUP_INTERVAL_SECONDS, 600L]
 }
