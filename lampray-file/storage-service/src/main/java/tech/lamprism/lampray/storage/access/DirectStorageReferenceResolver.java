@@ -22,6 +22,7 @@ import tech.lamprism.lampray.storage.StorageDirectAccessMode;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageReference;
+import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
 import tech.lamprism.lampray.storage.StorageReferenceSource;
 import tech.lamprism.lampray.storage.StorageVisibility;
@@ -63,7 +64,7 @@ public class DirectStorageReferenceResolver {
             return null;
         }
 
-        if (request.getMode() == tech.lamprism.lampray.storage.StorageReferenceMode.AUTO) {
+        if (request.getMode() == StorageReferenceMode.AUTO) {
             StorageDownloadMode autoMode = transferModeResolver.resolveDownloadMode(
                     target.getFileStorage(),
                     target.getGroupConfig(),
@@ -100,7 +101,7 @@ public class DirectStorageReferenceResolver {
             return null;
         }
         String url = target.getBlobStore().createPublicDownloadUrl(
-                new BlobDownloadRequest(target.getPlacementEntity().getObjectKey(), target.getFileStorage().getFileName(), mimeType)
+                new BlobDownloadRequest(target.getPlacement().getObjectKey(), target.getFileStorage().getFileName(), mimeType)
         );
         return new StorageReference(
                 url,
@@ -122,7 +123,7 @@ public class DirectStorageReferenceResolver {
         }
         StorageAccessRequest accessRequest = target.getBlobStore().createDirectDownload(
                 new BlobDownloadRequest(
-                        target.getPlacementEntity().getObjectKey(),
+                        target.getPlacement().getObjectKey(),
                         target.getFileStorage().getFileName(),
                         mimeType
                 ),
@@ -147,7 +148,7 @@ public class DirectStorageReferenceResolver {
         }
         storageTrafficPublisher.publishDirectDownloadRequest(
                 target.getGroupConfig().getName(),
-                target.getPlacementEntity().getBackendName()
+                target.getPlacement().getBackendName()
         );
         return reference;
     }

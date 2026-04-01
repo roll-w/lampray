@@ -20,14 +20,29 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import tech.lamprism.lampray.storage.FileStorage;
+import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageProvider;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
+import tech.lamprism.lampray.storage.StorageUploadMode;
 import tech.lamprism.lampray.storage.StorageUploadRequest;
 import tech.lamprism.lampray.storage.StorageUploadSession;
 import tech.lamprism.lampray.storage.StorageUploadSessionDetails;
 import tech.lamprism.lampray.storage.access.StorageAccessService;
+import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
+import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
+import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
+import tech.lamprism.lampray.storage.session.StorageUploadSessionManager;
+import tech.lamprism.lampray.storage.session.UploadSessionStatus;
+import tech.lamprism.lampray.storage.upload.workflow.DirectUploadCompletionWorkflow;
+import tech.lamprism.lampray.storage.upload.workflow.DirectUploadCompletionWorkflowContext;
+import tech.lamprism.lampray.storage.upload.workflow.ProxyUploadWorkflow;
+import tech.lamprism.lampray.storage.upload.workflow.ProxyUploadWorkflowContext;
+import tech.lamprism.lampray.storage.upload.workflow.TrustedUploadWorkflow;
+import tech.lamprism.lampray.storage.upload.workflow.TrustedUploadWorkflowContext;
+import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.DataErrorCode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,25 +54,37 @@ import java.io.InputStream;
 @Transactional(readOnly = true)
 public class StorageProviderImpl implements StorageProvider {
     private final StorageAccessService storageAccessService;
-    private final StorageUploadManager storageUploadManager;
+    private final StorageFileRepository storageFileRepository;
+    private final StorageUploadSessionManager storageUploadSessionManager;
+    private final ProxyUploadWorkflow proxyUploadWorkflow;
+    private final DirectUploadCompletionWorkflow directUploadCompletionWorkflow;
+    private final TrustedUploadWorkflow trustedUploadWorkflow;
 
     public StorageProviderImpl(StorageAccessService storageAccessService,
-                               StorageUploadManager storageUploadManager) {
+                               StorageFileRepository storageFileRepository,
+                               StorageUploadSessionManager storageUploadSessionManager,
+                               ProxyUploadWorkflow proxyUploadWorkflow,
+                               DirectUploadCompletionWorkflow directUploadCompletionWorkflow,
+                               TrustedUploadWorkflow trustedUploadWorkflow) {
         this.storageAccessService = storageAccessService;
-        this.storageUploadManager = storageUploadManager;
+        this.storageFileRepository = storageFileRepository;
+        this.storageUploadSessionManager = storageUploadSessionManager;
+        this.proxyUploadWorkflow = proxyUploadWorkflow;
+        this.directUploadCompletionWorkflow = directUploadCompletionWorkflow;
+        this.trustedUploadWorkflow = trustedUploadWorkflow;
     }
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public FileStorage saveFile(InputStream inputStream) throws IOException {
-        return storageUploadManager.saveFile(inputStream);
+        return trustedUploadWorkflow.execute(new TrustedUploadWorkflowContext(inputStream));
     }
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public StorageUploadSession createUploadSession(StorageUploadRequest request,
                                                     Long userId) throws IOException {
-        return storageUploadManager.createUploadSession(request, userId);
+        return storageUploadSessionManager.createUploadSession(request, userId);
     }
 
     @Override
@@ -65,21 +92,35 @@ public class StorageProviderImpl implements StorageProvider {
     public FileStorage uploadFileContent(String uploadId,
                                          InputStream inputStream,
                                          Long userId) throws IOException {
-        return storageUploadManager.uploadFileContent(uploadId, inputStream, userId);
+        StorageUploadSessionModel uploadSession = storageUploadSessionManager.requireActiveUploadSession(uploadId, userId);
+        if (uploadSession.getUploadMode() != StorageUploadMode.PROXY) {
+            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
+                    "Upload session requires completion after direct upload: " + uploadSession.getUploadId());
+        }
+        return proxyUploadWorkflow.execute(new ProxyUploadWorkflowContext(uploadSession, inputStream));
     }
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public FileStorage completeUpload(String uploadId,
                                       Long userId) throws IOException {
-        return storageUploadManager.completeUpload(uploadId, userId);
+        StorageUploadSessionModel uploadSession = storageUploadSessionManager.requireUploadSessionAuthorized(uploadId, userId);
+        if (uploadSession.getStatus() == UploadSessionStatus.COMPLETED) {
+            return toFileStorage(requireStoredFile(uploadSession.getFileId()));
+        }
+        uploadSession = storageUploadSessionManager.requireActiveUploadSession(uploadId, userId);
+        if (uploadSession.getUploadMode() != StorageUploadMode.DIRECT) {
+            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
+                    "Upload session requires proxy upload: " + uploadSession.getUploadId());
+        }
+        return directUploadCompletionWorkflow.execute(new DirectUploadCompletionWorkflowContext(uploadSession));
     }
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public StorageUploadSessionDetails getUploadSession(String uploadId,
                                                         Long userId) {
-        return storageUploadManager.getUploadSession(uploadId, userId);
+        return storageUploadSessionManager.getUploadSession(uploadId, userId);
     }
 
     @Override
@@ -93,6 +134,25 @@ public class StorageProviderImpl implements StorageProvider {
                                                     StorageReferenceRequest request,
                                                     Long userId) throws IOException {
         return storageAccessService.resolveStorageReference(id, request, userId);
+    }
+
+    private StorageFileEntity requireStoredFile(String fileId) {
+        return storageFileRepository.findById(fileId)
+                .orElseThrow(() -> new StorageException(
+                        DataErrorCode.ERROR_DATA_NOT_EXIST,
+                        "File not found: " + fileId
+                ));
+    }
+
+    private FileStorage toFileStorage(StorageFileEntity fileEntity) {
+        return new FileStorage(
+                fileEntity.getFileId(),
+                fileEntity.getFileName(),
+                fileEntity.getFileSize(),
+                fileEntity.getMimeType(),
+                fileEntity.getFileType(),
+                fileEntity.getCreateTime()
+        );
     }
 
 }

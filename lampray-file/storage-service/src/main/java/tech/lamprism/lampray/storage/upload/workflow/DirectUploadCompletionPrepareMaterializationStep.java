@@ -19,7 +19,8 @@ package tech.lamprism.lampray.storage.upload.workflow;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationRequest;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
-import tech.lamprism.lampray.storage.materialization.StorageBlobMaterializationService;
+import tech.lamprism.lampray.storage.materialization.workflow.BlobMaterializationWorkflow;
+import tech.lamprism.lampray.storage.materialization.workflow.BlobMaterializationWorkflowContext;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
 import java.io.IOException;
@@ -30,10 +31,10 @@ import java.util.Objects;
  */
 @Component
 final class DirectUploadCompletionPrepareMaterializationStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
-    private final StorageBlobMaterializationService storageBlobMaterializationService;
+    private final BlobMaterializationWorkflow blobMaterializationWorkflow;
 
-    DirectUploadCompletionPrepareMaterializationStep(StorageBlobMaterializationService storageBlobMaterializationService) {
-        this.storageBlobMaterializationService = storageBlobMaterializationService;
+    DirectUploadCompletionPrepareMaterializationStep(BlobMaterializationWorkflow blobMaterializationWorkflow) {
+        this.blobMaterializationWorkflow = blobMaterializationWorkflow;
     }
 
     @Override
@@ -43,7 +44,7 @@ final class DirectUploadCompletionPrepareMaterializationStep implements Workflow
 
     @Override
     public void execute(DirectUploadCompletionWorkflowContext context) throws IOException {
-        PreparedBlobMaterialization preparedBlob = storageBlobMaterializationService.prepareBlobMaterialization(
+        PreparedBlobMaterialization preparedBlob = blobMaterializationWorkflow.execute(new BlobMaterializationWorkflowContext(
                 BlobMaterializationRequest.forUploadedObject(
                         Objects.requireNonNull(context.getState().getWritePlan(), "writePlan"),
                         context.getUploadSession().getMimeType(),
@@ -52,7 +53,7 @@ final class DirectUploadCompletionPrepareMaterializationStep implements Workflow
                         Objects.requireNonNull(context.getState().getActualChecksum(), "actualChecksum"),
                         Objects.requireNonNull(context.getState().getUploadedObject(), "uploadedObject")
                 )
-        );
+        ));
         context.getState().setPreparedBlob(preparedBlob);
     }
 }

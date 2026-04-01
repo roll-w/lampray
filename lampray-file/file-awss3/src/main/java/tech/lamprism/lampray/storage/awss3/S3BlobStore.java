@@ -65,6 +65,7 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -431,7 +432,7 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
         }
         Map<String, String> metadata = normalizeMetadata(response.metadata());
         String metadataChecksum = metadata.get("checksum-sha256");
-        return hasText(metadataChecksum) ? metadataChecksum.trim().toLowerCase(java.util.Locale.ROOT) : null;
+        return hasText(metadataChecksum) ? metadataChecksum.trim().toLowerCase(Locale.ROOT) : null;
     }
 
     private String hexToBase64Checksum(String checksumSha256) {
@@ -491,7 +492,7 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
             if (!uri.isAbsolute() || !hasText(uri.getScheme()) || !hasText(uri.getHost())) {
                 throw new IllegalArgumentException("Endpoint URI must be an absolute http or https URL: " + endpoint);
             }
-            String scheme = uri.getScheme().trim().toLowerCase(java.util.Locale.ROOT);
+            String scheme = uri.getScheme().trim().toLowerCase(Locale.ROOT);
             if (!"http".equals(scheme) && !"https".equals(scheme)) {
                 throw new IllegalArgumentException("Endpoint URI scheme must be http or https: " + endpoint);
             }
@@ -578,9 +579,9 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
         if (hasText(publicEndpoint.getPath()) && !"/".equals(publicEndpoint.getPath().trim())) {
             return false;
         }
-        String normalizedHost = publicEndpoint.getHost().trim().toLowerCase(java.util.Locale.ROOT);
-        String bucketPrefix = bucket.toLowerCase(java.util.Locale.ROOT) + ".";
-        return !normalizedHost.equals(bucket.toLowerCase(java.util.Locale.ROOT))
+        String normalizedHost = publicEndpoint.getHost().trim().toLowerCase(Locale.ROOT);
+        String bucketPrefix = bucket.toLowerCase(Locale.ROOT) + ".";
+        return !normalizedHost.equals(bucket.toLowerCase(Locale.ROOT))
                 && !normalizedHost.startsWith(bucketPrefix);
     }
 

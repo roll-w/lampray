@@ -33,7 +33,6 @@ import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.storage.FileType
 import tech.lamprism.lampray.storage.StorageResourceKind
-import tech.lamprism.lampray.storage.domain.StorageBlobSnapshot
 import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 
@@ -98,87 +97,6 @@ class StorageBlobEntity(
 
     fun setUpdateTime(updateTime: OffsetDateTime) {
         this.updateTime = updateTime
-    }
-
-    fun toBuilder(): Builder = Builder(this)
-
-    fun lock(): StorageBlobSnapshot = StorageBlobSnapshot(
-        id = id!!,
-        blobId = blobId,
-        checksumSha256 = checksumSha256,
-        fileSize = fileSize,
-        mimeType = mimeType,
-        fileType = fileType,
-        primaryBackend = primaryBackend,
-        primaryObjectKey = primaryObjectKey,
-        createTime = createTime,
-        updateTime = updateTime,
-    )
-
-    class Builder {
-        private var id: Long? = null
-        private var blobId: String? = null
-        private var checksumSha256: String = ""
-        private var fileSize: Long = 0
-        private var mimeType: String = "application/octet-stream"
-        private var fileType: FileType = FileType.OTHER
-        private var primaryBackend: String = ""
-        private var primaryObjectKey: String = ""
-        private var createTime: OffsetDateTime = OffsetDateTime.now()
-        private var updateTime: OffsetDateTime = OffsetDateTime.now()
-
-        constructor()
-
-        constructor(other: StorageBlobEntity) {
-            id = other.id
-            blobId = other.blobId
-            checksumSha256 = other.checksumSha256
-            fileSize = other.fileSize
-            mimeType = other.mimeType
-            fileType = other.fileType
-            primaryBackend = other.primaryBackend
-            primaryObjectKey = other.primaryObjectKey
-            createTime = other.createTime
-            updateTime = other.updateTime
-        }
-
-        fun setId(id: Long?) = apply { this.id = id }
-
-        fun setBlobId(blobId: String) = apply { this.blobId = blobId }
-
-        fun setChecksumSha256(checksumSha256: String) = apply { this.checksumSha256 = checksumSha256 }
-
-        fun setFileSize(fileSize: Long) = apply { this.fileSize = fileSize }
-
-        fun setMimeType(mimeType: String) = apply { this.mimeType = mimeType }
-
-        fun setFileType(fileType: FileType) = apply { this.fileType = fileType }
-
-        fun setPrimaryBackend(primaryBackend: String) = apply { this.primaryBackend = primaryBackend }
-
-        fun setPrimaryObjectKey(primaryObjectKey: String) = apply { this.primaryObjectKey = primaryObjectKey }
-
-        fun setCreateTime(createTime: OffsetDateTime) = apply { this.createTime = createTime }
-
-        fun setUpdateTime(updateTime: OffsetDateTime) = apply { this.updateTime = updateTime }
-
-        fun build(): StorageBlobEntity = StorageBlobEntity(
-            id = id,
-            blobId = blobId!!,
-            checksumSha256 = checksumSha256,
-            fileSize = fileSize,
-            mimeType = mimeType,
-            fileType = fileType,
-            primaryBackend = primaryBackend,
-            primaryObjectKey = primaryObjectKey,
-            createTime = createTime,
-            updateTime = updateTime,
-        )
-    }
-
-    companion object {
-        @JvmStatic
-        fun builder(): Builder = Builder()
     }
 
     final override fun equals(other: Any?): Boolean {

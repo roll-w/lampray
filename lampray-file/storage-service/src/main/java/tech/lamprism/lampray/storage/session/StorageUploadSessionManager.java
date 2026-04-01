@@ -17,12 +17,25 @@
 package tech.lamprism.lampray.storage.session;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+import tech.lamprism.lampray.storage.FileStorage;
+import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageUploadRequest;
 import tech.lamprism.lampray.storage.StorageUploadSession;
 import tech.lamprism.lampray.storage.StorageUploadSessionDetails;
-import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
+import tech.lamprism.lampray.storage.StorageUploadSessionState;
+import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
+import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
+import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
+import tech.lamprism.lampray.storage.persistence.StorageUploadSessionRepository;
+import tech.lamprism.lampray.storage.session.workflow.CreateUploadSessionWorkflow;
+import tech.lamprism.lampray.storage.session.workflow.CreateUploadSessionWorkflowContext;
+import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.DataErrorCode;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -32,61 +45,112 @@ import java.time.OffsetDateTime;
  */
 @Service
 @Transactional(readOnly = true)
-public class StorageUploadSessionManager implements StorageUploadSessionService {
-    private final StorageUploadSessionCreationService storageUploadSessionCreationService;
-    private final StorageUploadSessionLookupService storageUploadSessionLookupService;
-    private final StorageUploadSessionDetailsService storageUploadSessionDetailsService;
-    private final StorageUploadSessionLifecycleService storageUploadSessionLifecycleService;
+public class StorageUploadSessionManager {
+    private final CreateUploadSessionWorkflow createUploadSessionWorkflow;
+    private final StorageUploadSessionRepository storageUploadSessionRepository;
+    private final StorageFileRepository storageFileRepository;
+    private final TransactionTemplate expireTransactionTemplate;
 
-    public StorageUploadSessionManager(StorageUploadSessionCreationService storageUploadSessionCreationService,
-                                       StorageUploadSessionLookupService storageUploadSessionLookupService,
-                                       StorageUploadSessionDetailsService storageUploadSessionDetailsService,
-                                       StorageUploadSessionLifecycleService storageUploadSessionLifecycleService) {
-        this.storageUploadSessionCreationService = storageUploadSessionCreationService;
-        this.storageUploadSessionLookupService = storageUploadSessionLookupService;
-        this.storageUploadSessionDetailsService = storageUploadSessionDetailsService;
-        this.storageUploadSessionLifecycleService = storageUploadSessionLifecycleService;
+    public StorageUploadSessionManager(CreateUploadSessionWorkflow createUploadSessionWorkflow,
+                                       StorageUploadSessionRepository storageUploadSessionRepository,
+                                       StorageFileRepository storageFileRepository,
+                                       PlatformTransactionManager transactionManager) {
+        this.createUploadSessionWorkflow = createUploadSessionWorkflow;
+        this.storageUploadSessionRepository = storageUploadSessionRepository;
+        this.storageFileRepository = storageFileRepository;
+        this.expireTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.expireTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
-    @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public StorageUploadSession createUploadSession(StorageUploadRequest request,
                                                     Long userId) throws IOException {
-        return storageUploadSessionCreationService.createUploadSession(request, userId);
+        return createUploadSessionWorkflow.execute(new CreateUploadSessionWorkflowContext(request, userId));
     }
 
-    @Override
-    public StorageUploadSessionEntity requireUploadSession(String uploadId) {
-        return storageUploadSessionLookupService.requireUploadSession(uploadId);
+    public StorageUploadSessionModel requireUploadSession(String uploadId) {
+        return storageUploadSessionRepository.findById(uploadId)
+                .map(StorageUploadSessionModel::from)
+                .orElseThrow(() -> new StorageException(DataErrorCode.ERROR_DATA_NOT_EXIST,
+                        "Upload session not found: " + uploadId));
     }
 
-    @Override
-    public StorageUploadSessionEntity requireUploadSessionAuthorized(String uploadId,
-                                                                     Long userId) {
-        return storageUploadSessionLookupService.requireUploadSessionAuthorized(uploadId, userId);
+    public StorageUploadSessionModel requireUploadSessionAuthorized(String uploadId,
+                                                                    Long userId) {
+        StorageUploadSessionModel uploadSession = requireUploadSession(uploadId);
+        uploadSession.ensureAuthorized(userId);
+        return uploadSession;
     }
 
-    @Override
-    public StorageUploadSessionEntity requireActiveUploadSession(String uploadId,
-                                                                 Long userId) {
-        return storageUploadSessionLookupService.requireActiveUploadSession(uploadId, userId);
+    public StorageUploadSessionModel requireActiveUploadSession(String uploadId,
+                                                                Long userId) {
+        StorageUploadSessionModel uploadSession = requireUploadSessionAuthorized(uploadId, userId);
+        if (uploadSession.getStatus() != UploadSessionStatus.PENDING) {
+            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
+                    "Upload session is not pending: " + uploadSession.getUploadId());
+        }
+        OffsetDateTime now = OffsetDateTime.now();
+        if (uploadSession.trackedStateAt(now) == StorageUploadSessionState.EXPIRED) {
+            expire(uploadSession.getUploadId(), now);
+            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
+                    "Upload session has expired: " + uploadSession.getUploadId());
+        }
+        return uploadSession;
     }
 
-    @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public StorageUploadSessionDetails getUploadSession(String uploadId,
                                                         Long userId) {
-        return storageUploadSessionDetailsService.getUploadSession(uploadId, userId);
+        StorageUploadSessionModel uploadSession = requireUploadSession(uploadId);
+        uploadSession.ensureQueryable(userId);
+        OffsetDateTime now = OffsetDateTime.now();
+        FileStorage fileStorage = uploadSession.trackedStateAt(now) == StorageUploadSessionState.COMPLETED
+                ? toFileStorage(requireStoredFile(uploadSession.getFileId()))
+                : null;
+        return new StorageUploadSessionDetails(
+                uploadSession.getUploadId(),
+                uploadSession.getUploadMode(),
+                uploadSession.getFileName(),
+                uploadSession.getGroupName(),
+                uploadSession.getFileId(),
+                uploadSession.trackedStateAt(now),
+                uploadSession.getExpiresAt(),
+                uploadSession.getCreateTime(),
+                uploadSession.getUpdateTime(),
+                fileStorage
+        );
     }
 
-    @Override
     public void expirePendingUploadSession(String uploadId) {
-        storageUploadSessionLifecycleService.expirePendingUploadSession(uploadId);
+        expire(uploadId, OffsetDateTime.now());
     }
 
-    @Override
-    public void markCompleted(StorageUploadSessionEntity uploadSession,
-                              OffsetDateTime now) {
-        storageUploadSessionLifecycleService.markCompleted(uploadSession, now);
+    private void expire(String uploadId,
+                        OffsetDateTime now) {
+        expireTransactionTemplate.executeWithoutResult(status -> storageUploadSessionRepository.findById(uploadId)
+                .filter(uploadSession -> uploadSession.getStatus() == UploadSessionStatus.PENDING)
+                .ifPresent(uploadSession -> {
+                    StorageUploadSessionModel.from(uploadSession).expire(now);
+                    storageUploadSessionRepository.save(uploadSession);
+                }));
+    }
+
+    private StorageFileEntity requireStoredFile(String fileId) {
+        return storageFileRepository.findById(fileId)
+                .orElseThrow(() -> new StorageException(
+                        DataErrorCode.ERROR_DATA_NOT_EXIST,
+                        "File not found: " + fileId
+                ));
+    }
+
+    private FileStorage toFileStorage(StorageFileEntity fileEntity) {
+        return new FileStorage(
+                fileEntity.getFileId(),
+                fileEntity.getFileName(),
+                fileEntity.getFileSize(),
+                fileEntity.getMimeType(),
+                fileEntity.getFileType(),
+                fileEntity.getCreateTime()
+        );
     }
 }

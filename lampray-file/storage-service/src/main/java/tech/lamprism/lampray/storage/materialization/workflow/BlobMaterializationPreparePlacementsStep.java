@@ -17,14 +17,15 @@
 package tech.lamprism.lampray.storage.materialization.workflow;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
 import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationRequest;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationSource;
 import tech.lamprism.lampray.storage.materialization.BlobObjectKeyFactory;
-import tech.lamprism.lampray.storage.materialization.placement.BlobPlacementCleanupService;
 import tech.lamprism.lampray.storage.materialization.placement.BlobPlacementWriter;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
 import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
+import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
 import java.io.IOException;
@@ -39,18 +40,21 @@ import java.util.Set;
  */
 @Component
 final class BlobMaterializationPreparePlacementsStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
+    private final BlobStoreLocator blobStoreLocator;
     private final BlobObjectKeyFactory blobObjectKeyFactory;
     private final BlobPlacementWriter blobPlacementWriter;
-    private final BlobPlacementCleanupService blobPlacementCleanupService;
+    private final StorageBlobRepository storageBlobRepository;
     private final StorageBlobPlacementRepository storageBlobPlacementRepository;
 
-    BlobMaterializationPreparePlacementsStep(BlobObjectKeyFactory blobObjectKeyFactory,
+    BlobMaterializationPreparePlacementsStep(BlobStoreLocator blobStoreLocator,
+                                             BlobObjectKeyFactory blobObjectKeyFactory,
                                              BlobPlacementWriter blobPlacementWriter,
-                                             BlobPlacementCleanupService blobPlacementCleanupService,
+                                             StorageBlobRepository storageBlobRepository,
                                              StorageBlobPlacementRepository storageBlobPlacementRepository) {
+        this.blobStoreLocator = blobStoreLocator;
         this.blobObjectKeyFactory = blobObjectKeyFactory;
         this.blobPlacementWriter = blobPlacementWriter;
-        this.blobPlacementCleanupService = blobPlacementCleanupService;
+        this.storageBlobRepository = storageBlobRepository;
         this.storageBlobPlacementRepository = storageBlobPlacementRepository;
     }
 
@@ -70,7 +74,7 @@ final class BlobMaterializationPreparePlacementsStep implements WorkflowStep<Blo
 
     private void materializeNewBlob(BlobMaterializationWorkflowContext context) throws IOException {
         BlobMaterializationRequest request = context.getRequest();
-        BlobMaterializationSource source = Objects.requireNonNull(context.getState().getSource(), "source");
+        BlobMaterializationSource source = request.source();
         String primaryObjectKey = source.resolvePrimaryObjectKey(blobObjectKeyFactory, request.checksum());
         context.getState().setPrimaryObjectKey(primaryObjectKey);
         try {
@@ -94,7 +98,7 @@ final class BlobMaterializationPreparePlacementsStep implements WorkflowStep<Blo
                 }
             }
         } catch (IOException | RuntimeException exception) {
-            blobPlacementCleanupService.cleanup(
+            cleanupPlacements(
                     context.getState().getMaterializedPlacements(),
                     source.protectsPrimaryPlacement() ? request.primaryBackend() : null,
                     source.protectsPrimaryPlacement() ? primaryObjectKey : null
@@ -113,7 +117,7 @@ final class BlobMaterializationPreparePlacementsStep implements WorkflowStep<Blo
             requiredBackends.addAll(request.writePlan().getMirrorBackends());
         }
 
-        BlobMaterializationSource source = Objects.requireNonNull(context.getState().getSource(), "source");
+        BlobMaterializationSource source = request.source();
         String sourceBackend = source.resolveSourceBackend(existingBlob, request);
         String sourceObjectKey = source.resolveSourceObjectKey(existingBlob, request, existingBlob.getPrimaryObjectKey());
 
@@ -136,7 +140,7 @@ final class BlobMaterializationPreparePlacementsStep implements WorkflowStep<Blo
                 );
             }
         } catch (IOException | RuntimeException exception) {
-            blobPlacementCleanupService.cleanup(placementsToPersist, sourceBackend, sourceObjectKey);
+            cleanupPlacements(placementsToPersist, sourceBackend, sourceObjectKey);
             throw exception;
         }
         return placementsToPersist;
@@ -155,5 +159,31 @@ final class BlobMaterializationPreparePlacementsStep implements WorkflowStep<Blo
         }
         source.materializeReplica(blobPlacementWriter, request, backendName, objectKey, sourceBackend, sourceObjectKey);
         materializedPlacements.put(backendName, objectKey);
+    }
+
+    private void cleanupPlacements(Map<String, String> placements,
+                                   String protectedBackend,
+                                   String protectedObjectKey) {
+        for (Map.Entry<String, String> entry : placements.entrySet()) {
+            boolean isProtected = protectedBackend != null
+                    && protectedBackend.equals(entry.getKey())
+                    && Objects.equals(protectedObjectKey, entry.getValue());
+            if (isProtected) {
+                continue;
+            }
+            if (isPersistedPlacement(entry.getKey(), entry.getValue())) {
+                continue;
+            }
+            try {
+                blobStoreLocator.require(entry.getKey()).delete(entry.getValue());
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    private boolean isPersistedPlacement(String backendName,
+                                         String objectKey) {
+        return storageBlobRepository.existsByPrimaryBackendAndPrimaryObjectKey(backendName, objectKey)
+                || storageBlobPlacementRepository.existsByBackendNameAndObjectKey(backendName, objectKey);
     }
 }

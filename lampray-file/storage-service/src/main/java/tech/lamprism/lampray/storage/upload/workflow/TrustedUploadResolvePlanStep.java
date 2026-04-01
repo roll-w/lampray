@@ -17,11 +17,14 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.policy.StorageContentRules;
+import tech.lamprism.lampray.storage.routing.StorageGroupRouter;
 import tech.lamprism.lampray.storage.routing.StorageWritePlan;
-import tech.lamprism.lampray.storage.routing.StorageWritePlanResolver;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
+import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.DataErrorCode;
 
 /**
  * @author RollW
@@ -30,12 +33,12 @@ import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 final class TrustedUploadResolvePlanStep implements WorkflowStep<TrustedUploadWorkflowContext> {
     private static final StorageContentRules CONTENT_RULES = StorageContentRules.INSTANCE;
 
-    private final StorageWritePlanResolver storageWritePlanResolver;
+    private final StorageGroupRouter storageGroupRouter;
     private final StorageRuntimeConfig runtimeSettings;
 
-    TrustedUploadResolvePlanStep(StorageWritePlanResolver storageWritePlanResolver,
+    TrustedUploadResolvePlanStep(StorageGroupRouter storageGroupRouter,
                                  StorageRuntimeConfig runtimeSettings) {
-        this.storageWritePlanResolver = storageWritePlanResolver;
+        this.storageGroupRouter = storageGroupRouter;
         this.runtimeSettings = runtimeSettings;
     }
 
@@ -47,12 +50,22 @@ final class TrustedUploadResolvePlanStep implements WorkflowStep<TrustedUploadWo
     @Override
     public void execute(TrustedUploadWorkflowContext context) {
         String groupName = runtimeSettings.getDefaultGroup();
-        StorageWritePlan writePlan = storageWritePlanResolver.select(groupName);
+        StorageWritePlan writePlan = selectWritePlan(groupName);
         context.getState().setGroupName(groupName);
         context.getState().setWritePlan(writePlan);
         context.getState().setGroupSettings(writePlan.getGroupSettings());
         String mimeType = CONTENT_RULES.requireMimeType("application/octet-stream");
         context.getState().setMimeType(mimeType);
         context.getState().setFileType(CONTENT_RULES.resolveFileType(mimeType));
+    }
+
+    private StorageWritePlan selectWritePlan(String groupName) {
+        try {
+            return storageGroupRouter.selectWritePlan(groupName);
+        } catch (IllegalArgumentException exception) {
+            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, exception.getMessage());
+        } catch (IllegalStateException exception) {
+            throw new StorageException(DataErrorCode.ERROR_DATA_NOT_EXIST, exception.getMessage());
+        }
     }
 }

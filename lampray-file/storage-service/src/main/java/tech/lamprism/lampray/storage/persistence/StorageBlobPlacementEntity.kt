@@ -28,7 +28,6 @@ import org.hibernate.generator.EventType
 import org.hibernate.proxy.HibernateProxy
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.storage.StorageResourceKind
-import tech.lamprism.lampray.storage.domain.StorageBlobPlacementSnapshot
 import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 
@@ -82,69 +81,6 @@ class StorageBlobPlacementEntity(
 
     fun setUpdateTime(updateTime: OffsetDateTime) {
         this.updateTime = updateTime
-    }
-
-    fun toBuilder(): Builder = Builder(this)
-
-    fun lock(): StorageBlobPlacementSnapshot = StorageBlobPlacementSnapshot(
-        id = id!!,
-        placementId = placementId,
-        blobId = blobId,
-        backendName = backendName,
-        objectKey = objectKey,
-        createTime = createTime,
-        updateTime = updateTime,
-    )
-
-    class Builder {
-        private var id: Long? = null
-        private var placementId: String? = null
-        private var blobId: String = ""
-        private var backendName: String = ""
-        private var objectKey: String = ""
-        private var createTime: OffsetDateTime = OffsetDateTime.now()
-        private var updateTime: OffsetDateTime = OffsetDateTime.now()
-
-        constructor()
-
-        constructor(other: StorageBlobPlacementEntity) {
-            id = other.id
-            placementId = other.placementId
-            blobId = other.blobId
-            backendName = other.backendName
-            objectKey = other.objectKey
-            createTime = other.createTime
-            updateTime = other.updateTime
-        }
-
-        fun setId(id: Long?) = apply { this.id = id }
-
-        fun setPlacementId(placementId: String) = apply { this.placementId = placementId }
-
-        fun setBlobId(blobId: String) = apply { this.blobId = blobId }
-
-        fun setBackendName(backendName: String) = apply { this.backendName = backendName }
-
-        fun setObjectKey(objectKey: String) = apply { this.objectKey = objectKey }
-
-        fun setCreateTime(createTime: OffsetDateTime) = apply { this.createTime = createTime }
-
-        fun setUpdateTime(updateTime: OffsetDateTime) = apply { this.updateTime = updateTime }
-
-        fun build(): StorageBlobPlacementEntity = StorageBlobPlacementEntity(
-            id = id,
-            placementId = placementId!!,
-            blobId = blobId,
-            backendName = backendName,
-            objectKey = objectKey,
-            createTime = createTime,
-            updateTime = updateTime,
-        )
-    }
-
-    companion object {
-        @JvmStatic
-        fun builder(): Builder = Builder()
     }
 
     final override fun equals(other: Any?): Boolean {

@@ -31,19 +31,19 @@ import java.time.OffsetDateTime;
 public class StorageUploadSessionCleanupRunner {
     private static final Logger logger = LoggerFactory.getLogger(StorageUploadSessionCleanupRunner.class);
 
-    private final StorageUploadSessionCleanupService cleanupService;
+    private final StorageUploadSessionRetentionService retentionService;
 
-    public StorageUploadSessionCleanupRunner(StorageUploadSessionCleanupService cleanupService) {
-        this.cleanupService = cleanupService;
+    public StorageUploadSessionCleanupRunner(StorageUploadSessionRetentionService retentionService) {
+        this.retentionService = retentionService;
     }
 
     @Scheduled(fixedDelayString = "#{@storageRuntimeConfig.getCleanupIntervalSeconds() * 1000}")
     public void cleanupUploadSessions() {
         OffsetDateTime now = OffsetDateTime.now();
         try {
-            int expired = cleanupService.expireOverdueSessions(now);
-            int purgedExpired = cleanupService.purgeExpiredSessions(now);
-            int purgedCompleted = cleanupService.purgeCompletedSessions(now);
+            int expired = retentionService.expireOverdueSessions(now);
+            int purgedExpired = retentionService.purgeExpiredSessions(now);
+            int purgedCompleted = retentionService.purgeCompletedSessions(now);
             if (expired > 0 || purgedExpired > 0 || purgedCompleted > 0) {
                 logger.info(
                         "Storage upload session cleanup finished: expired={}, purgedExpired={}, purgedCompleted={}",

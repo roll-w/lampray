@@ -18,6 +18,7 @@ package tech.lamprism.lampray.storage.monitoring;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageUploadSessionState;
 
@@ -128,7 +129,7 @@ public class StorageStatisticsEngine {
         return createQuery(sql, Map.of()).getResultList();
     }
 
-    private jakarta.persistence.Query createQuery(String sql,
+    private Query createQuery(String sql,
                                                   Map<String, Object> parameters) {
         var query = entityManager.createNativeQuery(sql);
         for (Map.Entry<String, Object> entry : parameters.entrySet()) {

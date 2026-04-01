@@ -18,16 +18,15 @@ package tech.lamprism.lampray.storage.session;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import tech.lamprism.lampray.storage.StorageUploadMode;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
+import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
 import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionRepository;
-import tech.lamprism.lampray.storage.persistence.UploadSessionStatus;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,7 +34,7 @@ import java.util.List;
  */
 @Service
 @Transactional
-public class StorageUploadSessionRetentionService implements StorageUploadSessionCleanupService {
+public class StorageUploadSessionRetentionService {
     private final StorageRuntimeConfig runtimeSettings;
     private final StorageUploadSessionRepository storageUploadSessionRepository;
     private final StorageFileRepository storageFileRepository;
@@ -51,15 +50,13 @@ public class StorageUploadSessionRetentionService implements StorageUploadSessio
         this.uploadObjectCleaner = uploadObjectCleaner;
     }
 
-    @Override
     public int expireOverdueSessions(OffsetDateTime now) {
         List<StorageUploadSessionEntity> overdueSessions = storageUploadSessionRepository.findAllByStatusAndExpiresAtBefore(
                 UploadSessionStatus.PENDING,
                 now
         );
         for (StorageUploadSessionEntity overdueSession : overdueSessions) {
-            overdueSession.setStatus(UploadSessionStatus.EXPIRED);
-            overdueSession.setUpdateTime(now);
+            StorageUploadSessionModel.from(overdueSession).expire(now);
         }
         if (!overdueSessions.isEmpty()) {
             storageUploadSessionRepository.saveAll(overdueSessions);
@@ -67,19 +64,20 @@ public class StorageUploadSessionRetentionService implements StorageUploadSessio
         return overdueSessions.size();
     }
 
-    @Override
     public int purgeExpiredSessions(OffsetDateTime now) throws IOException {
         OffsetDateTime expiredRetentionCutoff = now.minusSeconds(runtimeSettings.getCleanupExpiredUploadRetainSeconds());
         OffsetDateTime orphanCleanupCutoff = now.minusSeconds(runtimeSettings.getCleanupOrphanUploadExpireSeconds());
         List<StorageUploadSessionEntity> expiredSessions = storageUploadSessionRepository.findAllByStatus(
                 UploadSessionStatus.EXPIRED
         );
-        List<StorageUploadSessionEntity> deletableSessions = new java.util.ArrayList<>();
+        List<StorageUploadSessionEntity> deletableSessions = new ArrayList<>();
         for (StorageUploadSessionEntity expiredSession : expiredSessions) {
-            if (!isReadyToPurgeExpiredSession(expiredSession, expiredRetentionCutoff, orphanCleanupCutoff)) {
+            StorageUploadSessionModel uploadSession = StorageUploadSessionModel.from(expiredSession);
+            boolean hasStoredFile = storageFileRepository.existsById(uploadSession.getFileId());
+            if (!uploadSession.isReadyToPurgeExpired(expiredRetentionCutoff, orphanCleanupCutoff, hasStoredFile)) {
                 continue;
             }
-            if (cleanupExpiredUploadObject(expiredSession)) {
+            if (cleanupExpiredUploadObject(uploadSession, hasStoredFile)) {
                 deletableSessions.add(expiredSession);
             }
         }
@@ -89,7 +87,6 @@ public class StorageUploadSessionRetentionService implements StorageUploadSessio
         return deletableSessions.size();
     }
 
-    @Override
     public int purgeCompletedSessions(OffsetDateTime now) {
         OffsetDateTime retentionCutoff = now.minusSeconds(runtimeSettings.getCleanupCompletedUploadRetainSeconds());
         List<StorageUploadSessionEntity> completedSessions = storageUploadSessionRepository.findAllByStatusAndUpdateTimeBefore(
@@ -102,32 +99,11 @@ public class StorageUploadSessionRetentionService implements StorageUploadSessio
         return completedSessions.size();
     }
 
-    private boolean isReadyToPurgeExpiredSession(StorageUploadSessionEntity uploadSession,
-                                                 OffsetDateTime expiredRetentionCutoff,
-                                                 OffsetDateTime orphanCleanupCutoff) {
-        if (uploadSession.getUpdateTime().isAfter(expiredRetentionCutoff)) {
-            return false;
-        }
-        if (!requiresOrphanCleanup(uploadSession)) {
-            return true;
-        }
-        return !uploadSession.getExpiresAt().isAfter(orphanCleanupCutoff);
-    }
-
-    private boolean cleanupExpiredUploadObject(StorageUploadSessionEntity uploadSession) throws IOException {
-        if (!requiresOrphanCleanup(uploadSession)) {
+    private boolean cleanupExpiredUploadObject(StorageUploadSessionModel uploadSession,
+                                               boolean hasStoredFile) throws IOException {
+        if (!uploadSession.requiresOrphanCleanup(hasStoredFile)) {
             return true;
         }
         return uploadObjectCleaner.cleanup(uploadSession);
-    }
-
-    private boolean requiresOrphanCleanup(StorageUploadSessionEntity uploadSession) {
-        if (uploadSession.getUploadMode() != StorageUploadMode.DIRECT) {
-            return false;
-        }
-        if (!StringUtils.hasText(uploadSession.getPrimaryBackend()) || !StringUtils.hasText(uploadSession.getObjectKey())) {
-            return false;
-        }
-        return !storageFileRepository.existsById(uploadSession.getFileId());
     }
 }

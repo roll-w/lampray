@@ -17,19 +17,22 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.StorageException;
+import tech.lamprism.lampray.storage.routing.StorageGroupRouter;
 import tech.lamprism.lampray.storage.routing.StorageWritePlan;
-import tech.lamprism.lampray.storage.routing.StorageWritePlanResolver;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
+import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.DataErrorCode;
 
 /**
  * @author RollW
  */
 @Component
 final class ProxyUploadResolvePlanStep implements WorkflowStep<ProxyUploadWorkflowContext> {
-    private final StorageWritePlanResolver storageWritePlanResolver;
+    private final StorageGroupRouter storageGroupRouter;
 
-    ProxyUploadResolvePlanStep(StorageWritePlanResolver storageWritePlanResolver) {
-        this.storageWritePlanResolver = storageWritePlanResolver;
+    ProxyUploadResolvePlanStep(StorageGroupRouter storageGroupRouter) {
+        this.storageGroupRouter = storageGroupRouter;
     }
 
     @Override
@@ -39,11 +42,22 @@ final class ProxyUploadResolvePlanStep implements WorkflowStep<ProxyUploadWorkfl
 
     @Override
     public void execute(ProxyUploadWorkflowContext context) {
-        StorageWritePlan writePlan = storageWritePlanResolver.restore(
+        StorageWritePlan writePlan = restoreWritePlan(
                 context.getUploadSession().getGroupName(),
                 context.getUploadSession().getPrimaryBackend()
         );
         context.getState().setWritePlan(writePlan);
         context.getState().setGroupSettings(writePlan.getGroupSettings());
+    }
+
+    private StorageWritePlan restoreWritePlan(String groupName,
+                                              String primaryBackend) {
+        try {
+            return storageGroupRouter.restoreWritePlan(groupName, primaryBackend);
+        } catch (IllegalArgumentException exception) {
+            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, exception.getMessage());
+        } catch (IllegalStateException exception) {
+            throw new StorageException(DataErrorCode.ERROR_DATA_NOT_EXIST, exception.getMessage());
+        }
     }
 }

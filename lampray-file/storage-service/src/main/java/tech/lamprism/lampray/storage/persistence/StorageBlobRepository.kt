@@ -32,9 +32,25 @@ class StorageBlobRepository(
         return storageBlobDao.findOne(createChecksumSpecification(checksumSha256))
     }
 
+    fun existsByPrimaryBackendAndPrimaryObjectKey(primaryBackend: String, objectKey: String): Boolean {
+        return storageBlobDao.findOne(createPrimaryPlacementSpecification(primaryBackend, objectKey)).isPresent
+    }
+
     private fun createChecksumSpecification(checksumSha256: String): Specification<StorageBlobEntity> {
         return Specification { root, _, criteriaBuilder ->
             criteriaBuilder.equal(root.get(StorageBlobEntity_.checksumSha256), checksumSha256)
+        }
+    }
+
+    private fun createPrimaryPlacementSpecification(
+        primaryBackend: String,
+        objectKey: String,
+    ): Specification<StorageBlobEntity> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get(StorageBlobEntity_.primaryBackend), primaryBackend),
+                criteriaBuilder.equal(root.get(StorageBlobEntity_.primaryObjectKey), objectKey),
+            )
         }
     }
 }

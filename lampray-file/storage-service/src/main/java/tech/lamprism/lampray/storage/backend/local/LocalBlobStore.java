@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
+import java.util.Map;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
@@ -79,7 +80,7 @@ public class LocalBlobStore implements BlobStore {
     @Override
     public BlobObject describe(String key) throws IOException {
         Path resolved = resolve(key);
-        return describeInternal(resolved, key, Files.probeContentType(resolved), java.util.Map.of(), null);
+        return describeInternal(resolved, key, Files.probeContentType(resolved), Map.of(), null);
     }
 
     @Override
@@ -124,7 +125,7 @@ public class LocalBlobStore implements BlobStore {
     private BlobObject describeInternal(Path path,
                                         String key,
                                         String contentType,
-                                        java.util.Map<String, String> metadata,
+                                        Map<String, String> metadata,
                                         String checksumSha256) throws IOException {
         if (!Files.exists(path)) {
             throw new IOException("Blob does not exist: " + key);

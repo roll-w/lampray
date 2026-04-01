@@ -20,7 +20,7 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import tech.lamprism.lampray.storage.policy.StorageValidationRules;
+import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
 import tech.lamprism.lampray.storage.store.BlobObject;
 import tech.lamprism.lampray.storage.store.BlobStore;
 import tech.lamprism.lampray.storage.support.BlobMetadataSupport;
@@ -36,7 +36,6 @@ import java.util.Objects;
 @Component
 final class DirectUploadCompletionRecoverAndVerifyChecksumStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private static final int BUFFER_SIZE = 8192;
-    private static final StorageValidationRules VALIDATION_RULES = StorageValidationRules.INSTANCE;
 
     @Override
     public int getOrder() {
@@ -51,13 +50,16 @@ final class DirectUploadCompletionRecoverAndVerifyChecksumStep implements Workfl
         if (!StringUtils.hasText(actualChecksum)) {
             String metadataChecksum = BlobMetadataSupport.metadataChecksum(uploadedObject.getMetadata());
             if (StringUtils.hasText(metadataChecksum)) {
-                actualChecksum = VALIDATION_RULES.normalizeChecksum(metadataChecksum);
+                actualChecksum = StorageUploadSessionModel.normalizeChecksum(metadataChecksum);
             }
         }
         if (!StringUtils.hasText(actualChecksum)) {
             actualChecksum = calculateChecksum(blobStore, uploadedObject.getKey());
         }
-        VALIDATION_RULES.validateChecksumMatch(Objects.requireNonNull(context.getState().getExpectedChecksum(), "expectedChecksum"), actualChecksum);
+        StorageUploadSessionModel.validateChecksumMatch(
+                Objects.requireNonNull(context.getState().getExpectedChecksum(), "expectedChecksum"),
+                actualChecksum
+        );
         context.getState().setActualChecksum(actualChecksum);
     }
 

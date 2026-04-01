@@ -36,6 +36,10 @@ class StorageBlobPlacementRepository(
         return storageBlobPlacementDao.findOne(createBlobAndBackendSpecification(blobId, backendName))
     }
 
+    fun existsByBackendNameAndObjectKey(backendName: String, objectKey: String): Boolean {
+        return storageBlobPlacementDao.findOne(createBackendAndObjectKeySpecification(backendName, objectKey)).isPresent
+    }
+
     private fun createBlobIdSpecification(blobId: String): Specification<StorageBlobPlacementEntity> {
         return Specification { root, _, criteriaBuilder ->
             criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.blobId), blobId)
@@ -50,6 +54,18 @@ class StorageBlobPlacementRepository(
             criteriaBuilder.and(
                 criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.blobId), blobId),
                 criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.backendName), backendName),
+            )
+        }
+    }
+
+    private fun createBackendAndObjectKeySpecification(
+        backendName: String,
+        objectKey: String,
+    ): Specification<StorageBlobPlacementEntity> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.backendName), backendName),
+                criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.objectKey), objectKey),
             )
         }
     }

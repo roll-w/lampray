@@ -23,8 +23,10 @@ import tech.lamprism.lampray.storage.configuration.StorageGroupBackend;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageTopology;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,13 +54,13 @@ public class StorageMonitoringQueryService implements StorageMonitoringService {
 
     @Override
     public StorageMonitoringOverview getOverview() {
-        StorageOverviewTotals totals = storageStatisticsEngine.loadOverviewTotals(java.time.OffsetDateTime.now());
+        StorageOverviewTotals totals = storageStatisticsEngine.loadOverviewTotals(OffsetDateTime.now());
         Map<String, StorageBackendTotals> backendTotals = storageStatisticsEngine.loadBackendTotals();
         Map<String, StorageGroupTotals> groupTotals = storageStatisticsEngine.loadGroupTotals();
-        Set<String> backendNames = new java.util.LinkedHashSet<>(storageTopology.getBackends().keySet());
+        Set<String> backendNames = new LinkedHashSet<>(storageTopology.getBackends().keySet());
         backendNames.addAll(blobStoreRegistry.registrations().stream().map(BlobStoreRegistration::getBackendName).collect(Collectors.toSet()));
         backendNames.addAll(backendTotals.keySet());
-        Set<String> groupNames = new java.util.LinkedHashSet<>(storageTopology.getGroups().keySet());
+        Set<String> groupNames = new LinkedHashSet<>(storageTopology.getGroups().keySet());
         groupNames.addAll(groupTotals.keySet());
         return new StorageMonitoringOverview(
                 totals.getFileCount(),
@@ -93,7 +95,7 @@ public class StorageMonitoringQueryService implements StorageMonitoringService {
     public List<StorageBackendMonitoringView> listBackendMonitoring() {
         Map<String, BlobStoreRegistration> registrationMap = blobStoreRegistry.registrations().stream()
                 .collect(Collectors.toMap(BlobStoreRegistration::getBackendName, registration -> registration, (left, right) -> left, LinkedHashMap::new));
-        Set<String> backendNames = new java.util.LinkedHashSet<>(storageTopology.getBackends().keySet());
+        Set<String> backendNames = new LinkedHashSet<>(storageTopology.getBackends().keySet());
         backendNames.addAll(registrationMap.keySet());
         Map<String, StorageBackendTotals> backendTotals = storageStatisticsEngine.loadBackendTotals();
         backendNames.addAll(backendTotals.keySet());
@@ -124,7 +126,7 @@ public class StorageMonitoringQueryService implements StorageMonitoringService {
     @Override
     public List<StorageGroupMonitoringView> listGroupMonitoring() {
         Map<String, StorageGroupTotals> groupTotals = storageStatisticsEngine.loadGroupTotals();
-        Set<String> groupNames = new java.util.LinkedHashSet<>(storageTopology.getGroups().keySet());
+        Set<String> groupNames = new LinkedHashSet<>(storageTopology.getGroups().keySet());
         groupNames.addAll(groupTotals.keySet());
         List<StorageGroupMonitoringView> result = new ArrayList<>();
         for (String groupName : groupNames) {

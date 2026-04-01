@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.access
-
-import tech.lamprism.lampray.storage.FileStorage
-import tech.lamprism.lampray.storage.StorageVisibility
-import tech.lamprism.lampray.storage.configuration.StorageGroupConfig
-import tech.lamprism.lampray.storage.store.BlobStore
+package tech.lamprism.lampray.storage.session
 
 /**
  * @author RollW
  */
-public data class StoredDownloadTarget(
-    public val fileStorage: FileStorage,
-    public val visibility: StorageVisibility,
-    public val groupConfig: StorageGroupConfig,
-    public val placement: StoredBlobPlacement,
-    public val blobStore: BlobStore,
-)
+enum class UploadSessionStatus {
+    PENDING,
+    COMPLETED,
+    EXPIRED,
+}

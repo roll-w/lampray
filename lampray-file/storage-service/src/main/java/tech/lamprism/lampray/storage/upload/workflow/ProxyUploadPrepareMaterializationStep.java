@@ -19,8 +19,9 @@ package tech.lamprism.lampray.storage.upload.workflow;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationRequest;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
-import tech.lamprism.lampray.storage.materialization.StorageBlobMaterializationService;
 import tech.lamprism.lampray.storage.materialization.TempUpload;
+import tech.lamprism.lampray.storage.materialization.workflow.BlobMaterializationWorkflow;
+import tech.lamprism.lampray.storage.materialization.workflow.BlobMaterializationWorkflowContext;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
 import java.io.IOException;
@@ -31,10 +32,10 @@ import java.util.Objects;
  */
 @Component
 final class ProxyUploadPrepareMaterializationStep implements WorkflowStep<ProxyUploadWorkflowContext> {
-    private final StorageBlobMaterializationService storageBlobMaterializationService;
+    private final BlobMaterializationWorkflow blobMaterializationWorkflow;
 
-    ProxyUploadPrepareMaterializationStep(StorageBlobMaterializationService storageBlobMaterializationService) {
-        this.storageBlobMaterializationService = storageBlobMaterializationService;
+    ProxyUploadPrepareMaterializationStep(BlobMaterializationWorkflow blobMaterializationWorkflow) {
+        this.blobMaterializationWorkflow = blobMaterializationWorkflow;
     }
 
     @Override
@@ -45,7 +46,7 @@ final class ProxyUploadPrepareMaterializationStep implements WorkflowStep<ProxyU
     @Override
     public void execute(ProxyUploadWorkflowContext context) throws IOException {
         TempUpload tempUpload = Objects.requireNonNull(context.getState().getTempUpload(), "tempUpload");
-        PreparedBlobMaterialization preparedBlob = storageBlobMaterializationService.prepareBlobMaterialization(
+        PreparedBlobMaterialization preparedBlob = blobMaterializationWorkflow.execute(new BlobMaterializationWorkflowContext(
                 BlobMaterializationRequest.forTempUpload(
                         Objects.requireNonNull(context.getState().getWritePlan(), "writePlan"),
                         context.getUploadSession().getMimeType(),
@@ -54,7 +55,7 @@ final class ProxyUploadPrepareMaterializationStep implements WorkflowStep<ProxyU
                         tempUpload.getChecksumSha256(),
                         tempUpload.getPath()
                 )
-        );
+        ));
         context.getState().setPreparedBlob(preparedBlob);
     }
 }

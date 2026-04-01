@@ -30,7 +30,6 @@ import org.hibernate.generator.EventType
 import org.hibernate.proxy.HibernateProxy
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
-import tech.lamprism.lampray.storage.FileStorage
 import tech.lamprism.lampray.storage.FileType
 import tech.lamprism.lampray.storage.StorageResourceKind
 import tech.lamprism.lampray.storage.StorageVisibility
@@ -101,93 +100,6 @@ class StorageFileEntity(
 
     fun setUpdateTime(updateTime: OffsetDateTime) {
         this.updateTime = updateTime
-    }
-
-    fun toBuilder(): Builder = Builder(this)
-
-    fun lock(): FileStorage = FileStorage(
-        fileId = fileId,
-        fileName = fileName,
-        fileSize = fileSize,
-        mimeType = mimeType,
-        fileType = fileType,
-        createTime = createTime,
-    )
-
-    class Builder {
-        private var id: Long? = null
-        private var fileId: String? = null
-        private var blobId: String = ""
-        private var groupName: String = ""
-        private var ownerUserId: Long? = null
-        private var fileName: String = ""
-        private var fileSize: Long = 0
-        private var mimeType: String = "application/octet-stream"
-        private var fileType: FileType = FileType.OTHER
-        private var visibility: StorageVisibility = StorageVisibility.PRIVATE
-        private var createTime: OffsetDateTime = OffsetDateTime.now()
-        private var updateTime: OffsetDateTime = OffsetDateTime.now()
-
-        constructor()
-
-        constructor(other: StorageFileEntity) {
-            id = other.id
-            fileId = other.fileId
-            blobId = other.blobId
-            groupName = other.groupName
-            ownerUserId = other.ownerUserId
-            fileName = other.fileName
-            fileSize = other.fileSize
-            mimeType = other.mimeType
-            fileType = other.fileType
-            visibility = other.visibility
-            createTime = other.createTime
-            updateTime = other.updateTime
-        }
-
-        fun setId(id: Long?) = apply { this.id = id }
-
-        fun setFileId(fileId: String) = apply { this.fileId = fileId }
-
-        fun setBlobId(blobId: String) = apply { this.blobId = blobId }
-
-        fun setGroupName(groupName: String) = apply { this.groupName = groupName }
-
-        fun setOwnerUserId(ownerUserId: Long?) = apply { this.ownerUserId = ownerUserId }
-
-        fun setFileName(fileName: String) = apply { this.fileName = fileName }
-
-        fun setFileSize(fileSize: Long) = apply { this.fileSize = fileSize }
-
-        fun setMimeType(mimeType: String) = apply { this.mimeType = mimeType }
-
-        fun setFileType(fileType: FileType) = apply { this.fileType = fileType }
-
-        fun setVisibility(visibility: StorageVisibility) = apply { this.visibility = visibility }
-
-        fun setCreateTime(createTime: OffsetDateTime) = apply { this.createTime = createTime }
-
-        fun setUpdateTime(updateTime: OffsetDateTime) = apply { this.updateTime = updateTime }
-
-        fun build(): StorageFileEntity = StorageFileEntity(
-            id = id,
-            fileId = fileId!!,
-            blobId = blobId,
-            groupName = groupName,
-            ownerUserId = ownerUserId,
-            fileName = fileName,
-            fileSize = fileSize,
-            mimeType = mimeType,
-            fileType = fileType,
-            visibility = visibility,
-            createTime = createTime,
-            updateTime = updateTime,
-        )
-    }
-
-    companion object {
-        @JvmStatic
-        fun builder(): Builder = Builder()
     }
 
     final override fun equals(other: Any?): Boolean {

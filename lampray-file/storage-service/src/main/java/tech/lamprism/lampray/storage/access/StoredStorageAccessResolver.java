@@ -18,19 +18,34 @@ package tech.lamprism.lampray.storage.access;
 
 import com.google.common.collect.Maps;
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageException;
+import tech.lamprism.lampray.storage.StorageVisibility;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
+import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
+import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
+import tech.lamprism.lampray.storage.configuration.StorageTopology;
+import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementEntity;
+import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
+import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
+import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
 import tech.lamprism.lampray.storage.policy.StorageTransferModeResolver;
+import tech.lamprism.lampray.storage.routing.StorageGroupRouter;
+import tech.lamprism.lampray.storage.store.BlobStore;
+import tech.rollw.common.web.AuthErrorCode;
+import tech.rollw.common.web.DataErrorCode;
 import tech.rollw.common.web.CommonErrorCode;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Resolves access for persisted storage files.
@@ -41,21 +56,33 @@ import java.util.Map;
 public class StoredStorageAccessResolver {
     private final StorageRuntimeConfig runtimeSettings;
     private final StorageTransferModeResolver transferModeResolver;
-    private final StoredDownloadTargetResolver storedDownloadTargetResolver;
+    private final StorageTopology storageTopology;
+    private final BlobStoreLocator blobStoreLocator;
+    private final StorageFileRepository storageFileRepository;
+    private final StorageBlobPlacementRepository storageBlobPlacementRepository;
+    private final StorageGroupRouter storageGroupRouter;
     private final Map<StorageDownloadMode, StoredAccessStrategy> accessStrategies;
 
     public StoredStorageAccessResolver(StorageRuntimeConfig runtimeSettings,
-                                       StoredDownloadTargetResolver storedDownloadTargetResolver,
+                                       StorageTopology storageTopology,
+                                       BlobStoreLocator blobStoreLocator,
+                                       StorageFileRepository storageFileRepository,
+                                       StorageBlobPlacementRepository storageBlobPlacementRepository,
+                                       StorageGroupRouter storageGroupRouter,
                                        List<StoredAccessStrategy> accessStrategies) {
         this.runtimeSettings = runtimeSettings;
         this.transferModeResolver = new StorageTransferModeResolver(runtimeSettings);
-        this.storedDownloadTargetResolver = storedDownloadTargetResolver;
+        this.storageTopology = storageTopology;
+        this.blobStoreLocator = blobStoreLocator;
+        this.storageFileRepository = storageFileRepository;
+        this.storageBlobPlacementRepository = storageBlobPlacementRepository;
+        this.storageGroupRouter = storageGroupRouter;
         this.accessStrategies = Maps.uniqueIndex(accessStrategies, StoredAccessStrategy::mode);
     }
 
     public StorageDownloadResult resolveDownload(String fileId,
                                                  Long userId) throws IOException {
-        StoredDownloadTarget target = storedDownloadTargetResolver.resolve(fileId, userId);
+        StoredDownloadTarget target = resolveTarget(fileId, userId);
         StorageDownloadMode mode = transferModeResolver.resolveDownloadMode(
                 target.getFileStorage(),
                 target.getGroupConfig(),
@@ -72,7 +99,7 @@ public class StoredStorageAccessResolver {
     public StorageReference resolveReference(String fileId,
                                              StorageReferenceRequest request,
                                              Long userId) throws IOException {
-        StoredDownloadTarget target = storedDownloadTargetResolver.resolve(fileId, userId);
+        StoredDownloadTarget target = resolveTarget(fileId, userId);
         StorageDownloadMode resolvedMode = transferModeResolver.resolveDownloadMode(
                 target.getFileStorage(),
                 target.getGroupConfig(),
@@ -130,6 +157,77 @@ public class StoredStorageAccessResolver {
                     "Unsupported storage access mode: " + mode);
         }
         return strategy;
+    }
+
+    private StoredDownloadTarget resolveTarget(String fileId,
+                                               Long userId) {
+        StorageFileEntity fileEntity = requireFileEntity(fileId);
+        ensureDownloadAuthorized(fileEntity, userId);
+        StorageGroupConfig groupConfig = storageTopology.getGroup(fileEntity.getGroupName());
+        StorageBlobPlacementEntity placementEntity = resolvePlacement(fileEntity.getBlobId(), groupConfig);
+        StoredBlobPlacement placement = new StoredBlobPlacement(placementEntity.getBackendName(), placementEntity.getObjectKey());
+        BlobStore blobStore = blobStoreLocator.require(placement.getBackendName());
+        return new StoredDownloadTarget(toFileStorage(fileEntity), fileEntity.getVisibility(), groupConfig, placement, blobStore);
+    }
+
+    private StorageFileEntity requireFileEntity(String fileId) {
+        return storageFileRepository.findById(fileId)
+                .orElseThrow(() -> new StorageException(
+                        DataErrorCode.ERROR_DATA_NOT_EXIST,
+                        "File not found: " + fileId
+                ));
+    }
+
+    private StorageBlobPlacementEntity resolvePlacement(String blobId,
+                                                        StorageGroupConfig groupConfig) {
+        List<StorageBlobPlacementEntity> placements = storageBlobPlacementRepository.findAllByBlobId(blobId);
+        if (placements.isEmpty()) {
+            throw new StorageException(DataErrorCode.ERROR_DATA_NOT_EXIST, "No blob placement found for blob: " + blobId);
+        }
+        Map<String, StorageBlobPlacementEntity> placementsByBackend = placements.stream()
+                .collect(Collectors.toMap(
+                        StorageBlobPlacementEntity::getBackendName,
+                        placement -> placement,
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
+        String selectedBackend;
+        try {
+            selectedBackend = storageGroupRouter.selectReadBackend(groupConfig.getName(), placementsByBackend.keySet());
+        } catch (IllegalStateException exception) {
+            throw new StorageException(
+                    DataErrorCode.ERROR_DATA_NOT_EXIST,
+                    "No active blob store backend available for blob: " + blobId
+            );
+        }
+        return placementsByBackend.getOrDefault(selectedBackend, placements.get(0));
+    }
+
+    private void ensureDownloadAuthorized(StorageFileEntity fileEntity,
+                                          Long userId) {
+        if (fileEntity.getVisibility() == StorageVisibility.PUBLIC) {
+            return;
+        }
+        if (fileEntity.getVisibility() == StorageVisibility.INTERNAL && userId != null) {
+            return;
+        }
+        if (fileEntity.getVisibility() == StorageVisibility.PRIVATE
+                && userId != null
+                && userId.equals(fileEntity.getOwnerUserId())) {
+            return;
+        }
+        throw new StorageException(AuthErrorCode.ERROR_UNAUTHORIZED_USE, "You are not allowed to access this file.");
+    }
+
+    private FileStorage toFileStorage(StorageFileEntity fileEntity) {
+        return new FileStorage(
+                fileEntity.getFileId(),
+                fileEntity.getFileName(),
+                fileEntity.getFileSize(),
+                fileEntity.getMimeType(),
+                fileEntity.getFileType(),
+                fileEntity.getCreateTime()
+        );
     }
 
 }

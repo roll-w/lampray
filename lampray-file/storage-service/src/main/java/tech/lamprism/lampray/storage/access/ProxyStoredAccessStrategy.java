@@ -54,7 +54,7 @@ public class ProxyStoredAccessStrategy implements StoredAccessStrategy {
                 StorageDownloadMode.PROXY,
                 null,
                 new MonitoringStorageDownloadSource(
-                        target.getBlobStore().openDownload(target.getPlacementEntity().getObjectKey()),
+                        target.getBlobStore().openDownload(target.getPlacement().getObjectKey()),
                         storageTrafficPublisher,
                         target.getGroupConfig().getName()
                 )

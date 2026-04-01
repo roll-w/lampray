@@ -21,8 +21,9 @@ import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.storage.StorageResourceKind;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
-import tech.lamprism.lampray.storage.materialization.placement.BlobPlacementPersistenceService;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
+import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementEntity;
+import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
 import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
 
 import java.time.OffsetDateTime;
@@ -34,14 +35,14 @@ import java.util.Map;
 @Service
 public class BlobMaterializationPersistenceService {
     private final StorageBlobRepository storageBlobRepository;
-    private final BlobPlacementPersistenceService blobPlacementPersistenceService;
+    private final StorageBlobPlacementRepository storageBlobPlacementRepository;
     private final ResourceIdGenerator resourceIdGenerator;
 
     public BlobMaterializationPersistenceService(StorageBlobRepository storageBlobRepository,
-                                                 BlobPlacementPersistenceService blobPlacementPersistenceService,
+                                                 StorageBlobPlacementRepository storageBlobPlacementRepository,
                                                  ResourceIdGenerator resourceIdGenerator) {
         this.storageBlobRepository = storageBlobRepository;
-        this.blobPlacementPersistenceService = blobPlacementPersistenceService;
+        this.storageBlobPlacementRepository = storageBlobPlacementRepository;
         this.resourceIdGenerator = resourceIdGenerator;
     }
 
@@ -49,17 +50,18 @@ public class BlobMaterializationPersistenceService {
         StorageBlobEntity blobEntity = preparedBlob.getExistingBlob();
         if (blobEntity == null) {
             OffsetDateTime now = OffsetDateTime.now();
-            StorageBlobEntity candidate = StorageBlobEntity.builder()
-                    .setBlobId(newBlobId())
-                    .setChecksumSha256(preparedBlob.getChecksum())
-                    .setFileSize(preparedBlob.getSize())
-                    .setMimeType(preparedBlob.getMimeType())
-                    .setFileType(preparedBlob.getFileType())
-                    .setPrimaryBackend(preparedBlob.getPrimaryBackend())
-                    .setPrimaryObjectKey(preparedBlob.getPrimaryObjectKey())
-                    .setCreateTime(now)
-                    .setUpdateTime(now)
-                    .build();
+            StorageBlobEntity candidate = new StorageBlobEntity(
+                    null,
+                    newBlobId(),
+                    preparedBlob.getChecksum(),
+                    preparedBlob.getSize(),
+                    preparedBlob.getMimeType(),
+                    preparedBlob.getFileType(),
+                    preparedBlob.getPrimaryBackend(),
+                    preparedBlob.getPrimaryObjectKey(),
+                    now,
+                    now
+            );
             try {
                 blobEntity = storageBlobRepository.save(candidate);
             } catch (DataIntegrityViolationException exception) {
@@ -70,9 +72,35 @@ public class BlobMaterializationPersistenceService {
 
         OffsetDateTime now = OffsetDateTime.now();
         for (Map.Entry<String, String> entry : preparedBlob.getPlacementsToPersist().entrySet()) {
-            blobPlacementPersistenceService.persistIfAbsent(blobEntity.getBlobId(), entry.getKey(), entry.getValue(), now);
+            persistPlacementIfAbsent(blobEntity.getBlobId(), entry.getKey(), entry.getValue(), now);
         }
         return blobEntity;
+    }
+
+    private void persistPlacementIfAbsent(String blobId,
+                                          String backendName,
+                                          String objectKey,
+                                          OffsetDateTime now) {
+        if (storageBlobPlacementRepository.findByBlobIdAndBackendName(blobId, backendName).isPresent()) {
+            return;
+        }
+        StorageBlobPlacementEntity placementEntity = new StorageBlobPlacementEntity(
+                null,
+                resourceIdGenerator.nextId(StorageResourceKind.INSTANCE),
+                blobId,
+                backendName,
+                objectKey,
+                now,
+                now
+        );
+        try {
+            storageBlobPlacementRepository.save(placementEntity);
+        } catch (DataIntegrityViolationException exception) {
+            if (storageBlobPlacementRepository.findByBlobIdAndBackendName(blobId, backendName).isPresent()) {
+                return;
+            }
+            throw exception;
+        }
     }
 
     private String newBlobId() {

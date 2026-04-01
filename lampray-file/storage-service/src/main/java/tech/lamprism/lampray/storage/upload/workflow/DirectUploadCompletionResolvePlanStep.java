@@ -18,23 +18,21 @@ package tech.lamprism.lampray.storage.upload.workflow;
 
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageException;
-import tech.lamprism.lampray.storage.policy.StorageValidationRules;
+import tech.lamprism.lampray.storage.routing.StorageGroupRouter;
 import tech.lamprism.lampray.storage.routing.StorageWritePlan;
-import tech.lamprism.lampray.storage.routing.StorageWritePlanResolver;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.DataErrorCode;
 
 /**
  * @author RollW
  */
 @Component
 final class DirectUploadCompletionResolvePlanStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
-    private static final StorageValidationRules VALIDATION_RULES = StorageValidationRules.INSTANCE;
+    private final StorageGroupRouter storageGroupRouter;
 
-    private final StorageWritePlanResolver storageWritePlanResolver;
-
-    DirectUploadCompletionResolvePlanStep(StorageWritePlanResolver storageWritePlanResolver) {
-        this.storageWritePlanResolver = storageWritePlanResolver;
+    DirectUploadCompletionResolvePlanStep(StorageGroupRouter storageGroupRouter) {
+        this.storageGroupRouter = storageGroupRouter;
     }
 
     @Override
@@ -44,16 +42,24 @@ final class DirectUploadCompletionResolvePlanStep implements WorkflowStep<Direct
 
     @Override
     public void execute(DirectUploadCompletionWorkflowContext context) {
-        String checksum = VALIDATION_RULES.normalizeChecksum(context.getUploadSession().getChecksumSha256());
-        if (checksum == null) {
-            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "Direct uploads require a checksum.");
-        }
-        StorageWritePlan writePlan = storageWritePlanResolver.restore(
+        String checksum = context.getUploadSession().requireChecksum();
+        StorageWritePlan writePlan = restoreWritePlan(
                 context.getUploadSession().getGroupName(),
                 context.getUploadSession().getPrimaryBackend()
         );
         context.getState().setExpectedChecksum(checksum);
         context.getState().setWritePlan(writePlan);
         context.getState().setGroupSettings(writePlan.getGroupSettings());
+    }
+
+    private StorageWritePlan restoreWritePlan(String groupName,
+                                              String primaryBackend) {
+        try {
+            return storageGroupRouter.restoreWritePlan(groupName, primaryBackend);
+        } catch (IllegalArgumentException exception) {
+            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, exception.getMessage());
+        } catch (IllegalStateException exception) {
+            throw new StorageException(DataErrorCode.ERROR_DATA_NOT_EXIST, exception.getMessage());
+        }
     }
 }

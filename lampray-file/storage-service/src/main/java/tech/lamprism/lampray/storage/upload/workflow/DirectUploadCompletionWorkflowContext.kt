@@ -16,12 +16,12 @@
 
 package tech.lamprism.lampray.storage.upload.workflow
 
-import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity
+import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel
 
 /**
  * @author RollW
  */
 data class DirectUploadCompletionWorkflowContext @JvmOverloads constructor(
-    val uploadSession: StorageUploadSessionEntity,
+    val uploadSession: StorageUploadSessionModel,
     val state: DirectUploadCompletionWorkflowState = DirectUploadCompletionWorkflowState(),
 )

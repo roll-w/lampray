@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
+import tech.lamprism.lampray.storage.session.UploadSessionStatus
 import tech.rollw.common.web.page.Page
 import java.time.OffsetDateTime
 
@@ -30,32 +31,58 @@ import java.time.OffsetDateTime
 class StorageUploadSessionRepository(
     uploadSessionDao: StorageUploadSessionDao,
 ) : CommonRepository<StorageUploadSessionEntity, String>(uploadSessionDao) {
-    private val storageUploadSessionDao: StorageUploadSessionDao = uploadSessionDao
-
     fun findAll(
         pageable: Pageable,
         specification: Specification<StorageUploadSessionEntity>,
-    ): Page<StorageUploadSessionEntity> {
-        return super.findAll(pageable, specification)
-    }
+    ): Page<StorageUploadSessionEntity> = super.findAll(pageable, specification)
 
-    fun findAllByStatus(
-        status: UploadSessionStatus,
-    ): List<StorageUploadSessionEntity> {
-        return storageUploadSessionDao.findAllByStatus(status)
-    }
+    fun findAllByStatus(status: UploadSessionStatus): List<StorageUploadSessionEntity> =
+        findAll(statusSpec(status))
 
     fun findAllByStatusAndExpiresAtBefore(
         status: UploadSessionStatus,
         expiresAt: OffsetDateTime,
-    ): List<StorageUploadSessionEntity> {
-        return storageUploadSessionDao.findAllByStatusAndExpiresAtBefore(status, expiresAt)
-    }
+    ): List<StorageUploadSessionEntity> =
+        findAll(statusSpec(status).and(expiresAtBeforeSpec(expiresAt)))
 
     fun findAllByStatusAndUpdateTimeBefore(
         status: UploadSessionStatus,
         updateTime: OffsetDateTime,
-    ): List<StorageUploadSessionEntity> {
-        return storageUploadSessionDao.findAllByStatusAndUpdateTimeBefore(status, updateTime)
-    }
+    ): List<StorageUploadSessionEntity> =
+        findAll(statusSpec(status).and(updateTimeBeforeSpec(updateTime)))
+
+    fun existsOtherActiveSessionByPrimaryBackendAndObjectKey(
+        primaryBackend: String,
+        objectKey: String,
+        excludedUploadId: String,
+    ): Boolean = findOne(activeObjectReferenceSpec(primaryBackend, objectKey, excludedUploadId)).isPresent
+
+    private fun statusSpec(status: UploadSessionStatus): Specification<StorageUploadSessionEntity> =
+        Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.equal(root.get(StorageUploadSessionEntity_.status), status)
+        }
+
+    private fun expiresAtBeforeSpec(expiresAt: OffsetDateTime): Specification<StorageUploadSessionEntity> =
+        Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.lessThan(root.get(StorageUploadSessionEntity_.expiresAt), expiresAt)
+        }
+
+    private fun updateTimeBeforeSpec(updateTime: OffsetDateTime): Specification<StorageUploadSessionEntity> =
+        Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.lessThan(root.get(StorageUploadSessionEntity_.updateTime), updateTime)
+        }
+
+    private fun activeObjectReferenceSpec(
+        primaryBackend: String,
+        objectKey: String,
+        excludedUploadId: String,
+    ): Specification<StorageUploadSessionEntity> =
+        Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get(StorageUploadSessionEntity_.primaryBackend), primaryBackend),
+                criteriaBuilder.equal(root.get(StorageUploadSessionEntity_.objectKey), objectKey),
+                criteriaBuilder.notEqual(root.get(StorageUploadSessionEntity_.uploadId), excludedUploadId),
+                criteriaBuilder.notEqual(root.get(StorageUploadSessionEntity_.status), UploadSessionStatus.EXPIRED),
+            )
+        }
 }

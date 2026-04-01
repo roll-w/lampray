@@ -18,10 +18,14 @@ package tech.lamprism.lampray.storage.session;
 
 import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
-import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
+import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
+import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
+import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
+import tech.lamprism.lampray.storage.persistence.StorageUploadSessionRepository;
 import tech.lamprism.lampray.storage.store.BlobStore;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * @author RollW
@@ -29,20 +33,47 @@ import java.io.IOException;
 @Service
 public class UploadObjectCleaner {
     private final BlobStoreRegistry blobStoreRegistry;
+    private final StorageBlobRepository storageBlobRepository;
+    private final StorageBlobPlacementRepository storageBlobPlacementRepository;
+    private final StorageUploadSessionRepository storageUploadSessionRepository;
 
-    public UploadObjectCleaner(BlobStoreRegistry blobStoreRegistry) {
+    public UploadObjectCleaner(BlobStoreRegistry blobStoreRegistry,
+                               StorageBlobRepository storageBlobRepository,
+                               StorageBlobPlacementRepository storageBlobPlacementRepository,
+                               StorageUploadSessionRepository storageUploadSessionRepository) {
         this.blobStoreRegistry = blobStoreRegistry;
+        this.storageBlobRepository = storageBlobRepository;
+        this.storageBlobPlacementRepository = storageBlobPlacementRepository;
+        this.storageUploadSessionRepository = storageUploadSessionRepository;
     }
 
-    public boolean cleanup(StorageUploadSessionEntity uploadSession) throws IOException {
+    public boolean cleanup(StorageUploadSessionModel uploadSession) throws IOException {
         BlobStore blobStore = blobStoreRegistry.find(uploadSession.getPrimaryBackend()).orElse(null);
         if (blobStore == null) {
             return false;
         }
         String objectKey = uploadSession.getObjectKey();
+        if (objectKey == null) {
+            return true;
+        }
+        if (isStillReferenced(uploadSession)) {
+            return true;
+        }
         if (!blobStore.exists(objectKey)) {
             return true;
         }
         return blobStore.delete(objectKey);
+    }
+
+    private boolean isStillReferenced(StorageUploadSessionModel uploadSession) {
+        String backendName = uploadSession.getPrimaryBackend();
+        String objectKey = Objects.requireNonNull(uploadSession.getObjectKey(), "objectKey");
+        return storageBlobRepository.existsByPrimaryBackendAndPrimaryObjectKey(backendName, objectKey)
+                || storageBlobPlacementRepository.existsByBackendNameAndObjectKey(backendName, objectKey)
+                || storageUploadSessionRepository.existsOtherActiveSessionByPrimaryBackendAndObjectKey(
+                        backendName,
+                        objectKey,
+                        uploadSession.getUploadId()
+                );
     }
 }

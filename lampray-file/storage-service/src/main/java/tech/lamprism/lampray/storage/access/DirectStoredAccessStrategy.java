@@ -64,7 +64,7 @@ public class DirectStoredAccessStrategy implements StoredAccessStrategy {
         }
         StorageAccessRequest directRequest = target.getBlobStore().createDirectDownload(
                 new BlobDownloadRequest(
-                        target.getPlacementEntity().getObjectKey(),
+                        target.getPlacement().getObjectKey(),
                         target.getFileStorage().getFileName(),
                         mimeType
                 ),
@@ -73,7 +73,7 @@ public class DirectStoredAccessStrategy implements StoredAccessStrategy {
         if (!isSimpleDirectDownload(directRequest)) {
             return null;
         }
-        storageTrafficPublisher.publishDirectDownloadRequest(target.getGroupConfig().getName(), target.getPlacementEntity().getBackendName());
+        storageTrafficPublisher.publishDirectDownloadRequest(target.getGroupConfig().getName(), target.getPlacement().getBackendName());
         return new StorageDownloadResult(
                 target.getFileStorage(),
                 StorageDownloadMode.DIRECT,

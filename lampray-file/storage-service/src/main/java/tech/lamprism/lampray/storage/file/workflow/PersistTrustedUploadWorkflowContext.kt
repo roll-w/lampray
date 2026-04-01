@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.access
+package tech.lamprism.lampray.storage.file.workflow
 
-import tech.lamprism.lampray.storage.FileStorage
-import tech.lamprism.lampray.storage.StorageVisibility
-import tech.lamprism.lampray.storage.configuration.StorageGroupConfig
-import tech.lamprism.lampray.storage.store.BlobStore
+import tech.lamprism.lampray.storage.FileType
+import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization
 
 /**
  * @author RollW
  */
-public data class StoredDownloadTarget(
-    public val fileStorage: FileStorage,
-    public val visibility: StorageVisibility,
-    public val groupConfig: StorageGroupConfig,
-    public val placement: StoredBlobPlacement,
-    public val blobStore: BlobStore,
+data class PersistTrustedUploadWorkflowContext @JvmOverloads constructor(
+    val groupName: String,
+    val fileName: String,
+    val mimeType: String,
+    val fileType: FileType,
+    val ownerUserId: Long?,
+    val preparedBlob: PreparedBlobMaterialization,
+    val state: PersistTrustedUploadWorkflowState = PersistTrustedUploadWorkflowState(),
 )
