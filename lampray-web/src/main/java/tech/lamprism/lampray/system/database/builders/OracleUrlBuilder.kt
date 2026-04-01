@@ -36,7 +36,12 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
             val service = config.databaseName.ifBlank {
                 throw IllegalArgumentException("Database name must be specified for Oracle")
             }
-            "${config.type.urlPrefix}${target.getNetworkAddress()}/$service"
+            val protocolPrefix = if (config.ssl.isEnabled()) {
+                "jdbc:oracle:thin:@tcps://"
+            } else {
+                config.type.urlPrefix
+            }
+            "$protocolPrefix${target.getNetworkAddress()}/$service"
         } else {
             throw IllegalArgumentException("Oracle requires network target format (host:port or host)")
         }
@@ -60,6 +65,36 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
             }
         }
     }
+
+    override fun buildSslProperties(config: DatabaseConfig): Map<String, String> {
+        if (!config.ssl.isEnabled()) {
+            return emptyMap()
+        }
+
+        if (config.ssl.hasCustomMaterial()) {
+            throw IllegalArgumentException(
+                "Oracle managed SSL does not support custom certificate material in this implementation."
+            )
+        }
+
+        if (config.ssl.mode == tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_CA) {
+            throw IllegalArgumentException(
+                "Oracle does not support a managed verify-ca mode without identity matching. " +
+                        "Use 'required', 'verify-identity', or supplemental driver properties in database.options."
+            )
+        }
+
+        val dnMatch = when (config.ssl.mode) {
+            tech.lamprism.lampray.system.database.DatabaseSslMode.DISABLED -> "false"
+            tech.lamprism.lampray.system.database.DatabaseSslMode.REQUIRED -> "false"
+            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_IDENTITY -> "true"
+            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_CA -> "false"
+        }
+
+        return mapOf("oracle.net.ssl_server_dn_match" to dnMatch)
+    }
+
+    override fun getReservedSslOptionKeys(): Set<String> = setOf("oracle.net.ssl_server_dn_match")
 
     override fun getDefaultValidationQuery(): String = "SELECT 1 FROM DUAL"
 

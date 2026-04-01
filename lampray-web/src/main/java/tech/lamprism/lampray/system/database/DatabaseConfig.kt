@@ -26,6 +26,7 @@ data class DatabaseConfig(
     val databaseName: String,
     val type: DatabaseType,
     val charset: String?,
+    val ssl: DatabaseSslConfig,
     val customOptions: Collection<String>,
     val connectionPoolConfig: ConnectionPoolConfig
 )

@@ -17,9 +17,11 @@
 package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
+import tech.lamprism.lampray.system.database.DatabaseSslArtifacts
 import tech.lamprism.lampray.system.database.DatabaseType
 import tech.lamprism.lampray.system.database.DatabaseUrl
 import tech.lamprism.lampray.system.database.DatabaseUrlBuilder
+import tech.lamprism.lampray.system.database.addResourceCleanupSuppressed
 
 /**
  * Abstract base class for database URL builders providing common functionality.
@@ -36,9 +38,19 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
         validateConfig(config)
 
         val baseUrl = buildBaseUrl(config)
-        val parameters = buildAdditionalProperties(config)
+        val sslArtifacts = if (config.ssl.isEnabled()) {
+            buildSslArtifacts(config)
+        } else {
+            DatabaseSslArtifacts.EMPTY
+        }
+        val parameters = try {
+            buildAdditionalProperties(config, sslArtifacts.properties)
+        } catch (e: Exception) {
+            addResourceCleanupSuppressed(sslArtifacts.resources, e)
+            throw e
+        }
 
-        return DatabaseUrl(baseUrl, parameters)
+        return DatabaseUrl(baseUrl, parameters, sslArtifacts.resources)
     }
 
     /**
@@ -67,24 +79,52 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
      * @param config Database configuration
      * @return Map of parameter key-value pairs
      */
-    protected open fun buildAdditionalProperties(config: DatabaseConfig): Map<String, String> {
-        val params = mutableMapOf<String, String>()
+    protected open fun buildAdditionalProperties(
+        config: DatabaseConfig,
+        managedSslProperties: Map<String, String>
+    ): Map<String, String> {
+        val params = linkedMapOf<String, String>()
 
-        // Add charset if specified
         config.charset?.let { charset ->
             if (charset.isNotBlank()) {
                 addCharsetParameter(params, charset)
             }
         }
 
-        // Add custom options
-        if (config.customOptions.isNotEmpty()) {
-            parseCustomOptions(config.customOptions).forEach { (key, value) ->
-                params[key] = value
+        params.putAll(managedSslProperties)
+        mergeCustomOptions(params, config)
+
+        return params
+    }
+
+    protected open fun buildSslArtifacts(config: DatabaseConfig): DatabaseSslArtifacts {
+        return DatabaseSslArtifacts(buildSslProperties(config))
+    }
+
+    protected open fun buildSslProperties(config: DatabaseConfig): Map<String, String> = emptyMap()
+
+    protected open fun getReservedSslOptionKeys(): Set<String> = emptySet()
+
+    private fun mergeCustomOptions(params: MutableMap<String, String>, config: DatabaseConfig) {
+        if (config.customOptions.isEmpty()) {
+            return
+        }
+
+        val customOptions = parseCustomOptions(config.customOptions)
+        if (config.ssl.isEnabled()) {
+            val reservedKeys = getReservedSslOptionKeys()
+                .map { it.lowercase() }
+                .toSet()
+            val conflictingKeys = customOptions.keys.filter { key ->
+                reservedKeys.contains(key.lowercase())
+            }
+            require(conflictingKeys.isEmpty()) {
+                "Managed database SSL options conflict with database.options keys: ${conflictingKeys.joinToString(", ")}. " +
+                        "Use database.ssl.mode for SSL behavior and keep database.options for supplemental driver properties only."
             }
         }
 
-        return params
+        params.putAll(customOptions)
     }
 
     /**
@@ -112,11 +152,16 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
             return emptyMap()
         }
 
-        return options.mapNotNull { pair ->
+        val properties = linkedMapOf<String, String>()
+        options.mapNotNull { pair ->
             val parts = pair.split("=", limit = 2)
             if (parts.size == 2) {
                 parts[0].trim() to parts[1].trim()
             } else null
-        }.toMap()
+        }.forEach { (key, value) ->
+            properties[key] = value
+        }
+
+        return properties
     }
 }

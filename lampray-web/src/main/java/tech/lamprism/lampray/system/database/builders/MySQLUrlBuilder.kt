@@ -17,7 +17,10 @@
 package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
+import tech.lamprism.lampray.system.database.DatabaseSslArtifacts
+import tech.lamprism.lampray.system.database.DatabaseSslSupport
 import tech.lamprism.lampray.system.database.DatabaseType
+import tech.lamprism.lampray.system.database.addResourceCleanupSuppressed
 
 /**
  * URL builder for MySQL and MariaDB databases.
@@ -48,6 +51,35 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         params["useUnicode"] = "true"
     }
 
+    override fun buildSslArtifacts(config: DatabaseConfig): DatabaseSslArtifacts {
+        return when (config.type) {
+            DatabaseType.MYSQL -> buildMySqlSslArtifacts(config)
+            DatabaseType.MARIADB -> buildMariaDbSslArtifacts(config)
+            else -> DatabaseSslArtifacts.EMPTY
+        }
+    }
+
+    override fun getReservedSslOptionKeys(): Set<String> = setOf(
+        "sslMode",
+        "useSSL",
+        "requireSSL",
+        "verifyServerCertificate",
+        "trustServerCertificate",
+        "disableSslHostnameVerification",
+        "trustCertificateKeyStoreUrl",
+        "trustCertificateKeyStoreType",
+        "trustCertificateKeyStorePassword",
+        "fallbackToSystemTrustStore",
+        "clientCertificateKeyStoreUrl",
+        "clientCertificateKeyStoreType",
+        "clientCertificateKeyStorePassword",
+        "fallbackToSystemKeyStore",
+        "serverSslCert",
+        "keyStore",
+        "keyStorePassword",
+        "keyPassword"
+    )
+
     override fun getDefaultValidationQuery(): String = "SELECT 1"
 
     override fun validateConfig(config: DatabaseConfig) {
@@ -57,5 +89,88 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
         require(config.target.isNetwork()) {
             "MySQL requires network target format (host:port or host), got: ${config.target}"
         }
+    }
+
+    private fun mapMySqlSslMode(config: DatabaseConfig): String {
+        return when (config.ssl.mode) {
+            tech.lamprism.lampray.system.database.DatabaseSslMode.DISABLED -> "DISABLED"
+            tech.lamprism.lampray.system.database.DatabaseSslMode.REQUIRED -> "REQUIRED"
+            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_CA -> "VERIFY_CA"
+            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_IDENTITY -> "VERIFY_IDENTITY"
+        }
+    }
+
+    private fun mapMariaDbSslMode(config: DatabaseConfig): String {
+        return when (config.ssl.mode) {
+            tech.lamprism.lampray.system.database.DatabaseSslMode.DISABLED -> "disable"
+            tech.lamprism.lampray.system.database.DatabaseSslMode.REQUIRED -> "trust"
+            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_CA -> "verify-ca"
+            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_IDENTITY -> "verify-full"
+        }
+    }
+
+    private fun buildMySqlSslArtifacts(config: DatabaseConfig): DatabaseSslArtifacts {
+        val properties = linkedMapOf("sslMode" to mapMySqlSslMode(config))
+        val resources = mutableListOf<AutoCloseable>()
+
+        try {
+            config.ssl.ca?.let { ca ->
+                val trustStore = DatabaseSslSupport.materializeTrustStore("mysql-trust", ca)
+                properties["trustCertificateKeyStoreUrl"] = trustStore.path.toUri().toString()
+                properties["trustCertificateKeyStoreType"] = trustStore.type
+                properties["trustCertificateKeyStorePassword"] = trustStore.password
+                properties["fallbackToSystemTrustStore"] = "false"
+                resources.addAll(trustStore.resources)
+            }
+
+            val clientCertificate = config.ssl.certificate
+            val clientKey = config.ssl.key
+            if (clientCertificate != null && clientKey != null) {
+                val keyStore = DatabaseSslSupport.materializeKeyStore("mysql-client", clientCertificate, clientKey)
+                properties["clientCertificateKeyStoreUrl"] = keyStore.path.toUri().toString()
+                properties["clientCertificateKeyStoreType"] = keyStore.type
+                properties["clientCertificateKeyStorePassword"] = keyStore.password
+                properties["fallbackToSystemKeyStore"] = "false"
+                resources.addAll(keyStore.resources)
+            }
+        } catch (e: Exception) {
+            addResourceCleanupSuppressed(resources, e)
+            throw e
+        }
+
+        return DatabaseSslArtifacts(properties, resources)
+    }
+
+    private fun buildMariaDbSslArtifacts(config: DatabaseConfig): DatabaseSslArtifacts {
+        val properties = linkedMapOf("sslMode" to mapMariaDbSslMode(config))
+        val resources = mutableListOf<AutoCloseable>()
+
+        try {
+            config.ssl.ca?.let { ca ->
+                val certificate = DatabaseSslSupport.materializePemFile("mariadb-ca", ca)
+                properties["serverSslCert"] = certificate.path.toAbsolutePath().toString()
+                properties["fallbackToSystemTrustStore"] = "false"
+                resources.addAll(certificate.resources)
+            }
+
+            val clientCertificate = config.ssl.certificate
+            val clientKey = config.ssl.key
+            if (clientCertificate != null && clientKey != null) {
+                val keyStore = DatabaseSslSupport.materializeKeyStore(
+                    prefix = "mariadb-client",
+                    certificate = clientCertificate,
+                    key = clientKey
+                )
+                properties["keyStore"] = keyStore.path.toAbsolutePath().toString()
+                properties["keyStorePassword"] = keyStore.password
+                properties["keyPassword"] = keyStore.password
+                resources.addAll(keyStore.resources)
+            }
+        } catch (e: Exception) {
+            addResourceCleanupSuppressed(resources, e)
+            throw e
+        }
+
+        return DatabaseSslArtifacts(properties, resources)
     }
 }

@@ -33,8 +33,24 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
     override fun buildBaseUrl(config: DatabaseConfig): String {
         val target = config.target
 
+        require(!config.ssl.hasCustomMaterial()) {
+            "H2 managed SSL does not support custom certificate material in this implementation."
+        }
+
+        if (target.isNetwork() && config.ssl.isEnabled() &&
+            config.ssl.mode != tech.lamprism.lampray.system.database.DatabaseSslMode.REQUIRED
+        ) {
+            throw IllegalArgumentException(
+                "H2 network SSL only supports the managed 'required' mode. " +
+                        "Use 'required' or disable managed SSL for H2."
+            )
+        }
+
         return when {
             target.isMemory() -> {
+                require(!config.ssl.isEnabled()) {
+                    "H2 SSL is only supported for network targets. Disable database SSL or use a network H2 target."
+                }
                 "jdbc:h2:mem:lampray;DB_CLOSE_DELAY=-1"
             }
 
@@ -43,10 +59,18 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
                 val database = config.databaseName.ifBlank {
                     throw IllegalArgumentException("Database name must be specified for H2 TCP server mode")
                 }
-                "jdbc:h2:tcp://${target.getNetworkAddress()}/$database"
+                val prefix = if (config.ssl.isEnabled()) {
+                    "jdbc:h2:ssl://"
+                } else {
+                    "jdbc:h2:tcp://"
+                }
+                "$prefix${target.getNetworkAddress()}/$database"
             }
 
             target.isFile() -> {
+                require(!config.ssl.isEnabled()) {
+                    "H2 SSL is only supported for network targets. Disable database SSL or use a network H2 target."
+                }
                 // File-based database
                 val filePath = target.getFilePath()!!
                 val file = File(filePath)

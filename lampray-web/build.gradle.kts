@@ -52,6 +52,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("com.github.ben-manes.caffeine:caffeine")
     implementation("org.hibernate.orm:hibernate-community-dialects")
+    implementation(libs.bouncycastle.pkix)
+    implementation(libs.bouncycastle.prov)
     implementation("com.mysql:mysql-connector-j")
     implementation("org.postgresql:postgresql")
     implementation("org.xerial:sqlite-jdbc")
