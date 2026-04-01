@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,18 @@ import java.util.Optional
 @Repository
 class StaffRepository(
     private val staffDao: StaffDao
-) : CommonRepository<StaffDo, Long>(staffDao) {
-    fun findByUserId(userId: Long): Optional<StaffDo> {
+) : CommonRepository<StaffEntity, Long>(staffDao) {
+    fun findByUserId(userId: Long): Optional<StaffEntity> {
         return findOne { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get(StaffDo_.userId), userId)
+            criteriaBuilder.equal(root.get<Long>("userId"), userId)
         }
     }
 
-    fun findByTypes(types: Set<StaffType>): List<StaffDo> {
+    fun findByTypes(types: Set<StaffType>): List<StaffEntity> {
         return findAll { root, _, criteriaBuilder ->
             criteriaBuilder.and(
                 *types.map {
-                    criteriaBuilder.isMember(it, root.get(StaffDo_.types))
+                    criteriaBuilder.isMember(it, root.get<Set<StaffType>>("types"))
                 }.toTypedArray()
             )
         }

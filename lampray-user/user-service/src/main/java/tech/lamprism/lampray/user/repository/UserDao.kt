@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,5 +21,5 @@ import tech.lamprism.lampray.common.data.Dao
 
 @Dao
 @JvmDefaultWithoutCompatibility
-interface UserDao : CommonDao<UserDo, Long> {
+interface UserDao : CommonDao<UserEntity, Long> {
 }

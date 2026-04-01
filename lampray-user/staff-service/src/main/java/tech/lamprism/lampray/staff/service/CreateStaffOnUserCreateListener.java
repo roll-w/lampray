@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.staff.StaffType;
-import tech.lamprism.lampray.staff.persistence.StaffDo;
+import tech.lamprism.lampray.staff.persistence.StaffEntity;
 import tech.lamprism.lampray.staff.persistence.StaffRepository;
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.Role;
@@ -50,7 +50,7 @@ public class CreateStaffOnUserCreateListener implements ApplicationListener<NewU
         }
         OffsetDateTime now = OffsetDateTime.now();
         StaffType type = StaffType.of(attributedUser.getRole());
-        StaffDo staff = StaffDo.builder()
+        StaffEntity staff = StaffEntity.builder()
                 .setUserId(attributedUser.getUserId())
                 .setCreateTime(now)
                 .setUpdateTime(now)

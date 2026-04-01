@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,21 @@ import java.util.Optional
 @Repository
 class UserRepository(
     private val userDao: UserDao
-) : CommonRepository<UserDo, Long>(userDao) {
+) : CommonRepository<UserEntity, Long>(userDao) {
 
-    fun searchBy(keyword: String): List<UserDo> {
+    fun searchBy(keyword: String): List<UserEntity> {
         return userDao.findAll(createSearchBySpec(keyword))
     }
 
-    fun findByUsername(username: String): Optional<UserDo> {
+    fun findByUsername(username: String): Optional<UserEntity> {
         return findOne { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get(UserDo_.username), username)
+            criteriaBuilder.equal(root.get<String>("username"), username)
         }
     }
 
-    fun findByEmail(email: String): Optional<UserDo> {
+    fun findByEmail(email: String): Optional<UserEntity> {
         return findOne { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get(UserDo_.email), email)
+            criteriaBuilder.equal(root.get<String>("email"), email)
         }
     }
 
@@ -57,8 +57,8 @@ class UserRepository(
         return userDao.count() > 0
     }
 
-    private fun createSearchBySpec(keyword: String) =
-        Specification { root, _, builder ->
-            builder.like(root.get(UserDo_.username), keyword)
+    private fun createSearchBySpec(keyword: String): Specification<UserEntity> =
+        Specification<UserEntity> { root, _, builder ->
+            builder.like(root.get<String>("username"), keyword)
         }
 }

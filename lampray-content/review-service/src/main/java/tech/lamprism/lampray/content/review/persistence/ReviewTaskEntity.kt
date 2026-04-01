@@ -249,7 +249,10 @@ class ReviewTaskEntity(
         return resourceId == other.resourceId
     }
 
-    final override fun hashCode(): Int =
-        if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass.hashCode() else javaClass.hashCode()
+    final override fun hashCode(): Int {
+        val effectiveClass =
+            if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else javaClass
+        return 31 * effectiveClass.hashCode() + resourceId.hashCode()
+    }
 }
 
