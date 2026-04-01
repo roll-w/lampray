@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.observability;
 
-dependencies {
-    api(project(":lampray-common"))
-    api(project(":lampray-common-data"))
-    api(project(":lampray-content:content-api"))
-    implementation(project(":lampray-observability:observability-api"))
+/**
+ * Distinguishes domain-driven signals from runtime and performance signals.
+ *
+ * @author RollW
+ */
+public enum SignalDomain {
+    BUSINESS,
+    SYSTEM
 }
-
-description = "lampray-article-service"

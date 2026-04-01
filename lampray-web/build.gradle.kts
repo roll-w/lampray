@@ -21,8 +21,10 @@ plugins {
 
 dependencies {
     implementation(project(":lampray-common"))
+    implementation(project(":lampray-observability:observability-core"))
     implementation(project(":lampray-system:setting-service"))
     implementation(project(":lampray-system:message-resource-service"))
+    implementation("io.micrometer:micrometer-registry-prometheus")
     implementation(project(":lampray-content:content-service"))
     implementation(project(":lampray-content:article-service"))
     implementation(project(":lampray-content:comment-service"))

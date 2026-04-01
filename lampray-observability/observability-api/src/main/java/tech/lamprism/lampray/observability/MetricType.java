@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.observability;
 
-dependencies {
-    api(project(":lampray-common"))
-    api(project(":lampray-common-data"))
-    api(project(":lampray-content:content-api"))
-    implementation(project(":lampray-observability:observability-api"))
+/**
+ * @author RollW
+ */
+public enum MetricType {
+    COUNTER,
+    GAUGE,
+    TIME_GAUGE,
+    HISTOGRAM,
+    TIMER,
+    LONG_TASK_TIMER,
+    DISTRIBUTION_SUMMARY,
+    FUNCTION_COUNTER,
+    FUNCTION_TIMER,
+    MULTI_GAUGE
 }
-
-description = "lampray-article-service"

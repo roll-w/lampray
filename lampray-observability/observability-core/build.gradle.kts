@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,10 @@
 
 plugins {
     id("buildlogic.java-conventions")
-    id("buildlogic.jpa-conventions")
 }
 
 dependencies {
-    api(project(":lampray-iam:authentication-api"))
-    api(project(":lampray-user:user-service"))
-    api(project(":lampray-system:message-resource-api"))
-    api(project(":lampray-common-data"))
-    api(project(":lampray-push:push-api"))
-    implementation(project(":lampray-observability:observability-api"))
-    implementation(libs.io.jsonwebtoken.jjwt.api)
-    implementation(libs.io.jsonwebtoken.jjwt.impl)
-    implementation(libs.io.jsonwebtoken.jjwt.jackson)
+    api(project(":lampray-observability:observability-api"))
 }
 
-description = "lampray-authentication-service"
+description = "lampray-observability-core"

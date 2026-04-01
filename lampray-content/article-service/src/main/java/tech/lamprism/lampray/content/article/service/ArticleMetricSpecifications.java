@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.content.article.service;
 
-dependencies {
-    api(project(":lampray-common"))
-    api(project(":lampray-common-data"))
-    api(project(":lampray-content:content-api"))
-    implementation(project(":lampray-observability:observability-api"))
-}
+import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.observability.MetricSpecification;
+import tech.lamprism.lampray.observability.MetricSpecificationProvider;
 
-description = "lampray-article-service"
+import java.util.List;
+
+/**
+ * @author RollW
+ */
+@Component
+public final class ArticleMetricSpecifications implements MetricSpecificationProvider {
+    @Override
+    public List<MetricSpecification> getMetricSpecifications() {
+        return ArticleMetrics.SPECIFICATIONS;
+    }
+}

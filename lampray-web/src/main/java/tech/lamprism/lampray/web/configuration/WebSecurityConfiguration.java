@@ -57,6 +57,8 @@ import tech.lamprism.lampray.web.configuration.compenent.ForwardedHeaderDelegate
 import tech.lamprism.lampray.web.configuration.compenent.WebDelegateSecurityHandler;
 import tech.lamprism.lampray.web.configuration.filter.ApiContextInitializeFilter;
 import tech.lamprism.lampray.web.configuration.filter.CorsConfigFilter;
+import tech.lamprism.lampray.web.configuration.filter.MetricsScrapeAuthenticationFilter;
+import tech.lamprism.lampray.web.configuration.filter.RequestObservabilityFilter;
 import tech.lamprism.lampray.web.configuration.filter.TokenAuthenticationFilter;
 
 import java.time.Duration;
@@ -89,12 +91,14 @@ public class WebSecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity security,
-                                                   SecurityContextRepository securityContextRepository,
-                                                   CorsConfigFilter corsConfigFilter,
-                                                   TokenAuthenticationFilter tokenAuthenticationFilter,
-                                                   ApiContextInitializeFilter apiContextInitializeFilter,
-                                                   FirewallFilter firewallFilter,
-                                                   ForwardedHeaderDelegateFilter forwardedHeaderFilter,
+                                                    SecurityContextRepository securityContextRepository,
+                                                    CorsConfigFilter corsConfigFilter,
+                                                    TokenAuthenticationFilter tokenAuthenticationFilter,
+                                                    MetricsScrapeAuthenticationFilter metricsScrapeAuthenticationFilter,
+                                                    RequestObservabilityFilter requestObservabilityFilter,
+                                                    ApiContextInitializeFilter apiContextInitializeFilter,
+                                                    FirewallFilter firewallFilter,
+                                                    ForwardedHeaderDelegateFilter forwardedHeaderFilter,
                                                    AuthenticationEntryPoint authenticationEntryPoint,
                                                    AccessDeniedHandler accessDeniedHandler) throws Exception {
         security.csrf(AbstractHttpConfigurer::disable);
@@ -105,6 +109,8 @@ public class WebSecurityConfiguration {
                 configurer.securityContextRepository(securityContextRepository));
         security.authorizeHttpRequests(configurer -> configurer
                 .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                .requestMatchers("/healthz").permitAll()
+                .requestMatchers("/metrics").permitAll()
                 .requestMatchers("/api/{version}/auth/token:refresh").permitAll()
                 .requestMatchers("/api/{version}/admin/**").hasAnyAuthority("role:ADMIN")
                 .requestMatchers("/api/{version}/message/**").hasAnyAuthority("role:USER")
@@ -131,6 +137,8 @@ public class WebSecurityConfiguration {
         security.sessionManagement(configurer -> {
             configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         });
+        security.addFilterBefore(metricsScrapeAuthenticationFilter, RequestObservabilityFilter.class);
+        security.addFilterBefore(requestObservabilityFilter, TokenAuthenticationFilter.class);
         security.addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         security.addFilterAfter(apiContextInitializeFilter, TokenAuthenticationFilter.class);
         security.addFilterAfter(firewallFilter, ApiContextInitializeFilter.class);

@@ -35,6 +35,7 @@ import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
 import tech.lamprism.lampray.content.structuraltext.StructuralText;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -47,16 +48,21 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
     private static final Logger logger = LoggerFactory.getLogger(ArticleService.class);
 
     private final ArticleRepository articleRepository;
+    private final ArticleMetricRecorder articleMetricRecorder;
 
-    public ArticleService(ArticleRepository articleRepository) {
+    public ArticleService(ArticleRepository articleRepository,
+                          ArticleMetricRecorder articleMetricRecorder) {
         this.articleRepository = articleRepository;
+        this.articleMetricRecorder = articleMetricRecorder;
     }
 
     @Override
     public ContentDetails publish(@NonNull UncreatedContent uncreatedContent,
                                   OffsetDateTime timestamp)
             throws ContentException {
+        long startNanos = System.nanoTime();
         if (uncreatedContent.getContentType() != ContentType.ARTICLE) {
+            articleMetricRecorder.recordPublishFailure("invalid_type");
             throw new IllegalArgumentException("Content type not supported: " +
                     uncreatedContent.getContentType());
         }
@@ -66,6 +72,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
         long userId = uncreatedContent.getOperator().getUserId();
 
         if (articleRepository.findByTitle(title, userId).isPresent()) {
+            articleMetricRecorder.recordPublishFailure("duplicated");
             throw new ContentException(ContentErrorCode.ERROR_CONTENT_EXISTED);
         }
 
@@ -78,6 +85,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
                 .setUpdateTime(timestamp)
                 .build();
         ArticleDo created = articleRepository.save(article);
+        articleMetricRecorder.recordPublishSuccess(Duration.ofNanos(System.nanoTime() - startNanos));
         logger.trace("Article({}) title={} created by user({})",
                 created.getEntityId(), created.getTitle(), created.getUserId());
         return created;
@@ -123,4 +131,5 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
                     contentCollectionIdentity.getContentCollectionType());
         };
     }
+
 }

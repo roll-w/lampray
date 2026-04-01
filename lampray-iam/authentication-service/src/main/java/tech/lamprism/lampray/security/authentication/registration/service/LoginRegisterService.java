@@ -28,6 +28,9 @@ import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.LampException;
 import tech.lamprism.lampray.RequestMetadata;
+import tech.lamprism.lampray.observability.ObservationDefinition;
+import tech.lamprism.lampray.observability.ObservationScope;
+import tech.lamprism.lampray.observability.Observability;
 import tech.lamprism.lampray.security.authentication.UserInfoSignature;
 import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationToken;
@@ -63,6 +66,7 @@ import tech.rollw.common.web.system.AuthenticationException;
 import tech.rollw.common.web.system.SystemResourceOperatorProvider;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -84,19 +88,23 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
     private final AuthenticationManager authenticationManager;
     private final UserSignatureProvider userSignatureProvider;
     private final List<RegistrationInterceptor> registrationInterceptors;
+    private final Observability observability;
+    private final AuthenticationMetricRecorder authenticationMetricRecorder;
     private final Map<LoginStrategyType, LoginStrategy> loginStrategyMap =
             new EnumMap<>(LoginStrategyType.class);
 
-    public LoginRegisterService(List<LoginStrategy> strategies,
-                                RegisterTokenRepository registerTokenRepository,
-                                FirewallRegistry firewallRegistry,
-                                SystemResourceOperatorProvider<Long> systemResourceOperatorProvider,
-                                UserProvider userProvider,
-                                UserManageService userManageService,
-                                ApplicationEventPublisher eventPublisher,
-                                AuthenticationManager authenticationManager,
-                                UserSignatureProvider userSignatureProvider,
-                                List<RegistrationInterceptor> registrationInterceptors) {
+    LoginRegisterService(List<LoginStrategy> strategies,
+                         RegisterTokenRepository registerTokenRepository,
+                         FirewallRegistry firewallRegistry,
+                         SystemResourceOperatorProvider<Long> systemResourceOperatorProvider,
+                         UserProvider userProvider,
+                         UserManageService userManageService,
+                         ApplicationEventPublisher eventPublisher,
+                         AuthenticationManager authenticationManager,
+                         UserSignatureProvider userSignatureProvider,
+                         List<RegistrationInterceptor> registrationInterceptors,
+                         Observability observability,
+                         AuthenticationMetricRecorder authenticationMetricRecorder) {
         this.registerTokenRepository = registerTokenRepository;
         this.firewallRegistry = firewallRegistry;
         this.systemResourceOperatorProvider = systemResourceOperatorProvider;
@@ -106,6 +114,8 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         this.authenticationManager = authenticationManager;
         this.userSignatureProvider = userSignatureProvider;
         this.registrationInterceptors = registrationInterceptors;
+        this.observability = observability;
+        this.authenticationMetricRecorder = authenticationMetricRecorder;
         strategies.forEach(strategy ->
                 loginStrategyMap.put(strategy.getStrategyType(), strategy));
     }
@@ -118,22 +128,26 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
     public void sendToken(long userId,
                           LoginStrategyType type,
                           RequestMetadata requestMetadata) throws IOException {
-        LoginStrategy strategy = getLoginStrategy(type);
-        AttributedUserDetails user = userProvider.getUser(userId);
-        LoginVerifiableToken token = strategy.createToken(user);
-        LoginStrategy.Options requestInfo = new LoginStrategy.Options(LocaleContextHolder.getLocale());
-        sendToken(strategy, token, user, requestInfo);
+        sendTokenWithMetrics(type, () -> {
+            LoginStrategy strategy = getLoginStrategy(type);
+            AttributedUserDetails user = userProvider.getUser(userId);
+            LoginVerifiableToken token = strategy.createToken(user);
+            LoginStrategy.Options requestInfo = new LoginStrategy.Options(LocaleContextHolder.getLocale());
+            sendToken(strategy, token, user, requestInfo);
+        });
     }
 
     @Override
     public void sendToken(@NonNull String identity,
                           @NonNull LoginStrategyType type,
                           RequestMetadata requestMetadata) {
-        LoginStrategy strategy = getLoginStrategy(type);
-        AttributedUserDetails user = tryGetUser(identity);
-        LoginVerifiableToken token = strategy.createToken(user);
-        LoginStrategy.Options requestInfo = new LoginStrategy.Options(LocaleContextHolder.getLocale());
-        sendToken(strategy, token, user, requestInfo);
+        sendTokenWithMetrics(type, () -> {
+            LoginStrategy strategy = getLoginStrategy(type);
+            AttributedUserDetails user = tryGetUser(identity);
+            LoginVerifiableToken token = strategy.createToken(user);
+            LoginStrategy.Options requestInfo = new LoginStrategy.Options(LocaleContextHolder.getLocale());
+            sendToken(strategy, token, user, requestInfo);
+        });
     }
 
     private void sendToken(LoginStrategy strategy,
@@ -141,11 +155,24 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                            AttributedUserDetails user,
                            LoginStrategy.Options requestInfo) {
         try {
+            authenticationMetricRecorder.recordTokenPayloadSize(strategy.getStrategyType(), token.toString().length());
             strategy.sendToken(token, user, requestInfo);
         } catch (IOException e) {
             logger.error("Failed to send token to user: {}@{}, due to: {}",
                     user.getUserId(), user.getUsername(), e.getMessage(), e);
             throw new LampException(IoErrorCode.ERROR_IO);
+        }
+    }
+
+    private void sendTokenWithMetrics(LoginStrategyType type,
+                                      Runnable action) {
+        long startNanos = System.nanoTime();
+        try (AuthenticationMetricRecorder.TokenSendTask ignored = authenticationMetricRecorder.startTokenSendTask(type)) {
+            action.run();
+            authenticationMetricRecorder.recordTokenSendResult(type, Duration.ofNanos(System.nanoTime() - startNanos), "success");
+        } catch (RuntimeException | Error ex) {
+            authenticationMetricRecorder.recordTokenSendResult(type, Duration.ofNanos(System.nanoTime() - startNanos), "failure");
+            throw ex;
         }
     }
 
@@ -172,25 +199,57 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         Preconditions.checkNotNull(identity, "identity cannot be null");
         Preconditions.checkNotNull(token, "token cannot be null");
 
-        AttributedUserDetails user = tryGetUser(identity);
-        if (user == null) {
-            throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
+        ObservationDefinition definition = ObservationDefinition.business("lampray.auth.login")
+                .withLowCardinalityTag("strategy", type.name());
+
+        return observability.observe(definition, scope -> login(identity, token, type, metadata, scope));
+    }
+
+    private UserInfoSignature login(String identity,
+                                    String token,
+                                    LoginStrategyType type,
+                                    RequestMetadata metadata,
+                                    ObservationScope scope) {
+        try {
+            AttributedUserDetails user;
+            try {
+                user = tryGetUser(identity);
+            } catch (UserViewException ex) {
+                scope.lowCardinalityTag("result", "user_not_found");
+                authenticationMetricRecorder.recordLoginResult(type, "user_not_found");
+                throw ex;
+            }
+            if (user == null) {
+                scope.lowCardinalityTag("result", "user_not_found");
+                authenticationMetricRecorder.recordLoginResult(type, "user_not_found");
+                throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
+            }
+            ErrorCode code = verifyToken(token, user, type);
+            if (code.failed()) {
+                scope.lowCardinalityTag("result", "token_invalid");
+                authenticationMetricRecorder.recordLoginResult(type, "token_invalid");
+                throw new UserViewException(code);
+            }
+
+            firewallFilter(user);
+
+            PreUserAuthenticationToken authenticationToken = new PreUserAuthenticationToken(user);
+            Authentication authenticatedToken = authenticationManager.authenticate(authenticationToken);
+            SecurityContextHolder.getContext().setAuthentication(authenticatedToken);
+
+            OnUserLoginEvent onUserLoginEvent = new OnUserLoginEvent(user, metadata);
+            eventPublisher.publishEvent(onUserLoginEvent);
+            String signature = userSignatureProvider.getSignature(user.getUserId());
+            scope.lowCardinalityTag("result", "success");
+            authenticationMetricRecorder.recordLoginResult(type, "success");
+            return UserInfoSignature.from(user, signature);
+        } catch (RuntimeException ex) {
+            if (!(ex instanceof UserViewException)) {
+                scope.lowCardinalityTag("result", "failure");
+                authenticationMetricRecorder.recordLoginResult(type, "failure");
+            }
+            throw ex;
         }
-        ErrorCode code = verifyToken(token, user, type);
-        if (code.failed()) {
-            throw new UserViewException(code);
-        }
-
-        firewallFilter(user);
-
-        PreUserAuthenticationToken authenticationToken = new PreUserAuthenticationToken(user);
-        Authentication authenticatedToken = authenticationManager.authenticate(authenticationToken);
-        SecurityContextHolder.getContext().setAuthentication(authenticatedToken);
-
-        OnUserLoginEvent onUserLoginEvent = new OnUserLoginEvent(user, metadata);
-        eventPublisher.publishEvent(onUserLoginEvent);
-        String signature = userSignatureProvider.getSignature(user.getUserId());
-        return UserInfoSignature.from(user, signature);
     }
 
 
@@ -216,6 +275,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                 user.getRole(),
                 user.getUserId()
         );
+        authenticationMetricRecorder.recordRegistration(user.getRole());
         return user;
     }
 

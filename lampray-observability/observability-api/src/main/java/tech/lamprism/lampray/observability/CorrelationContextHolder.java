@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.observability;
 
-dependencies {
-    api(project(":lampray-common"))
-    api(project(":lampray-common-data"))
-    api(project(":lampray-content:content-api"))
-    implementation(project(":lampray-observability:observability-api"))
-}
+/**
+ * Stores correlation state for the current execution context.
+ *
+ * @author RollW
+ */
+public interface CorrelationContextHolder {
+    CorrelationContext current();
 
-description = "lampray-article-service"
+    CorrelationContext swap(CorrelationContext context);
+
+    void restore(CorrelationContext context);
+
+    default void clear() {
+        restore(null);
+    }
+}

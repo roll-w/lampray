@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,28 @@
  * limitations under the License.
  */
 
-plugins {
-    id("buildlogic.jpa-conventions")
-}
+package tech.lamprism.lampray.observability.core;
 
-dependencies {
-    api(project(":lampray-common"))
-    api(project(":lampray-common-data"))
-    api(project(":lampray-content:content-api"))
-    implementation(project(":lampray-observability:observability-api"))
-}
+import tech.lamprism.lampray.observability.ObservationScope;
 
-description = "lampray-article-service"
+/**
+ * @author RollW
+ */
+public final class NoOpObservationScope implements ObservationScope {
+    public static final NoOpObservationScope INSTANCE = new NoOpObservationScope();
+
+    private NoOpObservationScope() {
+    }
+
+    @Override
+    public void lowCardinalityTag(String key, String value) {
+    }
+
+    @Override
+    public void error(Throwable throwable) {
+    }
+
+    @Override
+    public void close() {
+    }
+}

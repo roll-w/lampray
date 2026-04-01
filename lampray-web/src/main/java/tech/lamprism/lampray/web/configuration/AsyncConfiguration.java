@@ -25,7 +25,13 @@ import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import space.lingu.NonNull;
+import tech.lamprism.lampray.observability.CorrelationContext;
+import tech.lamprism.lampray.observability.CorrelationContextHolder;
+import tech.lamprism.lampray.observability.ObservationDefinition;
+import tech.lamprism.lampray.observability.ObservationScope;
+import tech.lamprism.lampray.observability.Observability;
 import tech.lamprism.lampray.server.AutoInferredAddressProvider;
+import tech.lamprism.lampray.web.observability.CorrelationMdcSupport;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -37,9 +43,15 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 public class AsyncConfiguration implements AsyncConfigurer {
     private final AutoInferredAddressProvider autoInferredAddressProvider;
+    private final CorrelationContextHolder correlationContextHolder;
+    private final Observability observability;
 
-    public AsyncConfiguration(AutoInferredAddressProvider autoInferredAddressProvider) {
+    public AsyncConfiguration(AutoInferredAddressProvider autoInferredAddressProvider,
+                              CorrelationContextHolder correlationContextHolder,
+                              Observability observability) {
         this.autoInferredAddressProvider = autoInferredAddressProvider;
+        this.correlationContextHolder = correlationContextHolder;
+        this.observability = observability;
     }
 
     @Override
@@ -61,7 +73,11 @@ public class AsyncConfiguration implements AsyncConfigurer {
         executor.setQueueCapacity(200);
         executor.setKeepAliveSeconds(120);
         executor.setThreadNamePrefix("async-main-");
-        executor.setTaskDecorator(new AddressContextTaskDecorator(autoInferredAddressProvider));
+        executor.setTaskDecorator(new AddressContextTaskDecorator(
+                autoInferredAddressProvider,
+                correlationContextHolder,
+                observability
+        ));
 
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return executor;
@@ -73,24 +89,44 @@ public class AsyncConfiguration implements AsyncConfigurer {
     private static class AddressContextTaskDecorator implements TaskDecorator {
 
         private final AutoInferredAddressProvider autoInferredAddressProvider;
+        private final CorrelationContextHolder correlationContextHolder;
+        private final Observability observability;
 
-        public AddressContextTaskDecorator(AutoInferredAddressProvider autoInferredAddressProvider) {
+        public AddressContextTaskDecorator(AutoInferredAddressProvider autoInferredAddressProvider,
+                                          CorrelationContextHolder correlationContextHolder,
+                                          Observability observability) {
             this.autoInferredAddressProvider = autoInferredAddressProvider;
+            this.correlationContextHolder = correlationContextHolder;
+            this.observability = observability;
         }
 
         @NonNull
         @Override
         public Runnable decorate(@NonNull Runnable runnable) {
-            // Capture context in the calling thread
             AutoInferredAddressProvider.AsyncContext context = autoInferredAddressProvider.captureContext();
+            CorrelationContext correlationContext = correlationContextHolder.current();
 
             return () -> {
+                CorrelationContext previousCorrelationContext = correlationContextHolder.swap(correlationContext);
+                CorrelationMdcSupport.replace(correlationContext);
+                ObservationScope scope = observability.openScope(
+                        ObservationDefinition.system("lampray.async.task")
+                                .withLowCardinalityTag("executor", "main")
+                );
                 if (context != null) {
                     autoInferredAddressProvider.setAsyncContext(context);
                 }
                 try {
                     runnable.run();
+                    scope.lowCardinalityTag("result", "success");
+                } catch (RuntimeException | Error ex) {
+                    scope.lowCardinalityTag("result", "failure");
+                    scope.error(ex);
+                    throw ex;
                 } finally {
+                    scope.close();
+                    correlationContextHolder.restore(previousCorrelationContext);
+                    CorrelationMdcSupport.replace(previousCorrelationContext);
                     autoInferredAddressProvider.clearAsyncContext();
                 }
             };

@@ -53,7 +53,8 @@ public class ApiContextInitializeFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         ContextThread<ApiContext> contextThread =
                 apiContextThreadAware.assambleContextThread(null);
-        ApiContext apiContext = createApiContext(request, tryGetUser());
+        AttributedUser user = tryGetUser();
+        ApiContext apiContext = createApiContext(request, user);
         contextThread.setContext(apiContext);
         try {
             filterChain.doFilter(request, response);
