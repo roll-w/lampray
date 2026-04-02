@@ -26,6 +26,7 @@ import tech.rollw.common.web.CommonErrorCode;
 import tech.rollw.common.web.CommonRuntimeException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -92,7 +93,7 @@ public class MetricsManagementEndpoint implements ManagementEndpoint {
             search = search.tag(tag.getKey(), tag.getValue());
         }
 
-        List<Meter> meters = search.meters();
+        Collection<Meter> meters = search.meters();
         if (meters.isEmpty()) {
             throw new CommonRuntimeException(CommonErrorCode.ERROR_NOT_FOUND);
         }
@@ -130,7 +131,7 @@ public class MetricsManagementEndpoint implements ManagementEndpoint {
         return summary;
     }
 
-    private Map<String, List<String>> toAvailableTags(List<Meter> meters) {
+    private Map<String, List<String>> toAvailableTags(Collection<Meter> meters) {
         Map<String, Set<String>> tags = new LinkedHashMap<>();
         for (Meter meter : meters) {
             for (Tag tag : meter.getId().getTags()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import tech.lamprism.lampray.security.firewall.FirewallAccessRequest;
 import tech.lamprism.lampray.security.firewall.FirewallRegistry;
 import tech.lamprism.lampray.user.AttributedUser;
 import tech.lamprism.lampray.user.AttributedUserDetails;
+import tech.lamprism.lampray.user.Role;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.user.UserManageService;
 import tech.lamprism.lampray.user.UserOperator;
@@ -73,6 +74,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * @author RollW
@@ -209,7 +211,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         return observations.observe(
                 AuthenticationObservations.LOGIN,
                 SignalTags.of("strategy", type.name()),
-                scope -> login(identity, token, type, metadata, scope)
+                (Function<ObservationScope, UserInfoSignature>) scope -> login(identity, token, type, metadata, scope)
         );
     }
 
