@@ -97,8 +97,8 @@ final class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUploadS
         String mimeType = CONTENT_RULES.requireMimeType(request.getMimeType());
         FileType fileType = CONTENT_RULES.resolveFileType(mimeType);
         StorageUploadSessionModel.validateUploadRequest(request, groupSettings, fileType);
-        String checksumSha256 = StorageUploadSessionModel.normalizeChecksum(request.getChecksumSha256());
-        return new NormalizedUploadRequest(fileName, mimeType, fileType, checksumSha256);
+        String contentChecksum = StorageUploadSessionModel.normalizeChecksum(request.getContentChecksum());
+        return new NormalizedUploadRequest(fileName, mimeType, fileType, contentChecksum);
     }
 
     private StorageUploadSessionModel prepareUploadSession(CreateUploadSessionWorkflowContext context,
@@ -109,7 +109,7 @@ final class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUploadS
         BlobStore primaryBlobStore = blobStoreLocator.require(primaryBackend);
         StorageUploadMode uploadMode = transferModeResolver.resolveUploadMode(
                 context.getRequest(),
-                normalizedRequest.checksumSha256,
+                normalizedRequest.contentChecksum,
                 primaryBlobStore
         );
         OffsetDateTime now = OffsetDateTime.now();
@@ -130,7 +130,7 @@ final class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUploadS
                 context.getRequest().getSize(),
                 normalizedRequest.mimeType,
                 normalizedRequest.fileType,
-                normalizedRequest.checksumSha256,
+                normalizedRequest.contentChecksum,
                 context.getUserId(),
                 primaryBackend,
                 directUploadState.objectKey,
@@ -154,7 +154,7 @@ final class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUploadS
                 groupName,
                 primaryBackend,
                 normalizedRequest.mimeType,
-                normalizedRequest.checksumSha256,
+                normalizedRequest.contentChecksum,
                 Objects.requireNonNull(request.getSize(), "Direct uploads require a declared size."),
                 primaryBlobStore,
                 runtimeSettings.getDirectAccessTtlSeconds()
@@ -185,16 +185,16 @@ final class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUploadS
         private final String fileName;
         private final String mimeType;
         private final FileType fileType;
-        private final String checksumSha256;
+        private final String contentChecksum;
 
         private NormalizedUploadRequest(String fileName,
                                         String mimeType,
                                         FileType fileType,
-                                        String checksumSha256) {
+                                        String contentChecksum) {
             this.fileName = fileName;
             this.mimeType = mimeType;
             this.fileType = fileType;
-            this.checksumSha256 = checksumSha256;
+            this.contentChecksum = contentChecksum;
         }
     }
 

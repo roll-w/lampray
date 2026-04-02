@@ -31,6 +31,7 @@ import tech.lamprism.lampray.storage.StorageUploadSession;
 import tech.lamprism.lampray.storage.StorageUploadSessionDetails;
 import tech.lamprism.lampray.storage.access.StorageAccessService;
 import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
+import tech.lamprism.lampray.storage.file.StorageFileDeletionService;
 import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
 import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
 import tech.lamprism.lampray.storage.session.StorageUploadSessionManager;
@@ -55,6 +56,7 @@ import java.io.InputStream;
 public class StorageProviderImpl implements StorageProvider {
     private final StorageAccessService storageAccessService;
     private final StorageFileRepository storageFileRepository;
+    private final StorageFileDeletionService storageFileDeletionService;
     private final StorageUploadSessionManager storageUploadSessionManager;
     private final ProxyUploadWorkflow proxyUploadWorkflow;
     private final DirectUploadCompletionWorkflow directUploadCompletionWorkflow;
@@ -62,12 +64,14 @@ public class StorageProviderImpl implements StorageProvider {
 
     public StorageProviderImpl(StorageAccessService storageAccessService,
                                StorageFileRepository storageFileRepository,
+                               StorageFileDeletionService storageFileDeletionService,
                                StorageUploadSessionManager storageUploadSessionManager,
                                ProxyUploadWorkflow proxyUploadWorkflow,
                                DirectUploadCompletionWorkflow directUploadCompletionWorkflow,
                                TrustedUploadWorkflow trustedUploadWorkflow) {
         this.storageAccessService = storageAccessService;
         this.storageFileRepository = storageFileRepository;
+        this.storageFileDeletionService = storageFileDeletionService;
         this.storageUploadSessionManager = storageUploadSessionManager;
         this.proxyUploadWorkflow = proxyUploadWorkflow;
         this.directUploadCompletionWorkflow = directUploadCompletionWorkflow;
@@ -121,6 +125,13 @@ public class StorageProviderImpl implements StorageProvider {
     public StorageUploadSessionDetails getUploadSession(String uploadId,
                                                         Long userId) {
         return storageUploadSessionManager.getUploadSession(uploadId, userId);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void deleteFile(String fileId,
+                           Long userId) throws IOException {
+        storageFileDeletionService.deleteFile(fileId, userId);
     }
 
     @Override

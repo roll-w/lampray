@@ -25,5 +25,5 @@ public interface BlobObjectKeyFactory {
     /**
      * Creates the object key for a checksum.
      */
-    String createKey(String checksumSha256);
+    String createKey(String contentChecksum);
 }

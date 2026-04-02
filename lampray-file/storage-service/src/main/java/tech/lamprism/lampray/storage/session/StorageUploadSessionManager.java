@@ -105,7 +105,9 @@ public class StorageUploadSessionManager {
         uploadSession.ensureQueryable(userId);
         OffsetDateTime now = OffsetDateTime.now();
         FileStorage fileStorage = uploadSession.trackedStateAt(now) == StorageUploadSessionState.COMPLETED
-                ? toFileStorage(requireStoredFile(uploadSession.getFileId()))
+                ? storageFileRepository.findById(uploadSession.getFileId())
+                .map(this::toFileStorage)
+                .orElse(null)
                 : null;
         return new StorageUploadSessionDetails(
                 uploadSession.getUploadId(),
@@ -133,14 +135,6 @@ public class StorageUploadSessionManager {
                     StorageUploadSessionModel.from(uploadSession).expire(now);
                     storageUploadSessionRepository.save(uploadSession);
                 }));
-    }
-
-    private StorageFileEntity requireStoredFile(String fileId) {
-        return storageFileRepository.findById(fileId)
-                .orElseThrow(() -> new StorageException(
-                        DataErrorCode.ERROR_DATA_NOT_EXIST,
-                        "File not found: " + fileId
-                ));
     }
 
     private FileStorage toFileStorage(StorageFileEntity fileEntity) {

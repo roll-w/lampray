@@ -55,7 +55,7 @@ public class DirectUploadRequestCreator {
                         objectKey,
                         declaredSize,
                         mimeType,
-                        BlobMetadataSupport.checksumMetadata(checksum),
+                        BlobMetadataSupport.contentChecksumMetadata(checksum),
                         checksum
                 ),
                 Duration.ofSeconds(ttlSeconds)

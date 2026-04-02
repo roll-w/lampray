@@ -46,7 +46,7 @@ final class BlobMaterializationResolveExistingBlobStep implements WorkflowStep<B
     @Override
     public void execute(BlobMaterializationWorkflowContext context) {
         Optional<StorageBlobEntity> existingBlob = runtimeSettings.getDeduplicationEnabled()
-                ? storageBlobRepository.findByChecksumSha256(context.getRequest().checksum())
+                ? storageBlobRepository.findByContentChecksum(context.getRequest().checksum())
                 : Optional.empty();
         existingBlob.ifPresent(context.getState()::setExistingBlob);
     }

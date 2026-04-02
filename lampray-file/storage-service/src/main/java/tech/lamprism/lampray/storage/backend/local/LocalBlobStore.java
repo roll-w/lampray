@@ -67,7 +67,7 @@ public class LocalBlobStore implements BlobStore {
                 request.getKey(),
                 request.getContentType(),
                 request.getMetadata(),
-                request.getChecksumSha256()
+                request.getContentChecksum()
         );
     }
 
@@ -126,7 +126,7 @@ public class LocalBlobStore implements BlobStore {
                                         String key,
                                         String contentType,
                                         Map<String, String> metadata,
-                                        String checksumSha256) throws IOException {
+                                        String contentChecksum) throws IOException {
         if (!Files.exists(path)) {
             throw new IOException("Blob does not exist: " + key);
         }
@@ -137,7 +137,7 @@ public class LocalBlobStore implements BlobStore {
                 Files.size(path),
                 contentType != null ? contentType : "application/octet-stream",
                 null,
-                checksumSha256,
+                contentChecksum,
                 OffsetDateTime.ofInstant(fileTime.toInstant(), ZoneOffset.UTC),
                 metadata
         );

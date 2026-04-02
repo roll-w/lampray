@@ -16,9 +16,12 @@
 
 package tech.lamprism.lampray.storage.persistence
 
+import jakarta.persistence.EntityManager
+import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
+import java.time.OffsetDateTime
 import java.util.Optional
 
 /**
@@ -27,18 +30,25 @@ import java.util.Optional
 @Repository
 class StorageBlobRepository(
     private val storageBlobDao: StorageBlobDao,
+    private val entityManager: EntityManager,
 ) : CommonRepository<StorageBlobEntity, String>(storageBlobDao) {
-    fun findByChecksumSha256(checksumSha256: String): Optional<StorageBlobEntity> {
-        return storageBlobDao.findOne(createChecksumSpecification(checksumSha256))
+    fun findByContentChecksum(contentChecksum: String): Optional<StorageBlobEntity> {
+        return storageBlobDao.findOne(createChecksumSpecification(contentChecksum))
     }
+
+    fun findAllByOrphanedAtBefore(orphanedAt: OffsetDateTime): List<StorageBlobEntity> =
+        findAll(orphanedAtBeforeSpecification(orphanedAt))
+
+    fun lockById(blobId: String): Optional<StorageBlobEntity> =
+        Optional.ofNullable(entityManager.find(StorageBlobEntity::class.java, blobId, LockModeType.PESSIMISTIC_WRITE))
 
     fun existsByPrimaryBackendAndPrimaryObjectKey(primaryBackend: String, objectKey: String): Boolean {
         return storageBlobDao.findOne(createPrimaryPlacementSpecification(primaryBackend, objectKey)).isPresent
     }
 
-    private fun createChecksumSpecification(checksumSha256: String): Specification<StorageBlobEntity> {
+    private fun createChecksumSpecification(contentChecksum: String): Specification<StorageBlobEntity> {
         return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get(StorageBlobEntity_.checksumSha256), checksumSha256)
+            criteriaBuilder.equal(root.get(StorageBlobEntity_.contentChecksum), contentChecksum)
         }
     }
 
@@ -51,6 +61,12 @@ class StorageBlobRepository(
                 criteriaBuilder.equal(root.get(StorageBlobEntity_.primaryBackend), primaryBackend),
                 criteriaBuilder.equal(root.get(StorageBlobEntity_.primaryObjectKey), objectKey),
             )
+        }
+    }
+
+    private fun orphanedAtBeforeSpecification(orphanedAt: OffsetDateTime): Specification<StorageBlobEntity> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.lessThanOrEqualTo(root.get(StorageBlobEntity_.orphanedAt), orphanedAt)
         }
     }
 }

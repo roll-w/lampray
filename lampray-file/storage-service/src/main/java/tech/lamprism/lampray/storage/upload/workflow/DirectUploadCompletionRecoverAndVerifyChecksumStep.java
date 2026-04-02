@@ -46,11 +46,11 @@ final class DirectUploadCompletionRecoverAndVerifyChecksumStep implements Workfl
     public void execute(DirectUploadCompletionWorkflowContext context) throws IOException {
         BlobStore blobStore = Objects.requireNonNull(context.getState().getPrimaryBlobStore(), "primaryBlobStore");
         BlobObject uploadedObject = Objects.requireNonNull(context.getState().getUploadedObject(), "uploadedObject");
-        String actualChecksum = uploadedObject.getChecksumSha256();
+        String actualChecksum = uploadedObject.getContentChecksum();
         if (!StringUtils.hasText(actualChecksum)) {
-            String metadataChecksum = BlobMetadataSupport.metadataChecksum(uploadedObject.getMetadata());
-            if (StringUtils.hasText(metadataChecksum)) {
-                actualChecksum = StorageUploadSessionModel.normalizeChecksum(metadataChecksum);
+            String metadataContentChecksum = BlobMetadataSupport.metadataContentChecksum(uploadedObject.getMetadata());
+            if (StringUtils.hasText(metadataContentChecksum)) {
+                actualChecksum = StorageUploadSessionModel.normalizeChecksum(metadataContentChecksum);
             }
         }
         if (!StringUtils.hasText(actualChecksum)) {

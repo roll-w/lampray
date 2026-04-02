@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ChecksumBlobObjectKeyFactory implements BlobObjectKeyFactory {
     @Override
-    public String createKey(String checksumSha256) {
-        return checksumSha256.substring(0, 2) + "/" + checksumSha256.substring(2, 4) + "/" + checksumSha256;
+    public String createKey(String contentChecksum) {
+        return contentChecksum.substring(0, 2) + "/" + contentChecksum.substring(2, 4) + "/" + contentChecksum;
     }
 }

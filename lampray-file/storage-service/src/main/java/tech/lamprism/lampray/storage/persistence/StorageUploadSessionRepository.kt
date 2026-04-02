@@ -57,6 +57,11 @@ class StorageUploadSessionRepository(
         excludedUploadId: String,
     ): Boolean = findOne(activeObjectReferenceSpec(primaryBackend, objectKey, excludedUploadId)).isPresent
 
+    fun existsPendingSessionByPrimaryBackendAndObjectKey(
+        primaryBackend: String,
+        objectKey: String,
+    ): Boolean = findOne(pendingObjectReferenceSpec(primaryBackend, objectKey)).isPresent
+
     private fun statusSpec(status: UploadSessionStatus): Specification<StorageUploadSessionEntity> =
         Specification { root, _, criteriaBuilder ->
             criteriaBuilder.equal(root.get(StorageUploadSessionEntity_.status), status)
@@ -83,6 +88,18 @@ class StorageUploadSessionRepository(
                 criteriaBuilder.equal(root.get(StorageUploadSessionEntity_.objectKey), objectKey),
                 criteriaBuilder.notEqual(root.get(StorageUploadSessionEntity_.uploadId), excludedUploadId),
                 criteriaBuilder.notEqual(root.get(StorageUploadSessionEntity_.status), UploadSessionStatus.EXPIRED),
+            )
+        }
+
+    private fun pendingObjectReferenceSpec(
+        primaryBackend: String,
+        objectKey: String,
+    ): Specification<StorageUploadSessionEntity> =
+        Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get(StorageUploadSessionEntity_.primaryBackend), primaryBackend),
+                criteriaBuilder.equal(root.get(StorageUploadSessionEntity_.objectKey), objectKey),
+                criteriaBuilder.equal(root.get(StorageUploadSessionEntity_.status), UploadSessionStatus.PENDING),
             )
         }
 }

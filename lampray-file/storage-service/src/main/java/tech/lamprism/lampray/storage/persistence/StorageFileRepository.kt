@@ -27,7 +27,7 @@ import tech.rollw.common.web.page.Page
  */
 @Repository
 class StorageFileRepository(
-    storageFileDao: StorageFileDao,
+    private val storageFileDao: StorageFileDao,
 ) : CommonRepository<StorageFileEntity, String>(storageFileDao) {
     fun findAll(
         pageable: Pageable,
@@ -35,4 +35,12 @@ class StorageFileRepository(
     ): Page<StorageFileEntity> {
         return super.findAll(pageable, specification)
     }
+
+    fun existsByBlobId(blobId: String): Boolean =
+        storageFileDao.findOne(blobIdSpecification(blobId)).isPresent
+
+    private fun blobIdSpecification(blobId: String): Specification<StorageFileEntity> =
+        Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.equal(root.get(StorageFileEntity_.blobId), blobId)
+        }
 }

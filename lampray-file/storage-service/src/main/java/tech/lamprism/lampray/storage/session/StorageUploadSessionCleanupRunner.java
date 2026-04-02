@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.file.StorageFileDeletionService;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -32,9 +33,12 @@ public class StorageUploadSessionCleanupRunner {
     private static final Logger logger = LoggerFactory.getLogger(StorageUploadSessionCleanupRunner.class);
 
     private final StorageUploadSessionRetentionService retentionService;
+    private final StorageFileDeletionService storageFileDeletionService;
 
-    public StorageUploadSessionCleanupRunner(StorageUploadSessionRetentionService retentionService) {
+    public StorageUploadSessionCleanupRunner(StorageUploadSessionRetentionService retentionService,
+                                            StorageFileDeletionService storageFileDeletionService) {
         this.retentionService = retentionService;
+        this.storageFileDeletionService = storageFileDeletionService;
     }
 
     @Scheduled(fixedDelayString = "#{@storageRuntimeConfig.getCleanupIntervalSeconds() * 1000}")
@@ -44,12 +48,14 @@ public class StorageUploadSessionCleanupRunner {
             int expired = retentionService.expireOverdueSessions(now);
             int purgedExpired = retentionService.purgeExpiredSessions(now);
             int purgedCompleted = retentionService.purgeCompletedSessions(now);
-            if (expired > 0 || purgedExpired > 0 || purgedCompleted > 0) {
+            int purgedDeletedBlobs = storageFileDeletionService.purgeRetainedBlobs(now);
+            if (expired > 0 || purgedExpired > 0 || purgedCompleted > 0 || purgedDeletedBlobs > 0) {
                 logger.info(
-                        "Storage upload session cleanup finished: expired={}, purgedExpired={}, purgedCompleted={}",
+                        "Storage upload session cleanup finished: expired={}, purgedExpired={}, purgedCompleted={}, purgedDeletedBlobs={}",
                         expired,
                         purgedExpired,
-                        purgedCompleted
+                        purgedCompleted,
+                        purgedDeletedBlobs
                 );
             }
         } catch (IOException | RuntimeException exception) {

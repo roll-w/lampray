@@ -24,6 +24,6 @@ public record StorageUploadCreateRequest(
         String fileName,
         Long size,
         String mimeType,
-        String checksumSha256
+        String contentChecksum
 ) {
 }

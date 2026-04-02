@@ -25,7 +25,7 @@ import java.time.OffsetDateTime
  */
 data class StorageBlobView(
     val blobId: String,
-    val checksumSha256: String,
+    val contentChecksum: String,
     val fileSize: Long,
     val mimeType: String,
     val fileType: FileType,

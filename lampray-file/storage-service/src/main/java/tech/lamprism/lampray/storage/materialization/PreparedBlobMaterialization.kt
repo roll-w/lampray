@@ -43,7 +43,7 @@ data class PreparedBlobMaterialization private constructor(
         ): PreparedBlobMaterialization {
             return PreparedBlobMaterialization(
                 blobEntity,
-                blobEntity.checksumSha256,
+                blobEntity.contentChecksum,
                 size,
                 mimeType,
                 fileType,

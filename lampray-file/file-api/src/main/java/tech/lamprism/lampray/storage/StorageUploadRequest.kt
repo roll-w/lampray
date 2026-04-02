@@ -26,5 +26,5 @@ data class StorageUploadRequest(
     val fileName: String,
     val size: Long?,
     val mimeType: String,
-    val checksumSha256: String? = null,
+    val contentChecksum: String? = null,
 )

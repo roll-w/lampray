@@ -639,7 +639,7 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                  name: checksum_sha256
+                  name: content_checksum
                   type: VARCHAR(64)
               - column:
                   constraints:
@@ -666,6 +666,9 @@ databaseChangeLog:
                     nullable: false
                   name: primary_object_key
                   type: VARCHAR(512)
+              - column:
+                  name: orphaned_at
+                  type: DATETIME
               - column:
                   constraints:
                     nullable: false
@@ -838,7 +841,7 @@ databaseChangeLog:
                   name: file_type
                   type: VARCHAR(40)
               - column:
-                  name: checksum_sha256
+                  name: content_checksum
                   type: VARCHAR(64)
               - column:
                   name: owner_user_id
@@ -881,10 +884,56 @@ databaseChangeLog:
             constraintName: uc_storage_upload_session_resource
             tableName: storage_upload_session
         - addUniqueConstraint:
-            columnNames: checksum_sha256
-            constraintName: uc_storage_blob_checksum
+            columnNames: content_checksum
+            constraintName: uc_storage_blob_content_checksum
             tableName: storage_blob
         - addUniqueConstraint:
             columnNames: blob_id, backend_name
             constraintName: uc_storage_blob_backend
             tableName: storage_blob_placement
+        - createIndex:
+            indexName: idx_storage_file_blob_id
+            tableName: storage_file
+            columns:
+              - column:
+                  name: blob_id
+        - createIndex:
+            indexName: idx_storage_blob_primary_object
+            tableName: storage_blob
+            columns:
+              - column:
+                  name: primary_backend
+              - column:
+                  name: primary_object_key
+        - createIndex:
+            indexName: idx_storage_blob_orphaned_at
+            tableName: storage_blob
+            columns:
+              - column:
+                  name: orphaned_at
+        - createIndex:
+            indexName: idx_storage_blob_placement_object
+            tableName: storage_blob_placement
+            columns:
+              - column:
+                  name: backend_name
+              - column:
+                  name: object_key
+        - createIndex:
+            indexName: idx_storage_upload_session_status_object
+            tableName: storage_upload_session
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: primary_backend
+              - column:
+                  name: object_key
+        - createIndex:
+            indexName: idx_storage_upload_session_status_content_checksum
+            tableName: storage_upload_session
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: content_checksum

@@ -27,7 +27,7 @@ data class BlobObject(
     val size: Long,
     val contentType: String,
     val etag: String?,
-    val checksumSha256: String?,
+    val contentChecksum: String?,
     val lastModified: OffsetDateTime,
     val metadata: Map<String, String>,
 )

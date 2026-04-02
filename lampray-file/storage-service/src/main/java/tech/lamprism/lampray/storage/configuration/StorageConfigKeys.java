@@ -144,6 +144,14 @@ public class StorageConfigKeys implements SettingSpecificationSupplier {
                     .setSupportedSources(SettingSource.VALUES)
                     .build();
 
+    public static final AttributedSettingSpecification<Long, Long> CLEANUP_DELETED_BLOB_RETAIN_SECONDS =
+            new SettingSpecificationBuilder<>(SettingKey.ofLong(PREFIX + "cleanup.deleted-blob-retain-seconds"))
+                    .setTextDescription("Retention period in seconds before orphaned blobs are permanently deleted.")
+                    .setDefaultValue(0L)
+                    .setRequired(true)
+                    .setSupportedSources(SettingSource.VALUES)
+                    .build();
+
     public static final AttributedSettingSpecification<Long, Long> CLEANUP_INTERVAL_SECONDS =
             new SettingSpecificationBuilder<>(SettingKey.ofLong(PREFIX + "cleanup.interval-seconds"))
                     .setTextDescription("Interval in seconds between upload session cleanup runs.")
@@ -169,6 +177,7 @@ public class StorageConfigKeys implements SettingSpecificationSupplier {
             CLEANUP_ORPHAN_UPLOAD_EXPIRE_SECONDS,
             CLEANUP_EXPIRED_UPLOAD_RETAIN_SECONDS,
             CLEANUP_COMPLETED_UPLOAD_RETAIN_SECONDS,
+            CLEANUP_DELETED_BLOB_RETAIN_SECONDS,
             CLEANUP_INTERVAL_SECONDS
     );
 

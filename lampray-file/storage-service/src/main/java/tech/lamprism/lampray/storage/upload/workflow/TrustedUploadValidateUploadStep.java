@@ -43,7 +43,7 @@ final class TrustedUploadValidateUploadStep implements WorkflowStep<TrustedUploa
                         Objects.requireNonNull(context.getState().getFileName(), "fileName"),
                         tempUpload.getSize(),
                         Objects.requireNonNull(context.getState().getMimeType(), "mimeType"),
-                        tempUpload.getChecksumSha256()
+                        tempUpload.getContentChecksum()
                 ),
                 Objects.requireNonNull(context.getState().getGroupSettings(), "groupSettings"),
                 Objects.requireNonNull(context.getState().getFileType(), "fileType")

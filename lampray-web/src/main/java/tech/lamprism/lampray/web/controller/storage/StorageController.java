@@ -18,6 +18,7 @@ package tech.lamprism.lampray.web.controller.storage;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -67,7 +68,7 @@ public class StorageController {
                         request.fileName(),
                         request.size(),
                         request.mimeType(),
-                        request.checksumSha256()
+                        request.contentChecksum()
                 ),
                 userId
         );
@@ -97,6 +98,13 @@ public class StorageController {
         Long userId = requireUserId();
         StorageUploadSessionDetails uploadSession = storageProvider.getUploadSession(uploadId, userId);
         return HttpResponseEntity.success(StorageUploadSessionDetailsResponse.from(uploadSession));
+    }
+
+    @DeleteMapping("/files/{fileId}")
+    public HttpResponseEntity<Void> deleteFile(@PathVariable String fileId) throws IOException {
+        Long userId = requireUserId();
+        storageProvider.deleteFile(fileId, userId);
+        return HttpResponseEntity.success();
     }
 
     @GetMapping("/files/{fileId}")

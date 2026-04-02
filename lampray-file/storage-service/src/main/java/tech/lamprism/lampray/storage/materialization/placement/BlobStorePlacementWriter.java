@@ -47,15 +47,15 @@ public class BlobStorePlacementWriter implements BlobPlacementWriter {
                                  Path tempPath,
                                  long size,
                                  String mimeType,
-                                 String checksumSha256) throws IOException {
+                                 String contentChecksum) throws IOException {
         try (InputStream inputStream = Files.newInputStream(Objects.requireNonNull(tempPath))) {
             blobStoreLocator.require(backendName).store(
                     new BlobWriteRequest(
                             objectKey,
                             size,
                             mimeType,
-                            BlobMetadataSupport.checksumMetadata(checksumSha256),
-                            checksumSha256
+                            BlobMetadataSupport.contentChecksumMetadata(contentChecksum),
+                            contentChecksum
                     ),
                     inputStream
             );

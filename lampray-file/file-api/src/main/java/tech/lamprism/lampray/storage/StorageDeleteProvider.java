@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.materialization
+package tech.lamprism.lampray.storage;
 
-import java.nio.file.Path
+import java.io.IOException;
 
-/**
- * @author RollW
- */
-data class TempUpload(
-    val path: Path,
-    val size: Long,
-    val contentChecksum: String,
-)
+public interface StorageDeleteProvider {
+    void deleteFile(String fileId,
+                    Long userId) throws IOException;
+}

@@ -52,7 +52,7 @@ final class TrustedUploadPrepareMaterializationStep implements WorkflowStep<Trus
                         Objects.requireNonNull(context.getState().getMimeType(), "mimeType"),
                         Objects.requireNonNull(context.getState().getFileType(), "fileType"),
                         tempUpload.getSize(),
-                        tempUpload.getChecksumSha256(),
+                        tempUpload.getContentChecksum(),
                         tempUpload.getPath()
                 )
         ));

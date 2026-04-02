@@ -66,6 +66,10 @@ class StorageRuntimeConfig(
         get() =
             configReader[StorageConfigKeys.CLEANUP_COMPLETED_UPLOAD_RETAIN_SECONDS, 604800L]
 
+    val cleanupDeletedBlobRetainSeconds: Long
+        get() =
+            configReader[StorageConfigKeys.CLEANUP_DELETED_BLOB_RETAIN_SECONDS, 0L]
+
     val cleanupIntervalSeconds: Long
         get() =
             configReader[StorageConfigKeys.CLEANUP_INTERVAL_SECONDS, 600L]

@@ -33,7 +33,7 @@ public interface BlobPlacementWriter {
                           Path tempPath,
                           long size,
                           String mimeType,
-                          String checksumSha256) throws IOException;
+                          String contentChecksum) throws IOException;
 
     /**
      * Replicates an object from one backend to another.

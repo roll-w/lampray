@@ -43,7 +43,7 @@ import java.time.OffsetDateTime
 @Table(
     name = "storage_blob",
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["checksum_sha256"], name = "uc_storage_blob_checksum")
+        UniqueConstraint(columnNames = ["content_checksum"], name = "uc_storage_blob_content_checksum")
     ]
 )
 class StorageBlobEntity(
@@ -55,8 +55,8 @@ class StorageBlobEntity(
     @Column(name = "blob_id", nullable = false, length = 64, unique = true)
     var blobId: String = "",
 
-    @Column(name = "checksum_sha256", nullable = false, length = 64)
-    var checksumSha256: String = "",
+    @Column(name = "content_checksum", nullable = false, length = 64)
+    var contentChecksum: String = "",
 
     @Column(name = "file_size", nullable = false)
     var fileSize: Long = 0,
@@ -74,6 +74,10 @@ class StorageBlobEntity(
 
     @Column(name = "primary_object_key", nullable = false, length = 512)
     var primaryObjectKey: String = "",
+
+    @Column(name = "orphaned_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    var orphanedAt: OffsetDateTime? = null,
 
     @Column(name = "create_time", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)

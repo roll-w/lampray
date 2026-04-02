@@ -52,7 +52,7 @@ final class ProxyUploadPrepareMaterializationStep implements WorkflowStep<ProxyU
                         context.getUploadSession().getMimeType(),
                         context.getUploadSession().getFileType(),
                         tempUpload.getSize(),
-                        tempUpload.getChecksumSha256(),
+                        tempUpload.getContentChecksum(),
                         tempUpload.getPath()
                 )
         ));

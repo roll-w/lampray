@@ -47,7 +47,7 @@ public class BlobMaterializationPersistenceService {
     }
 
     public StorageBlobEntity persist(PreparedBlobMaterialization preparedBlob) {
-        StorageBlobEntity blobEntity = preparedBlob.getExistingBlob();
+        StorageBlobEntity blobEntity = resolveExistingBlob(preparedBlob);
         if (blobEntity == null) {
             OffsetDateTime now = OffsetDateTime.now();
             StorageBlobEntity candidate = new StorageBlobEntity(
@@ -59,15 +59,20 @@ public class BlobMaterializationPersistenceService {
                     preparedBlob.getFileType(),
                     preparedBlob.getPrimaryBackend(),
                     preparedBlob.getPrimaryObjectKey(),
+                    null,
                     now,
                     now
             );
             try {
                 blobEntity = storageBlobRepository.save(candidate);
             } catch (DataIntegrityViolationException exception) {
-                blobEntity = storageBlobRepository.findByChecksumSha256(preparedBlob.getChecksum())
+                blobEntity = storageBlobRepository.findByContentChecksum(preparedBlob.getChecksum())
                         .orElseThrow(() -> exception);
             }
+        } else if (blobEntity.getOrphanedAt() != null) {
+            blobEntity.setOrphanedAt(null);
+            blobEntity.setUpdateTime(OffsetDateTime.now());
+            blobEntity = storageBlobRepository.save(blobEntity);
         }
 
         OffsetDateTime now = OffsetDateTime.now();
@@ -75,6 +80,16 @@ public class BlobMaterializationPersistenceService {
             persistPlacementIfAbsent(blobEntity.getBlobId(), entry.getKey(), entry.getValue(), now);
         }
         return blobEntity;
+    }
+
+    private StorageBlobEntity resolveExistingBlob(PreparedBlobMaterialization preparedBlob) {
+        StorageBlobEntity existingBlob = preparedBlob.getExistingBlob();
+        if (existingBlob == null) {
+            return null;
+        }
+        return storageBlobRepository.lockById(existingBlob.getBlobId())
+                .or(() -> storageBlobRepository.findByContentChecksum(preparedBlob.getChecksum()))
+                .orElse(null);
     }
 
     private void persistPlacementIfAbsent(String blobId,

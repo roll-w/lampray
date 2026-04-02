@@ -125,7 +125,7 @@ public class StorageQueryService implements StorageQueryProvider {
                 toFileView(fileEntity),
                 new StorageBlobView(
                         blobEntity.getBlobId(),
-                        blobEntity.getChecksumSha256(),
+                        blobEntity.getContentChecksum(),
                         blobEntity.getFileSize(),
                         blobEntity.getMimeType(),
                         blobEntity.getFileType(),
@@ -173,7 +173,7 @@ public class StorageQueryService implements StorageQueryProvider {
                 uploadSession.getFileSize(),
                 uploadSession.getMimeType(),
                 uploadSession.getFileType(),
-                uploadSession.getChecksumSha256(),
+                uploadSession.getContentChecksum(),
                 uploadSession.getOwnerUserId(),
                 uploadSession.getPrimaryBackend(),
                 uploadSession.getObjectKey(),

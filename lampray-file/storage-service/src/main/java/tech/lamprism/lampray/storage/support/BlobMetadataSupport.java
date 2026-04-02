@@ -22,19 +22,19 @@ import java.util.Map;
  * @author RollW
  */
 public final class BlobMetadataSupport {
-    public static final String CHECKSUM_SHA256_KEY = "checksum-sha256";
+    public static final String CONTENT_CHECKSUM_KEY = "checksum-sha256";
 
     private BlobMetadataSupport() {
     }
 
-    public static Map<String, String> checksumMetadata(String checksumSha256) {
-        if (checksumSha256 == null) {
+    public static Map<String, String> contentChecksumMetadata(String contentChecksum) {
+        if (contentChecksum == null) {
             return Map.of();
         }
-        return Map.of(CHECKSUM_SHA256_KEY, checksumSha256);
+        return Map.of(CONTENT_CHECKSUM_KEY, contentChecksum);
     }
 
-    public static String metadataChecksum(Map<String, String> metadata) {
-        return metadata.get(CHECKSUM_SHA256_KEY);
+    public static String metadataContentChecksum(Map<String, String> metadata) {
+        return metadata.get(CONTENT_CHECKSUM_KEY);
     }
 }

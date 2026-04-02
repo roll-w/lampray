@@ -54,8 +54,8 @@ class StorageUploadSessionModel private constructor(
         get() = entity.mimeType
     val fileType: FileType
         get() = entity.fileType
-    val checksumSha256: String?
-        get() = entity.checksumSha256
+    val contentChecksum: String?
+        get() = entity.contentChecksum
     val ownerUserId: Long?
         get() = entity.ownerUserId
     val primaryBackend: String
@@ -113,15 +113,15 @@ class StorageUploadSessionModel private constructor(
     }
 
     fun requireChecksum(): String =
-        normalizeChecksum(entity.checksumSha256)
+        normalizeChecksum(entity.contentChecksum)
             ?: throw StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "Direct uploads require a checksum.")
 
     fun validateUploadedContent(tempUpload: TempUpload, groupSettings: StorageGroupConfig) {
         validateGroupSizeLimit(groupSettings.maxSizeBytes, tempUpload.size)
         validateDeclaredSize(entity.fileSize, tempUpload.size)
-        val expectedChecksum = normalizeChecksum(entity.checksumSha256)
+        val expectedChecksum = normalizeChecksum(entity.contentChecksum)
         if (expectedChecksum != null) {
-            validateChecksumMatch(expectedChecksum, tempUpload.checksumSha256)
+            validateChecksumMatch(expectedChecksum, tempUpload.contentChecksum)
         }
     }
 
@@ -170,7 +170,7 @@ class StorageUploadSessionModel private constructor(
             fileSize: Long?,
             mimeType: String,
             fileType: FileType,
-            checksumSha256: String?,
+            contentChecksum: String?,
             ownerUserId: Long?,
             primaryBackend: String,
             objectKey: String?,
@@ -188,7 +188,7 @@ class StorageUploadSessionModel private constructor(
                     fileSize = fileSize,
                     mimeType = mimeType,
                     fileType = fileType,
-                    checksumSha256 = checksumSha256,
+                    contentChecksum = contentChecksum,
                     ownerUserId = ownerUserId,
                     primaryBackend = primaryBackend,
                     objectKey = objectKey,
@@ -225,11 +225,11 @@ class StorageUploadSessionModel private constructor(
         }
 
         @JvmStatic
-        fun normalizeChecksum(checksumSha256: String?): String? {
-            if (StringUtils.isBlank(checksumSha256)) {
+        fun normalizeChecksum(contentChecksum: String?): String? {
+            if (StringUtils.isBlank(contentChecksum)) {
                 return null
             }
-            val normalized = checksumSha256!!.trim().lowercase(Locale.ROOT)
+            val normalized = contentChecksum!!.trim().lowercase(Locale.ROOT)
             if (normalized.length != 64) {
                 throw StorageException(
                     CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,

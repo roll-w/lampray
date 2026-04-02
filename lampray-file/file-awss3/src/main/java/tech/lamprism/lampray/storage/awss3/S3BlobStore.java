@@ -392,7 +392,7 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
                 size,
                 contentType,
                 response.eTag(),
-                resolveChecksumSha256(response),
+                resolveContentChecksum(response),
                 lastModified,
                 normalizeMetadata(response.metadata())
         );
@@ -419,24 +419,24 @@ public class S3BlobStore implements BlobStore, AutoCloseable {
         if (hasText(request.getContentType())) {
             requestBuilder.contentType(request.getContentType().trim());
         }
-        if (nativeChecksumEnabled && hasText(request.getChecksumSha256())) {
+        if (nativeChecksumEnabled && hasText(request.getContentChecksum())) {
             requestBuilder.checksumAlgorithm(ChecksumAlgorithm.SHA256);
-            requestBuilder.checksumSHA256(hexToBase64Checksum(request.getChecksumSha256().trim()));
+            requestBuilder.checksumSHA256(hexToBase64Checksum(request.getContentChecksum().trim()));
         }
         return requestBuilder.build();
     }
 
-    private String resolveChecksumSha256(HeadObjectResponse response) {
+    private String resolveContentChecksum(HeadObjectResponse response) {
         if (hasText(response.checksumSHA256())) {
             return base64ToHexChecksum(response.checksumSHA256());
         }
         Map<String, String> metadata = normalizeMetadata(response.metadata());
-        String metadataChecksum = metadata.get("checksum-sha256");
-        return hasText(metadataChecksum) ? metadataChecksum.trim().toLowerCase(Locale.ROOT) : null;
+        String metadataContentChecksum = metadata.get("checksum-sha256");
+        return hasText(metadataContentChecksum) ? metadataContentChecksum.trim().toLowerCase(Locale.ROOT) : null;
     }
 
-    private String hexToBase64Checksum(String checksumSha256) {
-        return Base64.getEncoder().encodeToString(hexToBytes(checksumSha256));
+    private String hexToBase64Checksum(String contentChecksum) {
+        return Base64.getEncoder().encodeToString(hexToBytes(contentChecksum));
     }
 
     private String base64ToHexChecksum(String base64Checksum) {

@@ -33,7 +33,7 @@ data class StorageSessionDetails(
     val fileSize: Long?,
     val mimeType: String?,
     val fileType: FileType?,
-    val checksumSha256: String?,
+    val contentChecksum: String?,
     val ownerUserId: Long?,
     val primaryBackend: String,
     val objectKey: String?,

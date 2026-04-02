@@ -24,7 +24,7 @@ data class BlobWriteRequest(
     val size: Long,
     val contentType: String?,
     metadata: Map<String, String> = emptyMap(),
-    val checksumSha256: String? = null,
+    val contentChecksum: String? = null,
 ) {
     init {
         require(key.isNotBlank()) { "key must not be blank" }

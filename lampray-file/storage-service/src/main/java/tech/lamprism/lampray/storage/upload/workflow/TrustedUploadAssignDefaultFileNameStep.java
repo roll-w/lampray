@@ -35,7 +35,7 @@ final class TrustedUploadAssignDefaultFileNameStep implements WorkflowStep<Trust
     @Override
     public void execute(TrustedUploadWorkflowContext context) {
         TempUpload tempUpload = Objects.requireNonNull(context.getState().getTempUpload(), "tempUpload");
-        String checksum = tempUpload.getChecksumSha256();
+        String checksum = tempUpload.getContentChecksum();
         String suffix = checksum.length() > 12 ? checksum.substring(0, 12) : checksum;
         context.getState().setFileName("upload-" + suffix + ".bin");
     }

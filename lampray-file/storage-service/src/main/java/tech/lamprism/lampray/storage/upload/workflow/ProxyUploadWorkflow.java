@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.materialization.TempUpload;
 import tech.lamprism.lampray.storage.support.PathCleanupSupport;
+import tech.lamprism.lampray.storage.support.StorageBlobLifecycleLockManager;
 import tech.lamprism.lampray.storage.workflow.Workflow;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
@@ -34,21 +35,34 @@ import java.util.Objects;
 @Component
 public class ProxyUploadWorkflow implements Workflow<ProxyUploadWorkflowContext, FileStorage> {
     private final List<WorkflowStep<ProxyUploadWorkflowContext>> steps;
+    private final StorageBlobLifecycleLockManager storageBlobLifecycleLockManager;
 
-    public ProxyUploadWorkflow(List<WorkflowStep<ProxyUploadWorkflowContext>> steps) {
+    public ProxyUploadWorkflow(List<WorkflowStep<ProxyUploadWorkflowContext>> steps,
+                               StorageBlobLifecycleLockManager storageBlobLifecycleLockManager) {
         this.steps = steps.stream()
                 .sorted(Comparator.comparingInt(WorkflowStep::getOrder))
                 .toList();
+        this.storageBlobLifecycleLockManager = storageBlobLifecycleLockManager;
     }
 
     @Override
     public FileStorage execute(ProxyUploadWorkflowContext context) throws IOException {
+        StorageBlobLifecycleLockManager.LockedKey contentLock = null;
         try {
             for (WorkflowStep<ProxyUploadWorkflowContext> step : steps) {
+                if (contentLock == null) {
+                    TempUpload tempUpload = context.getState().getTempUpload();
+                    if (tempUpload != null) {
+                        contentLock = storageBlobLifecycleLockManager.acquire(tempUpload.getContentChecksum());
+                    }
+                }
                 step.execute(context);
             }
             return Objects.requireNonNull(context.getState().getResult(), "proxyUploadResult");
         } finally {
+            if (contentLock != null) {
+                contentLock.close();
+            }
             TempUpload tempUpload = context.getState().getTempUpload();
             if (tempUpload != null) {
                 PathCleanupSupport.deleteIfExistsQuietly(tempUpload.getPath());

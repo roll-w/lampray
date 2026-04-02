@@ -71,8 +71,8 @@ class StorageUploadSessionEntity(
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var fileType: FileType = FileType.OTHER,
 
-    @Column(name = "checksum_sha256", length = 64)
-    var checksumSha256: String? = null,
+    @Column(name = "content_checksum", length = 64)
+    var contentChecksum: String? = null,
 
     @Column(name = "owner_user_id")
     var ownerUserId: Long? = null,
