@@ -18,25 +18,27 @@ package tech.lamprism.lampray.observability.core;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MultiGauge;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
+import tech.lamprism.lampray.observability.CounterSpecification;
+import tech.lamprism.lampray.observability.DistributionSummarySpecification;
+import tech.lamprism.lampray.observability.GaugeSpecification;
+import tech.lamprism.lampray.observability.LongTaskTimerSpecification;
 import tech.lamprism.lampray.observability.MetricSpecification;
+import tech.lamprism.lampray.observability.ObservedMetricSpecification;
+import tech.lamprism.lampray.observability.SignalTag;
+import tech.lamprism.lampray.observability.SignalTags;
+import tech.lamprism.lampray.observability.TimeGaugeSpecification;
+import tech.lamprism.lampray.observability.TimerSpecification;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
 
 /**
  * @author RollW
@@ -48,142 +50,72 @@ final class MicrometerMeterFactory {
         this.meterRegistry = meterRegistry;
     }
 
-    Counter createCounter(MetricSpecification specification,
-                          Map<String, String> tags) {
-        Counter.Builder builder = Counter.builder(specification.getMetricName())
-                .tags(toTagArray(tags));
-        applyDescription(builder::description, specification.getMetricDescription());
+    <T extends Meter> T create(MetricSpecification<T> specification,
+                               SignalTags tags) {
+        if (specification instanceof CounterSpecification counterSpecification) {
+            return specification.getMeterType().cast(createCounter(counterSpecification, tags));
+        }
+        if (specification instanceof TimerSpecification timerSpecification) {
+            return specification.getMeterType().cast(createTimer(timerSpecification, tags));
+        }
+        if (specification instanceof DistributionSummarySpecification summarySpecification) {
+            return specification.getMeterType().cast(createDistributionSummary(summarySpecification, tags));
+        }
+        if (specification instanceof LongTaskTimerSpecification longTaskTimerSpecification) {
+            return specification.getMeterType().cast(createLongTaskTimer(longTaskTimerSpecification, tags));
+        }
+        throw new IllegalArgumentException("Unsupported metric specification: " + specification.getClass().getName());
+    }
+
+    <T extends Meter, S> T createObserved(ObservedMetricSpecification<T, S> specification,
+                                          SignalTags tags,
+                                          S source) {
+        if (specification instanceof GaugeSpecification<?> gaugeSpecification) {
+            return specification.getMeterType().cast(createGauge(gaugeSpecification, tags, source));
+        }
+        if (specification instanceof TimeGaugeSpecification<?> timeGaugeSpecification) {
+            return specification.getMeterType().cast(createTimeGauge(timeGaugeSpecification, tags, source));
+        }
+        throw new IllegalArgumentException("Unsupported observed metric specification: " + specification.getClass().getName());
+    }
+
+    private Counter createCounter(CounterSpecification specification,
+                                  SignalTags tags) {
+        Counter.Builder builder = Counter.builder(specification.getName()).tags(toTagArray(tags));
+        applyDescription(builder::description, specification.getDescription());
         applyBaseUnit(builder::baseUnit, specification.getBaseUnit());
         return builder.register(meterRegistry);
     }
 
-    <T> Gauge createGauge(MetricSpecification specification,
-                          Map<String, String> tags,
-                          T target,
-                          ToDoubleFunction<T> valueFunction) {
-        Gauge.Builder<T> builder = Gauge.builder(specification.getMetricName(), target, valueFunction)
-                .tags(toTagArray(tags));
-        applyDescription(builder::description, specification.getMetricDescription());
-        applyBaseUnit(builder::baseUnit, specification.getBaseUnit());
-        return builder.register(meterRegistry);
-    }
-
-    <T> TimeGauge createTimeGauge(MetricSpecification specification,
-                                  Map<String, String> tags,
-                                  T target,
-                                  TimeUnit timeUnit,
-                                  ToDoubleFunction<T> valueFunction) {
-        TimeGauge.Builder<T> builder = TimeGauge.builder(
-                specification.getMetricName(),
-                target,
-                timeUnit,
-                valueFunction
-        ).tags(toTagArray(tags));
-        applyDescription(builder::description, specification.getMetricDescription());
-        return builder.register(meterRegistry);
-    }
-
-    DistributionSummary createHistogram(MetricSpecification specification,
-                                        Map<String, String> tags) {
-        return createSummary(specification, tags, true);
-    }
-
-    Timer createTimer(MetricSpecification specification,
-                      Map<String, String> tags) {
-        Timer.Builder builder = Timer.builder(specification.getMetricName())
-                .tags(toTagArray(tags));
-        applyDescription(builder::description, specification.getMetricDescription());
-        applyTimerConfiguration(builder, specification);
-        return builder.register(meterRegistry);
-    }
-
-    LongTaskTimer createLongTaskTimer(MetricSpecification specification,
-                                      Map<String, String> tags) {
-        LongTaskTimer.Builder builder = LongTaskTimer.builder(specification.getMetricName())
-                .tags(toTagArray(tags));
-        applyDescription(builder::description, specification.getMetricDescription());
-        return builder.register(meterRegistry);
-    }
-
-    DistributionSummary createDistributionSummary(MetricSpecification specification,
-                                                  Map<String, String> tags) {
-        return createSummary(specification, tags, specification.isHistogramEnabled());
-    }
-
-    <T> FunctionCounter createFunctionCounter(MetricSpecification specification,
-                                              Map<String, String> tags,
-                                              T target,
-                                              ToDoubleFunction<T> function) {
-        FunctionCounter.Builder<T> builder = FunctionCounter.builder(
-                        specification.getMetricName(),
-                        target,
-                        function)
-                .tags(toTagArray(tags));
-        applyDescription(builder::description, specification.getMetricDescription());
-        return builder.register(meterRegistry);
-    }
-
-    <T> FunctionTimer createFunctionTimer(MetricSpecification specification,
-                                          Map<String, String> tags,
-                                          T target,
-                                          ToLongFunction<T> countFunction,
-                                          ToDoubleFunction<T> totalTimeFunction,
-                                          TimeUnit totalTimeUnit) {
-        FunctionTimer.Builder<T> builder = FunctionTimer.builder(
-                        specification.getMetricName(),
-                        target,
-                        countFunction,
-                        totalTimeFunction,
-                        totalTimeUnit)
-                .tags(toTagArray(tags));
-        applyDescription(builder::description, specification.getMetricDescription());
-        return builder.register(meterRegistry);
-    }
-
-    MultiGauge createMultiGauge(MetricSpecification specification,
-                                Map<String, String> tags) {
-        MultiGauge.Builder builder = MultiGauge.builder(specification.getMetricName())
-                .tags(toTagArray(tags));
-        applyDescription(builder::description, specification.getMetricDescription());
-        applyBaseUnit(builder::baseUnit, specification.getBaseUnit());
-        return builder.register(meterRegistry);
-    }
-
-    private DistributionSummary createSummary(MetricSpecification specification,
-                                              Map<String, String> tags,
-                                              boolean histogramEnabled) {
-        DistributionSummary.Builder builder = DistributionSummary.builder(specification.getMetricName())
-                .tags(toTagArray(tags));
-        applyDescription(builder::description, specification.getMetricDescription());
-        applyBaseUnit(builder::baseUnit, specification.getBaseUnit());
-        applySummaryConfiguration(builder, specification, histogramEnabled);
-        return builder.register(meterRegistry);
-    }
-
-    private void applyTimerConfiguration(Timer.Builder builder,
-                                         MetricSpecification specification) {
-        if (specification.isHistogramEnabled()) {
+    private Timer createTimer(TimerSpecification specification,
+                              SignalTags tags) {
+        Timer.Builder builder = Timer.builder(specification.getName()).tags(toTagArray(tags));
+        applyDescription(builder::description, specification.getDescription());
+        if (specification.isHistogram()) {
             builder.publishPercentileHistogram();
         }
-        if (specification.getPercentiles().length > 0) {
-            builder.publishPercentiles(specification.getPercentiles());
+        if (!specification.getPercentiles().isEmpty()) {
+            builder.publishPercentiles(specification.getPercentiles().stream().mapToDouble(Double::doubleValue).toArray());
         }
-        if (specification.getServiceLevelObjectives().length > 0) {
-            builder.serviceLevelObjectives(toDurations(specification.getServiceLevelObjectives()));
+        if (!specification.getServiceLevelObjectives().isEmpty()) {
+            builder.serviceLevelObjectives(specification.getServiceLevelObjectives().toArray(Duration[]::new));
         }
+        return builder.register(meterRegistry);
     }
 
-    private void applySummaryConfiguration(DistributionSummary.Builder builder,
-                                           MetricSpecification specification,
-                                           boolean histogramEnabled) {
-        if (histogramEnabled) {
+    private DistributionSummary createDistributionSummary(DistributionSummarySpecification specification,
+                                                          SignalTags tags) {
+        DistributionSummary.Builder builder = DistributionSummary.builder(specification.getName()).tags(toTagArray(tags));
+        applyDescription(builder::description, specification.getDescription());
+        applyBaseUnit(builder::baseUnit, specification.getBaseUnit());
+        if (specification.isHistogram()) {
             builder.publishPercentileHistogram();
         }
-        if (specification.getPercentiles().length > 0) {
-            builder.publishPercentiles(specification.getPercentiles());
+        if (!specification.getPercentiles().isEmpty()) {
+            builder.publishPercentiles(specification.getPercentiles().stream().mapToDouble(Double::doubleValue).toArray());
         }
-        if (specification.getServiceLevelObjectives().length > 0) {
-            builder.serviceLevelObjectives(specification.getServiceLevelObjectives());
+        if (!specification.getServiceLevelObjectives().isEmpty()) {
+            builder.serviceLevelObjectives(specification.getServiceLevelObjectives().stream().mapToDouble(Double::doubleValue).toArray());
         }
         if (specification.getMinimumExpectedValue() != null) {
             builder.minimumExpectedValue(specification.getMinimumExpectedValue());
@@ -191,6 +123,51 @@ final class MicrometerMeterFactory {
         if (specification.getMaximumExpectedValue() != null) {
             builder.maximumExpectedValue(specification.getMaximumExpectedValue());
         }
+        return builder.register(meterRegistry);
+    }
+
+    private LongTaskTimer createLongTaskTimer(LongTaskTimerSpecification specification,
+                                              SignalTags tags) {
+        LongTaskTimer.Builder builder = LongTaskTimer.builder(specification.getName()).tags(toTagArray(tags));
+        applyDescription(builder::description, specification.getDescription());
+        return builder.register(meterRegistry);
+    }
+
+    private Gauge createGauge(GaugeSpecification<?> specification,
+                              SignalTags tags,
+                              Object source) {
+        return createGaugeTyped(specification, tags, source);
+    }
+
+    private <S> Gauge createGaugeTyped(GaugeSpecification<S> specification,
+                                       SignalTags tags,
+                                       Object source) {
+        S typedSource = specification.getSourceType().cast(source);
+        Gauge.Builder<S> builder = Gauge.builder(specification.getName(), typedSource, specification.getValueFunction())
+                .tags(toTagArray(tags));
+        applyDescription(builder::description, specification.getDescription());
+        applyBaseUnit(builder::baseUnit, specification.getBaseUnit());
+        return builder.register(meterRegistry);
+    }
+
+    private TimeGauge createTimeGauge(TimeGaugeSpecification<?> specification,
+                                      SignalTags tags,
+                                      Object source) {
+        return createTimeGaugeTyped(specification, tags, source);
+    }
+
+    private <S> TimeGauge createTimeGaugeTyped(TimeGaugeSpecification<S> specification,
+                                               SignalTags tags,
+                                               Object source) {
+        S typedSource = specification.getSourceType().cast(source);
+        TimeGauge.Builder<S> builder = TimeGauge.builder(
+                        specification.getName(),
+                        typedSource,
+                        specification.getTimeUnit(),
+                        specification.getValueFunction())
+                .tags(toTagArray(tags));
+        applyDescription(builder::description, specification.getDescription());
+        return builder.register(meterRegistry);
     }
 
     private void applyDescription(Consumer<String> consumer,
@@ -207,20 +184,12 @@ final class MicrometerMeterFactory {
         }
     }
 
-    private String[] toTagArray(Map<String, String> tags) {
-        List<String> meterTags = new ArrayList<>();
-        for (Map.Entry<String, String> entry : tags.entrySet()) {
-            meterTags.add(entry.getKey());
-            meterTags.add(entry.getValue());
+    private String[] toTagArray(SignalTags tags) {
+        List<String> values = new ArrayList<>();
+        for (SignalTag tag : tags) {
+            values.add(tag.getKey());
+            values.add(tag.getValue());
         }
-        return meterTags.toArray(String[]::new);
-    }
-
-    private Duration[] toDurations(double[] values) {
-        Duration[] durations = new Duration[values.length];
-        for (int i = 0; i < values.length; i++) {
-            durations[i] = Duration.ofNanos((long) values[i]);
-        }
-        return durations;
+        return values.toArray(String[]::new);
     }
 }

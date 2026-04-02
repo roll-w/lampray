@@ -44,7 +44,7 @@ public class MetricsScrapeAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        return !"/metrics".equals(request.getServletPath());
+        return !"/metrics".equals(request.getServletPath()) || !isPrometheusEnabled();
     }
 
     @Override
@@ -53,7 +53,7 @@ public class MetricsScrapeAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         String configuredToken = configuredToken();
         if (configuredToken.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            reject(response);
             return;
         }
 
@@ -78,6 +78,10 @@ public class MetricsScrapeAuthenticationFilter extends OncePerRequestFilter {
                 ObservabilityConfigKeys.DEFAULT_METRICS_SCRAPE_TOKEN
         );
         return token == null ? "" : token.trim();
+    }
+
+    private boolean isPrometheusEnabled() {
+        return Boolean.TRUE.equals(configReader.get(ObservabilityConfigKeys.PROMETHEUS_ENABLED, true));
     }
 
     private void reject(HttpServletResponse response) throws IOException {

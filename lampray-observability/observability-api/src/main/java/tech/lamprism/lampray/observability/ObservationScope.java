@@ -22,7 +22,8 @@ package tech.lamprism.lampray.observability;
  * @author RollW
  */
 public interface ObservationScope extends AutoCloseable {
-    void lowCardinalityTag(String key, String value);
+    ObservationScope tag(String key,
+                         String value);
 
     void error(Throwable throwable);
 

@@ -16,41 +16,15 @@
 
 package tech.lamprism.lampray.observability;
 
-import java.util.List;
+import io.micrometer.core.instrument.Meter;
 
 /**
  * @author RollW
  */
-public interface MetricSpecification {
-    List<String> getAllowedTags();
+public interface MetricSpecification<T extends Meter> extends SignalSpecification {
+    String getDescription();
 
-    String getMetricName();
+    String getBaseUnit();
 
-    String getMetricDescription();
-
-    MetricType getMetricType();
-
-    default String getBaseUnit() {
-        return null;
-    }
-
-    default boolean isHistogramEnabled() {
-        return false;
-    }
-
-    default double[] getPercentiles() {
-        return new double[0];
-    }
-
-    default double[] getServiceLevelObjectives() {
-        return new double[0];
-    }
-
-    default Double getMinimumExpectedValue() {
-        return null;
-    }
-
-    default Double getMaximumExpectedValue() {
-        return null;
-    }
+    Class<T> getMeterType();
 }

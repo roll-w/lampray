@@ -30,12 +30,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.lamprism.lampray.observability.CorrelationContextHolder;
 import tech.lamprism.lampray.observability.MetricProvider;
-import tech.lamprism.lampray.observability.MetricSpecificationProvider;
-import tech.lamprism.lampray.observability.Observability;
+import tech.lamprism.lampray.observability.Observations;
 import tech.lamprism.lampray.observability.core.MicrometerMetricProvider;
-import tech.lamprism.lampray.observability.core.MicrometerObservability;
+import tech.lamprism.lampray.observability.core.MicrometerObservations;
 import tech.lamprism.lampray.observability.core.MicrometerSystemMetrics;
-import tech.lamprism.lampray.observability.core.NoOpObservability;
 import tech.lamprism.lampray.observability.core.ThreadLocalCorrelationContextHolder;
 import tech.lamprism.lampray.setting.ConfigReader;
 import tech.lamprism.lampray.web.common.keys.ObservabilityConfigKeys;
@@ -83,12 +81,6 @@ public class ObservabilityConfiguration {
 
     @Bean
     public MeterRegistry observabilityMeterRegistry() {
-        if (!isEnabled()) {
-            SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-            meterRegistry.config().meterFilter(MeterFilter.deny());
-            return meterRegistry;
-        }
-
         MeterRegistry meterRegistry = isPrometheusEnabled()
                 ? new PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
                 : new SimpleMeterRegistry();
@@ -107,21 +99,13 @@ public class ObservabilityConfiguration {
     }
 
     @Bean
-    public MetricProvider metricProvider(MeterRegistry observabilityMeterRegistry,
-                                         List<MetricSpecificationProvider> metricSpecificationProviders) {
-        return new MicrometerMetricProvider(metricSpecificationProviders, observabilityMeterRegistry);
+    public MetricProvider metricProvider(MeterRegistry observabilityMeterRegistry) {
+        return new MicrometerMetricProvider(observabilityMeterRegistry);
     }
 
     @Bean
-    public Observability observability(ObservationRegistry observationRegistry) {
-        if (!isEnabled()) {
-            return NoOpObservability.INSTANCE;
-        }
-        return new MicrometerObservability(observationRegistry);
-    }
-
-    private boolean isEnabled() {
-        return Boolean.TRUE.equals(configReader.get(ObservabilityConfigKeys.ENABLED, true));
+    public Observations observations(ObservationRegistry observationRegistry) {
+        return new MicrometerObservations(observationRegistry);
     }
 
     private boolean isPrometheusEnabled() {

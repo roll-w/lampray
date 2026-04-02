@@ -19,7 +19,6 @@ package tech.lamprism.lampray.observability;
 /**
  * @author RollW
  */
-public interface MetricTask extends AutoCloseable {
-    @Override
-    void close();
+public interface ObservationSpecification extends SignalSpecification {
+    SignalDomain getDomain();
 }

@@ -16,50 +16,67 @@
 
 package tech.lamprism.lampray.security.authentication.registration.service;
 
-import tech.lamprism.lampray.observability.DefaultMetricSpecification;
-import tech.lamprism.lampray.observability.MetricSpecification;
-import tech.lamprism.lampray.observability.MetricType;
+import tech.lamprism.lampray.observability.CounterSpecification;
+import tech.lamprism.lampray.observability.DistributionSummarySpecification;
+import tech.lamprism.lampray.observability.LongTaskTimerSpecification;
+import tech.lamprism.lampray.observability.TagSpecification;
+import tech.lamprism.lampray.observability.TimerSpecification;
+import tech.lamprism.lampray.security.authentication.login.LoginStrategyType;
+import tech.lamprism.lampray.user.Role;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author RollW
  */
 public final class AuthenticationMetrics {
-    public static final MetricSpecification LOGIN_REQUESTS = DefaultMetricSpecification.builder(
-                    "lampray.auth.login.requests",
-                    MetricType.COUNTER)
+    private static final TagSpecification STRATEGY_TAG = TagSpecification.builder("strategy")
+            .required()
+            .allowedValues(namesOf(LoginStrategyType.values()))
+            .build();
+    private static final TagSpecification LOGIN_RESULT_TAG = TagSpecification.builder("result")
+            .required()
+            .allowedValues("success", "failure", "user_not_found", "token_invalid")
+            .build();
+    private static final TagSpecification TOKEN_SEND_RESULT_TAG = TagSpecification.builder("result")
+            .required()
+            .allowedValues("success", "failure")
+            .build();
+    private static final TagSpecification ROLE_TAG = TagSpecification.builder("role")
+            .required()
+            .allowedValues(namesOf(Role.values()))
+            .build();
+
+    public static final CounterSpecification LOGIN_REQUESTS = CounterSpecification.builder(
+                    "lampray.auth.login.requests")
             .description("Counts login attempts by strategy and result.")
-            .allowTags("strategy", "result")
+            .tags(STRATEGY_TAG, LOGIN_RESULT_TAG)
             .build();
 
-    public static final MetricSpecification TOKEN_SEND_REQUESTS = DefaultMetricSpecification.builder(
-                    "lampray.auth.token.send.requests",
-                    MetricType.COUNTER)
+    public static final CounterSpecification TOKEN_SEND_REQUESTS = CounterSpecification.builder(
+                    "lampray.auth.token.send.requests")
             .description("Counts login token delivery attempts by strategy and result.")
-            .allowTags("strategy", "result")
+            .tags(STRATEGY_TAG, TOKEN_SEND_RESULT_TAG)
             .build();
 
-    public static final MetricSpecification TOKEN_SEND_DURATION = DefaultMetricSpecification.builder(
-                    "lampray.auth.token.send.duration",
-                    MetricType.TIMER)
+    public static final TimerSpecification TOKEN_SEND_DURATION = TimerSpecification.builder(
+                    "lampray.auth.token.send.duration")
             .description("Measures end-to-end login token delivery duration.")
-            .allowTags("strategy")
+            .tag(STRATEGY_TAG)
             .histogram()
             .percentiles(0.5D, 0.95D, 0.99D)
             .serviceLevelObjectives(
-                    Duration.ofMillis(100).toNanos(),
-                    Duration.ofMillis(300).toNanos(),
-                    Duration.ofSeconds(1).toNanos()
+                    Duration.ofMillis(100),
+                    Duration.ofMillis(300),
+                    Duration.ofSeconds(1)
             )
             .build();
 
-    public static final MetricSpecification TOKEN_SEND_PAYLOAD_SIZE = DefaultMetricSpecification.builder(
-                    "lampray.auth.token.send.payload.size",
-                    MetricType.HISTOGRAM)
+    public static final DistributionSummarySpecification TOKEN_SEND_PAYLOAD_SIZE = DistributionSummarySpecification.builder(
+                    "lampray.auth.token.send.payload.size")
             .description("Records approximate token payload size before delivery.")
-            .allowTags("strategy")
+            .tag(STRATEGY_TAG)
             .baseUnit("characters")
             .histogram()
             .percentiles(0.5D, 0.95D, 0.99D)
@@ -67,37 +84,24 @@ public final class AuthenticationMetrics {
             .maximumExpectedValue(4096D)
             .build();
 
-    public static final MetricSpecification TOKEN_SEND_LONG_TASK = DefaultMetricSpecification.builder(
-                    "lampray.auth.token.send.long-task",
-                    MetricType.LONG_TASK_TIMER)
+    public static final LongTaskTimerSpecification TOKEN_SEND_LONG_TASK = LongTaskTimerSpecification.builder(
+                    "lampray.auth.token.send.long-task")
             .description("Tracks active long-running token delivery operations.")
-            .allowTags("strategy")
+            .tag(STRATEGY_TAG)
             .build();
 
-    public static final MetricSpecification ACTIVE_TOKEN_SEND_TASKS = DefaultMetricSpecification.builder(
-                    "lampray.auth.token.send.active",
-                    MetricType.GAUGE)
-            .description("Current number of active token delivery tasks.")
-            .allowTags("strategy")
-            .build();
-
-    public static final MetricSpecification REGISTRATIONS = DefaultMetricSpecification.builder(
-                    "lampray.auth.registration.completed",
-                    MetricType.COUNTER)
+    public static final CounterSpecification REGISTRATIONS = CounterSpecification.builder(
+                    "lampray.auth.registration.completed")
             .description("Counts successful user registrations by role.")
-            .allowTags("role")
+            .tag(ROLE_TAG)
             .build();
-
-    public static final List<MetricSpecification> SPECIFICATIONS = List.of(
-            LOGIN_REQUESTS,
-            TOKEN_SEND_REQUESTS,
-            TOKEN_SEND_DURATION,
-            TOKEN_SEND_PAYLOAD_SIZE,
-            TOKEN_SEND_LONG_TASK,
-            ACTIVE_TOKEN_SEND_TASKS,
-            REGISTRATIONS
-    );
 
     private AuthenticationMetrics() {
+    }
+
+    private static String[] namesOf(Enum<?>[] values) {
+        return Arrays.stream(values)
+                .map(Enum::name)
+                .toArray(String[]::new);
     }
 }

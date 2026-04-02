@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.security.authentication.registration.service;
 
 import com.google.common.base.Preconditions;
+import io.micrometer.core.instrument.LongTaskTimer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,9 +29,10 @@ import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.LampException;
 import tech.lamprism.lampray.RequestMetadata;
-import tech.lamprism.lampray.observability.ObservationDefinition;
+import tech.lamprism.lampray.observability.MetricProvider;
 import tech.lamprism.lampray.observability.ObservationScope;
-import tech.lamprism.lampray.observability.Observability;
+import tech.lamprism.lampray.observability.Observations;
+import tech.lamprism.lampray.observability.SignalTags;
 import tech.lamprism.lampray.security.authentication.UserInfoSignature;
 import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationToken;
@@ -88,8 +90,8 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
     private final AuthenticationManager authenticationManager;
     private final UserSignatureProvider userSignatureProvider;
     private final List<RegistrationInterceptor> registrationInterceptors;
-    private final Observability observability;
-    private final AuthenticationMetricRecorder authenticationMetricRecorder;
+    private final MetricProvider metricProvider;
+    private final Observations observations;
     private final Map<LoginStrategyType, LoginStrategy> loginStrategyMap =
             new EnumMap<>(LoginStrategyType.class);
 
@@ -103,8 +105,8 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                          AuthenticationManager authenticationManager,
                          UserSignatureProvider userSignatureProvider,
                          List<RegistrationInterceptor> registrationInterceptors,
-                         Observability observability,
-                         AuthenticationMetricRecorder authenticationMetricRecorder) {
+                         MetricProvider metricProvider,
+                         Observations observations) {
         this.registerTokenRepository = registerTokenRepository;
         this.firewallRegistry = firewallRegistry;
         this.systemResourceOperatorProvider = systemResourceOperatorProvider;
@@ -114,8 +116,8 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         this.authenticationManager = authenticationManager;
         this.userSignatureProvider = userSignatureProvider;
         this.registrationInterceptors = registrationInterceptors;
-        this.observability = observability;
-        this.authenticationMetricRecorder = authenticationMetricRecorder;
+        this.metricProvider = metricProvider;
+        this.observations = observations;
         strategies.forEach(strategy ->
                 loginStrategyMap.put(strategy.getStrategyType(), strategy));
     }
@@ -155,7 +157,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                            AttributedUserDetails user,
                            LoginStrategy.Options requestInfo) {
         try {
-            authenticationMetricRecorder.recordTokenPayloadSize(strategy.getStrategyType(), token.toString().length());
+            recordTokenPayloadSize(strategy.getStrategyType(), token.toString().length());
             strategy.sendToken(token, user, requestInfo);
         } catch (IOException e) {
             logger.error("Failed to send token to user: {}@{}, due to: {}",
@@ -167,12 +169,17 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
     private void sendTokenWithMetrics(LoginStrategyType type,
                                       Runnable action) {
         long startNanos = System.nanoTime();
-        try (AuthenticationMetricRecorder.TokenSendTask ignored = authenticationMetricRecorder.startTokenSendTask(type)) {
+        String result = "success";
+        LongTaskTimer.Sample sample = metricProvider.meter(AuthenticationMetrics.TOKEN_SEND_LONG_TASK, strategyTags(type))
+                .start();
+        try {
             action.run();
-            authenticationMetricRecorder.recordTokenSendResult(type, Duration.ofNanos(System.nanoTime() - startNanos), "success");
         } catch (RuntimeException | Error ex) {
-            authenticationMetricRecorder.recordTokenSendResult(type, Duration.ofNanos(System.nanoTime() - startNanos), "failure");
+            result = "failure";
             throw ex;
+        } finally {
+            sample.stop();
+            recordTokenSendResult(type, Duration.ofNanos(System.nanoTime() - startNanos), result);
         }
     }
 
@@ -199,10 +206,11 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         Preconditions.checkNotNull(identity, "identity cannot be null");
         Preconditions.checkNotNull(token, "token cannot be null");
 
-        ObservationDefinition definition = ObservationDefinition.business("lampray.auth.login")
-                .withLowCardinalityTag("strategy", type.name());
-
-        return observability.observe(definition, scope -> login(identity, token, type, metadata, scope));
+        return observations.observe(
+                AuthenticationObservations.LOGIN,
+                SignalTags.of("strategy", type.name()),
+                scope -> login(identity, token, type, metadata, scope)
+        );
     }
 
     private UserInfoSignature login(String identity,
@@ -215,19 +223,19 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
             try {
                 user = tryGetUser(identity);
             } catch (UserViewException ex) {
-                scope.lowCardinalityTag("result", "user_not_found");
-                authenticationMetricRecorder.recordLoginResult(type, "user_not_found");
+                scope.tag("result", "user_not_found");
+                recordLoginResult(type, "user_not_found");
                 throw ex;
             }
             if (user == null) {
-                scope.lowCardinalityTag("result", "user_not_found");
-                authenticationMetricRecorder.recordLoginResult(type, "user_not_found");
+                scope.tag("result", "user_not_found");
+                recordLoginResult(type, "user_not_found");
                 throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
             }
             ErrorCode code = verifyToken(token, user, type);
             if (code.failed()) {
-                scope.lowCardinalityTag("result", "token_invalid");
-                authenticationMetricRecorder.recordLoginResult(type, "token_invalid");
+                scope.tag("result", "token_invalid");
+                recordLoginResult(type, "token_invalid");
                 throw new UserViewException(code);
             }
 
@@ -240,13 +248,13 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
             OnUserLoginEvent onUserLoginEvent = new OnUserLoginEvent(user, metadata);
             eventPublisher.publishEvent(onUserLoginEvent);
             String signature = userSignatureProvider.getSignature(user.getUserId());
-            scope.lowCardinalityTag("result", "success");
-            authenticationMetricRecorder.recordLoginResult(type, "success");
+            scope.tag("result", "success");
+            recordLoginResult(type, "success");
             return UserInfoSignature.from(user, signature);
         } catch (RuntimeException ex) {
             if (!(ex instanceof UserViewException)) {
-                scope.lowCardinalityTag("result", "failure");
-                authenticationMetricRecorder.recordLoginResult(type, "failure");
+                scope.tag("result", "failure");
+                recordLoginResult(type, "failure");
             }
             throw ex;
         }
@@ -275,8 +283,47 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                 user.getRole(),
                 user.getUserId()
         );
-        authenticationMetricRecorder.recordRegistration(user.getRole());
+        recordRegistration(user.getRole());
         return user;
+    }
+
+    private void recordLoginResult(LoginStrategyType type,
+                                   String result) {
+        metricProvider.meter(AuthenticationMetrics.LOGIN_REQUESTS, loginTags(type, result)).increment();
+    }
+
+    private void recordTokenPayloadSize(LoginStrategyType type,
+                                        int payloadSize) {
+        metricProvider.meter(AuthenticationMetrics.TOKEN_SEND_PAYLOAD_SIZE, strategyTags(type)).record(payloadSize);
+    }
+
+    private void recordTokenSendResult(LoginStrategyType type,
+                                       Duration duration,
+                                       String result) {
+        metricProvider.meter(AuthenticationMetrics.TOKEN_SEND_DURATION, strategyTags(type)).record(duration);
+        metricProvider.meter(AuthenticationMetrics.TOKEN_SEND_REQUESTS, tokenSendTags(type, result)).increment();
+    }
+
+    private void recordRegistration(Role role) {
+        metricProvider.meter(AuthenticationMetrics.REGISTRATIONS, registrationTags(role)).increment();
+    }
+
+    private SignalTags loginTags(LoginStrategyType type,
+                                 String result) {
+        return SignalTags.of("strategy", type.name(), "result", result);
+    }
+
+    private SignalTags tokenSendTags(LoginStrategyType type,
+                                     String result) {
+        return SignalTags.of("strategy", type.name(), "result", result);
+    }
+
+    private SignalTags strategyTags(LoginStrategyType type) {
+        return SignalTags.of("strategy", type.name());
+    }
+
+    private SignalTags registrationTags(Role role) {
+        return SignalTags.of("role", role.name());
     }
 
     private void firewallFilter(AttributedUser user) {

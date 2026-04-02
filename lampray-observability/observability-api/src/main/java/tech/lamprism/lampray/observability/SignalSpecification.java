@@ -16,18 +16,13 @@
 
 package tech.lamprism.lampray.observability;
 
+import java.util.List;
+
 /**
  * @author RollW
  */
-public enum MetricType {
-    COUNTER,
-    GAUGE,
-    TIME_GAUGE,
-    HISTOGRAM,
-    TIMER,
-    LONG_TASK_TIMER,
-    DISTRIBUTION_SUMMARY,
-    FUNCTION_COUNTER,
-    FUNCTION_TIMER,
-    MULTI_GAUGE
+public interface SignalSpecification {
+    String getName();
+
+    List<TagSpecification> getTagSpecifications();
 }

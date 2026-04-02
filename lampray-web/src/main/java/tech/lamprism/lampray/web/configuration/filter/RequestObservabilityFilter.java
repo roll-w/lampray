@@ -26,12 +26,13 @@ import org.springframework.web.servlet.HandlerMapping;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.observability.CorrelationContext;
 import tech.lamprism.lampray.observability.CorrelationContextHolder;
-import tech.lamprism.lampray.observability.ObservationDefinition;
 import tech.lamprism.lampray.observability.ObservationScope;
-import tech.lamprism.lampray.observability.Observability;
+import tech.lamprism.lampray.observability.Observations;
+import tech.lamprism.lampray.observability.SignalTags;
 import tech.lamprism.lampray.setting.ConfigReader;
 import tech.lamprism.lampray.web.common.keys.ObservabilityConfigKeys;
 import tech.lamprism.lampray.web.observability.CorrelationMdcSupport;
+import tech.lamprism.lampray.web.observability.WebObservations;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -41,14 +42,14 @@ import java.util.UUID;
  */
 @Component
 public class RequestObservabilityFilter extends OncePerRequestFilter {
-    private final Observability observability;
+    private final Observations observations;
     private final CorrelationContextHolder correlationContextHolder;
     private final ConfigReader configReader;
 
-    public RequestObservabilityFilter(Observability observability,
+    public RequestObservabilityFilter(Observations observations,
                                       CorrelationContextHolder correlationContextHolder,
                                       ConfigReader configReader) {
-        this.observability = observability;
+        this.observations = observations;
         this.correlationContextHolder = correlationContextHolder;
         this.configReader = configReader;
     }
@@ -62,19 +63,19 @@ public class RequestObservabilityFilter extends OncePerRequestFilter {
         CorrelationMdcSupport.replace(correlationContext);
         response.setHeader(resolveRequestIdHeader(), correlationContext.getRequestId());
 
-        ObservationScope scope = observability.openScope(
-                ObservationDefinition.system("lampray.http.server.request")
-                        .withLowCardinalityTag("method", request.getMethod())
+        ObservationScope scope = observations.open(
+                WebObservations.HTTP_SERVER_REQUEST,
+                SignalTags.of("method", request.getMethod())
         );
         try {
             filterChain.doFilter(request, response);
-            scope.lowCardinalityTag("uri", resolveUriPattern(request));
-            scope.lowCardinalityTag("status", Integer.toString(response.getStatus()));
-            scope.lowCardinalityTag("result", resolveHttpResult(response.getStatus()));
+            scope.tag("uri", resolveUriPattern(request));
+            scope.tag("status", Integer.toString(response.getStatus()));
+            scope.tag("result", resolveHttpResult(response.getStatus()));
         } catch (Throwable ex) {
-            scope.lowCardinalityTag("uri", resolveUriPattern(request));
-            scope.lowCardinalityTag("status", Integer.toString(response.getStatus()));
-            scope.lowCardinalityTag("result", "error");
+            scope.tag("uri", resolveUriPattern(request));
+            scope.tag("status", Integer.toString(response.getStatus()));
+            scope.tag("result", "error");
             scope.error(ex);
             if (ex instanceof ServletException servletException) {
                 throw servletException;

@@ -21,16 +21,26 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Provides an implementation-neutral entry point for observability.
- *
  * @author RollW
  */
-public interface Observability {
-    ObservationScope openScope(ObservationDefinition definition);
+public interface Observations {
+    default ObservationScope open(ObservationSpecification specification) {
+        return open(specification, SignalTags.empty());
+    }
 
-    default void observe(ObservationDefinition definition, Consumer<ObservationScope> consumer) {
+    ObservationScope open(ObservationSpecification specification,
+                          SignalTags tags);
+
+    default void observe(ObservationSpecification specification,
+                         Consumer<ObservationScope> consumer) {
+        observe(specification, SignalTags.empty(), consumer);
+    }
+
+    default void observe(ObservationSpecification specification,
+                         SignalTags tags,
+                         Consumer<ObservationScope> consumer) {
         Objects.requireNonNull(consumer, "consumer cannot be null");
-        ObservationScope scope = openScope(definition);
+        ObservationScope scope = open(specification, tags);
         try {
             consumer.accept(scope);
         } catch (RuntimeException | Error ex) {
@@ -41,9 +51,16 @@ public interface Observability {
         }
     }
 
-    default <T> T observe(ObservationDefinition definition, Function<ObservationScope, T> function) {
+    default <T> T observe(ObservationSpecification specification,
+                          Function<ObservationScope, T> function) {
+        return observe(specification, SignalTags.empty(), function);
+    }
+
+    default <T> T observe(ObservationSpecification specification,
+                          SignalTags tags,
+                          Function<ObservationScope, T> function) {
         Objects.requireNonNull(function, "function cannot be null");
-        ObservationScope scope = openScope(definition);
+        ObservationScope scope = open(specification, tags);
         try {
             return function.apply(scope);
         } catch (RuntimeException | Error ex) {

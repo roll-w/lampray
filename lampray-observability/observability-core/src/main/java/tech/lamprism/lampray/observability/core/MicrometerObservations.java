@@ -18,10 +18,11 @@ package tech.lamprism.lampray.observability.core;
 
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
-import tech.lamprism.lampray.observability.ObservationDefinition;
 import tech.lamprism.lampray.observability.ObservationScope;
-import tech.lamprism.lampray.observability.ObservationTag;
-import tech.lamprism.lampray.observability.Observability;
+import tech.lamprism.lampray.observability.ObservationSpecification;
+import tech.lamprism.lampray.observability.Observations;
+import tech.lamprism.lampray.observability.SignalTag;
+import tech.lamprism.lampray.observability.SignalTags;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -29,26 +30,29 @@ import java.util.Objects;
 /**
  * @author RollW
  */
-public class MicrometerObservability implements Observability {
+public final class MicrometerObservations implements Observations {
     private final ObservationRegistry observationRegistry;
+    private final SpecificationRegistry specificationRegistry = new SpecificationRegistry();
 
-    public MicrometerObservability(ObservationRegistry observationRegistry) {
+    public MicrometerObservations(ObservationRegistry observationRegistry) {
         this.observationRegistry = Objects.requireNonNull(observationRegistry,
                 "observationRegistry cannot be null");
     }
 
     @Override
-    public ObservationScope openScope(ObservationDefinition definition) {
-        Objects.requireNonNull(definition, "definition cannot be null");
+    public ObservationScope open(ObservationSpecification specification,
+                                 SignalTags tags) {
+        Objects.requireNonNull(specification, "specification cannot be null");
+        specificationRegistry.register(specification);
+        SignalTags normalizedTags = specificationRegistry.normalizePartial(specification, tags);
 
-        Observation observation = Observation.createNotStarted(definition.getName(), observationRegistry)
-                .lowCardinalityKeyValue("domain", definition.getDomain().name().toLowerCase(Locale.ROOT));
-
-        for (ObservationTag tag : definition.getLowCardinalityTags()) {
+        Observation observation = Observation.createNotStarted(specification.getName(), observationRegistry)
+                .lowCardinalityKeyValue("domain", specification.getDomain().name().toLowerCase(Locale.ROOT));
+        for (SignalTag tag : normalizedTags) {
             observation.lowCardinalityKeyValue(tag.getKey(), tag.getValue());
         }
 
         observation.start();
-        return new MicrometerObservationScope(observation, observation.openScope());
+        return new MicrometerObservationScope(observation, observation.openScope(), specification, specificationRegistry);
     }
 }

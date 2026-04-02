@@ -16,24 +16,36 @@
 
 package tech.lamprism.lampray.observability.core;
 
-import tech.lamprism.lampray.observability.ObservationDefinition;
-import tech.lamprism.lampray.observability.ObservationScope;
-import tech.lamprism.lampray.observability.Observability;
+import tech.lamprism.lampray.observability.SignalTags;
 
 import java.util.Objects;
 
 /**
  * @author RollW
  */
-public final class NoOpObservability implements Observability {
-    public static final NoOpObservability INSTANCE = new NoOpObservability();
+final class MeterCacheKey {
+    private final String name;
+    private final SignalTags tags;
 
-    private NoOpObservability() {
+    MeterCacheKey(String name,
+                  SignalTags tags) {
+        this.name = name;
+        this.tags = tags;
     }
 
     @Override
-    public ObservationScope openScope(ObservationDefinition definition) {
-        Objects.requireNonNull(definition, "definition cannot be null");
-        return NoOpObservationScope.INSTANCE;
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof MeterCacheKey that)) {
+            return false;
+        }
+        return Objects.equals(name, that.name) && Objects.equals(tags, that.tags);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, tags);
     }
 }

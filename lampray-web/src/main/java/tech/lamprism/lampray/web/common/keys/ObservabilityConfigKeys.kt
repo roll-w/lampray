@@ -35,16 +35,6 @@ object ObservabilityConfigKeys : SettingSpecificationSupplier {
     const val DEFAULT_METRICS_SCRAPE_TOKEN = ""
 
     @JvmField
-    val ENABLED =
-        SettingSpecificationBuilder(SettingKey.ofBoolean("observability.enabled"))
-            .setTextDescription("Enable observability collection.")
-            .setValueEntries(listOf(false, true))
-            .setDefaultValue(true)
-            .setSupportedSources(SettingSource.VALUES)
-            .setRequired(false)
-            .build()
-
-    @JvmField
     val REQUEST_ID_HEADER =
         SettingSpecificationBuilder(SettingKey.ofString("observability.correlation.request-id-header"))
             .setTextDescription("Header name used for request correlation.")
@@ -56,7 +46,7 @@ object ObservabilityConfigKeys : SettingSpecificationSupplier {
     @JvmField
     val PROMETHEUS_ENABLED =
         SettingSpecificationBuilder(SettingKey.ofBoolean("observability.prometheus.enabled"))
-            .setTextDescription("Enable Prometheus registry and scrape endpoint support.")
+            .setTextDescription("Enable the Prometheus scrape endpoint.")
             .setValueEntries(listOf(false, true))
             .setDefaultValue(true)
             .setSupportedSources(SettingSource.VALUES)
@@ -100,7 +90,6 @@ object ObservabilityConfigKeys : SettingSpecificationSupplier {
             .build()
 
     private val keys = listOf(
-        ENABLED,
         REQUEST_ID_HEADER,
         PROMETHEUS_ENABLED,
         METRICS_SCRAPE_TOKEN,

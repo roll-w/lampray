@@ -136,7 +136,7 @@ public class ObservabilityController {
 
     @GetMapping(value = "/observability/prometheus", produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> scrapePrometheus() {
-        if (!isObservabilityEnabled() || !isPrometheusEnabled() || !(meterRegistry instanceof PrometheusMeterRegistry prometheusMeterRegistry)) {
+        if (!isPrometheusEnabled() || !(meterRegistry instanceof PrometheusMeterRegistry prometheusMeterRegistry)) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok()
@@ -233,17 +233,12 @@ public class ObservabilityController {
         return tags;
     }
 
-    private boolean isObservabilityEnabled() {
-        return Boolean.TRUE.equals(configReader.get(ObservabilityConfigKeys.ENABLED, true));
-    }
-
     private boolean isPrometheusEnabled() {
         return Boolean.TRUE.equals(configReader.get(ObservabilityConfigKeys.PROMETHEUS_ENABLED, true));
     }
 
     private Map<String, Object> buildInfoPayload() {
         Map<String, Object> info = new LinkedHashMap<>();
-        info.put("enabled", isObservabilityEnabled());
         info.put("prometheusEnabled", isPrometheusEnabled());
         info.put("registryType", meterRegistry.getClass().getName());
         info.put("observationRegistryType", observationRegistry.getClass().getName());
@@ -292,7 +287,6 @@ public class ObservabilityController {
                 "type", observationRegistry.getClass().getName()
         )));
         components.put("meterRegistry", healthComponent("UP", Map.of(
-                "enabled", isObservabilityEnabled(),
                 "type", meterRegistry.getClass().getName(),
                 "meterCount", meterRegistry.getMeters().size()
         )));
@@ -306,7 +300,6 @@ public class ObservabilityController {
     private Map<String, Object> buildReadinessHealth() {
         Map<String, Object> components = new LinkedHashMap<>();
         components.put("observability", healthComponent("UP", Map.of(
-                "enabled", isObservabilityEnabled(),
                 "prometheusEnabled", isPrometheusEnabled()
         )));
         components.put("database", buildDatabaseHealth());
@@ -339,17 +332,10 @@ public class ObservabilityController {
     }
 
     private Map<String, Object> buildPrometheusHealth() {
-        if (!isObservabilityEnabled()) {
-            return healthComponent("UP", Map.of(
-                    "enabled", false,
-                    "reason", "Observability disabled"
-            ));
-        }
-
         if (!isPrometheusEnabled()) {
             return healthComponent("UP", Map.of(
                     "enabled", false,
-                    "reason", "Disabled by config"
+                    "reason", "Endpoint disabled by config"
             ));
         }
 

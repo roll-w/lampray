@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.content.article.service;
 
 import org.apache.commons.lang3.Validate;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ import tech.lamprism.lampray.content.collection.ContentCollectionType;
 import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
 import tech.lamprism.lampray.content.structuraltext.StructuralText;
+import tech.lamprism.lampray.observability.MetricProvider;
+import tech.lamprism.lampray.observability.SignalTags;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -48,12 +51,14 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
     private static final Logger logger = LoggerFactory.getLogger(ArticleService.class);
 
     private final ArticleRepository articleRepository;
-    private final ArticleMetricRecorder articleMetricRecorder;
+    private final MetricProvider metricProvider;
+    private final Timer articlePublishDuration;
 
     public ArticleService(ArticleRepository articleRepository,
-                          ArticleMetricRecorder articleMetricRecorder) {
+                          MetricProvider metricProvider) {
         this.articleRepository = articleRepository;
-        this.articleMetricRecorder = articleMetricRecorder;
+        this.metricProvider = metricProvider;
+        this.articlePublishDuration = metricProvider.meter(ArticleMetrics.ARTICLE_PUBLISH_DURATION);
     }
 
     @Override
@@ -62,7 +67,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
             throws ContentException {
         long startNanos = System.nanoTime();
         if (uncreatedContent.getContentType() != ContentType.ARTICLE) {
-            articleMetricRecorder.recordPublishFailure("invalid_type");
+            metricProvider.meter(ArticleMetrics.ARTICLE_PUBLISH_REQUESTS, publishTags("invalid_type")).increment();
             throw new IllegalArgumentException("Content type not supported: " +
                     uncreatedContent.getContentType());
         }
@@ -72,7 +77,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
         long userId = uncreatedContent.getOperator().getUserId();
 
         if (articleRepository.findByTitle(title, userId).isPresent()) {
-            articleMetricRecorder.recordPublishFailure("duplicated");
+            metricProvider.meter(ArticleMetrics.ARTICLE_PUBLISH_REQUESTS, publishTags("duplicated")).increment();
             throw new ContentException(ContentErrorCode.ERROR_CONTENT_EXISTED);
         }
 
@@ -85,10 +90,15 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
                 .setUpdateTime(timestamp)
                 .build();
         ArticleDo created = articleRepository.save(article);
-        articleMetricRecorder.recordPublishSuccess(Duration.ofNanos(System.nanoTime() - startNanos));
+        articlePublishDuration.record(Duration.ofNanos(System.nanoTime() - startNanos));
+        metricProvider.meter(ArticleMetrics.ARTICLE_PUBLISH_REQUESTS, publishTags("success")).increment();
         logger.trace("Article({}) title={} created by user({})",
                 created.getEntityId(), created.getTitle(), created.getUserId());
         return created;
+    }
+
+    private SignalTags publishTags(String result) {
+        return SignalTags.of("result", result);
     }
 
     @Override

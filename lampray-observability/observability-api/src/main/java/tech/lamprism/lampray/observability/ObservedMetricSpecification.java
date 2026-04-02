@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.content.article.service;
+package tech.lamprism.lampray.observability;
 
-import org.springframework.stereotype.Component;
-import tech.lamprism.lampray.observability.MetricSpecification;
-import tech.lamprism.lampray.observability.MetricSpecificationProvider;
-
-import java.util.List;
+import io.micrometer.core.instrument.Meter;
 
 /**
  * @author RollW
  */
-@Component
-public final class ArticleMetricSpecifications implements MetricSpecificationProvider {
-    @Override
-    public List<MetricSpecification> getMetricSpecifications() {
-        return ArticleMetrics.SPECIFICATIONS;
-    }
+public interface ObservedMetricSpecification<T extends Meter, S> extends MetricSpecification<T> {
+    Class<S> getSourceType();
 }

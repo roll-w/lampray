@@ -18,6 +18,7 @@ package tech.lamprism.lampray.observability.core;
 
 import io.micrometer.observation.Observation;
 import tech.lamprism.lampray.observability.ObservationScope;
+import tech.lamprism.lampray.observability.ObservationSpecification;
 
 /**
  * @author RollW
@@ -25,16 +26,26 @@ import tech.lamprism.lampray.observability.ObservationScope;
 final class MicrometerObservationScope implements ObservationScope {
     private final Observation observation;
     private final Observation.Scope scope;
+    private final ObservationSpecification specification;
+    private final SpecificationRegistry specificationRegistry;
     private boolean closed;
 
-    MicrometerObservationScope(Observation observation, Observation.Scope scope) {
+    MicrometerObservationScope(Observation observation,
+                               Observation.Scope scope,
+                               ObservationSpecification specification,
+                               SpecificationRegistry specificationRegistry) {
         this.observation = observation;
         this.scope = scope;
+        this.specification = specification;
+        this.specificationRegistry = specificationRegistry;
     }
 
     @Override
-    public void lowCardinalityTag(String key, String value) {
+    public ObservationScope tag(String key,
+                                String value) {
+        specificationRegistry.validateTag(specification, key, value);
         observation.lowCardinalityKeyValue(key, value);
+        return this;
     }
 
     @Override
