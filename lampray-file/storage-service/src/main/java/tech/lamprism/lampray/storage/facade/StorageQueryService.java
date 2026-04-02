@@ -17,11 +17,11 @@
 package tech.lamprism.lampray.storage.facade;
 
 import com.google.common.primitives.Ints;
+import jakarta.persistence.metamodel.SingularAttribute;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import jakarta.persistence.metamodel.SingularAttribute;
 import tech.lamprism.lampray.storage.StorageBackendType;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageUploadSessionState;
@@ -42,9 +42,9 @@ import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
 import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
 import tech.lamprism.lampray.storage.persistence.StorageFileEntity_;
 import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
-import tech.lamprism.lampray.storage.persistence.StorageUploadSessionRepository;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity_;
+import tech.lamprism.lampray.storage.persistence.StorageUploadSessionRepository;
 import tech.lamprism.lampray.storage.query.StorageBackendView;
 import tech.lamprism.lampray.storage.query.StorageBlobPlacementView;
 import tech.lamprism.lampray.storage.query.StorageBlobView;
@@ -107,10 +107,10 @@ public class StorageQueryService implements StorageQueryProvider {
         int normalizedPage = Math.max(page, 1);
         var pageable = PageRequest.of(normalizedPage - 1, normalizedSize);
         var entityPage = storageFileRepository.findAll(pageable, fileSpecification(groupName, ownerUserId, fileName));
-        List<StorageFileView> content = entityPage.getContent().stream()
+        List<StorageFileView> content = entityPage.getData().stream()
                 .map(this::toFileView)
                 .toList();
-        return ImmutablePage.of(normalizedPage, normalizedSize, entityPage.getTotalPages(), content);
+        return ImmutablePage.of(normalizedPage, normalizedSize, (int) entityPage.getTotal(), content);
     }
 
     @Override
@@ -147,8 +147,8 @@ public class StorageQueryService implements StorageQueryProvider {
         int normalizedSize = Ints.constrainToRange(size, 1, 200);
         int normalizedPage = Math.max(page, 1);
         OffsetDateTime now = OffsetDateTime.now();
-        var pageable = PageRequest.of(normalizedPage - 1, normalizedSize);
-        var sessionPage = storageUploadSessionRepository.findAll(pageable, sessionSpecification(state, ownerUserId, fileName, now));
+        PageRequest pageable = PageRequest.of(normalizedPage - 1, normalizedSize);
+        Page<StorageUploadSessionEntity> sessionPage = storageUploadSessionRepository.findAll(pageable, sessionSpecification(state, ownerUserId, fileName, now));
         List<StorageSessionView> content = sessionPage.getData().stream()
                 .map(StorageUploadSessionModel::from)
                 .map(uploadSession -> toSessionView(uploadSession, now))
@@ -350,7 +350,7 @@ public class StorageQueryService implements StorageQueryProvider {
 
     @SafeVarargs
     private static <T> Specification<T> combine(Specification<T>... specifications) {
-        Specification<T> result = Specification.where(null);
+        Specification<T> result = Specification.unrestricted();
         for (Specification<T> specification : specifications) {
             if (specification != null) {
                 result = result.and(specification);

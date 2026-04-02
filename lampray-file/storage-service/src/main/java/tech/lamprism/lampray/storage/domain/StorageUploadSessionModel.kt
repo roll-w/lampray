@@ -156,6 +156,7 @@ class StorageUploadSessionModel private constructor(
 
     companion object {
         @JvmStatic
+        @JvmOverloads
         fun from(
             entity: StorageUploadSessionEntity,
             directRequest: StorageAccessRequest? = null,

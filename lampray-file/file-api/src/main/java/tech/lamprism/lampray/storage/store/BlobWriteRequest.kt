@@ -23,13 +23,11 @@ data class BlobWriteRequest(
     val key: String,
     val size: Long,
     val contentType: String?,
-    metadata: Map<String, String> = emptyMap(),
+    val metadata: Map<String, String> = emptyMap(),
     val contentChecksum: String? = null,
 ) {
     init {
         require(key.isNotBlank()) { "key must not be blank" }
         require(size >= 0) { "size must not be negative" }
     }
-
-    val metadata: Map<String, String> = metadata.takeIf { it.isNotEmpty() }?.toMap() ?: emptyMap()
 }

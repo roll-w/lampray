@@ -16,12 +16,10 @@
 
 package tech.lamprism.lampray.storage.persistence
 
-import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
 import tech.lamprism.lampray.storage.session.UploadSessionStatus
-import tech.rollw.common.web.page.Page
 import java.time.OffsetDateTime
 
 /**
@@ -31,11 +29,6 @@ import java.time.OffsetDateTime
 class StorageUploadSessionRepository(
     uploadSessionDao: StorageUploadSessionDao,
 ) : CommonRepository<StorageUploadSessionEntity, String>(uploadSessionDao) {
-    fun findAll(
-        pageable: Pageable,
-        specification: Specification<StorageUploadSessionEntity>,
-    ): Page<StorageUploadSessionEntity> = super.findAll(pageable, specification)
-
     fun findAllByStatus(status: UploadSessionStatus): List<StorageUploadSessionEntity> =
         findAll(statusSpec(status))
 

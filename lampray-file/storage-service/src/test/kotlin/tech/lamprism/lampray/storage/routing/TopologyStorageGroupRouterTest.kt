@@ -16,20 +16,20 @@
 
 package tech.lamprism.lampray.storage.routing
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
 import tech.lamprism.lampray.storage.StorageBackendType
 import tech.lamprism.lampray.storage.StorageVisibility
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistration
+import tech.lamprism.lampray.storage.backend.DynamicBlobStoreRegistry
 import tech.lamprism.lampray.storage.configuration.StorageBackendConfig
 import tech.lamprism.lampray.storage.configuration.StorageGroupBackend
+import tech.lamprism.lampray.storage.configuration.StorageGroupConfig
 import tech.lamprism.lampray.storage.configuration.StorageGroupDownloadPolicy
 import tech.lamprism.lampray.storage.configuration.StorageGroupLoadBalanceMode
 import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode
-import tech.lamprism.lampray.storage.configuration.StorageGroupConfig
 import tech.lamprism.lampray.storage.configuration.StorageTopology
-import tech.lamprism.lampray.storage.backend.BlobStoreRegistration
-import tech.lamprism.lampray.storage.backend.DynamicBlobStoreRegistry
 import tech.lamprism.lampray.storage.support.TestBlobStore
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /**
  * @author RollW
@@ -69,7 +69,7 @@ class TopologyStorageGroupRouterTest {
         val sequence = (1..5).map { router.selectWritePlan("upload").primaryBackend }
 
         assertEquals(listOf("a", "b", "c", "c", "c"), sequence)
-        assertEquals(listOf("b", "c"), router.selectWritePlan("upload").mirrorBackends())
+        assertEquals(listOf("b", "c"), router.selectWritePlan("upload").mirrorBackends)
     }
 
     @Test

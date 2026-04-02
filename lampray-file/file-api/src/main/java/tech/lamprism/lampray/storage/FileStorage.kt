@@ -31,9 +31,11 @@ data class FileStorage(
     val fileSize: Long,
     val mimeType: String,
     val fileType: FileType,
-    override val createTime: OffsetDateTime,
+    private val createTime: OffsetDateTime,
 ) : DataEntity<String> {
     override fun getEntityId(): String = fileId
+
+    override fun getCreateTime(): OffsetDateTime = createTime
 
     override fun getUpdateTime(): OffsetDateTime = createTime
 
