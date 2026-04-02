@@ -60,6 +60,7 @@ import tech.lamprism.lampray.web.configuration.filter.CorsConfigFilter;
 import tech.lamprism.lampray.web.configuration.filter.MetricsScrapeAuthenticationFilter;
 import tech.lamprism.lampray.web.configuration.filter.RequestObservabilityFilter;
 import tech.lamprism.lampray.web.configuration.filter.TokenAuthenticationFilter;
+import tech.lamprism.lampray.web.observability.management.ManagementEndpointRegistry;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -95,12 +96,14 @@ public class WebSecurityConfiguration {
                                                     CorsConfigFilter corsConfigFilter,
                                                     TokenAuthenticationFilter tokenAuthenticationFilter,
                                                     MetricsScrapeAuthenticationFilter metricsScrapeAuthenticationFilter,
+                                                    ManagementEndpointRegistry managementEndpointRegistry,
                                                     RequestObservabilityFilter requestObservabilityFilter,
                                                     ApiContextInitializeFilter apiContextInitializeFilter,
                                                     FirewallFilter firewallFilter,
                                                     ForwardedHeaderDelegateFilter forwardedHeaderFilter,
-                                                   AuthenticationEntryPoint authenticationEntryPoint,
-                                                   AccessDeniedHandler accessDeniedHandler) throws Exception {
+                                                    AuthenticationEntryPoint authenticationEntryPoint,
+                                                    AccessDeniedHandler accessDeniedHandler) throws Exception {
+        String[] managementAliases = managementEndpointRegistry.aliasPaths();
         security.csrf(AbstractHttpConfigurer::disable);
         security.cors(configurer -> configurer
                 .configurationSource(corsConfigurationSource())
@@ -109,8 +112,7 @@ public class WebSecurityConfiguration {
                 configurer.securityContextRepository(securityContextRepository));
         security.authorizeHttpRequests(configurer -> configurer
                 .requestMatchers(HttpMethod.OPTIONS).permitAll()
-                .requestMatchers("/healthz").permitAll()
-                .requestMatchers("/metrics").permitAll()
+                .requestMatchers(managementAliases).permitAll()
                 .requestMatchers("/api/{version}/auth/token:refresh").permitAll()
                 .requestMatchers("/api/{version}/admin/**").hasAnyAuthority("role:ADMIN")
                 .requestMatchers("/api/{version}/message/**").hasAnyAuthority("role:USER")

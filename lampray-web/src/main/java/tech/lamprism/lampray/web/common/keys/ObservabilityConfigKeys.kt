@@ -33,6 +33,9 @@ object ObservabilityConfigKeys : SettingSpecificationSupplier {
     const val DEFAULT_INSTANCE_TAG = "local"
     const val DEFAULT_ENVIRONMENT_TAG = "default"
     const val DEFAULT_METRICS_SCRAPE_TOKEN = ""
+    private val DEFAULT_EXPOSED_ENDPOINTS = listOf("info", "health", "metrics")
+    private val DEFAULT_LIVENESS_CONTRIBUTORS = listOf("application", "observationRegistry", "meterRegistry")
+    private val DEFAULT_READINESS_CONTRIBUTORS = listOf("observability", "database", "prometheus")
 
     @JvmField
     val REQUEST_ID_HEADER =
@@ -44,11 +47,31 @@ object ObservabilityConfigKeys : SettingSpecificationSupplier {
             .build()
 
     @JvmField
-    val PROMETHEUS_ENABLED =
-        SettingSpecificationBuilder(SettingKey.ofBoolean("observability.prometheus.enabled"))
-            .setTextDescription("Enable the Prometheus scrape endpoint.")
-            .setValueEntries(listOf(false, true))
-            .setDefaultValue(true)
+    val MANAGEMENT_EXPOSED_ENDPOINTS =
+        SettingSpecificationBuilder(SettingKey.ofStringSet("observability.management.endpoints.exposed"))
+            .setTextDescription("Exposed observability management endpoints.")
+            .setValueEntries(DEFAULT_EXPOSED_ENDPOINTS)
+            .setDefaults(DEFAULT_EXPOSED_ENDPOINTS.indices.toList())
+            .setSupportedSources(SettingSource.VALUES)
+            .setRequired(false)
+            .build()
+
+    @JvmField
+    val HEALTH_LIVENESS_CONTRIBUTORS =
+        SettingSpecificationBuilder(SettingKey.ofStringSet("observability.health.liveness.include"))
+            .setTextDescription("Health contributors included in the liveness group.")
+            .setValueEntries(DEFAULT_LIVENESS_CONTRIBUTORS)
+            .setDefaults(DEFAULT_LIVENESS_CONTRIBUTORS.indices.toList())
+            .setSupportedSources(SettingSource.VALUES)
+            .setRequired(false)
+            .build()
+
+    @JvmField
+    val HEALTH_READINESS_CONTRIBUTORS =
+        SettingSpecificationBuilder(SettingKey.ofStringSet("observability.health.readiness.include"))
+            .setTextDescription("Health contributors included in the readiness group.")
+            .setValueEntries(DEFAULT_READINESS_CONTRIBUTORS)
+            .setDefaults(DEFAULT_READINESS_CONTRIBUTORS.indices.toList())
             .setSupportedSources(SettingSource.VALUES)
             .setRequired(false)
             .build()
@@ -56,7 +79,7 @@ object ObservabilityConfigKeys : SettingSpecificationSupplier {
     @JvmField
     val METRICS_SCRAPE_TOKEN =
         SettingSpecificationBuilder(SettingKey.ofString("observability.prometheus.scrape-token"))
-            .setTextDescription("Bearer token required to access the Prometheus scrape endpoint.")
+            .setTextDescription("Bearer token required to access the Prometheus scrape alias.")
             .setDefaultValue(DEFAULT_METRICS_SCRAPE_TOKEN)
             .setSupportedSources(SettingSource.VALUES)
             .setRequired(false)
@@ -91,7 +114,9 @@ object ObservabilityConfigKeys : SettingSpecificationSupplier {
 
     private val keys = listOf(
         REQUEST_ID_HEADER,
-        PROMETHEUS_ENABLED,
+        MANAGEMENT_EXPOSED_ENDPOINTS,
+        HEALTH_LIVENESS_CONTRIBUTORS,
+        HEALTH_READINESS_CONTRIBUTORS,
         METRICS_SCRAPE_TOKEN,
         COMMON_TAG_APPLICATION,
         COMMON_TAG_INSTANCE,

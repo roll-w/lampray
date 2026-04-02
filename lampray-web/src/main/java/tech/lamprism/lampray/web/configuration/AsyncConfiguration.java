@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.web.configuration;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.aop.interceptor.SimpleAsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
@@ -45,14 +46,14 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class AsyncConfiguration implements AsyncConfigurer {
     private final AutoInferredAddressProvider autoInferredAddressProvider;
     private final CorrelationContextHolder correlationContextHolder;
-    private final Observations observations;
+    private final ObjectProvider<Observations> observationsProvider;
 
     public AsyncConfiguration(AutoInferredAddressProvider autoInferredAddressProvider,
                               CorrelationContextHolder correlationContextHolder,
-                              Observations observations) {
+                              ObjectProvider<Observations> observationsProvider) {
         this.autoInferredAddressProvider = autoInferredAddressProvider;
         this.correlationContextHolder = correlationContextHolder;
-        this.observations = observations;
+        this.observationsProvider = observationsProvider;
     }
 
     @Override
@@ -77,7 +78,7 @@ public class AsyncConfiguration implements AsyncConfigurer {
         executor.setTaskDecorator(new AddressContextTaskDecorator(
                 autoInferredAddressProvider,
                 correlationContextHolder,
-                observations
+                observationsProvider
         ));
 
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
@@ -94,14 +95,14 @@ public class AsyncConfiguration implements AsyncConfigurer {
 
         private final AutoInferredAddressProvider autoInferredAddressProvider;
         private final CorrelationContextHolder correlationContextHolder;
-        private final Observations observations;
+        private final ObjectProvider<Observations> observationsProvider;
 
         public AddressContextTaskDecorator(AutoInferredAddressProvider autoInferredAddressProvider,
                                            CorrelationContextHolder correlationContextHolder,
-                                           Observations observations) {
+                                           ObjectProvider<Observations> observationsProvider) {
             this.autoInferredAddressProvider = autoInferredAddressProvider;
             this.correlationContextHolder = correlationContextHolder;
-            this.observations = observations;
+            this.observationsProvider = observationsProvider;
         }
 
         @NonNull
@@ -113,7 +114,7 @@ public class AsyncConfiguration implements AsyncConfigurer {
             return () -> {
                 CorrelationContext previousCorrelationContext = correlationContextHolder.swap(correlationContext);
                 CorrelationMdcSupport.replace(correlationContext);
-                ObservationScope scope = observations.open(
+                ObservationScope scope = observationsProvider.getObject().open(
                         WebObservations.ASYNC_TASK,
                         SignalTags.of("executor", "main")
                 );

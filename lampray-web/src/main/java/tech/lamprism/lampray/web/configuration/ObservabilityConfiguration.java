@@ -16,11 +16,7 @@
 
 package tech.lamprism.lampray.web.configuration;
 
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.observation.DefaultMeterObservationHandler;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
@@ -29,33 +25,34 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.lamprism.lampray.observability.CorrelationContextHolder;
+import tech.lamprism.lampray.observability.HealthContributor;
 import tech.lamprism.lampray.observability.MetricProvider;
+import tech.lamprism.lampray.observability.MeterRegistryContributor;
+import tech.lamprism.lampray.observability.ObservationRegistryContributor;
 import tech.lamprism.lampray.observability.Observations;
+import tech.lamprism.lampray.observability.StatusAggregator;
+import tech.lamprism.lampray.observability.core.CompositeHealthService;
+import tech.lamprism.lampray.observability.core.DefaultMeterObservationRegistryContributor;
+import tech.lamprism.lampray.observability.core.DefaultStatusAggregator;
+import tech.lamprism.lampray.observability.core.MeterRegistryContributors;
 import tech.lamprism.lampray.observability.core.MicrometerMetricProvider;
 import tech.lamprism.lampray.observability.core.MicrometerObservations;
-import tech.lamprism.lampray.observability.core.MicrometerSystemMetrics;
+import tech.lamprism.lampray.observability.core.MicrometerSystemMetricsContributor;
+import tech.lamprism.lampray.observability.core.ObservationRegistryContributors;
 import tech.lamprism.lampray.observability.core.ThreadLocalCorrelationContextHolder;
-import tech.lamprism.lampray.setting.ConfigReader;
-import tech.lamprism.lampray.web.common.keys.ObservabilityConfigKeys;
 import tech.lamprism.lampray.web.configuration.filter.ApiContextInitializeFilter;
 import tech.lamprism.lampray.web.configuration.filter.MetricsScrapeAuthenticationFilter;
 import tech.lamprism.lampray.web.configuration.filter.RequestObservabilityFilter;
+import tech.lamprism.lampray.web.observability.management.ManagementEndpointIds;
+import tech.lamprism.lampray.web.observability.management.ManagementExposurePolicy;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.time.Duration;
 
 /**
  * @author RollW
  */
 @Configuration
 public class ObservabilityConfiguration {
-    private final ConfigReader configReader;
-
-    public ObservabilityConfiguration(ConfigReader configReader) {
-        this.configReader = configReader;
-    }
-
     @Bean
     public CorrelationContextHolder correlationContextHolder() {
         return new ThreadLocalCorrelationContextHolder();
@@ -80,21 +77,41 @@ public class ObservabilityConfiguration {
     }
 
     @Bean
-    public MeterRegistry observabilityMeterRegistry() {
-        MeterRegistry meterRegistry = isPrometheusEnabled()
+    public MeterRegistryContributor micrometerSystemMetricsContributor() {
+        return new MicrometerSystemMetricsContributor();
+    }
+
+    @Bean
+    public StatusAggregator statusAggregator() {
+        return new DefaultStatusAggregator();
+    }
+
+    @Bean
+    public CompositeHealthService compositeHealthService(List<HealthContributor> contributors,
+                                                        StatusAggregator statusAggregator) {
+        return new CompositeHealthService(contributors, statusAggregator);
+    }
+
+    @Bean
+    public MeterRegistry observabilityMeterRegistry(List<MeterRegistryContributor> contributors,
+                                                    ManagementExposurePolicy exposurePolicy) {
+        MeterRegistry meterRegistry = exposurePolicy.isExposed(ManagementEndpointIds.PROMETHEUS)
                 ? new PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
                 : new SimpleMeterRegistry();
-        configureMeterRegistry(meterRegistry);
-        MicrometerSystemMetrics.bindTo(meterRegistry);
-
+        new MeterRegistryContributors(contributors).contribute(meterRegistry);
         return meterRegistry;
     }
 
     @Bean
-    public ObservationRegistry observationRegistry(MeterRegistry observabilityMeterRegistry) {
+    public ObservationRegistryContributor defaultMeterObservationRegistryContributor(
+            MeterRegistry observabilityMeterRegistry) {
+        return new DefaultMeterObservationRegistryContributor(observabilityMeterRegistry);
+    }
+
+    @Bean
+    public ObservationRegistry observationRegistry(List<ObservationRegistryContributor> contributors) {
         ObservationRegistry observationRegistry = ObservationRegistry.create();
-        observationRegistry.observationConfig()
-                .observationHandler(new DefaultMeterObservationHandler(observabilityMeterRegistry));
+        new ObservationRegistryContributors(contributors).contribute(observationRegistry);
         return observationRegistry;
     }
 
@@ -106,67 +123,6 @@ public class ObservabilityConfiguration {
     @Bean
     public Observations observations(ObservationRegistry observationRegistry) {
         return new MicrometerObservations(observationRegistry);
-    }
-
-    private boolean isPrometheusEnabled() {
-        return Boolean.TRUE.equals(configReader.get(ObservabilityConfigKeys.PROMETHEUS_ENABLED, true));
-    }
-
-    private void configureMeterRegistry(MeterRegistry meterRegistry) {
-        List<String> commonTags = new ArrayList<>();
-        appendCommonTag(commonTags, "application", configReader.get(
-                ObservabilityConfigKeys.COMMON_TAG_APPLICATION,
-                ObservabilityConfigKeys.DEFAULT_APPLICATION_TAG
-        ));
-        appendCommonTag(commonTags, "instance", configReader.get(
-                ObservabilityConfigKeys.COMMON_TAG_INSTANCE,
-                ObservabilityConfigKeys.DEFAULT_INSTANCE_TAG
-        ));
-        appendCommonTag(commonTags, "environment", configReader.get(
-                ObservabilityConfigKeys.COMMON_TAG_ENVIRONMENT,
-                ObservabilityConfigKeys.DEFAULT_ENVIRONMENT_TAG
-        ));
-
-        var config = meterRegistry.config();
-        if (!commonTags.isEmpty()) {
-            config.commonTags(commonTags.toArray(String[]::new));
-        }
-        config.meterFilter(MeterFilter.maximumAllowableMetrics(5000))
-                .meterFilter(new MeterFilter() {
-                    @Override
-                    public DistributionStatisticConfig configure(Meter.Id id,
-                                                                 DistributionStatisticConfig config) {
-                        if (supportsDistributionStatistics(id)) {
-                            return DistributionStatisticConfig.builder()
-                                    .percentilesHistogram(true)
-                                    .percentiles(0.5, 0.95, 0.99)
-                                    .serviceLevelObjectives(
-                                            Duration.ofMillis(100).toNanos(),
-                                            Duration.ofMillis(300).toNanos(),
-                                            Duration.ofSeconds(1).toNanos()
-                                    )
-                                    .build()
-                                    .merge(config);
-                        }
-                        return config;
-                    }
-                });
-    }
-
-    private void appendCommonTag(List<String> tags,
-                                 String key,
-                                 String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return;
-        }
-        tags.add(key);
-        tags.add(value.trim());
-    }
-
-    private boolean supportsDistributionStatistics(Meter.Id id) {
-        String name = id.getName();
-        return name.startsWith("lampray.http.server.request")
-                || name.startsWith("lampray.async.task");
     }
 
     private <T extends jakarta.servlet.Filter> FilterRegistrationBean<T> disableServletRegistration(T filter) {

@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.binder.system.DiskSpaceMetrics;
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.binder.system.UptimeMetrics;
+import tech.lamprism.lampray.observability.MeterRegistryContributor;
 
 import java.io.File;
 import java.util.Objects;
@@ -36,11 +37,14 @@ import java.util.Objects;
 /**
  * @author RollW
  */
-public final class MicrometerSystemMetrics {
-    private MicrometerSystemMetrics() {
+public final class MicrometerSystemMetricsContributor implements MeterRegistryContributor {
+    @Override
+    public int getOrder() {
+        return 100;
     }
 
-    public static void bindTo(MeterRegistry meterRegistry) {
+    @Override
+    public void contribute(MeterRegistry meterRegistry) {
         Objects.requireNonNull(meterRegistry, "meterRegistry cannot be null");
 
         new ClassLoaderMetrics().bindTo(meterRegistry);

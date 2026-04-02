@@ -18,26 +18,28 @@ package tech.lamprism.lampray.web.configuration;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
-import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.observability.MeterRegistryContributor;
 
 /**
  * @author RollW
  */
 @Component
-public class AsyncExecutorMetricsBinder implements SmartInitializingSingleton {
-    private final MeterRegistry meterRegistry;
+public class AsyncExecutorMeterRegistryContributor implements MeterRegistryContributor {
     private final ThreadPoolTaskExecutor mainScheduledExecutorService;
 
-    public AsyncExecutorMetricsBinder(MeterRegistry meterRegistry,
-                                      ThreadPoolTaskExecutor mainScheduledExecutorService) {
-        this.meterRegistry = meterRegistry;
+    public AsyncExecutorMeterRegistryContributor(ThreadPoolTaskExecutor mainScheduledExecutorService) {
         this.mainScheduledExecutorService = mainScheduledExecutorService;
     }
 
     @Override
-    public void afterSingletonsInstantiated() {
+    public int getOrder() {
+        return 200;
+    }
+
+    @Override
+    public void contribute(MeterRegistry meterRegistry) {
         ExecutorServiceMetrics.monitor(
                 meterRegistry,
                 mainScheduledExecutorService.getThreadPoolExecutor(),

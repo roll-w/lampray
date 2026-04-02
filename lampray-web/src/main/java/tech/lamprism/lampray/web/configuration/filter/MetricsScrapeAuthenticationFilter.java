@@ -25,6 +25,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.setting.ConfigReader;
 import tech.lamprism.lampray.web.common.keys.ObservabilityConfigKeys;
+import tech.lamprism.lampray.web.observability.management.ManagementAccess;
+import tech.lamprism.lampray.web.observability.management.ManagementEndpointDescriptor;
+import tech.lamprism.lampray.web.observability.management.ManagementEndpointRegistry;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -37,14 +40,18 @@ public class MetricsScrapeAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final ConfigReader configReader;
+    private final ManagementEndpointRegistry managementEndpointRegistry;
 
-    public MetricsScrapeAuthenticationFilter(ConfigReader configReader) {
+    public MetricsScrapeAuthenticationFilter(ConfigReader configReader,
+                                             ManagementEndpointRegistry managementEndpointRegistry) {
         this.configReader = configReader;
+        this.managementEndpointRegistry = managementEndpointRegistry;
     }
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        return !"/metrics".equals(request.getServletPath()) || !isPrometheusEnabled();
+        ManagementEndpointDescriptor descriptor = managementEndpointRegistry.resolveAlias(request.getServletPath());
+        return descriptor == null || descriptor.getAliasAccess() != ManagementAccess.TOKEN;
     }
 
     @Override
@@ -78,10 +85,6 @@ public class MetricsScrapeAuthenticationFilter extends OncePerRequestFilter {
                 ObservabilityConfigKeys.DEFAULT_METRICS_SCRAPE_TOKEN
         );
         return token == null ? "" : token.trim();
-    }
-
-    private boolean isPrometheusEnabled() {
-        return Boolean.TRUE.equals(configReader.get(ObservabilityConfigKeys.PROMETHEUS_ENABLED, true));
     }
 
     private void reject(HttpServletResponse response) throws IOException {
