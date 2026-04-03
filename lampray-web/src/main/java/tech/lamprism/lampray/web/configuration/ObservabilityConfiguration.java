@@ -26,8 +26,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tech.lamprism.lampray.observability.CorrelationContextHolder;
 import tech.lamprism.lampray.observability.HealthContributor;
-import tech.lamprism.lampray.observability.MetricProvider;
 import tech.lamprism.lampray.observability.MeterRegistryContributor;
+import tech.lamprism.lampray.observability.MetricProvider;
 import tech.lamprism.lampray.observability.ObservationRegistryContributor;
 import tech.lamprism.lampray.observability.Observations;
 import tech.lamprism.lampray.observability.StatusAggregator;
@@ -88,7 +88,7 @@ public class ObservabilityConfiguration {
 
     @Bean
     public CompositeHealthService compositeHealthService(List<HealthContributor> contributors,
-                                                        StatusAggregator statusAggregator) {
+                                                         StatusAggregator statusAggregator) {
         return new CompositeHealthService(contributors, statusAggregator);
     }
 

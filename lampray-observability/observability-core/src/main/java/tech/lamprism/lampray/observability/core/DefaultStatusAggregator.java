@@ -25,8 +25,8 @@ import tech.lamprism.lampray.observability.StatusAggregator;
 public final class DefaultStatusAggregator implements StatusAggregator {
     @Override
     public HealthStatus aggregate(Iterable<HealthStatus> statuses) {
-        HealthStatus selected = HealthStatus.UNKNOWN;
-        int selectedRank = rank(selected);
+        HealthStatus selected = null;
+        int selectedRank = Integer.MAX_VALUE;
         boolean hasStatus = false;
 
         for (HealthStatus status : statuses) {
@@ -41,23 +41,18 @@ public final class DefaultStatusAggregator implements StatusAggregator {
             }
         }
 
-        return hasStatus ? selected : HealthStatus.UNKNOWN;
+        if (!hasStatus) {
+            return HealthStatus.UNKNOWN;
+        }
+        return selected != null ? selected : HealthStatus.UNKNOWN;
     }
 
     private int rank(HealthStatus status) {
-        String code = status.getCode();
-        if (HealthStatus.DOWN.getCode().equals(code)) {
-            return 0;
-        }
-        if (HealthStatus.OUT_OF_SERVICE.getCode().equals(code)) {
-            return 1;
-        }
-        if (HealthStatus.UNKNOWN.getCode().equals(code)) {
-            return 2;
-        }
-        if (HealthStatus.UP.getCode().equals(code)) {
-            return 3;
-        }
-        return 2;
+        return switch (status) {
+            case DOWN -> 0;
+            case OUT_OF_SERVICE -> 1;
+            case UP -> 3;
+            default -> 2;
+        };
     }
 }

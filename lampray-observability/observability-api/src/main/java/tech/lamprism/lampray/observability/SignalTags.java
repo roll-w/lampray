@@ -16,6 +16,8 @@
 
 package tech.lamprism.lampray.observability;
 
+import space.lingu.NonNull;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -90,6 +92,7 @@ public final class SignalTags implements Iterable<SignalTag> {
         return tags;
     }
 
+    @NonNull
     @Override
     public Iterator<SignalTag> iterator() {
         return tags.iterator();

@@ -39,8 +39,8 @@ public class PrometheusHealthContributor implements HealthContributor {
     private final ManagementExposurePolicy exposurePolicy;
 
     public PrometheusHealthContributor(MeterRegistry meterRegistry,
-                                      ConfigReader configReader,
-                                      ManagementExposurePolicy exposurePolicy) {
+                                       ConfigReader configReader,
+                                       ManagementExposurePolicy exposurePolicy) {
         this.meterRegistry = meterRegistry;
         this.configReader = configReader;
         this.exposurePolicy = exposurePolicy;
@@ -64,7 +64,7 @@ public class PrometheusHealthContributor implements HealthContributor {
                 ObservabilityConfigKeys.METRICS_SCRAPE_TOKEN,
                 ObservabilityConfigKeys.DEFAULT_METRICS_SCRAPE_TOKEN
         );
-        if (scrapeToken == null || scrapeToken.trim().isEmpty()) {
+        if (scrapeToken.trim().isEmpty()) {
             return Health.down().withDetails(Map.of(
                     "exposed", true,
                     "reason", "Scrape token is not configured"

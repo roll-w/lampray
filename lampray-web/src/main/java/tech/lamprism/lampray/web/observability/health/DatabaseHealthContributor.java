@@ -23,6 +23,7 @@ import tech.lamprism.lampray.observability.HealthContributor;
 import tech.lamprism.lampray.observability.HealthStatus;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -49,7 +50,7 @@ public class DatabaseHealthContributor implements HealthContributor {
             return Health.down().withDetail("reason", "No DataSource bean available");
         }
 
-        try (var connection = dataSource.getConnection()) {
+        try (Connection connection = dataSource.getConnection()) {
             boolean valid = connection.isValid(1);
             Map<String, Object> details = new LinkedHashMap<>();
             details.put("valid", valid);

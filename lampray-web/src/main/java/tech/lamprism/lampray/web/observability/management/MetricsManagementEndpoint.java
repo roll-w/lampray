@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.search.Search;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import tech.rollw.common.web.CommonErrorCode;
@@ -88,7 +89,7 @@ public class MetricsManagementEndpoint implements ManagementEndpoint {
 
     private Map<String, Object> metricDetails(String name,
                                               List<String> tagFilters) {
-        var search = meterRegistry.find(name);
+        Search search = meterRegistry.find(name);
         for (Tag tag : parseTags(tagFilters)) {
             search = search.tag(tag.getKey(), tag.getValue());
         }

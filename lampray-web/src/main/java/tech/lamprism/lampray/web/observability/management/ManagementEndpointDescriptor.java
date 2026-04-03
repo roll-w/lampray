@@ -30,11 +30,11 @@ public final class ManagementEndpointDescriptor {
     private final ManagementAccess aliasAccess;
 
     public ManagementEndpointDescriptor(String id,
-                                       String description,
-                                       String produces,
-                                       ManagementAccess managementAccess,
-                                       String aliasPath,
-                                       ManagementAccess aliasAccess) {
+                                        String description,
+                                        String produces,
+                                        ManagementAccess managementAccess,
+                                        String aliasPath,
+                                        ManagementAccess aliasAccess) {
         this.id = normalize(id);
         this.description = Objects.requireNonNull(description, "description cannot be null");
         this.produces = Objects.requireNonNull(produces, "produces cannot be null");

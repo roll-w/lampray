@@ -92,17 +92,17 @@ public class WebSecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity security,
-                                                    SecurityContextRepository securityContextRepository,
-                                                    CorsConfigFilter corsConfigFilter,
-                                                    TokenAuthenticationFilter tokenAuthenticationFilter,
-                                                    MetricsScrapeAuthenticationFilter metricsScrapeAuthenticationFilter,
-                                                    ManagementEndpointRegistry managementEndpointRegistry,
-                                                    RequestObservabilityFilter requestObservabilityFilter,
-                                                    ApiContextInitializeFilter apiContextInitializeFilter,
-                                                    FirewallFilter firewallFilter,
-                                                    ForwardedHeaderDelegateFilter forwardedHeaderFilter,
-                                                    AuthenticationEntryPoint authenticationEntryPoint,
-                                                    AccessDeniedHandler accessDeniedHandler) throws Exception {
+                                                   SecurityContextRepository securityContextRepository,
+                                                   CorsConfigFilter corsConfigFilter,
+                                                   TokenAuthenticationFilter tokenAuthenticationFilter,
+                                                   MetricsScrapeAuthenticationFilter metricsScrapeAuthenticationFilter,
+                                                   ManagementEndpointRegistry managementEndpointRegistry,
+                                                   RequestObservabilityFilter requestObservabilityFilter,
+                                                   ApiContextInitializeFilter apiContextInitializeFilter,
+                                                   FirewallFilter firewallFilter,
+                                                   ForwardedHeaderDelegateFilter forwardedHeaderFilter,
+                                                   AuthenticationEntryPoint authenticationEntryPoint,
+                                                   AccessDeniedHandler accessDeniedHandler) throws Exception {
         String[] managementAliases = managementEndpointRegistry.aliasPaths();
         security.csrf(AbstractHttpConfigurer::disable);
         security.cors(configurer -> configurer
@@ -139,13 +139,13 @@ public class WebSecurityConfiguration {
         security.sessionManagement(configurer -> {
             configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         });
-        security.addFilterBefore(metricsScrapeAuthenticationFilter, RequestObservabilityFilter.class);
-        security.addFilterBefore(requestObservabilityFilter, TokenAuthenticationFilter.class);
         security.addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         security.addFilterAfter(apiContextInitializeFilter, TokenAuthenticationFilter.class);
         security.addFilterAfter(firewallFilter, ApiContextInitializeFilter.class);
         security.addFilterBefore(corsConfigFilter, SecurityContextHolderFilter.class);
         security.addFilterBefore(forwardedHeaderFilter, CorsConfigFilter.class);
+        security.addFilterBefore(requestObservabilityFilter, TokenAuthenticationFilter.class);
+        security.addFilterBefore(metricsScrapeAuthenticationFilter, RequestObservabilityFilter.class);
         return security.build();
     }
 

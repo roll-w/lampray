@@ -22,15 +22,15 @@ import java.util.Objects;
 /**
  * @author RollW
  */
-public final class HealthStatus {
-    public static final HealthStatus UP = new HealthStatus("UP");
-    public static final HealthStatus DOWN = new HealthStatus("DOWN");
-    public static final HealthStatus OUT_OF_SERVICE = new HealthStatus("OUT_OF_SERVICE");
-    public static final HealthStatus UNKNOWN = new HealthStatus("UNKNOWN");
+public enum HealthStatus {
+    UP("UP"),
+    DOWN("DOWN"),
+    OUT_OF_SERVICE("OUT_OF_SERVICE"),
+    UNKNOWN("UNKNOWN");
 
     private final String code;
 
-    private HealthStatus(String code) {
+    HealthStatus(String code) {
         this.code = normalize(code);
     }
 
@@ -40,8 +40,7 @@ public final class HealthStatus {
             case "UP" -> UP;
             case "DOWN" -> DOWN;
             case "OUT_OF_SERVICE" -> OUT_OF_SERVICE;
-            case "UNKNOWN" -> UNKNOWN;
-            default -> new HealthStatus(normalized);
+            default -> UNKNOWN;
         };
     }
 
@@ -49,21 +48,6 @@ public final class HealthStatus {
         return code;
     }
 
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) {
-            return true;
-        }
-        if (!(object instanceof HealthStatus status)) {
-            return false;
-        }
-        return Objects.equals(code, status.code);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(code);
-    }
 
     @Override
     public String toString() {

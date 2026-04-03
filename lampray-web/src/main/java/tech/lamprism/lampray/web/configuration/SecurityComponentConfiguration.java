@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package tech.lamprism.lampray.web.configuration;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.observation.SecurityObservationSettings;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
@@ -49,5 +50,10 @@ public class SecurityComponentConfiguration {
     ) {
         Boolean enabled = configReader.get(ServerConfigKeys.PROCESS_PROXY_HEADERS);
         return new ForwardedHeaderDelegateFilter(enabled != null && enabled);
+    }
+
+    @Bean
+    public SecurityObservationSettings noSpringSecurityObservations() {
+        return SecurityObservationSettings.noObservations();
     }
 }
