@@ -582,7 +582,7 @@ databaseChangeLog:
                     nullable: false
                     primaryKey: true
                     primaryKeyName: pk_user_personal_data
-                  name: user_id
+                  name: id
                   type: BIGINT
               - column:
                   constraints:

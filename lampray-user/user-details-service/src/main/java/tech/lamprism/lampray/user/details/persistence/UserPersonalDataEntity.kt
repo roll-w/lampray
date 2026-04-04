@@ -44,7 +44,7 @@ import java.time.OffsetDateTime
 @Table(name = "user_personal_data")
 class UserPersonalDataEntity(
     @Id
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "id", nullable = false)
     private var userId: Long = 0,
 
     @Column(name = "nickname", nullable = false, length = 120)
