@@ -25,15 +25,11 @@ import java.util.Optional
  */
 @Repository
 class RegisterTokenRepository(
-    private val registerTokenDao: RegisterTokenDao
-) : CommonRepository<RegisterTokenEntity, String>(registerTokenDao) {
-    override fun <S : RegisterTokenEntity> save(entity: S): S {
-        return registerTokenDao.saveAndFlush(entity)
-    }
-
+    registerTokenDao: RegisterTokenDao
+) : CommonRepository<RegisterTokenEntity, Long>(registerTokenDao) {
     fun findByToken(token: String): Optional<RegisterTokenEntity> {
         return findOne { root, _, cb ->
-            cb.equal(root.get<String>("token"), token)
+            cb.equal(root.get(RegisterTokenEntity_.token), token)
         }
     }
 }

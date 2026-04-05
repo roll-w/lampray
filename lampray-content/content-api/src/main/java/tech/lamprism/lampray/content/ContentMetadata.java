@@ -27,9 +27,8 @@ import java.time.OffsetDateTime;
  * @author RollW
  */
 @SuppressWarnings({"ClassCanBeRecord"})
-public class ContentMetadata implements DataEntity<String>, ContentTrait {
+public class ContentMetadata implements DataEntity<Long>, ContentTrait {
     private final Long id;
-    private final String resourceId;
     private final long userId;
     private final String contentId;
 
@@ -42,13 +41,12 @@ public class ContentMetadata implements DataEntity<String>, ContentTrait {
     @NonNull
     private final ContentAccessAuthType contentAccessAuthType;
 
-    public ContentMetadata(Long id, String resourceId, long userId,
+    public ContentMetadata(Long id, long userId,
                            @NonNull String contentId,
                            @NonNull ContentType contentType,
                            @NonNull ContentStatus contentStatus,
                            @NonNull ContentAccessAuthType contentAccessAuthType) {
         this.id = id;
-        this.resourceId = resourceId;
         this.userId = userId;
         this.contentId = contentId;
         this.contentType = contentType;
@@ -59,9 +57,6 @@ public class ContentMetadata implements DataEntity<String>, ContentTrait {
 
     @SuppressWarnings("all")
     private void checkForNull() {
-        if (resourceId == null) {
-            throw new NullPointerException("resourceId is null");
-        }
         if (contentId == null) {
             throw new NullPointerException("contentId is null");
         }
@@ -81,8 +76,8 @@ public class ContentMetadata implements DataEntity<String>, ContentTrait {
     }
 
     @Override
-    public String getEntityId() {
-        return resourceId;
+    public Long getEntityId() {
+        return id;
     }
 
     @NonNull
@@ -136,9 +131,8 @@ public class ContentMetadata implements DataEntity<String>, ContentTrait {
         return ContentMetadataResourceKind.INSTANCE;
     }
 
-    public static class Builder implements EntityBuilder<ContentMetadata, String> {
+    public static class Builder implements EntityBuilder<ContentMetadata, Long> {
         private Long id;
-        private String resourceId;
         private long userId;
         private String contentId;
         private ContentType contentType;
@@ -150,7 +144,6 @@ public class ContentMetadata implements DataEntity<String>, ContentTrait {
 
         public Builder(ContentMetadata contentMetadata) {
             this.id = contentMetadata.id;
-            this.resourceId = contentMetadata.resourceId;
             this.userId = contentMetadata.userId;
             this.contentId = contentMetadata.contentId;
             this.contentType = contentMetadata.contentType;
@@ -159,17 +152,12 @@ public class ContentMetadata implements DataEntity<String>, ContentTrait {
         }
 
         @Override
-        public Builder setEntityId(String id) {
-            return setResourceId(id);
+        public Builder setEntityId(Long id) {
+            return setId(id);
         }
 
         public Builder setId(Long id) {
             this.id = id;
-            return this;
-        }
-
-        public Builder setResourceId(String resourceId) {
-            this.resourceId = resourceId;
             return this;
         }
 
@@ -200,7 +188,7 @@ public class ContentMetadata implements DataEntity<String>, ContentTrait {
 
         @Override
         public ContentMetadata build() {
-            return new ContentMetadata(id, resourceId, userId, contentId,
+            return new ContentMetadata(id, userId, contentId,
                     contentType, contentStatus, contentAccessAuthType);
         }
     }

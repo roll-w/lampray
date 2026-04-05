@@ -16,8 +16,6 @@
 
 package tech.lamprism.lampray.content.article.persistence
 
-import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 import tech.lamprism.lampray.common.data.CommonDao
 import tech.lamprism.lampray.common.data.Dao
 
@@ -25,7 +23,4 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface ArticleDao : CommonDao<ArticleEntity, String> {
-    @Query("FROM ArticleEntity a WHERE a.userId = :userId")
-    fun findAllByUserId(@Param("userId") userId: Long): List<ArticleEntity>
-}
+interface ArticleDao : CommonDao<ArticleEntity, String>

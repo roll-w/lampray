@@ -26,14 +26,14 @@ import tech.lamprism.lampray.content.review.ReviewStatus
  */
 @Repository
 class ReviewJobRepository(
-    private val reviewJobDao: ReviewJobDao
+    reviewJobDao: ReviewJobDao
 ) : CommonRepository<ReviewJobEntity, String>(reviewJobDao) {
     override fun <S : ReviewJobEntity> save(entity: S): S {
-        return reviewJobDao.saveAndFlush(entity)
+        return saveAndFlush(entity)
     }
 
     override fun <S : ReviewJobEntity> saveAll(entities: Iterable<S>): List<S> {
-        return reviewJobDao.saveAllAndFlush(entities)
+        return saveAllAndFlush(entities)
     }
 
     fun findByContent(

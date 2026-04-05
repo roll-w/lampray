@@ -23,5 +23,4 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface LocalizedMessageDao : CommonDao<LocalizedMessageEntity, String> {
-}
+interface LocalizedMessageDao : CommonDao<LocalizedMessageEntity, Long>

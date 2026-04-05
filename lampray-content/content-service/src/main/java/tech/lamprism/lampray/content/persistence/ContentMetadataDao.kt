@@ -23,4 +23,4 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface ContentMetadataDao : CommonDao<ContentMetadataEntity, String>
+interface ContentMetadataDao : CommonDao<ContentMetadataEntity, Long>

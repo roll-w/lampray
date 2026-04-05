@@ -26,22 +26,22 @@ import java.util.Optional
  */
 @Repository
 class UserRepository(
-    private val userDao: UserDao
+    userDao: UserDao
 ) : CommonRepository<UserEntity, Long>(userDao) {
 
     fun searchBy(keyword: String): List<UserEntity> {
-        return userDao.findAll(createSearchBySpec(keyword))
+        return findAll(createSearchBySpec(keyword))
     }
 
     fun findByUsername(username: String): Optional<UserEntity> {
         return findOne { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<String>("username"), username)
+            criteriaBuilder.equal(root.get(UserEntity_.username), username)
         }
     }
 
     fun findByEmail(email: String): Optional<UserEntity> {
         return findOne { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<String>("email"), email)
+            criteriaBuilder.equal(root.get(UserEntity_.email), email)
         }
     }
 
@@ -54,11 +54,11 @@ class UserRepository(
     }
 
     fun hasUsers(): Boolean {
-        return userDao.count() > 0
+        return count() > 0
     }
 
     private fun createSearchBySpec(keyword: String): Specification<UserEntity> =
         Specification<UserEntity> { root, _, builder ->
-            builder.like(root.get<String>("username"), keyword)
+            builder.like(root.get(UserEntity_.username), keyword)
         }
 }

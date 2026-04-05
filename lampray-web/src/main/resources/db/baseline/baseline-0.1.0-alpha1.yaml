@@ -138,12 +138,6 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                    unique: true
-                  name: resource_id
-                  type: VARCHAR(64)
-              - column:
-                  constraints:
-                    nullable: false
                   name: user_id
                   type: BIGINT
               - column:
@@ -294,12 +288,6 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                    unique: true
-                  name: resource_id
-                  type: VARCHAR(64)
-              - column:
-                  constraints:
-                    nullable: false
                   name: key
                   type: VARCHAR(255)
               - column:
@@ -328,12 +316,6 @@ databaseChangeLog:
                     primaryKeyName: pk_register_verification_token
                   name: id
                   type: BIGINT
-              - column:
-                  constraints:
-                    nullable: false
-                    unique: true
-                  name: resource_id
-                  type: VARCHAR(64)
               - column:
                   name: token
                   type: VARCHAR(255)
@@ -499,10 +481,6 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                    unique: true
-                  name: resource_id
-                  type: VARCHAR(64)
-              - column:
                   name: key
                   type: VARCHAR(255)
               - column:

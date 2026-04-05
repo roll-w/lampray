@@ -47,7 +47,7 @@ public class UserPersonalDataServiceImpl implements UserPersonalDataService {
 
     @Override
     public UserPersonalData getPersonalData(long userId) {
-        UserPersonalDataEntity data = userPersonalDataRepository.findByUserId(userId);
+        UserPersonalDataEntity data = userPersonalDataRepository.findById(userId).orElse(null);
         if (data == null) {
             AttributedUser user = userProvider.getUser(userId);
             return UserPersonalData.defaultOf(user);
@@ -62,8 +62,7 @@ public class UserPersonalDataServiceImpl implements UserPersonalDataService {
 
     @Override
     public UserPersonalData getPersonalData(UserIdentity userIdentity) {
-        UserPersonalDataEntity data = userPersonalDataRepository.findByUserId(
-                userIdentity.getUserId());
+        UserPersonalDataEntity data = userPersonalDataRepository.findById(userIdentity.getUserId()).orElse(null);
         if (data == null) {
             return UserPersonalData.defaultOf(userIdentity);
         }
@@ -95,7 +94,7 @@ public class UserPersonalDataServiceImpl implements UserPersonalDataService {
 
     @Override
     public List<UserPersonalData> getPersonalDataByIds(List<Long> ids) {
-        return userPersonalDataRepository.findAllByUserIdIn(ids)
+        return userPersonalDataRepository.findAllById(ids)
                 .stream()
                 .map(UserPersonalDataEntity::lock)
                 .toList();
@@ -112,7 +111,7 @@ public class UserPersonalDataServiceImpl implements UserPersonalDataService {
         if (fields.length == 0) {
             return;
         }
-        UserPersonalDataEntity exist = userPersonalDataRepository.findByUserId(user.getUserId());
+        UserPersonalDataEntity exist = userPersonalDataRepository.findById(user.getUserId()).orElse(null);
         UserPersonalDataEntity.Builder builder = toBuilder(exist, user.getUserId());
         for (UserDataField<?> field : fields) {
             Utils.setBuilderValue(builder, field);

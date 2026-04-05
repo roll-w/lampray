@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
 import tech.lamprism.lampray.LampException;
 import tech.lamprism.lampray.RequestMetadata;
-import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.security.authentication.UserInfoSignature;
 import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.lamprism.lampray.security.authentication.adapter.PreUserAuthenticationToken;
@@ -40,7 +39,6 @@ import tech.lamprism.lampray.security.authentication.login.OnUserLoginEvent;
 import tech.lamprism.lampray.security.authentication.registration.OnUserRegistrationEvent;
 import tech.lamprism.lampray.security.authentication.registration.RegisterProvider;
 import tech.lamprism.lampray.security.authentication.registration.RegisterTokenProvider;
-import tech.lamprism.lampray.security.authentication.registration.RegisterTokenResourceKind;
 import tech.lamprism.lampray.security.authentication.registration.RegisterVerificationToken;
 import tech.lamprism.lampray.security.authentication.registration.Registration;
 import tech.lamprism.lampray.security.authentication.registration.RegistrationInterceptor;
@@ -80,7 +78,6 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
     private final RegisterTokenRepository registerTokenRepository;
     private final FirewallRegistry firewallRegistry;
     private final SystemResourceOperatorProvider<Long> systemResourceOperatorProvider;
-    private final ResourceIdGenerator resourceIdGenerator;
     private final UserProvider userProvider;
     private final UserManageService userManageService;
     private final ApplicationEventPublisher eventPublisher;
@@ -94,7 +91,6 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
                                 RegisterTokenRepository registerTokenRepository,
                                 FirewallRegistry firewallRegistry,
                                 SystemResourceOperatorProvider<Long> systemResourceOperatorProvider,
-                                ResourceIdGenerator resourceIdGenerator,
                                 UserProvider userProvider,
                                 UserManageService userManageService,
                                 ApplicationEventPublisher eventPublisher,
@@ -104,7 +100,6 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         this.registerTokenRepository = registerTokenRepository;
         this.firewallRegistry = firewallRegistry;
         this.systemResourceOperatorProvider = systemResourceOperatorProvider;
-        this.resourceIdGenerator = resourceIdGenerator;
         this.userProvider = userProvider;
         this.userManageService = userManageService;
         this.eventPublisher = eventPublisher;
@@ -241,8 +236,7 @@ public class LoginRegisterService implements LoginProvider, RegisterTokenProvide
         UUID uuid = UUID.randomUUID();
         String token = uuid.toString();
         long expiryTime = RegisterVerificationToken.calculateExpiryDate();
-        RegisterTokenEntity registerVerificationToken = RegisterTokenEntity.Companion.builder()
-                .setResourceId(resourceIdGenerator.nextId(RegisterTokenResourceKind.INSTANCE))
+        RegisterTokenEntity registerVerificationToken = RegisterTokenEntity.builder()
                 .setToken(token)
                 .setUserId(userIdentity.getUserId())
                 .setExpiryTime(expiryTime)

@@ -20,12 +20,12 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
-import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.generator.EventType
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.TimeAttributed
@@ -48,13 +48,10 @@ import java.time.OffsetDateTime
     ]
 )
 class ContentMetadataEntity(
-    @Column(name = "id", nullable = false, insertable = false, updatable = false)
-    @Generated(event = [EventType.INSERT])
-    private var id: Long? = null,
-
     @Id
-    @Column(name = "resource_id", nullable = false, length = 64, unique = true)
-    private var resourceId: String,
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private var id: Long? = null,
 
     @Column(name = "user_id", nullable = false)
     var userId: Long = 0,
@@ -76,8 +73,8 @@ class ContentMetadataEntity(
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var contentAccessAuthType: ContentAccessAuthType = ContentAccessAuthType.PUBLIC
-) : DataEntity<String>, ContentTrait {
-    override fun getEntityId(): String = resourceId
+) : DataEntity<Long>, ContentTrait {
+    override fun getEntityId(): Long = id!!
 
     fun getId(): Long? = id
 
@@ -101,7 +98,7 @@ class ContentMetadataEntity(
     }
 
     fun lock(): ContentMetadata = ContentMetadata(
-        id, resourceId, userId, contentId, contentType, contentStatus, contentAccessAuthType
+        id, userId, contentId, contentType, contentStatus, contentAccessAuthType
     )
 
     fun toBuilder(): Builder {
@@ -116,7 +113,6 @@ class ContentMetadataEntity(
         fun ContentMetadata.toEntity() =
             ContentMetadataEntity(
                 id = id,
-                resourceId = entityId,
                 userId = userId,
                 contentId = contentId,
                 contentType = contentType,
@@ -127,7 +123,6 @@ class ContentMetadataEntity(
 
     class Builder {
         private var id: Long? = null
-        private var resourceId: String? = null
         private var userId: Long = 0
         private var contentId: String = ""
         private var contentType: ContentType? = null
@@ -138,7 +133,6 @@ class ContentMetadataEntity(
 
         constructor(other: ContentMetadataEntity) {
             this.id = other.id
-            this.resourceId = other.resourceId
             this.userId = other.userId
             this.contentId = other.contentId
             this.contentType = other.contentType
@@ -148,10 +142,6 @@ class ContentMetadataEntity(
 
         fun setId(id: Long?) = apply {
             this.id = id
-        }
-
-        fun setResourceId(resourceId: String) = apply {
-            this.resourceId = resourceId
         }
 
         fun setUserId(userId: Long) = apply {
@@ -177,7 +167,6 @@ class ContentMetadataEntity(
         fun build(): ContentMetadataEntity {
             return ContentMetadataEntity(
                 id = id,
-                resourceId = resourceId!!,
                 userId = userId,
                 contentId = contentId,
                 contentType = contentType!!,

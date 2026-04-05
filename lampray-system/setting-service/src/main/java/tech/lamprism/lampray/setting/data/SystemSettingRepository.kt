@@ -18,31 +18,15 @@ package tech.lamprism.lampray.setting.data
 
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
-import java.util.Optional
 
 /**
  * @author RollW
  */
 @Repository
 class SystemSettingRepository(
-    private val systemSettingDao: SystemSettingDao
+    systemSettingDao: SystemSettingDao
 ) : CommonRepository<SystemSettingEntity, String>(systemSettingDao) {
     override fun <S : SystemSettingEntity> save(entity: S): S {
-        return systemSettingDao.saveAndFlush(entity)
-    }
-
-    fun findByKey(key: String): Optional<SystemSettingEntity> {
-        return findOne { root, query, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<String>("key"), key)
-        }
-    }
-
-    fun findByKeyIn(keys: Set<String>): List<SystemSettingEntity> {
-        if (keys.isEmpty()) {
-            return emptyList()
-        }
-        return findAll { root, query, criteriaBuilder ->
-            root.get<String>("key").`in`(keys)
-        }
+        return saveAndFlush(entity)
     }
 }

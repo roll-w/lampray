@@ -24,13 +24,13 @@ import tech.lamprism.lampray.common.data.CommonRepository
  */
 @Repository
 class FavoriteItemRepository(
-    private val favoriteItemDao: FavoriteItemDao
+    favoriteItemDao: FavoriteItemDao
 ) : CommonRepository<FavoriteItemEntity, String>(favoriteItemDao) {
     override fun <S : FavoriteItemEntity> save(entity: S): S {
-        return favoriteItemDao.saveAndFlush(entity)
+        return saveAndFlush(entity)
     }
 
     override fun <S : FavoriteItemEntity> saveAll(entities: Iterable<S>): List<S> {
-        return favoriteItemDao.saveAllAndFlush(entities)
+        return saveAllAndFlush(entities)
     }
 }

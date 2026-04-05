@@ -64,32 +64,6 @@ databaseChangeLog:
             constraintName: uc_comment_resource_id
 
         - addColumn:
-            tableName: content_metadata
-            columns:
-              - column:
-                  name: resource_id
-                  type: VARCHAR(64)
-        - update:
-            tableName: content_metadata
-            columns:
-              - column:
-                  name: resource_id
-                  valueComputed: id
-            where: resource_id IS NULL
-        - modifyDataType:
-            tableName: content_metadata
-            columnName: content_id
-            newDataType: VARCHAR(64)
-        - addNotNullConstraint:
-            tableName: content_metadata
-            columnName: resource_id
-            columnDataType: VARCHAR(64)
-        - addUniqueConstraint:
-            tableName: content_metadata
-            columnNames: resource_id
-            constraintName: uc_content_metadata_resource_id
-
-        - addColumn:
             tableName: favorite_group
             columns:
               - column:
@@ -141,73 +115,7 @@ databaseChangeLog:
             columnNames: resource_id
             constraintName: uc_favorite_item_resource_id
 
-        - addColumn:
-            tableName: localized_message
-            columns:
-              - column:
-                  name: resource_id
-                  type: VARCHAR(64)
-        - update:
-            tableName: localized_message
-            columns:
-              - column:
-                  name: resource_id
-                  valueComputed: id
-            where: resource_id IS NULL
-        - addNotNullConstraint:
-            tableName: localized_message
-            columnName: resource_id
-            columnDataType: VARCHAR(64)
-        - addUniqueConstraint:
-            tableName: localized_message
-            columnNames: resource_id
-            constraintName: uc_localized_message_resource_id
-
-        - addColumn:
-            tableName: register_verification_token
-            columns:
-              - column:
-                  name: resource_id
-                  type: VARCHAR(64)
-        - update:
-            tableName: register_verification_token
-            columns:
-              - column:
-                  name: resource_id
-                  valueComputed: id
-            where: resource_id IS NULL
-        - addNotNullConstraint:
-            tableName: register_verification_token
-            columnName: resource_id
-            columnDataType: VARCHAR(64)
-        - addUniqueConstraint:
-            tableName: register_verification_token
-            columnNames: resource_id
-            constraintName: uc_register_verification_token_resource_id
-
         - modifyDataType:
             tableName: review_job
             columnName: content_id
             newDataType: VARCHAR(64)
-
-        - addColumn:
-            tableName: system_setting
-            columns:
-              - column:
-                  name: resource_id
-                  type: VARCHAR(64)
-        - update:
-            tableName: system_setting
-            columns:
-              - column:
-                  name: resource_id
-                  valueComputed: id
-            where: resource_id IS NULL
-        - addNotNullConstraint:
-            tableName: system_setting
-            columnName: resource_id
-            columnDataType: VARCHAR(64)
-        - addUniqueConstraint:
-            tableName: system_setting
-            columnNames: resource_id
-            constraintName: uc_system_setting_resource_id

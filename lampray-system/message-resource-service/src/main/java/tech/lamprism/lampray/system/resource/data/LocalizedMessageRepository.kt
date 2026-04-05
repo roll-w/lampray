@@ -27,17 +27,14 @@ import java.util.Locale
  */
 @Repository
 class LocalizedMessageRepository(
-    private val localizedMessageDao: LocalizedMessageDao
-) : CommonRepository<LocalizedMessageEntity, String>(localizedMessageDao) {
-    override fun <S : LocalizedMessageEntity> save(entity: S): S {
-        return localizedMessageDao.saveAndFlush(entity)
-    }
+    localizedMessageDao: LocalizedMessageDao
+) : CommonRepository<LocalizedMessageEntity, Long>(localizedMessageDao) {
 
     fun findByKey(key: String, locale: Locale) =
         findOne { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get<String>("key"), key),
-                criteriaBuilder.equal(root.get<Locale>("locale"), locale)
+                criteriaBuilder.equal(root.get(LocalizedMessageEntity_.key), key),
+                criteriaBuilder.equal(root.get(LocalizedMessageEntity_.locale), locale)
             )
         }
 
@@ -46,13 +43,13 @@ class LocalizedMessageRepository(
         pageable: Pageable = Pageable.unpaged()
     ): Page<LocalizedMessageEntity> =
         findAll(pageable) { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<String>("key"), key)
+            criteriaBuilder.equal(root.get(LocalizedMessageEntity_.key), key)
         }
 
     fun deleteByKey(key: String) {
         delete { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get<String>("key"), key)
+                criteriaBuilder.equal(root.get(LocalizedMessageEntity_.key), key)
             )
         }
     }
@@ -60,8 +57,8 @@ class LocalizedMessageRepository(
     fun deleteByKey(key: String, locale: Locale) {
         delete { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get<String>("key"), key),
-                criteriaBuilder.equal(root.get<Locale>("locale"), locale)
+                criteriaBuilder.equal(root.get(LocalizedMessageEntity_.key), key),
+                criteriaBuilder.equal(root.get(LocalizedMessageEntity_.locale), locale)
             )
         }
     }

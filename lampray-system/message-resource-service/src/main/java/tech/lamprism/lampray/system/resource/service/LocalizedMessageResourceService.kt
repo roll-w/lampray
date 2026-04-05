@@ -19,7 +19,6 @@ package tech.lamprism.lampray.system.resource.service
 import org.springframework.stereotype.Service
 import tech.lamprism.lampray.common.data.ResourceIdGenerator
 import tech.lamprism.lampray.system.resource.LocalizedMessageResource
-import tech.lamprism.lampray.system.resource.LocalizedMessageResourceKind
 import tech.lamprism.lampray.system.resource.LocalizedMessageResourceProvider
 import tech.lamprism.lampray.system.resource.SimpleLocalizedMessageResource
 import tech.lamprism.lampray.system.resource.data.LocalizedMessageEntity
@@ -51,12 +50,11 @@ class LocalizedMessageResourceService(
     ) {
         val localizedMessageEntity = localizedMessageRepository
             .findByKey(key, locale).orElse(null) ?: LocalizedMessageEntity().apply {
-            setResourceId(resourceIdGenerator.nextId(LocalizedMessageResourceKind))
             this.key = key
             this.value = value
             this.locale = locale
         }
-        if (localizedMessageEntity.getId() != null &&
+        if (localizedMessageEntity.id != null &&
             localizedMessageEntity.value == value
         ) {
             return

@@ -26,11 +26,11 @@ import java.util.Optional
  */
 @Repository
 class StaffRepository(
-    private val staffDao: StaffDao
+    staffDao: StaffDao
 ) : CommonRepository<StaffEntity, Long>(staffDao) {
     fun findByUserId(userId: Long): Optional<StaffEntity> {
         return findOne { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<Long>("userId"), userId)
+            criteriaBuilder.equal(root.get(StaffEntity_.userId), userId)
         }
     }
 
@@ -38,7 +38,7 @@ class StaffRepository(
         return findAll { root, _, criteriaBuilder ->
             criteriaBuilder.and(
                 *types.map {
-                    criteriaBuilder.isMember(it, root.get<Set<StaffType>>("types"))
+                    criteriaBuilder.isMember(it, root.get(StaffEntity_.types))
                 }.toTypedArray()
             )
         }

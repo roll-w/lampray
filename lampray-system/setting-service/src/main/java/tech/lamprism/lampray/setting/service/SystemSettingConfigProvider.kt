@@ -17,7 +17,6 @@
 package tech.lamprism.lampray.setting.service
 
 import org.springframework.stereotype.Service
-import tech.lamprism.lampray.common.data.ResourceIdGenerator
 import tech.lamprism.lampray.setting.ConfigPath
 import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.setting.ConfigReader
@@ -29,7 +28,6 @@ import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
 import tech.lamprism.lampray.setting.SettingSpecificationHelper
 import tech.lamprism.lampray.setting.SettingSpecificationProvider
 import tech.lamprism.lampray.setting.SnapshotConfigValue
-import tech.lamprism.lampray.setting.SystemSettingResourceKind
 import tech.lamprism.lampray.setting.data.SystemSettingEntity
 import tech.lamprism.lampray.setting.data.SystemSettingRepository
 
@@ -40,7 +38,6 @@ import tech.lamprism.lampray.setting.data.SystemSettingRepository
 class SystemSettingConfigProvider(
     private val systemSettingRepository: SystemSettingRepository,
     private val settingSpecificationProvider: SettingSpecificationProvider,
-    private val resourceIdGenerator: ResourceIdGenerator
 ) : ConfigProvider {
 
     override val metadata: ConfigReader.Metadata =
@@ -50,7 +47,7 @@ class SystemSettingConfigProvider(
         )
 
     override fun get(key: String): String? {
-        return systemSettingRepository.findByKey(key)
+        return systemSettingRepository.findById(key)
             .orElse(null)?.value
     }
 
@@ -58,7 +55,7 @@ class SystemSettingConfigProvider(
         get(key) ?: defaultValue
 
     override fun <T, V> get(specification: SettingSpecification<T, V>): T? {
-        val setting = systemSettingRepository.findByKey(specification.keyName)
+        val setting = systemSettingRepository.findById(specification.keyName)
             .orElse(null) ?: return null
         return with(SettingSpecificationHelper) {
             setting.value.deserialize(specification)
@@ -71,7 +68,7 @@ class SystemSettingConfigProvider(
     ): T = get(specification) ?: defaultValue
 
     override fun <T, V> getValue(specification: SettingSpecification<T, V>): ConfigValue<T, V> {
-        val setting = systemSettingRepository.findByKey(specification.keyName)
+        val setting = systemSettingRepository.findById(specification.keyName)
             .orElse(null) ?: return SnapshotConfigValue(null, SettingSource.DATABASE, specification)
         return with(SettingSpecificationHelper) {
             SnapshotConfigValue(
@@ -87,7 +84,7 @@ class SystemSettingConfigProvider(
             return emptyList()
         }
         val keys = specifications.map { it.keyName }.toSet()
-        val settings = systemSettingRepository.findByKeyIn(keys)
+        val settings = systemSettingRepository.findAllById(keys)
             .associateBy { it.key }
         @Suppress("UNCHECKED_CAST")
         return (specifications as List<SettingSpecification<Any, Any>>).map { spec ->
@@ -105,7 +102,7 @@ class SystemSettingConfigProvider(
     }
 
     override fun set(key: String, value: String?): SettingSource {
-        val setting = systemSettingRepository.findByKey(key)
+        val setting = systemSettingRepository.findById(key)
             .orElse(null)
         if (setting != null) {
             setting.value = value
@@ -113,7 +110,6 @@ class SystemSettingConfigProvider(
             return SettingSource.DATABASE
         }
         val newSetting = SystemSettingEntity(
-            resourceId = resourceIdGenerator.nextId(SystemSettingResourceKind),
             key = key,
             value = value
         )
@@ -122,7 +118,7 @@ class SystemSettingConfigProvider(
     }
 
     override fun <T, V> set(spec: SettingSpecification<T, V>, value: T?): SettingSource {
-        val setting = systemSettingRepository.findByKey(spec.keyName)
+        val setting = systemSettingRepository.findById(spec.keyName)
             .orElse(null)
         val value = with(SettingSpecificationHelper) {
             value.serialize(spec)
@@ -133,7 +129,6 @@ class SystemSettingConfigProvider(
             return SettingSource.DATABASE
         }
         val newSetting = SystemSettingEntity(
-            resourceId = resourceIdGenerator.nextId(SystemSettingResourceKind),
             key = spec.key.name,
             value = value
         )
@@ -142,7 +137,7 @@ class SystemSettingConfigProvider(
     }
 
     override fun <T, V> reset(spec: SettingSpecification<T, V>): SettingSource {
-        val setting = systemSettingRepository.findByKey(spec.keyName)
+        val setting = systemSettingRepository.findById(spec.keyName)
             .orElse(null) ?: return SettingSource.NONE
         systemSettingRepository.delete(setting)
         return SettingSource.DATABASE

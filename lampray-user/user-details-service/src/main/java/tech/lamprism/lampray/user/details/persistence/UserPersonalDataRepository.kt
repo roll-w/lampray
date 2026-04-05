@@ -24,17 +24,6 @@ import tech.lamprism.lampray.common.data.CommonRepository
  */
 @Repository
 class UserPersonalDataRepository(
-    private val userPersonalDataDao: UserPersonalDataDao
+    userPersonalDataDao: UserPersonalDataDao
 ) : CommonRepository<UserPersonalDataEntity, Long>(userPersonalDataDao) {
-    override fun <S : UserPersonalDataEntity> save(entity: S): S {
-        return userPersonalDataDao.saveAndFlush(entity)
-    }
-
-    fun findByUserId(userId: Long): UserPersonalDataEntity? {
-        return userPersonalDataDao.findByUserId(userId)
-    }
-
-    fun findAllByUserIdIn(userIds: Iterable<Long>): List<UserPersonalDataEntity> {
-        return userPersonalDataDao.findAllByUserIdIn(userIds)
-    }
 }

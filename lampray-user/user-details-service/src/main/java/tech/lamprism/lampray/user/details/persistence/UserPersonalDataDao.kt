@@ -23,8 +23,4 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface UserPersonalDataDao : CommonDao<UserPersonalDataEntity, Long> {
-    fun findByUserId(userId: Long): UserPersonalDataEntity?
-
-    fun findAllByUserIdIn(userIds: Iterable<Long>): List<UserPersonalDataEntity>
-}
+interface UserPersonalDataDao : CommonDao<UserPersonalDataEntity, Long>

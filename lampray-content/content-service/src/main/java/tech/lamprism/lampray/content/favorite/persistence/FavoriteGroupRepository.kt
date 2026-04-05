@@ -26,28 +26,28 @@ import java.util.Optional
  */
 @Repository
 class FavoriteGroupRepository(
-    private val favoriteGroupDao: FavoriteGroupDao
+    favoriteGroupDao: FavoriteGroupDao
 ) : CommonRepository<FavoriteGroupEntity, String>(favoriteGroupDao) {
     override fun <S : FavoriteGroupEntity> save(entity: S): S {
-        return favoriteGroupDao.saveAndFlush(entity)
+        return saveAndFlush(entity)
     }
 
     override fun <S : FavoriteGroupEntity> saveAll(entities: Iterable<S>): List<S> {
-        return favoriteGroupDao.saveAllAndFlush(entities)
+        return saveAllAndFlush(entities)
     }
 
     fun findByName(name: String, operator: Operator): Optional<FavoriteGroupEntity> =
         findOne { root, _, builder ->
             builder.and(
-                builder.equal(root.get<String>("name"), name),
-                builder.equal(root.get<Long>("userId"), operator.operatorId)
+                builder.equal(root.get(FavoriteGroupEntity_.name), name),
+                builder.equal(root.get(FavoriteGroupEntity_.userId), operator.operatorId)
             )
         }
 
     fun findByUser(userId: Long): List<FavoriteGroupEntity> =
         findAll { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get<Long>("userId"), userId)
+                criteriaBuilder.equal(root.get(FavoriteGroupEntity_.userId), userId)
             )
         }
 }

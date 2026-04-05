@@ -26,22 +26,24 @@ import java.util.Optional
  */
 @Repository
 class ArticleRepository(
-    private val articleDao: ArticleDao
+    articleDao: ArticleDao
 ) : CommonRepository<ArticleEntity, String>(articleDao) {
     override fun <S : ArticleEntity> save(entity: S): S {
-        return articleDao.saveAndFlush(entity)
+        return saveAndFlush(entity)
     }
 
     override fun <S : ArticleEntity> saveAll(entities: Iterable<S>): List<S> {
-        return articleDao.saveAllAndFlush(entities)
+        return saveAllAndFlush(entities)
     }
 
     fun findAllByUserId(userId: Long): List<ArticleEntity> {
-        return articleDao.findAllByUserId(userId)
+        return findAll { root, _, builder ->
+            builder.equal(root.get(ArticleEntity_.userId), userId)
+        }
     }
 
     fun findByTitle(title: String, userId: Long): Optional<ArticleEntity> {
-        return articleDao.findOne(createTitleSpecification(title, userId))
+        return findOne(createTitleSpecification(title, userId))
     }
 
     private fun createTitleSpecification(

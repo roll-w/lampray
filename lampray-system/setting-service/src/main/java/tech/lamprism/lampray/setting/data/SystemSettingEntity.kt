@@ -40,13 +40,10 @@ import java.time.OffsetDateTime
 class SystemSettingEntity(
     @Column(name = "id", nullable = false, insertable = false, updatable = false)
     @Generated(event = [EventType.INSERT])
-    private var id: Long? = null,
+    var id: Long? = null,
 
     @Id
-    @Column(name = "resource_id", nullable = false, length = 64, unique = true)
-    private var resourceId: String = "",
-
-    @Column(name = "key")
+    @Column(name = "key", nullable = false, unique = true, length = 255)
     var key: String = "",
 
     @Column(name = "value")
@@ -55,13 +52,7 @@ class SystemSettingEntity(
     @Column(name = "update_time", nullable = false)
     private var updateTime: OffsetDateTime = OffsetDateTime.now()
 ) : DataEntity<String> {
-    override fun getEntityId(): String = resourceId
-
-    fun getId(): Long? = id
-
-    fun setResourceId(resourceId: String) {
-        this.resourceId = resourceId
-    }
+    override fun getEntityId(): String = key
 
     fun setUpdateTime(updateTime: OffsetDateTime) {
         this.updateTime = updateTime
@@ -74,13 +65,12 @@ class SystemSettingEntity(
     override fun getSystemResourceKind(): SystemResourceKind =
         SystemSettingResourceKind
 
-    fun lock(): SystemSetting = SystemSetting(id, resourceId, key, value)
+    fun lock(): SystemSetting = SystemSetting(id, key, value)
 
     companion object {
         @JvmStatic
         fun SystemSetting.toEntity() = SystemSettingEntity(
-            id = getId(),
-            resourceId = entityId,
+            id = id,
             key = key,
             value = value
         )

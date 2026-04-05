@@ -23,6 +23,4 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface CommentDao : CommonDao<CommentEntity, String> {
-    fun findAllByUserId(userId: Long): List<CommentEntity>
-}
+interface CommentDao : CommonDao<CommentEntity, String>

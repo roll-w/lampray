@@ -15,11 +15,9 @@
  */
 package tech.lamprism.lampray.system.resource
 
-import space.lingu.NonNull
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.EntityBuilder
 import tech.lamprism.lampray.TimeAttributed
-import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 import java.util.Locale
 
@@ -33,13 +31,12 @@ import java.util.Locale
  */
 data class LocalizedMessage(
     private val id: Long?,
-    private val resourceId: String,
     override val key: String,
     override val value: String,
     override val locale: Locale,
     private val updateTime: OffsetDateTime
-) : LocalizedMessageResource, DataEntity<String> {
-    override fun getEntityId(): String = resourceId
+) : LocalizedMessageResource, DataEntity<Long> {
+    override fun getEntityId(): Long = id!!
 
     fun getId(): Long? = id
 
@@ -47,16 +44,12 @@ data class LocalizedMessage(
 
     override fun getUpdateTime(): OffsetDateTime = updateTime
 
-    @NonNull
-    override fun getSystemResourceKind(): SystemResourceKind {
-        return LocalizedMessageResourceKind
-    }
+    override fun getSystemResourceKind() = LocalizedMessageResourceKind
 
     fun toBuilder() = Builder(this)
 
-    class Builder : EntityBuilder<LocalizedMessage, String> {
+    class Builder : EntityBuilder<LocalizedMessage, Long> {
         private var id: Long? = null
-        private var resourceId: String? = null
         private var key: String? = null
         private var value: String? = null
         private var locale: Locale? = null
@@ -66,7 +59,6 @@ data class LocalizedMessage(
 
         constructor(localizedMessage: LocalizedMessage) {
             this.id = localizedMessage.id
-            this.resourceId = localizedMessage.resourceId
             this.key = localizedMessage.key
             this.value = localizedMessage.value
             this.locale = localizedMessage.locale
@@ -77,12 +69,8 @@ data class LocalizedMessage(
             this.id = id
         }
 
-        override fun setEntityId(id: String) = apply {
-            this.resourceId = id
-        }
-
-        fun setResourceId(resourceId: String) = apply {
-            this.resourceId = resourceId
+        override fun setEntityId(id: Long) = apply {
+            this.id = id
         }
 
         fun setKey(key: String) = apply {
@@ -102,7 +90,7 @@ data class LocalizedMessage(
         }
 
         override fun build(): LocalizedMessage =
-            LocalizedMessage(id, resourceId!!, key!!, value!!, locale!!, updateTime!!)
+            LocalizedMessage(id, key!!, value!!, locale!!, updateTime!!)
     }
 
     companion object {
@@ -116,7 +104,6 @@ data class LocalizedMessage(
         ): LocalizedMessage {
             val now = OffsetDateTime.now()
             return builder()
-                .setResourceId("")
                 .setKey(key)
                 .setValue(value)
                 .setLocale(locale)

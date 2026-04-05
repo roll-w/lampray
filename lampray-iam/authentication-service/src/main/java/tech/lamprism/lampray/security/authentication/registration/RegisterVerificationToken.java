@@ -32,12 +32,11 @@ import java.util.Date;
  */
 public record RegisterVerificationToken(
         Long id,
-        String resourceId,
         String token,
         long userId,
         long expiryTime,
         boolean used
-) implements VerifiableToken, DataEntity<String> {
+) implements VerifiableToken, DataEntity<Long> {
 
     public boolean isExpired() {
         return System.currentTimeMillis() > expiryTime;
@@ -60,8 +59,8 @@ public record RegisterVerificationToken(
     }
 
     @Override
-    public String getEntityId() {
-        return resourceId;
+    public Long getEntityId() {
+        return id;
     }
 
     @NonNull
@@ -104,9 +103,8 @@ public record RegisterVerificationToken(
         return !used && !isExpired();
     }
 
-    public static final class Builder implements EntityBuilder<RegisterVerificationToken, String> {
+    public static final class Builder implements EntityBuilder<RegisterVerificationToken, Long> {
         private Long id;
-        private String resourceId;
         private String token;
         private long userId;
         private long expiryTime;
@@ -117,7 +115,6 @@ public record RegisterVerificationToken(
 
         public Builder(RegisterVerificationToken source) {
             this.id = source.id;
-            this.resourceId = source.resourceId;
             this.token = source.token;
             this.userId = source.userId;
             this.expiryTime = source.expiryTime;
@@ -125,17 +122,12 @@ public record RegisterVerificationToken(
         }
 
         @Override
-        public Builder setEntityId(String id) {
-            return setResourceId(id);
+        public Builder setEntityId(Long id) {
+            return setId(id);
         }
 
         public Builder setId(Long id) {
             this.id = id;
-            return this;
-        }
-
-        public Builder setResourceId(String resourceId) {
-            this.resourceId = resourceId;
             return this;
         }
 
@@ -161,7 +153,7 @@ public record RegisterVerificationToken(
 
         @Override
         public RegisterVerificationToken build() {
-            return new RegisterVerificationToken(id, resourceId, token, userId, expiryTime, used);
+            return new RegisterVerificationToken(id, token, userId, expiryTime, used);
         }
     }
 }

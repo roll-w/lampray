@@ -26,18 +26,20 @@ import tech.lamprism.lampray.content.ContentType
  */
 @Repository
 class CommentRepository(
-    private val commentDao: CommentDao
+    commentDao: CommentDao
 ) : CommonRepository<CommentEntity, String>(commentDao) {
     override fun <S : CommentEntity> save(entity: S): S {
-        return commentDao.saveAndFlush(entity)
+        return saveAndFlush(entity)
     }
 
     override fun <S : CommentEntity> saveAll(entities: Iterable<S>): List<S> {
-        return commentDao.saveAllAndFlush(entities)
+        return saveAllAndFlush(entities)
     }
 
     fun findAllByUserId(userId: Long): List<CommentEntity> {
-        return commentDao.findAllByUserId(userId)
+        return findAll { root, _, builder ->
+            builder.equal(root.get(CommentEntity_.userId), userId)
+        }
     }
 
     fun findByContent(

@@ -20,7 +20,6 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.content.Content;
 import tech.lamprism.lampray.content.ContentAccessAuthType;
 import tech.lamprism.lampray.content.ContentAccessCredentials;
@@ -28,7 +27,6 @@ import tech.lamprism.lampray.content.ContentAccessService;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentMetadata;
 import tech.lamprism.lampray.content.ContentMetadataDetails;
-import tech.lamprism.lampray.content.ContentMetadataResourceKind;
 import tech.lamprism.lampray.content.ContentProvider;
 import tech.lamprism.lampray.content.ContentProviderFactory;
 import tech.lamprism.lampray.content.ContentPublishProvider;
@@ -74,7 +72,6 @@ public class ContentService implements ContentAccessService,
     private final ContentProviderFactory contentProviderFactory;
     private final ContentPermitChecker contentPermitChecker;
     private final ContentMetadataRepository contentMetadataRepository;
-    private final ResourceIdGenerator resourceIdGenerator;
 
     public ContentService(List<ContentPublisher> contentPublishers,
                           List<UncreatedContentPreChecker> uncreatedContentPreCheckers,
@@ -82,8 +79,7 @@ public class ContentService implements ContentAccessService,
                           List<ContentPublishListener> contentPublishListeners,
                           ContentProviderFactory contentProviderFactory,
                           ContentPermitChecker contentPermitChecker,
-                          ContentMetadataRepository contentMetadataRepository,
-                          ResourceIdGenerator resourceIdGenerator) {
+                          ContentMetadataRepository contentMetadataRepository) {
         this.contentPublishers = contentPublishers;
         this.uncreatedContentPreCheckers = uncreatedContentPreCheckers;
         this.contentCollectionProviders = contentCollectionProviders;
@@ -91,7 +87,6 @@ public class ContentService implements ContentAccessService,
         this.contentProviderFactory = contentProviderFactory;
         this.contentPermitChecker = contentPermitChecker;
         this.contentMetadataRepository = contentMetadataRepository;
-        this.resourceIdGenerator = resourceIdGenerator;
     }
 
     /**
@@ -194,7 +189,6 @@ public class ContentService implements ContentAccessService,
         );
         ContentMetadataEntity.Builder contentMetadataBuilder = ContentMetadataEntity
                 .builder()
-                .setResourceId(resourceIdGenerator.nextId(ContentMetadataResourceKind.INSTANCE))
                 .setContentId(contentDetails.getContentId())
                 .setContentType(contentDetails.getContentType())
                 .setUserId(contentDetails.getUserId())

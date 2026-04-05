@@ -23,5 +23,4 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface SystemSettingDao : CommonDao<SystemSettingEntity, String> {
-}
+interface SystemSettingDao : CommonDao<SystemSettingEntity, String>

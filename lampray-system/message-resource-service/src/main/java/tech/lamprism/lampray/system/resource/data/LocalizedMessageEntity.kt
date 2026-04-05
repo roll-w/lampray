@@ -19,14 +19,14 @@ package tech.lamprism.lampray.system.resource.data
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Lob
 import jakarta.persistence.Table
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
 import jakarta.persistence.UniqueConstraint
-import org.hibernate.annotations.Generated
-import org.hibernate.generator.EventType
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.TimeAttributed
 import tech.lamprism.lampray.common.data.LocaleAttributeConverter
@@ -47,13 +47,10 @@ import java.util.Locale
     ]
 )
 class LocalizedMessageEntity(
-    @Column(name = "id", nullable = false, insertable = false, updatable = false)
-    @Generated(event = [EventType.INSERT])
-    private var id: Long? = null,
-
     @Id
-    @Column(name = "resource_id", nullable = false, length = 64, unique = true)
-    private var resourceId: String = "",
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null,
 
     @Column(name = "key", nullable = false, length = 255)
     override var key: String = "",
@@ -69,20 +66,11 @@ class LocalizedMessageEntity(
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "update_time", nullable = false)
     private var updateTime: OffsetDateTime = OffsetDateTime.now()
-) : LocalizedMessageResource, DataEntity<String> {
-    override fun getEntityId(): String {
-        return resourceId
+) : LocalizedMessageResource, DataEntity<Long> {
+    override fun getEntityId(): Long? {
+        return id
     }
 
-    fun getId(): Long? = id
-
-    fun setId(id: Long?) {
-        this.id = id
-    }
-
-    fun setResourceId(resourceId: String) {
-        this.resourceId = resourceId
-    }
 
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
 
@@ -97,12 +85,12 @@ class LocalizedMessageEntity(
     }
 
     fun lock(): LocalizedMessage {
-        return LocalizedMessage(id, resourceId, key, value, locale, updateTime)
+        return LocalizedMessage(id, key, value, locale, updateTime)
     }
 
     companion object {
         fun LocalizedMessage.toEntity(): LocalizedMessageEntity {
-            return LocalizedMessageEntity(getId(), entityId, key, value, locale, updateTime)
+            return LocalizedMessageEntity(entityId, key, value, locale, updateTime)
         }
     }
 }
