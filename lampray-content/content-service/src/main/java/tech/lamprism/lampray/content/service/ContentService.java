@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
 import tech.lamprism.lampray.content.permit.ContentPermitChecker;
 import tech.lamprism.lampray.content.permit.ContentPermitResult;
-import tech.lamprism.lampray.content.persistence.ContentMetadataDo;
+import tech.lamprism.lampray.content.persistence.ContentMetadataEntity;
 import tech.lamprism.lampray.content.persistence.ContentMetadataRepository;
 import tech.lamprism.lampray.content.publish.ContentPublishListener;
 import tech.rollw.common.web.CommonErrorCode;
@@ -95,7 +95,7 @@ public class ContentService implements ContentAccessService,
     @Override
     public ContentDetails openContent(ContentTrait contentTrait,
                                       ContentAccessCredentials contentAccessCredentials) throws ContentException {
-        ContentMetadataDo metadata = contentMetadataRepository
+        ContentMetadataEntity metadata = contentMetadataRepository
                 .findByContent(contentTrait)
                 .orElseThrow(() -> new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND));
         ErrorCode errorCode = fromContentStatus(metadata.getContentStatus());
@@ -129,7 +129,7 @@ public class ContentService implements ContentAccessService,
     @Override
     public ContentMetadataDetails<?> getContentMetadataDetails(ContentTrait contentTrait)
             throws ContentException {
-        ContentMetadataDo metadata = contentMetadataRepository
+        ContentMetadataEntity metadata = contentMetadataRepository
                 .findByContent(contentTrait)
                 .orElse(null);
         if (metadata == null) {
@@ -147,7 +147,7 @@ public class ContentService implements ContentAccessService,
      */
     public ContentStatus getContentStatus(ContentTrait contentTrait)
             throws ContentException {
-        ContentMetadataDo metadata = contentMetadataRepository
+        ContentMetadataEntity metadata = contentMetadataRepository
                 .findByContent(contentTrait)
                 .orElse(null);
         if (metadata == null) {
@@ -187,7 +187,7 @@ public class ContentService implements ContentAccessService,
                 uncreatedContent,
                 timestamp
         );
-        ContentMetadataDo.Builder contentMetadataBuilder = ContentMetadataDo
+        ContentMetadataEntity.Builder contentMetadataBuilder = ContentMetadataEntity
                 .builder()
                 .setContentId(contentDetails.getContentId())
                 .setContentType(contentDetails.getContentType())
@@ -210,7 +210,7 @@ public class ContentService implements ContentAccessService,
             List<ContentMetadata> contentMetadata) {
         return contentDetails.stream().map(details -> {
             ContentMetadata metadata = contentMetadata.stream()
-                    .filter(m -> m.getContentId() == details.getContentId())
+                    .filter(m -> m.getContentId().equals(details.getContentId()))
                     .findFirst()
                     .orElseThrow(() -> new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND));
             return new ContentMetadataDetails<>(details, metadata);
@@ -246,7 +246,7 @@ public class ContentService implements ContentAccessService,
         List<ContentMetadata> contentMetadatas = contentMetadataRepository
                 .findByContents(contents)
                 .stream()
-                .map(ContentMetadataDo::lock)
+                .map(ContentMetadataEntity::lock)
                 .toList();
         return pairWith(contents, contentMetadatas);
     }

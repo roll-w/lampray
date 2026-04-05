@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import tech.lamprism.lampray.content.ContentMetadata
 import tech.lamprism.lampray.content.ContentTrait
 import tech.lamprism.lampray.content.common.ContentErrorCode
 import tech.lamprism.lampray.content.common.ContentException
-import tech.lamprism.lampray.content.persistence.ContentMetadataDo.Companion.toDo
+import tech.lamprism.lampray.content.persistence.ContentMetadataEntity.Companion.toEntity
 import tech.lamprism.lampray.content.persistence.ContentMetadataRepository
 
 /**
@@ -44,11 +44,11 @@ class ContentMetadataServiceImpl(
     }
 
     fun createMetadata(metadata: ContentMetadata) {
-        contentMetadataRepository.save(metadata.toDo())
+        contentMetadataRepository.save(metadata.toEntity())
     }
 
     override fun updateMetadata(metadata: ContentMetadata) {
-        contentMetadataRepository.save(metadata.toDo())
+        contentMetadataRepository.save(metadata.toEntity())
     }
 
     fun deleteMetadata(contentTrait: ContentTrait) {

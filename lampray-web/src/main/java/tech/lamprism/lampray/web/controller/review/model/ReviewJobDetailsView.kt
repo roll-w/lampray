@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ data class ReviewJobDetailsView(
     val id: String,
     val status: ReviewStatus,
     val contentType: ContentType,
-    val contentId: Long,
+    val contentId: String,
     val reviewMark: ReviewMark,
     val createTime: OffsetDateTime,
     val updateTime: OffsetDateTime,

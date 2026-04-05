@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.LampException;
 import tech.lamprism.lampray.staff.StaffInfo;
 import tech.lamprism.lampray.staff.StaffService;
-import tech.lamprism.lampray.staff.persistence.StaffDo;
+import tech.lamprism.lampray.staff.persistence.StaffEntity;
 import tech.lamprism.lampray.staff.persistence.StaffRepository;
 import tech.lamprism.lampray.user.UserIdentity;
 import tech.lamprism.lampray.user.UserProvider;
@@ -42,7 +42,7 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     public StaffInfo getStaffByUser(long userId) {
-        StaffDo staff = staffRepository.findByUserId(userId).orElse(null);
+        StaffEntity staff = staffRepository.findByUserId(userId).orElse(null);
         if (staff == null) {
             throw new LampException(DataErrorCode.ERROR_DATA_NOT_EXIST);
         }
@@ -52,7 +52,7 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     public StaffInfo getStaff(long staffId) {
-        StaffDo staff = staffRepository.findById(staffId).orElse(null);
+        StaffEntity staff = staffRepository.findById(staffId).orElse(null);
         if (staff == null) {
             throw new LampException(DataErrorCode.ERROR_DATA_NOT_EXIST);
         }

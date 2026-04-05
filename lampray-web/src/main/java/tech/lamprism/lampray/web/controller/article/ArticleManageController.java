@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package tech.lamprism.lampray.web.controller.article;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import tech.lamprism.lampray.web.controller.AdminApi;
-import tech.lamprism.lampray.web.controller.article.model.ArticleMetaVo;
 import tech.lamprism.lampray.content.ContentAccessService;
 import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentMetadataDetails;
@@ -27,6 +25,8 @@ import tech.lamprism.lampray.content.ContentPublishProvider;
 import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
+import tech.lamprism.lampray.web.controller.AdminApi;
+import tech.lamprism.lampray.web.controller.article.model.ArticleMetaVo;
 import tech.rollw.common.web.HttpResponseEntity;
 
 /**
@@ -46,7 +46,7 @@ public class ArticleManageController {
     @GetMapping("/users/{userId}/articles/{articleId}")
     public HttpResponseEntity<ArticleMetaVo> getArticle(
             @PathVariable("userId") Long userId,
-            @PathVariable("articleId") Long articleId) {
+            @PathVariable("articleId") String articleId) {
         ContentMetadataDetails<?> contentMetadataDetails =
                 contentAccessService.getContentMetadataDetails(
                         ContentIdentity.of(articleId, ContentType.ARTICLE)

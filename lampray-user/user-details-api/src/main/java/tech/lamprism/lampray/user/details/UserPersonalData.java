@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public final class UserPersonalData implements Serializable, DataEntity<Long> {
 
     @Override
     public Long getEntityId() {
-        return getUserId();
+        return userId;
     }
 
     @NonNull
@@ -140,7 +140,6 @@ public final class UserPersonalData implements Serializable, DataEntity<Long> {
                 .setNickname(user.getUsername())
                 .build();
     }
-
 
     public static boolean checkNecessaryFields(
             @NonNull UserPersonalData userPersonalData) {
@@ -187,11 +186,12 @@ public final class UserPersonalData implements Serializable, DataEntity<Long> {
             this.introduction = userPersonalData.introduction;
             this.location = userPersonalData.location;
             this.website = userPersonalData.website;
+            this.updateTime = userPersonalData.updateTime;
         }
 
         @Override
         public Builder setEntityId(Long id) {
-            return this;
+            return setUserId(Preconditions.checkNotNull(id));
         }
 
         public Builder setUserId(long userId) {

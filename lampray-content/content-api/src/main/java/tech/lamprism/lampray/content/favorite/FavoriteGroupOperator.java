@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import tech.rollw.common.web.system.SystemResourceOperator;
 /**
  * @author RollW
  */
-public interface FavoriteGroupOperator extends SystemResourceOperator<Long>, SystemResource<Long> {
+public interface FavoriteGroupOperator extends SystemResourceOperator<String>, SystemResource<String> {
     @Override
     void setCheckDeleted(boolean checkDeleted);
 
@@ -56,7 +56,7 @@ public interface FavoriteGroupOperator extends SystemResourceOperator<Long>, Sys
     FavoriteGroup getFavoriteGroup();
 
     @Override
-    default Long getResourceId() {
+    default String getResourceId() {
         return getFavoriteGroup().getEntityId();
     }
 

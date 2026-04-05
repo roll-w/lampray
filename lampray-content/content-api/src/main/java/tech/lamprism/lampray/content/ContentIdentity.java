@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,16 @@ import java.io.Serializable;
 /**
  * @author RollW
  */
-public interface ContentIdentity extends ContentTrait, SystemResource<Long>, Serializable {
+public interface ContentIdentity extends ContentTrait, SystemResource<String>, Serializable {
     @Override
-    long getContentId();
+    String getContentId();
 
     @Override
     ContentType getContentType();
 
     @Override
     @NonNull
-    default Long getResourceId() {
+    default String getResourceId() {
         return getContentId();
     }
 
@@ -44,7 +44,7 @@ public interface ContentIdentity extends ContentTrait, SystemResource<Long>, Ser
         return getContentType().getSystemResourceKind();
     }
 
-    static ContentIdentity of(long contentId, @NonNull ContentType contentType) {
+    static ContentIdentity of(@NonNull String contentId, @NonNull ContentType contentType) {
         return new SimpleContentIdentity(contentId, contentType);
     }
 }

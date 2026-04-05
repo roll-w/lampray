@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,26 +26,27 @@ import java.util.Optional
  */
 @Repository
 class ContentMetadataRepository(
-    private val contentMetadataDao: ContentMetadataDao
-) : CommonRepository<ContentMetadataDo, Long>(contentMetadataDao) {
-    fun findByContent(content: ContentTrait): Optional<ContentMetadataDo> {
-        return findOne { root, query, criteriaBuilder ->
+    contentMetadataDao: ContentMetadataDao
+) : CommonRepository<ContentMetadataEntity, Long>(contentMetadataDao) {
+
+    fun findByContent(content: ContentTrait): Optional<ContentMetadataEntity> {
+        return findOne { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get(ContentMetadataDo_.contentId), content.contentId),
-                criteriaBuilder.equal(root.get(ContentMetadataDo_.contentType), content.contentType)
+                criteriaBuilder.equal(root.get(ContentMetadataEntity_.contentId), content.contentId),
+                criteriaBuilder.equal(root.get(ContentMetadataEntity_.contentType), content.contentType)
             )
         }
     }
 
-    fun findByContents(contents: List<ContentTrait>): List<ContentMetadataDo> {
+    fun findByContents(contents: List<ContentTrait>): List<ContentMetadataEntity> {
         if (contents.isEmpty()) {
             return emptyList()
         }
         return findAll { root, _, builder ->
             val predicates = contents.map {
                 builder.and(
-                    builder.equal(root.get(ContentMetadataDo_.contentId), it.contentId),
-                    builder.equal(root.get(ContentMetadataDo_.contentType), it.contentType)
+                    builder.equal(root.get(ContentMetadataEntity_.contentId), it.contentId),
+                    builder.equal(root.get(ContentMetadataEntity_.contentType), it.contentType)
                 )
             }
             builder.or(*predicates.toTypedArray())

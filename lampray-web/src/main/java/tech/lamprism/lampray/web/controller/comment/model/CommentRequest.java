@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,6 @@ import tech.lamprism.lampray.content.structuraltext.StructuralText;
  */
 public record CommentRequest(
         StructuralText content,
-        Long parent
+        String parent
 ) {
 }

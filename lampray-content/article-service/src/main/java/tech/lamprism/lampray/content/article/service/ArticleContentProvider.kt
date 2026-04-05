@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import tech.lamprism.lampray.content.ContentProvider
 import tech.lamprism.lampray.content.ContentTrait
 import tech.lamprism.lampray.content.ContentType
 import tech.lamprism.lampray.content.article.Article
-import tech.lamprism.lampray.content.article.persistence.ArticleDo.Companion.toDo
+import tech.lamprism.lampray.content.article.persistence.ArticleEntity.Companion.toEntity
 import tech.lamprism.lampray.content.article.persistence.ArticleRepository
 import tech.lamprism.lampray.content.common.ContentErrorCode
 import tech.lamprism.lampray.content.common.ContentException
@@ -69,6 +69,6 @@ class ArticleContentProvider(
     }
 
     override fun updateArticle(article: Article) {
-        articleRepository.save(article.toDo())
+        articleRepository.save(article.toEntity())
     }
 }

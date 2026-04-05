@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,22 +26,36 @@ import tech.lamprism.lampray.content.ContentType
  */
 @Repository
 class CommentRepository(
-    private val commentDao: CommentDao
-) : CommonRepository<CommentDo, Long>(commentDao) {
+    commentDao: CommentDao
+) : CommonRepository<CommentEntity, String>(commentDao) {
+    override fun <S : CommentEntity> save(entity: S): S {
+        return saveAndFlush(entity)
+    }
+
+    override fun <S : CommentEntity> saveAll(entities: Iterable<S>): List<S> {
+        return saveAllAndFlush(entities)
+    }
+
+    fun findAllByUserId(userId: Long): List<CommentEntity> {
+        return findAll { root, _, builder ->
+            builder.equal(root.get(CommentEntity_.userId), userId)
+        }
+    }
+
     fun findByContent(
-        contentId: Long,
+        contentId: String,
         contentType: ContentType
-    ): List<CommentDo> {
+    ): List<CommentEntity> {
         return findAll(createContentSpecification(contentId, contentType))
     }
 
     private fun createContentSpecification(
-        contentId: Long,
+        contentId: String,
         contentType: ContentType
-    ): Specification<CommentDo> = Specification { root, query, criteriaBuilder ->
+    ): Specification<CommentEntity> = Specification { root, query, criteriaBuilder ->
         criteriaBuilder.and(
-            criteriaBuilder.equal(root.get(CommentDo_.commentOnId), contentId),
-            criteriaBuilder.equal(root.get(CommentDo_.commentOnType), contentType)
+            criteriaBuilder.equal(root.get(CommentEntity_.commentOnId), contentId),
+            criteriaBuilder.equal(root.get(CommentEntity_.commentOnType), contentType)
         )
     }
 }

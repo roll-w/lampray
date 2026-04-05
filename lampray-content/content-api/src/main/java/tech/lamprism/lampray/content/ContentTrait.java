@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package tech.lamprism.lampray.content;
  * @author RollW
  */
 public interface ContentTrait {
-    long getContentId();
+    String getContentId();
 
     ContentType getContentType();
 }

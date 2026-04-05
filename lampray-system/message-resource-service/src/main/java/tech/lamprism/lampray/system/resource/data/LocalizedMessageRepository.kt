@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,28 +27,29 @@ import java.util.Locale
  */
 @Repository
 class LocalizedMessageRepository(
-    private val localizedMessageDao: LocalizedMessageDao
-) : CommonRepository<LocalizedMessageDo, Long>(localizedMessageDao) {
+    localizedMessageDao: LocalizedMessageDao
+) : CommonRepository<LocalizedMessageEntity, Long>(localizedMessageDao) {
+
     fun findByKey(key: String, locale: Locale) =
         findOne { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get(LocalizedMessageDo_.key), key),
-                criteriaBuilder.equal(root.get(LocalizedMessageDo_.locale), locale)
+                criteriaBuilder.equal(root.get(LocalizedMessageEntity_.key), key),
+                criteriaBuilder.equal(root.get(LocalizedMessageEntity_.locale), locale)
             )
         }
 
     fun findByKey(
         key: String,
         pageable: Pageable = Pageable.unpaged()
-    ): Page<LocalizedMessageDo> =
+    ): Page<LocalizedMessageEntity> =
         findAll(pageable) { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get(LocalizedMessageDo_.key), key)
+            criteriaBuilder.equal(root.get(LocalizedMessageEntity_.key), key)
         }
 
     fun deleteByKey(key: String) {
         delete { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get(LocalizedMessageDo_.key), key)
+                criteriaBuilder.equal(root.get(LocalizedMessageEntity_.key), key)
             )
         }
     }
@@ -56,8 +57,8 @@ class LocalizedMessageRepository(
     fun deleteByKey(key: String, locale: Locale) {
         delete { root, _, criteriaBuilder ->
             criteriaBuilder.and(
-                criteriaBuilder.equal(root.get(LocalizedMessageDo_.key), key),
-                criteriaBuilder.equal(root.get(LocalizedMessageDo_.locale), locale)
+                criteriaBuilder.equal(root.get(LocalizedMessageEntity_.key), key),
+                criteriaBuilder.equal(root.get(LocalizedMessageEntity_.locale), locale)
             )
         }
     }
