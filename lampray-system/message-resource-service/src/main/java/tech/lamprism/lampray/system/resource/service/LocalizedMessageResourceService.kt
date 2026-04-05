@@ -17,7 +17,6 @@
 package tech.lamprism.lampray.system.resource.service
 
 import org.springframework.stereotype.Service
-import tech.lamprism.lampray.common.data.ResourceIdGenerator
 import tech.lamprism.lampray.system.resource.LocalizedMessageResource
 import tech.lamprism.lampray.system.resource.LocalizedMessageResourceProvider
 import tech.lamprism.lampray.system.resource.SimpleLocalizedMessageResource
@@ -32,8 +31,7 @@ import java.util.function.Supplier
  */
 @Service
 class LocalizedMessageResourceService(
-    private val localizedMessageRepository: LocalizedMessageRepository,
-    private val resourceIdGenerator: ResourceIdGenerator
+    private val localizedMessageRepository: LocalizedMessageRepository
 ) : LocalizedMessageResourceProvider {
     private var _fallbackLocale: Locale = Locale.ROOT
 

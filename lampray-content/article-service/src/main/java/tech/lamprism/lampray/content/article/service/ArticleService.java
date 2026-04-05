@@ -64,7 +64,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
             throw new IllegalArgumentException("Content type not supported: " +
                     uncreatedContent.getContentType());
         }
-        String title = Validate.notEmpty(Objects.requireNonNull(uncreatedContent.getTitle()));
+        String title = Validate.notEmpty(uncreatedContent.getTitle());
         StructuralText content = Objects.requireNonNull(uncreatedContent.getContent());
 
         long userId = uncreatedContent.getOperator().getUserId();

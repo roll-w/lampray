@@ -71,7 +71,6 @@ class LocalizedMessageEntity(
         return id
     }
 
-
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
 
     override fun getUpdateTime(): OffsetDateTime = updateTime
