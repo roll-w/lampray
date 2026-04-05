@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ package tech.lamprism.lampray.content.collection;
  * @author RollW
  */
 public record SimpleContentCollectionIdentity(
-        long contentCollectionId,
+        String contentCollectionId,
         ContentCollectionType contentCollectionType
 ) implements ContentCollectionIdentity {
     @Override
-    public long getContentCollectionId() {
+    public String getContentCollectionId() {
         return contentCollectionId;
     }
 
@@ -34,7 +34,7 @@ public record SimpleContentCollectionIdentity(
     }
 
     public static SimpleContentCollectionIdentity of(
-            long contentCollectionId,
+            String contentCollectionId,
             ContentCollectionType contentCollectionType) {
         return new SimpleContentCollectionIdentity(
                 contentCollectionId,

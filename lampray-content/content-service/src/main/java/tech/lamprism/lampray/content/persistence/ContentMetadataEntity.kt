@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,17 +47,17 @@ import java.time.OffsetDateTime
         UniqueConstraint(columnNames = ["content_id", "type"], name = "index__content_id_type")
     ]
 )
-class ContentMetadataDo(
-    @Column(name = "id")
+class ContentMetadataEntity(
     @Id
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private var id: Long? = null,
 
     @Column(name = "user_id", nullable = false)
     var userId: Long = 0,
 
-    @Column(name = "content_id", nullable = false)
-    private var contentId: Long = 0,
+    @Column(name = "content_id", nullable = false, length = 64)
+    private var contentId: String = "",
 
     @Column(name = "type", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
@@ -74,11 +74,9 @@ class ContentMetadataDo(
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var contentAccessAuthType: ContentAccessAuthType = ContentAccessAuthType.PUBLIC
 ) : DataEntity<Long>, ContentTrait {
-    override fun getEntityId(): Long? = id
+    override fun getEntityId(): Long = id!!
 
-    fun setId(id: Long?) {
-        this.id = id
-    }
+    fun getId(): Long? = id
 
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
 
@@ -87,9 +85,9 @@ class ContentMetadataDo(
     override fun getSystemResourceKind(): SystemResourceKind =
         ContentMetadataResourceKind
 
-    override fun getContentId(): Long = contentId
+    override fun getContentId(): String = contentId
 
-    fun setContentId(contentId: Long) {
+    fun setContentId(contentId: String) {
         this.contentId = contentId
     }
 
@@ -112,29 +110,32 @@ class ContentMetadataDo(
         fun builder(): Builder = Builder()
 
         @JvmStatic
-        fun ContentMetadata.toDo() =
-            ContentMetadataDo(
-                entityId, userId, contentId, contentType,
-                contentStatus, contentAccessAuthType
+        fun ContentMetadata.toEntity() =
+            ContentMetadataEntity(
+                id = id,
+                userId = userId,
+                contentId = contentId,
+                contentType = contentType,
+                contentStatus = contentStatus,
+                contentAccessAuthType = contentAccessAuthType
             )
-
     }
 
     class Builder {
         private var id: Long? = null
         private var userId: Long = 0
-        private var contentId: Long = 0
+        private var contentId: String = ""
         private var contentType: ContentType? = null
         private var contentStatus: ContentStatus? = null
         private var contentAccessAuthType: ContentAccessAuthType? = null
 
         constructor()
 
-        constructor(other: ContentMetadataDo) {
-            this.id = other.getEntityId()
+        constructor(other: ContentMetadataEntity) {
+            this.id = other.id
             this.userId = other.userId
-            this.contentId = other.getContentId()
-            this.contentType = other.getContentType()
+            this.contentId = other.contentId
+            this.contentType = other.contentType
             this.contentStatus = other.contentStatus
             this.contentAccessAuthType = other.contentAccessAuthType
         }
@@ -147,7 +148,7 @@ class ContentMetadataDo(
             this.userId = userId
         }
 
-        fun setContentId(contentId: Long) = apply {
+        fun setContentId(contentId: String) = apply {
             this.contentId = contentId
         }
 
@@ -163,12 +164,14 @@ class ContentMetadataDo(
             this.contentAccessAuthType = contentAccessAuthType
         }
 
-        fun build(): ContentMetadataDo {
-            return ContentMetadataDo(
-                id, userId,
-                contentId,
-                contentType!!, contentStatus!!,
-                contentAccessAuthType!!
+        fun build(): ContentMetadataEntity {
+            return ContentMetadataEntity(
+                id = id,
+                userId = userId,
+                contentId = contentId,
+                contentType = contentType!!,
+                contentStatus = contentStatus!!,
+                contentAccessAuthType = contentAccessAuthType!!
             )
         }
     }

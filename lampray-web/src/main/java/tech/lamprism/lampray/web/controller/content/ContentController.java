@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import tech.rollw.common.web.system.SystemResource;
 import tech.rollw.common.web.system.SystemResourceOperatorProvider;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author RollW
@@ -55,13 +56,13 @@ import java.util.List;
 public class ContentController {
     private final ContentPublishProvider contentPublishProvider;
     private final ContentAccessService contentAccessService;
-    private final SystemResourceOperatorProvider<Long> systemResourceOperatorProvider;
+    private final SystemResourceOperatorProvider<String> systemResourceOperatorProvider;
     private final ContentCollectionProviderFactory contentCollectionProviderFactory;
     private final ContextThreadAware<ApiContext> apiContextThreadAware;
 
     public ContentController(ContentPublishProvider contentPublishProvider,
                              ContentAccessService contentAccessService,
-                             SystemResourceOperatorProvider<Long> systemResourceOperatorProvider,
+                             SystemResourceOperatorProvider<String> systemResourceOperatorProvider,
                              ContentCollectionProviderFactory contentCollectionProviderFactory,
                              ContextThreadAware<ApiContext> apiContextThreadAware) {
         this.contentPublishProvider = contentPublishProvider;
@@ -75,7 +76,7 @@ public class ContentController {
     public HttpResponseEntity<ContentVo> getContent(
             @PathVariable("userId") Long userId,
             @PathVariable("contentType") UrlContentType contentType,
-            @PathVariable("contentId") Long contentId) {
+            @PathVariable("contentId") String contentId) {
         ContextThread<ApiContext> apiContextThread = apiContextThreadAware.getContextThread();
         ApiContext apiContext = apiContextThread.getContext();
         ContentDetails details = contentAccessService.openContent(
@@ -88,7 +89,7 @@ public class ContentController {
             return HttpResponseEntity.of(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
         }
 
-        return HttpResponseEntity.success(contentVoConvert(details));
+        return HttpResponseEntity.success(contentVoConvertOrThrow(details));
     }
 
 
@@ -109,14 +110,17 @@ public class ContentController {
         );
         List<ContentMetadataDetails<?>> contents = contentCollectionProviderFactory.getContents(
                 ContentCollectionIdentity.of(
-                        user.getUserId(),
+                        String.valueOf(user.getUserId()),
                         userCollectionType
                 ),
                 contentAccessCredentials
         );
 
         return HttpResponseEntity.success(
-                contents.stream().map(this::contentVoConvert).toList()
+                contents.stream()
+                        .map(this::contentVoConvert)
+                        .filter(Objects::nonNull)
+                        .toList()
         );
     }
 
@@ -136,13 +140,16 @@ public class ContentController {
         List<ContentMetadataDetails<?>> contents =
                 contentCollectionProviderFactory.getContents(
                         ContentCollectionIdentity.of(
-                                userId,
+                                String.valueOf(userId),
                                 contentType.getUserCollectionType()
                         ),
                         contentAccessCredentials
                 );
         return HttpResponseEntity.success(
-                contents.stream().map(this::contentVoConvert).toList()
+                contents.stream()
+                        .map(this::contentVoConvert)
+                        .filter(Objects::nonNull)
+                        .toList()
         );
     }
 
@@ -150,7 +157,7 @@ public class ContentController {
     public HttpResponseEntity<Void> deleteContent(
             @PathVariable("userId") Long userId,
             @PathVariable("contentType") UrlContentType contentType,
-            @PathVariable("contentId") Long contentId) {
+            @PathVariable("contentId") String contentId) {
         ContentOperator contentOperator =
                 systemResourceOperatorProvider.getSystemResourceOperator(
                         getSystemResource(contentId, contentType), true
@@ -167,12 +174,12 @@ public class ContentController {
     public HttpResponseEntity<Void> updateContent(
             @PathVariable("userId") Long userId,
             @PathVariable("contentType") UrlContentType contentType,
-            @PathVariable("contentId") Long contentId) {
+            @PathVariable("contentId") String contentId) {
         return HttpResponseEntity.success();
     }
 
-    private SystemResource<Long> getSystemResource(Long contentId,
-                                                   UrlContentType contentType) {
+    private SystemResource<String> getSystemResource(String contentId,
+                                                     UrlContentType contentType) {
         return new SimpleSystemResource<>(
                 contentId,
                 contentType.getContentType().getSystemResourceKind()
@@ -180,6 +187,14 @@ public class ContentController {
     }
 
     private ContentVo contentVoConvert(ContentDetails details) {
-       return ContentViewHelper.toContentView(details);
+        return ContentViewHelper.toContentView(details);
+    }
+
+    private ContentVo contentVoConvertOrThrow(ContentDetails details) {
+        ContentVo contentVo = contentVoConvert(details);
+        if (contentVo == null) {
+            throw new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
+        }
+        return contentVo;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package tech.lamprism.lampray.content.favorite;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.DataEntity;
-import tech.lamprism.lampray.LongEntityBuilder;
+import tech.lamprism.lampray.EntityBuilder;
 import tech.rollw.common.web.system.SystemResourceKind;
 
 import java.time.OffsetDateTime;
@@ -26,23 +26,25 @@ import java.time.OffsetDateTime;
 /**
  * @author RollW
  */
-public class FavoriteGroup implements DataEntity<Long> {
+public class FavoriteGroup implements DataEntity<String> {
     private final Long id;
+    private final String resourceId;
     private final String name;
     private final long userId;
     private final FavoriteGroupType type;
-    private final boolean isPublic; // add 'is' to avoid conflict with keyword
+    private final boolean isPublic;
     private final String description;
     private final String icon;
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
     private final boolean deleted;
 
-    public FavoriteGroup(Long id, String name, long userId, FavoriteGroupType type,
+    public FavoriteGroup(Long id, String resourceId, String name, long userId, FavoriteGroupType type,
                          boolean isPublic, String description, String icon,
                          OffsetDateTime createTime, OffsetDateTime updateTime,
                          boolean deleted) {
         this.id = id;
+        this.resourceId = resourceId;
         this.name = name;
         this.userId = userId;
         this.type = type;
@@ -54,9 +56,13 @@ public class FavoriteGroup implements DataEntity<Long> {
         this.deleted = deleted;
     }
 
-    @Override
-    public Long getEntityId() {
+    public Long getId() {
         return id;
+    }
+
+    @Override
+    public String getEntityId() {
+        return resourceId;
     }
 
     public String getName() {
@@ -113,8 +119,9 @@ public class FavoriteGroup implements DataEntity<Long> {
         return new Builder();
     }
 
-    public final static class Builder implements LongEntityBuilder<FavoriteGroup> {
+    public static final class Builder implements EntityBuilder<FavoriteGroup, String> {
         private Long id;
+        private String resourceId;
         private String name;
         private long userId;
         private FavoriteGroupType type;
@@ -130,6 +137,7 @@ public class FavoriteGroup implements DataEntity<Long> {
 
         public Builder(FavoriteGroup favoriteGroup) {
             this.id = favoriteGroup.id;
+            this.resourceId = favoriteGroup.resourceId;
             this.name = favoriteGroup.name;
             this.userId = favoriteGroup.userId;
             this.type = favoriteGroup.type;
@@ -142,8 +150,17 @@ public class FavoriteGroup implements DataEntity<Long> {
         }
 
         @Override
-        public Builder setEntityId(Long id) {
+        public Builder setEntityId(String id) {
+            return setResourceId(id);
+        }
+
+        public Builder setId(Long id) {
             this.id = id;
+            return this;
+        }
+
+        public Builder setResourceId(String resourceId) {
+            this.resourceId = resourceId;
             return this;
         }
 
@@ -194,7 +211,7 @@ public class FavoriteGroup implements DataEntity<Long> {
 
         @Override
         public FavoriteGroup build() {
-            return new FavoriteGroup(id, name, userId, type, isPublic, description,
+            return new FavoriteGroup(id, resourceId, name, userId, type, isPublic, description,
                     icon, createTime, updateTime, deleted);
         }
     }

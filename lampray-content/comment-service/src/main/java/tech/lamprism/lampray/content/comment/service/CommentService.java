@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package tech.lamprism.lampray.content.comment.service;
 
 import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
-import tech.lamprism.lampray.content.Content;
+import space.lingu.Nullable;
+import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentDetailsMetadata;
 import tech.lamprism.lampray.content.ContentIdentity;
@@ -34,7 +35,7 @@ import tech.lamprism.lampray.content.collection.ContentCollectionType;
 import tech.lamprism.lampray.content.comment.Comment;
 import tech.lamprism.lampray.content.comment.CommentDetailsMetadata;
 import tech.lamprism.lampray.content.comment.CommentStatus;
-import tech.lamprism.lampray.content.comment.persistence.CommentDo;
+import tech.lamprism.lampray.content.comment.persistence.CommentEntity;
 import tech.lamprism.lampray.content.comment.persistence.CommentRepository;
 import tech.lamprism.lampray.content.common.ContentErrorCode;
 import tech.lamprism.lampray.content.common.ContentException;
@@ -51,11 +52,14 @@ import java.util.List;
 public class CommentService implements ContentPublisher, ContentCollectionProvider {
     private final CommentRepository commentRepository;
     private final ContentMetadataService contentMetadataService;
+    private final ResourceIdGenerator resourceIdGenerator;
 
     public CommentService(CommentRepository commentRepository,
-                          ContentMetadataService contentMetadataService) {
+                          ContentMetadataService contentMetadataService,
+                          ResourceIdGenerator resourceIdGenerator) {
         this.commentRepository = commentRepository;
         this.contentMetadataService = contentMetadataService;
+        this.resourceIdGenerator = resourceIdGenerator;
     }
 
     @Override
@@ -74,10 +78,11 @@ public class CommentService implements ContentPublisher, ContentCollectionProvid
                 commentDetailsMetadata.contentType()
         );
         checkCommentOnContent(commentOn, operator);
-        long parentId = checkParentId(commentDetailsMetadata.parentId(), operator);
+        String parentId = checkParentId(commentDetailsMetadata.parentId(), operator);
 
-        CommentDo comment = CommentDo
+        CommentEntity comment = CommentEntity
                 .builder()
+                .setResourceId(resourceIdGenerator.nextId(ContentType.COMMENT.getSystemResourceKind()))
                 .setUserId(operator.getUserId())
                 .setParentId(parentId)
                 .setContent(uncreatedContent.getContent())
@@ -107,26 +112,22 @@ public class CommentService implements ContentPublisher, ContentCollectionProvid
         throw new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
     }
 
-    private long checkParentId(Long parentId, UserIdentity operator) {
-        if (parentId == null || parentId == Comment.COMMENT_ROOT_ID) {
+    private String checkParentId(@Nullable String parentId, UserIdentity operator) {
+        if (parentId == null || Comment.COMMENT_ROOT_ID.equals(parentId)) {
             return Comment.COMMENT_ROOT_ID;
         }
-        if (parentId < 0) {
-            throw new IllegalArgumentException("Parent id must be greater than 0");
-        }
-        CommentDo comment = commentRepository.findById(parentId).orElseThrow(
+        commentRepository.findById(parentId).orElseThrow(
                 () -> new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND)
         );
         ContentMetadata metadata = contentMetadataService.getMetadata(
                 new SimpleContentIdentity(parentId, ContentType.COMMENT));
-        if (!checkCanCommentOn(comment, metadata, operator)) {
+        if (!checkCanCommentOn(metadata, operator)) {
             throw new ContentException(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
         }
         return parentId;
     }
 
     private boolean checkCanCommentOn(
-            Content content,
             ContentMetadata contentMetadata,
             UserIdentity operator) {
         if (contentMetadata.getContentStatus() != ContentStatus.PUBLISHED) {
@@ -149,18 +150,21 @@ public class CommentService implements ContentPublisher, ContentCollectionProvid
             ContentCollectionIdentity contentCollectionIdentity) {
         return getCommentsBy(contentCollectionIdentity)
                 .stream()
-                .map(CommentDo::lock)
+                .map(CommentEntity::lock)
                 .toList();
     }
 
     @NonNull
-    public List<CommentDo> getCommentsBy(
+    public List<CommentEntity> getCommentsBy(
             ContentCollectionIdentity contentCollectionIdentity) {
         return switch (contentCollectionIdentity.getContentCollectionType()) {
             case COMMENTS -> commentRepository.findAll();
             case ARTICLE_COMMENTS -> commentRepository.findByContent(
                     contentCollectionIdentity.getContentCollectionId(),
                     ContentType.ARTICLE
+            );
+            case USER_COMMENTS -> commentRepository.findAllByUserId(
+                    Long.parseLong(contentCollectionIdentity.getContentCollectionId())
             );
             default -> throw new UnsupportedOperationException("Unsupported collection type: " +
                     contentCollectionIdentity.getContentCollectionType());
@@ -170,7 +174,7 @@ public class CommentService implements ContentPublisher, ContentCollectionProvid
     @Override
     public boolean supportsCollection(@NonNull ContentCollectionType contentCollectionType) {
         return switch (contentCollectionType) {
-            case COMMENTS, ARTICLE_COMMENTS -> true;
+            case COMMENTS, ARTICLE_COMMENTS, USER_COMMENTS -> true;
             default -> false;
         };
     }

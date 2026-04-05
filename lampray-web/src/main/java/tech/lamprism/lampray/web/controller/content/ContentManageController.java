@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,14 +59,18 @@ public class ContentManageController {
     public HttpResponseEntity<ContentVo> getContent(
             @PathVariable("userId") Long userId,
             @PathVariable("contentType") UrlContentType contentType,
-            @PathVariable("contentId") Long contentId) {
+            @PathVariable("contentId") String contentId) {
         ContentMetadataDetails<?> contentMetadataDetails = contentAccessService.getContentMetadataDetails(
                 ContentIdentity.of(contentId, contentType.getContentType())
         );
         if (contentMetadataDetails.getUserId() != userId) {
             return HttpResponseEntity.of(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
         }
-        return HttpResponseEntity.success(ContentViewHelper.toContentView(contentMetadataDetails.getContentDetails()));
+        ContentVo contentVo = ContentViewHelper.toContentView(contentMetadataDetails.getContentDetails());
+        if (contentVo == null) {
+            return HttpResponseEntity.of(ContentErrorCode.ERROR_CONTENT_NOT_FOUND);
+        }
+        return HttpResponseEntity.success(contentVo);
     }
 
     private ContentCollectionType getUserContentCollectionType(UrlContentType contentType) {

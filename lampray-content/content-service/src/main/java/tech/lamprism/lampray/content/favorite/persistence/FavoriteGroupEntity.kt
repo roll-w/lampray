@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,12 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Lob
 import jakarta.persistence.Table
-import jakarta.persistence.Temporal
-import jakarta.persistence.TemporalType
+import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.proxy.HibernateProxy
+import org.hibernate.generator.EventType
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.content.favorite.FavoriteGroup
@@ -41,11 +38,14 @@ import java.time.OffsetDateTime
  */
 @Entity
 @Table(name = "favorite_group")
-class FavoriteGroupDo(
-    @Id
-    @Column(name = "id", nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+class FavoriteGroupEntity(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
     private var id: Long? = null,
+
+    @Id
+    @Column(name = "resource_id", nullable = false, length = 64, unique = true)
+    private var resourceId: String,
 
     @Column(name = "name", nullable = false)
     var name: String = "",
@@ -68,18 +68,18 @@ class FavoriteGroupDo(
     @Column(name = "icon", nullable = false)
     private var icon: String = "",
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_time", nullable = false)
     private var createTime: OffsetDateTime = OffsetDateTime.now(),
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "update_time", nullable = false)
     private var updateTime: OffsetDateTime = OffsetDateTime.now(),
 
     @Column(name = "deleted", nullable = false)
     var deleted: Boolean = false
-) : DataEntity<Long> {
-    override fun getEntityId(): Long = id!!
+) : DataEntity<String> {
+    override fun getEntityId(): String = resourceId
+
+    fun getId(): Long? = id
 
     override fun getSystemResourceKind() = FavoriteGroupResourceKind
 
@@ -87,13 +87,10 @@ class FavoriteGroupDo(
 
     override fun getUpdateTime(): OffsetDateTime = updateTime
 
-    fun setId(id: Long) {
-        this.id = id
-    }
-
     fun lock(): FavoriteGroup =
         FavoriteGroup(
             id,
+            resourceId,
             name,
             userId,
             type,
@@ -109,6 +106,7 @@ class FavoriteGroupDo(
 
     class Builder {
         private var id: Long? = null
+        private var resourceId: String? = null
         private var name: String = ""
         private var userId: Long = 0L
         private var type: FavoriteGroupType = FavoriteGroupType.USER
@@ -121,8 +119,9 @@ class FavoriteGroupDo(
 
         constructor()
 
-        constructor(favoriteGroup: FavoriteGroupDo) {
+        constructor(favoriteGroup: FavoriteGroupEntity) {
             this.id = favoriteGroup.id
+            this.resourceId = favoriteGroup.resourceId
             this.name = favoriteGroup.name
             this.userId = favoriteGroup.userId
             this.type = favoriteGroup.type
@@ -136,6 +135,10 @@ class FavoriteGroupDo(
 
         fun setId(id: Long?) = apply {
             this.id = id
+        }
+
+        fun setResourceId(resourceId: String) = apply {
+            this.resourceId = resourceId
         }
 
         fun setName(name: String) = apply {
@@ -174,17 +177,18 @@ class FavoriteGroupDo(
             this.deleted = deleted
         }
 
-        fun build() = FavoriteGroupDo(
-            id,
-            name,
-            userId,
-            type,
-            isPublic,
-            description,
-            icon,
-            createTime,
-            updateTime,
-            deleted
+        fun build() = FavoriteGroupEntity(
+            id = id,
+            resourceId = resourceId!!,
+            name = name,
+            userId = userId,
+            type = type,
+            isPublic = isPublic,
+            description = description,
+            icon = icon,
+            createTime = createTime,
+            updateTime = updateTime,
+            deleted = deleted
         )
     }
 
@@ -193,33 +197,18 @@ class FavoriteGroupDo(
         fun builder() = Builder()
 
         @JvmStatic
-        fun FavoriteGroup.toDo() = FavoriteGroupDo(
-            entityId,
-            name,
-            userId,
-            type,
-            isPublic,
-            description,
-            icon,
-            createTime,
-            updateTime,
-            isDeleted
+        fun FavoriteGroup.toEntity() = FavoriteGroupEntity(
+            id = id,
+            resourceId = entityId,
+            name = name,
+            userId = userId,
+            type = type,
+            isPublic = isPublic,
+            description = description,
+            icon = icon,
+            createTime = createTime,
+            updateTime = updateTime,
+            deleted = isDeleted
         )
     }
-
-    final override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null) return false
-        val oEffectiveClass =
-            if (other is HibernateProxy) other.hibernateLazyInitializer.persistentClass else other.javaClass
-        val thisEffectiveClass =
-            if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else this.javaClass
-        if (thisEffectiveClass != oEffectiveClass) return false
-        other as FavoriteGroupDo
-
-        return id != null && id == other.id
-    }
-
-    final override fun hashCode(): Int =
-        if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass.hashCode() else javaClass.hashCode()
 }

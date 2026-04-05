@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import tech.lamprism.lampray.user.event.NewUserCreatedEvent;
 import tech.lamprism.lampray.user.filter.UserFilteringInfo;
 import tech.lamprism.lampray.user.filter.UserFilteringInfoType;
 import tech.lamprism.lampray.user.filter.UserInfoFilter;
-import tech.lamprism.lampray.user.repository.UserDo;
+import tech.lamprism.lampray.user.repository.UserEntity;
 import tech.lamprism.lampray.user.repository.UserRepository;
 import tech.rollw.common.web.ErrorCode;
 import tech.rollw.common.web.UserErrorCode;
@@ -66,7 +66,7 @@ public class UserServiceImpl implements UserSignatureProvider,
 
     @Override
     public String getSignature(long userId) {
-        UserDo user = userRepository.findById(userId).orElse(null);
+        UserEntity user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             return null;
         }
@@ -86,7 +86,7 @@ public class UserServiceImpl implements UserSignatureProvider,
         validate(username, password, email);
 
         OffsetDateTime time = OffsetDateTime.now();
-        UserDo user = UserDo.builder()
+        UserEntity user = UserEntity.builder()
                 .setUsername(username)
                 .setPassword(passwordEncoder.encode(password))
                 .setRole(role)
@@ -95,7 +95,7 @@ public class UserServiceImpl implements UserSignatureProvider,
                 .setUpdateTime(time)
                 .setEmail(email)
                 .build();
-        UserDo inserted = userRepository.save(user);
+        UserEntity inserted = userRepository.save(user);
         NewUserCreatedEvent newUserCreatedEvent = new NewUserCreatedEvent(inserted);
         eventPublisher.publishEvent(newUserCreatedEvent);
         return inserted;
@@ -119,7 +119,7 @@ public class UserServiceImpl implements UserSignatureProvider,
 
     @Override
     public AttributedUserDetails getUser(long userId) throws UserViewException {
-        UserDo user = userRepository.findById(userId).orElse(null);
+        UserEntity user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
         }
@@ -128,7 +128,7 @@ public class UserServiceImpl implements UserSignatureProvider,
 
     @Override
     public AttributedUserDetails getUser(String username) throws UserViewException {
-        UserDo user = userRepository.findByUsername(username).orElse(null);
+        UserEntity user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
         }
@@ -137,7 +137,7 @@ public class UserServiceImpl implements UserSignatureProvider,
 
     @Override
     public AttributedUserDetails getUserByEmail(String email) throws UserViewException {
-        UserDo user = userRepository.findByEmail(email).orElse(null);
+        UserEntity user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
             throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.time.OffsetDateTime
  * @author RollW
  */
 data class ReviewJobContentView(
-    val contentId: Long,
+    val contentId: String,
     val contentType: ContentType,
     val title: String?,
     val content: StructuralText,

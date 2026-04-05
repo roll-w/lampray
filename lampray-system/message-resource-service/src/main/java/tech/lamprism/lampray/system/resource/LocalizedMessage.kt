@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
  */
 package tech.lamprism.lampray.system.resource
 
-import space.lingu.NonNull
 import tech.lamprism.lampray.DataEntity
+import tech.lamprism.lampray.EntityBuilder
 import tech.lamprism.lampray.TimeAttributed
-import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 import java.util.Locale
 
@@ -37,20 +36,19 @@ data class LocalizedMessage(
     override val locale: Locale,
     private val updateTime: OffsetDateTime
 ) : LocalizedMessageResource, DataEntity<Long> {
-    override fun getEntityId(): Long? = id
+    override fun getEntityId(): Long = id!!
+
+    fun getId(): Long? = id
 
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
 
     override fun getUpdateTime(): OffsetDateTime = updateTime
 
-    @NonNull
-    override fun getSystemResourceKind(): SystemResourceKind {
-        return LocalizedMessageResourceKind
-    }
+    override fun getSystemResourceKind() = LocalizedMessageResourceKind
 
     fun toBuilder() = Builder(this)
 
-    class Builder {
+    class Builder : EntityBuilder<LocalizedMessage, Long> {
         private var id: Long? = null
         private var key: String? = null
         private var value: String? = null
@@ -71,6 +69,10 @@ data class LocalizedMessage(
             this.id = id
         }
 
+        override fun setEntityId(id: Long) = apply {
+            this.id = id
+        }
+
         fun setKey(key: String) = apply {
             this.key = key
         }
@@ -87,7 +89,7 @@ data class LocalizedMessage(
             this.updateTime = updateTime
         }
 
-        fun build(): LocalizedMessage =
+        override fun build(): LocalizedMessage =
             LocalizedMessage(id, key!!, value!!, locale!!, updateTime!!)
     }
 
@@ -100,10 +102,12 @@ data class LocalizedMessage(
             key: String, value: String,
             locale: Locale
         ): LocalizedMessage {
+            val now = OffsetDateTime.now()
             return builder()
                 .setKey(key)
                 .setValue(value)
                 .setLocale(locale)
+                .setUpdateTime(now)
                 .build()
         }
     }

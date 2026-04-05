@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,10 @@ import java.time.OffsetDateTime
  */
 @Entity
 @Table(name = "user_personal_data")
-class UserPersonalDataDo(
+class UserPersonalDataEntity(
     @Id
     @Column(name = "id", nullable = false)
-    private var id: Long = 0,
+    private var userId: Long = 0,
 
     @Column(name = "nickname", nullable = false, length = 120)
     var nickname: String = "",
@@ -78,7 +78,13 @@ class UserPersonalDataDo(
     @Temporal(TemporalType.TIMESTAMP)
     private var updateTime: OffsetDateTime = OffsetDateTime.now()
 ) : DataEntity<Long> {
-    override fun getEntityId(): Long = id
+    override fun getEntityId(): Long = userId
+
+    fun getUserId(): Long = userId
+
+    fun setUserId(userId: Long) {
+        this.userId = userId
+    }
 
     override fun getSystemResourceKind(): SystemResourceKind =
         UserResourceKind
@@ -98,14 +104,22 @@ class UserPersonalDataDo(
     }
 
     fun lock() = UserPersonalData(
-        id, nickname, avatar, cover, birthday, introduction,
-        gender, location, website, updateTime
+        userId,
+        nickname,
+        avatar,
+        cover,
+        birthday,
+        introduction,
+        gender,
+        location,
+        website,
+        updateTime
     )
 
     fun toBuilder() = Builder(this)
 
     class Builder {
-        private var id: Long = 0
+        private var userId: Long = 0
         private var nickname: String? = null
         private var avatar: String? = null
         private var cover: String? = null
@@ -118,8 +132,8 @@ class UserPersonalDataDo(
 
         constructor()
 
-        constructor(other: UserPersonalDataDo) {
-            this.id = other.id
+        constructor(other: UserPersonalDataEntity) {
+            this.userId = other.userId
             this.nickname = other.nickname
             this.avatar = other.avatar
             this.cover = other.cover
@@ -131,8 +145,8 @@ class UserPersonalDataDo(
             this.updateTime = other.updateTime
         }
 
-        fun setId(id: Long) = apply {
-            this.id = id
+        fun setUserId(userId: Long) = apply {
+            this.userId = userId
         }
 
         fun setNickname(nickname: String) = apply {
@@ -171,27 +185,35 @@ class UserPersonalDataDo(
             this.updateTime = updateTime
         }
 
-        fun build(): UserPersonalDataDo {
-            return UserPersonalDataDo(
-                id,
-                nickname!!,
-                avatar!!,
-                cover!!,
-                birthday!!,
-                introduction,
-                gender!!,
-                location,
-                website,
-                updateTime!!
+        fun build(): UserPersonalDataEntity {
+            return UserPersonalDataEntity(
+                userId = userId,
+                nickname = nickname!!,
+                avatar = avatar!!,
+                cover = cover!!,
+                birthday = birthday!!,
+                introduction = introduction,
+                gender = gender!!,
+                location = location,
+                website = website,
+                updateTime = updateTime!!
             )
         }
     }
 
     companion object {
         @JvmStatic
-        fun UserPersonalData.toDo() = UserPersonalDataDo(
-            entityId, nickname, avatar, cover, birthday, introduction,
-            gender, location, website, updateTime
+        fun UserPersonalData.toEntity() = UserPersonalDataEntity(
+            userId = entityId,
+            nickname = nickname,
+            avatar = avatar,
+            cover = cover,
+            birthday = birthday,
+            introduction = introduction,
+            gender = gender,
+            location = location,
+            website = website,
+            updateTime = updateTime
         )
 
         @JvmStatic

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,10 @@ import java.time.OffsetDateTime
         UniqueConstraint(columnNames = ["token"], name = "index__token")
     ]
 )
-class RegisterTokenDo(
+class RegisterTokenEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
     private var id: Long? = null,
 
     @Column(name = "token")
@@ -64,7 +64,7 @@ class RegisterTokenDo(
     }
 
     override fun getUserId(): Long {
-       return userId
+        return userId
     }
 
     fun setUserId(userId: Long) {
@@ -75,12 +75,10 @@ class RegisterTokenDo(
         return !used && !isExpired()
     }
 
-    fun setId(id: Long?) {
-        this.id = id
-    }
+    fun getId(): Long? = id
 
-    override fun getEntityId(): Long? {
-        return id
+    override fun getEntityId(): Long {
+        return id!!
     }
 
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
@@ -91,8 +89,7 @@ class RegisterTokenDo(
         RegisterTokenResourceKind
 
     fun lock(): RegisterVerificationToken = RegisterVerificationToken(
-        id, token, userId,
-        expiryTime, used
+        id, token, userId, expiryTime, used
     )
 
     fun toBuilder(): Builder {
@@ -109,11 +106,6 @@ class RegisterTokenDo(
 
     companion object {
         @JvmStatic
-        fun RegisterVerificationToken.toDo(): RegisterTokenDo = RegisterTokenDo(
-            entityId, token, userId, expiryTime, used
-        )
-
-        @JvmStatic
         fun builder(): Builder {
             return Builder()
         }
@@ -128,12 +120,12 @@ class RegisterTokenDo(
 
         internal constructor()
 
-        internal constructor(registerTokenDo: RegisterTokenDo) {
-            id = registerTokenDo.id
-            token = registerTokenDo.token
-            userId = registerTokenDo.userId
-            expiryTime = registerTokenDo.expiryTime
-            used = registerTokenDo.used
+        internal constructor(registerTokenEntity: RegisterTokenEntity) {
+            id = registerTokenEntity.id
+            token = registerTokenEntity.token
+            userId = registerTokenEntity.userId
+            expiryTime = registerTokenEntity.expiryTime
+            used = registerTokenEntity.used
         }
 
         fun setId(id: Long?): Builder {
@@ -159,6 +151,16 @@ class RegisterTokenDo(
         fun setUsed(used: Boolean): Builder {
             this.used = used
             return this
+        }
+
+        fun build(): RegisterTokenEntity {
+            return RegisterTokenEntity(
+                id = id,
+                token = token,
+                userId = userId,
+                expiryTime = expiryTime,
+                used = used
+            )
         }
     }
 }

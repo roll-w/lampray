@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class CommentController(
 ) {
     @PostMapping("/{contentType}/{contentId}/comments")
     fun createComment(
-        @PathVariable("contentId") contentId: Long,
+        @PathVariable("contentId") contentId: String,
         @PathVariable("contentType") type: String,
         @RequestBody commentRequest: CommentRequest
     ): HttpResponseEntity<CommentVo> {
@@ -77,7 +77,7 @@ class CommentController(
 
     @GetMapping("/{contentType}/{contentId}/comments")
     fun getComments(
-        @PathVariable("contentId") contentId: Long,
+        @PathVariable("contentId") contentId: String,
         @PathVariable("contentType") type: String
     ): HttpResponseEntity<List<CommentVo>> {
         val contentType = getContentType(type)
@@ -105,7 +105,7 @@ class CommentController(
             .context
         val user = context.user!!
         val contents = contentCollectionProviderFactory.getContents(
-            ContentCollectionIdentity.of(user.userId, ContentCollectionType.USER_COMMENTS),
+            ContentCollectionIdentity.of(user.userId.toString(), ContentCollectionType.USER_COMMENTS),
             ContentAccessCredentials.NO_LIMIT
         ).mapNotNull {
             CommentVo.of(it.contentDetails)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public interface ContentDetails extends Content, TimeAttributed {
      * @inheritDoc
      */
     @Override
-    long getContentId();
+    String getContentId();
 
     /**
      * @inheritDoc

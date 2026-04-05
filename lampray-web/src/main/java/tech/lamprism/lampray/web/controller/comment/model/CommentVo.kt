@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,17 +26,17 @@ import java.time.OffsetDateTime
  * @author RollW
  */
 data class CommentVo(
-    val id: Long,
+    val id: String,
     val userId: Long,
-    val parent: Long,
+    val parent: String?,
     val content: StructuralText,
-    val contentId: Long,
+    val contentId: String,
     val contentType: ContentType,
     val createTime: OffsetDateTime,
     val updateTime: OffsetDateTime
 ) : ContentVo {
 
-    override fun id(): Long = id
+    override fun id(): String = id
 
     override fun createTime(): OffsetDateTime = createTime
 
@@ -53,11 +53,13 @@ data class CommentVo(
             if (metadata !is CommentDetailsMetadata) {
                 return null
             }
+            val content = contentDetails.content
+                ?: return null
             return CommentVo(
                 contentDetails.contentId,
                 contentDetails.userId,
                 metadata.parentId,
-                contentDetails.content,
+                content,
                 metadata.contentId,
                 metadata.contentType,
                 contentDetails.createTime,

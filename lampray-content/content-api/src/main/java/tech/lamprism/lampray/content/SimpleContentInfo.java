@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import space.lingu.NonNull;
  */
 public record SimpleContentInfo(
         long userId,
-        long contentId,
+        @NonNull String contentId,
         ContentType contentType
 ) implements Content {
 
@@ -39,7 +39,7 @@ public record SimpleContentInfo(
     }
 
     @Override
-    public long getContentId() {
+    public String getContentId() {
         return contentId;
     }
 
