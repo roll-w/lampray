@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,15 @@ package tech.lamprism.lampray.setting.data
 
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
-import java.util.Optional
 
 /**
  * @author RollW
  */
 @Repository
 class SystemSettingRepository(
-    private val systemSettingDao: SystemSettingDao
-) : CommonRepository<SystemSettingDo, Long>(systemSettingDao) {
-    fun findByKey(key: String): Optional<SystemSettingDo> {
-        return findOne { root, query, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<String>("key"), key)
-        }
-    }
-
-    fun findByKeyIn(keys: Set<String>): List<SystemSettingDo> {
-        if (keys.isEmpty()) {
-            return emptyList()
-        }
-        return findAll { root, query, criteriaBuilder ->
-            root.get<String>("key").`in`(keys)
-        }
+    systemSettingDao: SystemSettingDao
+) : CommonRepository<SystemSettingEntity, String>(systemSettingDao) {
+    override fun <S : SystemSettingEntity> save(entity: S): S {
+        return saveAndFlush(entity)
     }
 }

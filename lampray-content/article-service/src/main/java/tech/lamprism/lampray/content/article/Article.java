@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package tech.lamprism.lampray.content.article;
 import space.lingu.NonNull;
 import space.lingu.Nullable;
 import tech.lamprism.lampray.DataEntity;
-import tech.lamprism.lampray.LongEntityBuilder;
+import tech.lamprism.lampray.EntityBuilder;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentDetailsMetadata;
 import tech.lamprism.lampray.content.ContentType;
@@ -30,8 +30,9 @@ import java.time.OffsetDateTime;
 /**
  * @author RollW
  */
-public class Article implements DataEntity<Long>, ContentDetails {
+public class Article implements DataEntity<String>, ContentDetails {
     private final Long id;
+    private final String resourceId;
     private final long userId;
     private final String title;
     private final String cover;
@@ -39,9 +40,10 @@ public class Article implements DataEntity<Long>, ContentDetails {
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
 
-    public Article(Long id, long userId, String title, String cover,
+    public Article(Long id, String resourceId, long userId, String title, String cover,
                    StructuralText content, OffsetDateTime createTime, OffsetDateTime updateTime) {
         this.id = id;
+        this.resourceId = resourceId;
         this.userId = userId;
         this.title = title;
         this.cover = cover;
@@ -55,14 +57,14 @@ public class Article implements DataEntity<Long>, ContentDetails {
     }
 
     @Override
-    public Long getEntityId() {
-        return id;
+    public String getEntityId() {
+        return resourceId;
     }
 
     @Override
     @NonNull
-    public Long getResourceId() {
-        return DataEntity.super.getResourceId();
+    public String getResourceId() {
+        return resourceId;
     }
 
     @Override
@@ -103,8 +105,8 @@ public class Article implements DataEntity<Long>, ContentDetails {
         return cover;
     }
 
-    public Article fork(Long id) {
-        return new Article(id, userId, title, cover,
+    public Article fork(Long id, String resourceId) {
+        return new Article(id, resourceId, userId, title, cover,
                 content, createTime, updateTime
         );
     }
@@ -118,7 +120,7 @@ public class Article implements DataEntity<Long>, ContentDetails {
     }
 
     @Override
-    public long getContentId() {
+    public String getContentId() {
         return getEntityId();
     }
 
@@ -128,8 +130,9 @@ public class Article implements DataEntity<Long>, ContentDetails {
         return ContentType.ARTICLE;
     }
 
-    public final static class Builder implements LongEntityBuilder<Article> {
+    public final static class Builder implements EntityBuilder<Article, String> {
         private Long id;
+        private String resourceId;
         private long userId;
         private String title;
         private String cover;
@@ -143,6 +146,7 @@ public class Article implements DataEntity<Long>, ContentDetails {
 
         public Builder(Article article) {
             this.id = article.id;
+            this.resourceId = article.resourceId;
             this.userId = article.userId;
             this.title = article.title;
             this.cover = article.cover;
@@ -152,8 +156,17 @@ public class Article implements DataEntity<Long>, ContentDetails {
         }
 
         @Override
-        public Builder setEntityId(Long id) {
+        public Builder setEntityId(String id) {
+            return setResourceId(id);
+        }
+
+        public Builder setId(Long id) {
             this.id = id;
+            return this;
+        }
+
+        public Builder setResourceId(String resourceId) {
+            this.resourceId = resourceId;
             return this;
         }
 
@@ -189,7 +202,7 @@ public class Article implements DataEntity<Long>, ContentDetails {
 
         @Override
         public Article build() {
-            return new Article(id, userId, title, cover, content,
+            return new Article(id, resourceId, userId, title, cover, content,
                     createTime, updateTime);
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Lob
 import jakarta.persistence.Table
+import org.hibernate.annotations.Generated
 import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.generator.EventType
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.content.ContentAssociated
@@ -45,17 +45,20 @@ import java.time.OffsetDateTime
  */
 @Entity
 @Table(name = "comment")
-class CommentDo(
-    @Id
-    @Column(name = "id", nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+class CommentEntity(
+    @Column(name = "id", nullable = false, insertable = false, updatable = false)
+    @Generated(event = [EventType.INSERT])
     private var id: Long? = null,
+
+    @Id
+    @Column(name = "resource_id", nullable = false, length = 64, unique = true)
+    private var persistedResourceId: String,
 
     @Column(name = "user_id", nullable = false)
     private var userId: Long = 0,
 
     @Column(name = "parent_id", nullable = false)
-    var parentId: Long = 0,
+    var parentId: String = Comment.COMMENT_ROOT_ID,
 
     @Lob
     @Column(name = "content", nullable = false, length = 1000000)
@@ -72,21 +75,21 @@ class CommentDo(
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var commentOnType: ContentType = ContentType.COMMENT,
 
-    @Column(name = "comment_on_id", nullable = false)
-    var commentOnId: Long = 0,
+    @Column(name = "comment_on_id", nullable = false, length = 64)
+    var commentOnId: String = "",
 
     @Column(name = "comment_status", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     var commentStatus: CommentStatus = CommentStatus.NONE
-) : DataEntity<Long>, ContentDetails, ContentAssociated {
-    override fun getEntityId(): Long? = id
+) : DataEntity<String>, ContentDetails, ContentAssociated {
+    override fun getEntityId(): String = persistedResourceId
 
-    fun setId(id: Long) {
+    override fun getResourceId(): String = persistedResourceId
+
+    fun setId(id: Long?) {
         this.id = id
     }
-
-    override fun getResourceId(): Long = id!!
 
     override fun getCreateTime(): OffsetDateTime = createTime
 
@@ -100,7 +103,7 @@ class CommentDo(
         this.updateTime = updateTime
     }
 
-    override fun getContentId(): Long = id!!
+    override fun getContentId(): String = persistedResourceId
 
     override fun getContentType(): ContentType =
         ContentType.COMMENT
@@ -132,13 +135,14 @@ class CommentDo(
     }
 
     fun lock(): Comment = Comment(
-        id!!, userId, parentId, content, createTime,
+        id, persistedResourceId, userId, parentId, content, createTime,
         updateTime, commentOnType, commentOnId, commentStatus
     )
 
     override fun toString(): String {
-        return "CommentDo(" +
+        return "CommentEntity(" +
                 "id=$id, " +
+                "resourceId='$persistedResourceId', " +
                 "userId=$userId, " +
                 "parentId=$parentId, " +
                 "content='$content', " +
@@ -152,19 +156,21 @@ class CommentDo(
 
     class Builder {
         private var id: Long? = null
+        private var resourceId: String? = null
         private var userId: Long = 0
-        private var parentId: Long = 0
+        private var parentId: String = Comment.COMMENT_ROOT_ID
         private var content: StructuralText? = null
         private var createTime: OffsetDateTime? = null
         private var updateTime: OffsetDateTime? = null
         private var commentOnType: ContentType? = null
-        private var commentOnId: Long = 0
+        private var commentOnId: String = ""
         private var commentStatus: CommentStatus? = null
 
         constructor()
 
-        constructor(other: CommentDo) {
+        constructor(other: CommentEntity) {
             this.id = other.id
+            this.resourceId = other.getResourceId()
             this.userId = other.userId
             this.parentId = other.parentId
             this.content = other.content
@@ -179,11 +185,15 @@ class CommentDo(
             this.id = id
         }
 
+        fun setResourceId(resourceId: String) = apply {
+            this.resourceId = resourceId
+        }
+
         fun setUserId(userId: Long) = apply {
             this.userId = userId
         }
 
-        fun setParentId(parentId: Long) = apply {
+        fun setParentId(parentId: String) = apply {
             this.parentId = parentId
         }
 
@@ -203,7 +213,7 @@ class CommentDo(
             this.commentOnType = commentOnType
         }
 
-        fun setCommentOnId(commentOnId: Long) = apply {
+        fun setCommentOnId(commentOnId: String) = apply {
             this.commentOnId = commentOnId
         }
 
@@ -211,17 +221,18 @@ class CommentDo(
             this.commentStatus = commentStatus
         }
 
-        fun build(): CommentDo {
-            return CommentDo(
-                id,
-                userId,
-                parentId,
-                content!!,
-                createTime!!,
-                updateTime!!,
-                commentOnType!!,
-                commentOnId,
-                commentStatus!!
+        fun build(): CommentEntity {
+            return CommentEntity(
+                id = id,
+                persistedResourceId = resourceId!!,
+                userId = userId,
+                parentId = parentId,
+                content = content!!,
+                createTime = createTime!!,
+                updateTime = updateTime!!,
+                commentOnType = commentOnType!!,
+                commentOnId = commentOnId,
+                commentStatus = commentStatus!!
             )
         }
     }
@@ -231,11 +242,18 @@ class CommentDo(
         fun builder(): Builder = Builder()
 
         @JvmStatic
-        fun Comment.toDo(): CommentDo {
-            return CommentDo(
-                entityId, userId, parentId, content,
-                createTime, updateTime,
-                commentOnType, commentOnId, commentStatus
+        fun Comment.toEntity(): CommentEntity {
+            return CommentEntity(
+                id = null,
+                persistedResourceId = resourceId,
+                userId = userId,
+                parentId = parentId,
+                content = content,
+                createTime = createTime,
+                updateTime = updateTime,
+                commentOnType = commentOnType,
+                commentOnId = commentOnId,
+                commentStatus = commentStatus
             )
         }
     }

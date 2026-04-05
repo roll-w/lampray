@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import java.time.OffsetDateTime
  */
 @Entity
 @Table(name = "staff")
-class StaffDo(
+class StaffEntity(
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,9 +54,11 @@ class StaffDo(
     override var userId: Long = 0,
 
     @ElementCollection(targetClass = StaffType::class, fetch = FetchType.EAGER)
-    @CollectionTable(name = "staff_types", joinColumns = [
-        JoinColumn(name = "id", referencedColumnName = "id"),
-    ], foreignKey = ForeignKey(name = "index__type__id"))
+    @CollectionTable(
+        name = "staff_types", joinColumns = [
+            JoinColumn(name = "id", referencedColumnName = "id"),
+        ], foreignKey = ForeignKey(name = "index__type__id")
+    )
     @Column(name = "type", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
@@ -77,13 +79,13 @@ class StaffDo(
     var deleted: Boolean = false
 ) : DataEntity<Long>, AttributedStaff {
     override fun getEntityId(): Long? = id
-    
+
     fun setId(id: Long?) {
         this.id = id
     }
 
     override fun getCreateTime(): OffsetDateTime = createTime
-    
+
     fun setCreateTime(createTime: OffsetDateTime) {
         this.createTime = createTime
     }
@@ -93,14 +95,14 @@ class StaffDo(
     fun setUpdateTime(updateTime: OffsetDateTime) {
         this.updateTime = updateTime
     }
-    
+
     override val staffId: Long
         get() = id!!
 
     override fun getResourceId(): Long = id!!
 
     fun lock() = Staff(
-        id, userId, types, createTime, updateTime, 
+        id, userId, types, createTime, updateTime,
         asUser, deleted
     )
 
@@ -112,10 +114,10 @@ class StaffDo(
         private var updateTime: OffsetDateTime? = null
         private var asUser = false
         private var deleted = false
-        
+
         constructor()
-        
-        constructor(staff: StaffDo) {
+
+        constructor(staff: StaffEntity) {
             this.id = staff.id
             this.userId = staff.userId
             this.types = staff.types.toMutableSet()
@@ -129,7 +131,7 @@ class StaffDo(
             this.id = id
         }
 
-        fun setUserId(userId: Long) = apply{
+        fun setUserId(userId: Long) = apply {
             this.userId = userId
         }
 
@@ -166,26 +168,26 @@ class StaffDo(
         fun setDeleted(deleted: Boolean) = apply {
             this.deleted = deleted
         }
-        
-        fun build() = StaffDo(
+
+        fun build() = StaffEntity(
             id, userId, types ?: emptySet(),
-            createTime!!, 
-            updateTime!!, 
+            createTime!!,
+            updateTime!!,
             asUser, deleted
         )
     }
 
     companion object {
         @JvmStatic
-        fun Staff.toDo(): StaffDo {
-            return StaffDo(
+        fun Staff.toEntity(): StaffEntity {
+            return StaffEntity(
                 entityId, userId, types, createTime, updateTime,
                 isAsUser, isDeleted
             )
         }
-        
+
         @JvmStatic
         fun builder() = Builder()
     }
-    
+
 }

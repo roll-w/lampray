@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import java.util.Optional
  */
 @Repository
 class RegisterTokenRepository(
-    private val registerTokenDao: RegisterTokenDao
-) : CommonRepository<RegisterTokenDo, Long>(registerTokenDao) {
-    fun findByToken(token: String): Optional<RegisterTokenDo> {
+    registerTokenDao: RegisterTokenDao
+) : CommonRepository<RegisterTokenEntity, Long>(registerTokenDao) {
+    fun findByToken(token: String): Optional<RegisterTokenEntity> {
         return findOne { root, _, cb ->
-            cb.equal(root.get(RegisterTokenDo_.token), token)
+            cb.equal(root.get(RegisterTokenEntity_.token), token)
         }
     }
 }

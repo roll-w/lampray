@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,18 @@ import tech.lamprism.lampray.content.review.ReviewStatus
  */
 @Repository
 class ReviewJobRepository(
-    private val reviewJobDao: ReviewJobDao
+    reviewJobDao: ReviewJobDao
 ) : CommonRepository<ReviewJobEntity, String>(reviewJobDao) {
     override fun <S : ReviewJobEntity> save(entity: S): S {
-        return reviewJobDao.saveAndFlush(entity)
+        return saveAndFlush(entity)
     }
 
     override fun <S : ReviewJobEntity> saveAll(entities: Iterable<S>): List<S> {
-        return reviewJobDao.saveAllAndFlush(entities)
+        return saveAllAndFlush(entities)
     }
 
     fun findByContent(
-        contentId: Long,
+        contentId: String,
         contentType: ContentType,
     ): List<ReviewJobEntity> = findAll { root, _, criteriaBuilder ->
         criteriaBuilder.and(
@@ -47,7 +47,7 @@ class ReviewJobRepository(
     }
 
     fun findByContentAndStatus(
-        contentId: Long,
+        contentId: String,
         contentType: ContentType,
         reviewStatus: ReviewStatus
     ): List<ReviewJobEntity> = findAll { root, _, criteriaBuilder ->

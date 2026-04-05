@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.Objects;
  * @author RollW
  */
 @SuppressWarnings("all")
-public class SystemSetting implements DataEntity<Long> {
+public class SystemSetting implements DataEntity<String> {
     private final Long id;
     private final String key;
     private final String value;
@@ -47,9 +47,13 @@ public class SystemSetting implements DataEntity<Long> {
         return value;
     }
 
-    @Override
-    public Long getEntityId() {
+    public Long getId() {
         return id;
+    }
+
+    @Override
+    public String getEntityId() {
+        return key;
     }
 
     @NonNull
@@ -95,7 +99,7 @@ public class SystemSetting implements DataEntity<Long> {
                 + '}';
     }
 
-    public static final class Builder implements EntityBuilder<SystemSetting, Long> {
+    public static final class Builder implements EntityBuilder<SystemSetting, String> {
         private Long id;
         private String key;
         private String value;
@@ -104,10 +108,11 @@ public class SystemSetting implements DataEntity<Long> {
         }
 
         public Builder(SystemSetting systemSetting) {
-            this.id = systemSetting.getEntityId();
+            this.id = systemSetting.id;
             this.key = systemSetting.getKey();
             this.value = systemSetting.getValue();
         }
+
 
         public Builder setKey(String key) {
             this.key = key;
@@ -124,9 +129,14 @@ public class SystemSetting implements DataEntity<Long> {
             return new SystemSetting(id, key, value);
         }
 
-        @Override
-        public Builder setEntityId(Long id) {
+        public Builder setId(Long id) {
             this.id = id;
+            return this;
+        }
+
+        @Override
+        public Builder setEntityId(String id) {
+            this.key = id;
             return this;
         }
     }

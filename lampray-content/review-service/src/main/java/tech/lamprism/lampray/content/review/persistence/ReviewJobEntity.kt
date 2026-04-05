@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,8 @@ class ReviewJobEntity(
     @Column(name = "resource_id", nullable = false, length = 64, unique = true)
     var resourceId: String = "",
 
-    @Column(name = "content_id", nullable = false)
-    var reviewContentId: Long = 0,
+    @Column(name = "content_id", nullable = false, length = 64)
+    var reviewContentId: String = "",
 
     @Column(name = "content_type", nullable = false, length = 40)
     @Enumerated(EnumType.STRING)
@@ -123,7 +123,7 @@ class ReviewJobEntity(
     class Builder {
         private var id: Long? = null
         private var resourceId: String? = null
-        private var reviewContentId: Long = 0
+        private var reviewContentId: String = ""
         private var reviewContentType: ContentType = ContentType.ARTICLE
         private var status: ReviewStatus = ReviewStatus.PENDING
         private var createTime: OffsetDateTime = OffsetDateTime.now()
@@ -151,7 +151,7 @@ class ReviewJobEntity(
             this.resourceId = resourceId
         }
 
-        fun setReviewContentId(reviewContentId: Long) = apply {
+        fun setReviewContentId(reviewContentId: String) = apply {
             this.reviewContentId = reviewContentId
         }
 
@@ -191,7 +191,7 @@ class ReviewJobEntity(
 
     companion object {
         @JvmStatic
-        fun ReviewJob.toDo(): ReviewJobEntity = ReviewJobEntity(
+        fun ReviewJob.toEntity(): ReviewJobEntity = ReviewJobEntity(
             id, jobId,
             reviewContentId = reviewContentId,
             reviewContentType = reviewContentType,

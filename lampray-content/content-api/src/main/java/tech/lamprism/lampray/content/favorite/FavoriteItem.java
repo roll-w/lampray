@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package tech.lamprism.lampray.content.favorite;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.DataEntity;
-import tech.lamprism.lampray.LongEntityBuilder;
+import tech.lamprism.lampray.EntityBuilder;
 import tech.lamprism.lampray.content.ContentAssociated;
 import tech.lamprism.lampray.content.ContentIdentity;
 import tech.lamprism.lampray.content.ContentType;
@@ -29,22 +29,24 @@ import java.time.OffsetDateTime;
 /**
  * @author RollW
  */
-public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
+public class FavoriteItem implements DataEntity<String>, ContentAssociated {
     private final Long id;
-    private final long groupId;
+    private final String resourceId;
+    private final String groupId;
     private final long userId;
-    private final long contentId;
+    private final String contentId;
     private final ContentType contentType;
     private final OffsetDateTime createTime;
     private final OffsetDateTime updateTime;
     private final boolean deleted;
     private final ContentIdentity associatedContent;
 
-    public FavoriteItem(Long id, long groupId, long userId,
-                        long contentId, ContentType contentType,
+    public FavoriteItem(Long id, String resourceId, String groupId, long userId,
+                        String contentId, ContentType contentType,
                         OffsetDateTime createTime,
                         OffsetDateTime updateTime, boolean deleted) {
         this.id = id;
+        this.resourceId = resourceId;
         this.groupId = groupId;
         this.userId = userId;
         this.contentId = contentId;
@@ -55,12 +57,16 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
         this.associatedContent = ContentIdentity.of(contentId, contentType);
     }
 
-    @Override
-    public Long getEntityId() {
+    public Long getId() {
         return id;
     }
 
-    public long getGroupId() {
+    @Override
+    public String getEntityId() {
+        return resourceId;
+    }
+
+    public String getGroupId() {
         return groupId;
     }
 
@@ -68,7 +74,7 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
         return userId;
     }
 
-    public long getContentId() {
+    public String getContentId() {
         return contentId;
     }
 
@@ -111,11 +117,12 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
         return new Builder();
     }
 
-    public static final class Builder implements LongEntityBuilder<FavoriteItem> {
+    public static final class Builder implements EntityBuilder<FavoriteItem, String> {
         private Long id;
-        private long groupId;
+        private String resourceId;
+        private String groupId;
         private long userId;
-        private long contentId;
+        private String contentId;
         private ContentType contentType;
         private OffsetDateTime createTime;
         private OffsetDateTime updateTime;
@@ -124,24 +131,34 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
         private Builder() {
         }
 
-        private Builder(FavoriteItem favoriteitem) {
-            this.id = favoriteitem.id;
-            this.groupId = favoriteitem.groupId;
-            this.userId = favoriteitem.userId;
-            this.contentId = favoriteitem.contentId;
-            this.contentType = favoriteitem.contentType;
-            this.createTime = favoriteitem.createTime;
-            this.updateTime = favoriteitem.updateTime;
-            this.deleted = favoriteitem.deleted;
+        private Builder(FavoriteItem favoriteItem) {
+            this.id = favoriteItem.id;
+            this.resourceId = favoriteItem.resourceId;
+            this.groupId = favoriteItem.groupId;
+            this.userId = favoriteItem.userId;
+            this.contentId = favoriteItem.contentId;
+            this.contentType = favoriteItem.contentType;
+            this.createTime = favoriteItem.createTime;
+            this.updateTime = favoriteItem.updateTime;
+            this.deleted = favoriteItem.deleted;
         }
 
         @Override
-        public Builder setEntityId(Long id) {
+        public Builder setEntityId(String id) {
+            return setResourceId(id);
+        }
+
+        public Builder setId(Long id) {
             this.id = id;
             return this;
         }
 
-        public Builder setGroupId(long groupId) {
+        public Builder setResourceId(String resourceId) {
+            this.resourceId = resourceId;
+            return this;
+        }
+
+        public Builder setGroupId(String groupId) {
             this.groupId = groupId;
             return this;
         }
@@ -151,7 +168,7 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
             return this;
         }
 
-        public Builder setContentId(long contentId) {
+        public Builder setContentId(String contentId) {
             this.contentId = contentId;
             return this;
         }
@@ -176,8 +193,9 @@ public class FavoriteItem implements DataEntity<Long>, ContentAssociated {
             return this;
         }
 
+        @Override
         public FavoriteItem build() {
-            return new FavoriteItem(id, groupId, userId, contentId,
+            return new FavoriteItem(id, resourceId, groupId, userId, contentId,
                     contentType, createTime, updateTime, deleted);
         }
     }

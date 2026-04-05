@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import space.lingu.NonNull;
  * @author RollW
  */
 public record SimpleContentIdentity(
-        long contentId,
+        @NonNull String contentId,
         @NonNull ContentType contentType
 ) implements ContentIdentity {
     @Override
-    public long getContentId() {
+    public String getContentId() {
         return contentId;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import tech.lamprism.lampray.user.User;
 import tech.lamprism.lampray.user.UserResourceKind;
 import tech.lamprism.lampray.user.UserViewException;
 import tech.lamprism.lampray.user.filter.UserInfoFilter;
-import tech.lamprism.lampray.user.repository.UserDo;
+import tech.lamprism.lampray.user.repository.UserEntity;
 import tech.lamprism.lampray.user.repository.UserRepository;
 import tech.rollw.common.web.CommonRuntimeException;
 import tech.rollw.common.web.UserErrorCode;
@@ -82,8 +82,8 @@ public class UserProviderService implements SystemResourceProvider<Long>,
         return getUser(rawSystemResource.getResourceId());
     }
 
-    private UserDo getUser(long id) {
-        UserDo user = userRepository.findById(id).orElse(null);
+    private UserEntity getUser(long id) {
+        UserEntity user = userRepository.findById(id).orElse(null);
         if (user == null) {
             throw new UserViewException(UserErrorCode.ERROR_USER_NOT_EXIST);
         }
@@ -92,12 +92,12 @@ public class UserProviderService implements SystemResourceProvider<Long>,
 
     @Override
     public void updateUser(User user) {
-        userRepository.save(UserDo.toDo(user));
+        userRepository.save(UserEntity.toEntity(user));
     }
 
     @Override
     public boolean checkUsernameExist(String username, long id) {
-        UserDo user = userRepository.findByUsername(username).orElse(null);
+        UserEntity user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             return false;
         }
@@ -109,7 +109,7 @@ public class UserProviderService implements SystemResourceProvider<Long>,
 
     @Override
     public boolean checkEmailExist(String email, long id) {
-        UserDo user = userRepository.findByEmail(email).orElse(null);
+        UserEntity user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
             return false;
         }

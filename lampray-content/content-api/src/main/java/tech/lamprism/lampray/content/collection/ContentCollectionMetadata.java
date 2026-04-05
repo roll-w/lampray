@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class ContentCollectionMetadata implements DataEntity<Long> {
 
     private final ContentCollectionType type;
 
-    private final long contentId;
+    private final String contentId;
 
     @Nullable
     private final ContentType contentType;
@@ -54,7 +54,7 @@ public class ContentCollectionMetadata implements DataEntity<Long> {
     public ContentCollectionMetadata(@Nullable Long id,
                                      long collectionId,
                                      ContentCollectionType type,
-                                     long contentId,
+                                     String contentId,
                                      @Nullable ContentType contentType,
                                      @Nullable Integer order) {
         this.id = id;
@@ -91,7 +91,7 @@ public class ContentCollectionMetadata implements DataEntity<Long> {
         return type;
     }
 
-    public long getContentId() {
+    public String getContentId() {
         return contentId;
     }
 
@@ -144,7 +144,7 @@ public class ContentCollectionMetadata implements DataEntity<Long> {
         private Long id;
         private long collectionId;
         private ContentCollectionType type;
-        private long contentId;
+        private String contentId;
         @Nullable
         private ContentType contentType;
         @Nullable
@@ -178,7 +178,7 @@ public class ContentCollectionMetadata implements DataEntity<Long> {
             return this;
         }
 
-        public Builder setContentId(long contentId) {
+        public Builder setContentId(String contentId) {
             this.contentId = contentId;
             return this;
         }

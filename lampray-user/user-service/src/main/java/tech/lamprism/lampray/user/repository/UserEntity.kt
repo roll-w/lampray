@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import java.time.OffsetDateTime
         UniqueConstraint(columnNames = ["username"], name = "index__username")
     ]
 )
-class UserDo(
+class UserEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -170,7 +170,7 @@ class UserDo(
     }
 
     override fun toString(): String {
-        return "UserDo{" +
+        return "UserEntity{" +
                 "id=" + id +
                 ", username='" + username + '\'' +
                 ", password='" + password + '\'' +
@@ -210,7 +210,7 @@ class UserDo(
 
         constructor()
 
-        constructor(other: UserDo) {
+        constructor(other: UserEntity) {
             this.id = other.id
             this.username = other.username
             this.password = other.password
@@ -268,8 +268,8 @@ class UserDo(
             this.canceled = canceled
         }
 
-        fun build(): UserDo {
-            return UserDo(
+        fun build(): UserEntity {
+            return UserEntity(
                 id,
                 username,
                 password,
@@ -287,8 +287,8 @@ class UserDo(
 
     companion object {
         @JvmStatic
-        fun User.toDo(): UserDo {
-            return UserDo(
+        fun User.toEntity(): UserEntity {
+            return UserEntity(
                 entityId, username, password, role,
                 registerTime, updateTime, email, phone,
                 isEnabled, isLocked, isCanceled

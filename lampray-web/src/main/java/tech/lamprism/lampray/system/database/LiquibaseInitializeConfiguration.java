@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,10 @@ package tech.lamprism.lampray.system.database;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
+import liquibase.Scope;
+import liquibase.changelog.ChangeLogHistoryService;
+import liquibase.changelog.ChangeLogHistoryServiceFactory;
+import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
@@ -35,6 +39,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Liquibase initialization configuration for database migration management.
@@ -46,6 +51,7 @@ public class LiquibaseInitializeConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(LiquibaseInitializeConfiguration.class);
 
     private static final String CHANGELOG_PATH = "classpath:db/changelog.yaml";
+    private static final String BASELINE_CHANGELOG_PATH_PREFIX = "db/baseline/";
 
     private static final String BASELINE_CONTEXT = "baseline";
     private static final String INCREMENTAL_CONTEXT = "incremental";
@@ -78,7 +84,7 @@ public class LiquibaseInitializeConfiguration {
 
         switch (status) {
             case NEW_INSTALL -> handleNewInstallationSync(dataSource, liquibase);
-            case NORMAL_UPGRADE -> handleNormalUpgradeSync(dataSource, liquibase);
+            case NORMAL_UPGRADE -> handleNormalUpgradeSync(dataSource);
         }
 
         return liquibase;
@@ -156,8 +162,8 @@ public class LiquibaseInitializeConfiguration {
     }
 
 
-    private void handleNormalUpgradeSync(DataSource dataSource, SpringLiquibase springLiquibase) throws  Exception {
-        logger.info("Normal upgrade detected: syncing baseline changeSets...");
+    private void handleNormalUpgradeSync(DataSource dataSource) throws Exception {
+        logger.info("Normal upgrade detected: refreshing mutable baseline checksums and syncing baseline changeSets...");
 
         try (Connection connection = dataSource.getConnection()) {
             Database database = DatabaseFactory.getInstance()
@@ -168,10 +174,65 @@ public class LiquibaseInitializeConfiguration {
                     new ClassLoaderResourceAccessor(),
                     database
             );
+
+            refreshMutableBaselineChecksums(liquibase, database);
             syncChangeSetsByContext(liquibase, BASELINE_CONTEXT);
             logger.info("Normal upgrade sync completed: baseline changeSets marked as executed, " +
                     "future incremental changeSets will be applied on upgrades.");
         }
+    }
+
+    private void refreshMutableBaselineChecksums(Liquibase liquibase, Database database) throws Exception {
+        ChangeLogHistoryService changeLogHistoryService = Scope.getCurrentScope()
+                .getSingleton(ChangeLogHistoryServiceFactory.class)
+                .getChangeLogService(database);
+        int refreshedChecksums = 0;
+
+        for (ChangeSet changeSet : liquibase.getDatabaseChangeLog().getChangeSets()) {
+            if (!isMutableBaselineChangeSet(changeSet)) {
+                continue;
+            }
+
+            ChangeSet.RunStatus runStatus = database.getRunStatus(changeSet);
+            if (runStatus == ChangeSet.RunStatus.INVALID_MD5SUM || runStatus == ChangeSet.RunStatus.RUN_AGAIN) {
+                changeLogHistoryService.replaceChecksum(changeSet);
+                refreshedChecksums++;
+                logger.info("Refreshed checksum for mutable baseline changeset {}::{}::{}",
+                        changeSet.getFilePath(), changeSet.getId(), changeSet.getAuthor());
+            }
+        }
+
+        if (refreshedChecksums > 0) {
+            logger.info("Refreshed {} mutable baseline checksum(s) before Liquibase validation.", refreshedChecksums);
+        }
+    }
+
+    private boolean isMutableBaselineChangeSet(ChangeSet changeSet) {
+        return hasBaselinePath(changeSet.getFilePath())
+                || hasBaselinePath(changeSet.getStoredFilePath())
+                || hasBaselineContext(changeSet);
+    }
+
+    private boolean hasBaselinePath(String filePath) {
+        if (filePath == null) {
+            return false;
+        }
+
+        String normalizedPath = filePath.replace('\\', '/');
+        if (normalizedPath.startsWith("classpath:")) {
+            normalizedPath = normalizedPath.substring("classpath:".length());
+        }
+
+        return normalizedPath.startsWith(BASELINE_CHANGELOG_PATH_PREFIX)
+                || normalizedPath.contains("/" + BASELINE_CHANGELOG_PATH_PREFIX);
+    }
+
+    private boolean hasBaselineContext(ChangeSet changeSet) {
+        if (changeSet.getContextFilter() == null) {
+            return false;
+        }
+
+        return changeSet.getContextFilter().toString().toLowerCase(Locale.ROOT).contains(BASELINE_CONTEXT);
     }
 
     private void handleLegacyMigrationSync(DataSource dataSource) throws Exception {

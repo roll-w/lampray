@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import tech.rollw.common.web.system.SystemResourceOperator;
 /**
  * @author RollW
  */
-public interface ContentOperator extends SystemResourceOperator<Long>, ContentDetails {
+public interface ContentOperator extends SystemResourceOperator<String>, ContentDetails {
     @Override
     ContentOperator update() throws CommonRuntimeException;
 
@@ -68,7 +68,7 @@ public interface ContentOperator extends SystemResourceOperator<Long>, ContentDe
 
     @NonNull
     @Override
-    default Long getResourceId() {
+    default String getResourceId() {
         return getContentId();
     }
 

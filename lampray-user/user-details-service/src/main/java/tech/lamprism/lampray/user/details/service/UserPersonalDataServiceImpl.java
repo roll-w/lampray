@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import tech.lamprism.lampray.user.details.UserDataField;
 import tech.lamprism.lampray.user.details.UserDataFieldType;
 import tech.lamprism.lampray.user.details.UserPersonalData;
 import tech.lamprism.lampray.user.details.UserPersonalDataService;
-import tech.lamprism.lampray.user.details.persistence.UserPersonalDataDo;
+import tech.lamprism.lampray.user.details.persistence.UserPersonalDataEntity;
 import tech.lamprism.lampray.user.details.persistence.UserPersonalDataRepository;
 
 import java.time.OffsetDateTime;
@@ -47,8 +47,7 @@ public class UserPersonalDataServiceImpl implements UserPersonalDataService {
 
     @Override
     public UserPersonalData getPersonalData(long userId) {
-        UserPersonalDataDo data = userPersonalDataRepository.findById(userId)
-                .orElse(null);
+        UserPersonalDataEntity data = userPersonalDataRepository.findById(userId).orElse(null);
         if (data == null) {
             AttributedUser user = userProvider.getUser(userId);
             return UserPersonalData.defaultOf(user);
@@ -63,8 +62,7 @@ public class UserPersonalDataServiceImpl implements UserPersonalDataService {
 
     @Override
     public UserPersonalData getPersonalData(UserIdentity userIdentity) {
-        UserPersonalDataDo data = userPersonalDataRepository.findById(
-                userIdentity.getUserId()).orElse(null);
+        UserPersonalDataEntity data = userPersonalDataRepository.findById(userIdentity.getUserId()).orElse(null);
         if (data == null) {
             return UserPersonalData.defaultOf(userIdentity);
         }
@@ -98,7 +96,7 @@ public class UserPersonalDataServiceImpl implements UserPersonalDataService {
     public List<UserPersonalData> getPersonalDataByIds(List<Long> ids) {
         return userPersonalDataRepository.findAllById(ids)
                 .stream()
-                .map(UserPersonalDataDo::lock)
+                .map(UserPersonalDataEntity::lock)
                 .toList();
     }
 
@@ -113,9 +111,8 @@ public class UserPersonalDataServiceImpl implements UserPersonalDataService {
         if (fields.length == 0) {
             return;
         }
-        UserPersonalDataDo exist = userPersonalDataRepository.findById(user.getUserId())
-                .orElse(null);
-        UserPersonalDataDo.Builder builder = toBuilder(exist);
+        UserPersonalDataEntity exist = userPersonalDataRepository.findById(user.getUserId()).orElse(null);
+        UserPersonalDataEntity.Builder builder = toBuilder(exist, user.getUserId());
         for (UserDataField<?> field : fields) {
             Utils.setBuilderValue(builder, field);
         }
@@ -123,10 +120,11 @@ public class UserPersonalDataServiceImpl implements UserPersonalDataService {
         userPersonalDataRepository.save(builder.build());
     }
 
-    private UserPersonalDataDo.Builder toBuilder(UserPersonalDataDo data) {
+    private UserPersonalDataEntity.Builder toBuilder(UserPersonalDataEntity data, long userId) {
         if (data != null) {
             return data.toBuilder();
         }
-        return UserPersonalDataDo.builder();
+        return UserPersonalDataEntity.builder()
+                .setUserId(userId);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,14 @@ import tech.lamprism.lampray.content.review.ReviewTaskStatus
  */
 @Repository
 class ReviewTaskRepository(
-    private val reviewTaskDao: ReviewTaskDao
+    reviewTaskDao: ReviewTaskDao
 ) : CommonRepository<ReviewTaskEntity, String>(reviewTaskDao) {
     override fun <S : ReviewTaskEntity> save(entity: S): S {
-        return reviewTaskDao.saveAndFlush(entity)
+        return saveAndFlush(entity)
     }
 
     override fun <S : ReviewTaskEntity> saveAll(entities: Iterable<S>): List<S> {
-        return reviewTaskDao.saveAllAndFlush(entities)
+        return saveAllAndFlush(entities)
     }
 
     fun findByJobId(jobId: String): List<ReviewTaskEntity> {

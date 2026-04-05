@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import space.lingu.NonNull;
+import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.content.ContentDetails;
 import tech.lamprism.lampray.content.ContentPublisher;
 import tech.lamprism.lampray.content.ContentType;
 import tech.lamprism.lampray.content.UncreatedContent;
 import tech.lamprism.lampray.content.article.Article;
-import tech.lamprism.lampray.content.article.persistence.ArticleDo;
+import tech.lamprism.lampray.content.article.persistence.ArticleEntity;
 import tech.lamprism.lampray.content.article.persistence.ArticleRepository;
 import tech.lamprism.lampray.content.collection.ContentCollectionIdentity;
 import tech.lamprism.lampray.content.collection.ContentCollectionProvider;
@@ -47,9 +48,12 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
     private static final Logger logger = LoggerFactory.getLogger(ArticleService.class);
 
     private final ArticleRepository articleRepository;
+    private final ResourceIdGenerator resourceIdGenerator;
 
-    public ArticleService(ArticleRepository articleRepository) {
+    public ArticleService(ArticleRepository articleRepository,
+                          ResourceIdGenerator resourceIdGenerator) {
         this.articleRepository = articleRepository;
+        this.resourceIdGenerator = resourceIdGenerator;
     }
 
     @Override
@@ -69,7 +73,8 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
             throw new ContentException(ContentErrorCode.ERROR_CONTENT_EXISTED);
         }
 
-        ArticleDo article = ArticleDo.builder()
+        ArticleEntity article = ArticleEntity.builder()
+                .setResourceId(resourceIdGenerator.nextId(ContentType.ARTICLE.getSystemResourceKind()))
                 .setUserId(userId)
                 .setTitle(title)
                 .setContent(content)
@@ -77,9 +82,9 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
                 .setCreateTime(timestamp)
                 .setUpdateTime(timestamp)
                 .build();
-        ArticleDo created = articleRepository.save(article);
+        ArticleEntity created = articleRepository.save(article);
         logger.trace("Article({}) title={} created by user({})",
-                created.getEntityId(), created.getTitle(), created.getUserId());
+                created.getResourceId(), created.getTitle(), created.getUserId());
         return created;
     }
 
@@ -91,14 +96,14 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
     private List<Article> getUserArticles(long id) {
         return articleRepository.findAllByUserId(id)
                 .stream()
-                .map(ArticleDo::lock)
+                .map(ArticleEntity::lock)
                 .toList();
     }
 
     private List<Article> getArticles() {
         return articleRepository.findAll()
                 .stream()
-                .map(ArticleDo::lock)
+                .map(ArticleEntity::lock)
                 .toList();
     }
 
@@ -117,7 +122,7 @@ public class ArticleService implements ContentPublisher, ContentCollectionProvid
         return switch (contentCollectionIdentity.getContentCollectionType()) {
             case ARTICLES -> getArticles();
             case USER_ARTICLES -> getUserArticles(
-                    contentCollectionIdentity.getContentCollectionId()
+                    Long.parseLong(contentCollectionIdentity.getContentCollectionId())
             );
             default -> throw new UnsupportedOperationException("Unsupported collection type: " +
                     contentCollectionIdentity.getContentCollectionType());

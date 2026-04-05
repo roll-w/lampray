@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,11 +46,11 @@ import java.util.Locale
         UniqueConstraint(columnNames = ["key", "locale"], name = "index__key_locale")
     ]
 )
-class LocalizedMessageDo(
+class LocalizedMessageEntity(
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null,
+    var id: Long? = null,
 
     @Column(name = "key", nullable = false, length = 255)
     override var key: String = "",
@@ -71,10 +71,6 @@ class LocalizedMessageDo(
         return id
     }
 
-    fun setId(id: Long?) {
-        this.id = id
-    }
-
     override fun getCreateTime(): OffsetDateTime = TimeAttributed.NONE_TIME
 
     override fun getUpdateTime(): OffsetDateTime = updateTime
@@ -92,8 +88,8 @@ class LocalizedMessageDo(
     }
 
     companion object {
-        fun LocalizedMessage.toDo(): LocalizedMessageDo {
-            return LocalizedMessageDo(entityId, key, value, locale, updateTime)
+        fun LocalizedMessage.toEntity(): LocalizedMessageEntity {
+            return LocalizedMessageEntity(entityId, key, value, locale, updateTime)
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,7 +221,7 @@ class ReviewTaskEntity(
          * Converts immutable [ReviewTask] to mutable entity.
          */
         @JvmStatic
-        fun ReviewTask.toDo(): ReviewTaskEntity = ReviewTaskEntity(
+        fun ReviewTask.toEntity(): ReviewTaskEntity = ReviewTaskEntity(
             id,
             resourceId = taskId,
             reviewJobId = reviewJobId,
@@ -249,7 +249,10 @@ class ReviewTaskEntity(
         return resourceId == other.resourceId
     }
 
-    final override fun hashCode(): Int =
-        if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass.hashCode() else javaClass.hashCode()
+    final override fun hashCode(): Int {
+        val effectiveClass =
+            if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else javaClass
+        return 31 * effectiveClass.hashCode() + resourceId.hashCode()
+    }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package tech.lamprism.lampray.security.authentication.registration;
 
 import space.lingu.NonNull;
 import tech.lamprism.lampray.DataEntity;
-import tech.lamprism.lampray.LongEntityBuilder;
+import tech.lamprism.lampray.EntityBuilder;
 import tech.lamprism.lampray.security.authentication.VerifiableToken;
 import tech.rollw.common.web.system.SystemResourceKind;
 
@@ -34,7 +34,7 @@ public record RegisterVerificationToken(
         Long id,
         String token,
         long userId,
-        long expiryTime,// timestamp
+        long expiryTime,
         boolean used
 ) implements VerifiableToken, DataEntity<Long> {
 
@@ -42,7 +42,7 @@ public record RegisterVerificationToken(
         return System.currentTimeMillis() > expiryTime;
     }
 
-    private static final int EXPIRATION = 60 * 24;// min
+    private static final int EXPIRATION = 60 * 24;
 
     public static long calculateExpiryDate(int expiryTimeInMinutes) {
         long now = System.currentTimeMillis();
@@ -103,7 +103,7 @@ public record RegisterVerificationToken(
         return !used && !isExpired();
     }
 
-    public static final class Builder implements LongEntityBuilder<RegisterVerificationToken> {
+    public static final class Builder implements EntityBuilder<RegisterVerificationToken, Long> {
         private Long id;
         private String token;
         private long userId;
@@ -123,6 +123,10 @@ public record RegisterVerificationToken(
 
         @Override
         public Builder setEntityId(Long id) {
+            return setId(id);
+        }
+
+        public Builder setId(Long id) {
             this.id = id;
             return this;
         }
