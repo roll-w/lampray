@@ -27,7 +27,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class BlobMaterializationBuildPreparedBlobStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
+public class BlobMaterializationBuildPreparedBlobStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
     @Override
     public int getOrder() {
         return 400;

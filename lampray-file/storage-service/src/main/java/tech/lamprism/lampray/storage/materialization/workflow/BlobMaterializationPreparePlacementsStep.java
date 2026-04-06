@@ -39,7 +39,7 @@ import java.util.Set;
  * @author RollW
  */
 @Component
-final class BlobMaterializationPreparePlacementsStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
+public class BlobMaterializationPreparePlacementsStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
     private final BlobStoreLocator blobStoreLocator;
     private final BlobObjectKeyFactory blobObjectKeyFactory;
     private final BlobPlacementWriter blobPlacementWriter;

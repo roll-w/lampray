@@ -27,7 +27,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class TrustedUploadPublishTrafficStep implements WorkflowStep<TrustedUploadWorkflowContext> {
+public class TrustedUploadPublishTrafficStep implements WorkflowStep<TrustedUploadWorkflowContext> {
     private final StorageTrafficPublisher storageTrafficPublisher;
 
     TrustedUploadPublishTrafficStep(StorageTrafficPublisher storageTrafficPublisher) {

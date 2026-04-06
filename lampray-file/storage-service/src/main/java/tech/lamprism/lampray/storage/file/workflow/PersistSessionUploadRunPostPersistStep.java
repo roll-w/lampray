@@ -17,20 +17,22 @@
 package tech.lamprism.lampray.storage.file.workflow;
 
 import org.springframework.stereotype.Component;
-import tech.lamprism.lampray.storage.materialization.hook.StorageMaterializationHookNotifier;
+import tech.lamprism.lampray.storage.materialization.hook.StorageMaterializationContext;
+import tech.lamprism.lampray.storage.materialization.hook.StorageMaterializationHook;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
  * @author RollW
  */
 @Component
-final class PersistSessionUploadRunPostPersistStep implements WorkflowStep<PersistSessionUploadWorkflowContext> {
-    private final StorageMaterializationHookNotifier storageMaterializationHookNotifier;
+public class PersistSessionUploadRunPostPersistStep implements WorkflowStep<PersistSessionUploadWorkflowContext> {
+    private final List<StorageMaterializationHook> storageMaterializationHooks;
 
-    PersistSessionUploadRunPostPersistStep(StorageMaterializationHookNotifier storageMaterializationHookNotifier) {
-        this.storageMaterializationHookNotifier = storageMaterializationHookNotifier;
+    PersistSessionUploadRunPostPersistStep(List<StorageMaterializationHook> storageMaterializationHooks) {
+        this.storageMaterializationHooks = List.copyOf(storageMaterializationHooks);
     }
 
     @Override
@@ -40,12 +42,16 @@ final class PersistSessionUploadRunPostPersistStep implements WorkflowStep<Persi
 
     @Override
     public void execute(PersistSessionUploadWorkflowContext context) {
-        storageMaterializationHookNotifier.notifyAfterMaterialized(
-                Objects.requireNonNull(context.getState().getPersistedMaterialization(), "persistedMaterialization")
-                        .toMaterializationContext(
-                                context.getUploadSession().getGroupName(),
-                                context.getUploadSession().getOwnerUserId()
-                        )
-        );
+        StorageMaterializationContext materializationContext = Objects.requireNonNull(context.getState()
+                        .getPersistedMaterialization(), "persistedMaterialization")
+                .toMaterializationContext(
+                        context.getUploadSession().getGroupName(),
+                        context.getUploadSession().getOwnerUserId()
+                );
+        for (StorageMaterializationHook hook : storageMaterializationHooks) {
+            hook.afterMaterialized(
+                    materializationContext
+            );
+        }
     }
 }

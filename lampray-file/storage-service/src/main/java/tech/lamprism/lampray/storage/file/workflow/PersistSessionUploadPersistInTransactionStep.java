@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.storage.file.workflow;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.file.PersistedMaterialization;
 import tech.lamprism.lampray.storage.file.StorageFilePersistenceTransactionService;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
@@ -24,7 +25,7 @@ import tech.lamprism.lampray.storage.workflow.WorkflowStep;
  * @author RollW
  */
 @Component
-final class PersistSessionUploadPersistInTransactionStep implements WorkflowStep<PersistSessionUploadWorkflowContext> {
+public class PersistSessionUploadPersistInTransactionStep implements WorkflowStep<PersistSessionUploadWorkflowContext> {
     private final StorageFilePersistenceTransactionService storageFilePersistenceTransactionService;
 
     PersistSessionUploadPersistInTransactionStep(StorageFilePersistenceTransactionService storageFilePersistenceTransactionService) {
@@ -38,7 +39,7 @@ final class PersistSessionUploadPersistInTransactionStep implements WorkflowStep
 
     @Override
     public void execute(PersistSessionUploadWorkflowContext context) {
-        var persistedMaterialization =
+        PersistedMaterialization persistedMaterialization =
                 storageFilePersistenceTransactionService.persistSessionUpload(context.getUploadSession(), context.getPreparedBlob())
         ;
         context.getState().setPersistedMaterialization(persistedMaterialization);

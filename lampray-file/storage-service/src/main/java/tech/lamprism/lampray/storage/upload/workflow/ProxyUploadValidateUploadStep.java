@@ -25,7 +25,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class ProxyUploadValidateUploadStep implements WorkflowStep<ProxyUploadWorkflowContext> {
+public class ProxyUploadValidateUploadStep implements WorkflowStep<ProxyUploadWorkflowContext> {
     @Override
     public int getOrder() {
         return 400;

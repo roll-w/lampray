@@ -28,7 +28,7 @@ import java.util.Optional;
  * @author RollW
  */
 @Component
-final class BlobMaterializationResolveExistingBlobStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
+public class BlobMaterializationResolveExistingBlobStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
     private final StorageRuntimeConfig runtimeSettings;
     private final StorageBlobRepository storageBlobRepository;
 

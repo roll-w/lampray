@@ -31,7 +31,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class CreateUploadSessionPersistUploadSessionStep implements WorkflowStep<CreateUploadSessionWorkflowContext> {
+public class CreateUploadSessionPersistUploadSessionStep implements WorkflowStep<CreateUploadSessionWorkflowContext> {
     private final StorageUploadSessionRepository storageUploadSessionRepository;
     private final TransactionTemplate transactionTemplate;
 

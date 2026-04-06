@@ -28,7 +28,7 @@ import tech.rollw.common.web.DataErrorCode;
  * @author RollW
  */
 @Component
-final class ProxyUploadResolvePlanStep implements WorkflowStep<ProxyUploadWorkflowContext> {
+public class ProxyUploadResolvePlanStep implements WorkflowStep<ProxyUploadWorkflowContext> {
     private final StorageGroupRouter storageGroupRouter;
 
     ProxyUploadResolvePlanStep(StorageGroupRouter storageGroupRouter) {

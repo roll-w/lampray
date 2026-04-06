@@ -27,7 +27,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class ProxyUploadPublishTrafficStep implements WorkflowStep<ProxyUploadWorkflowContext> {
+public class ProxyUploadPublishTrafficStep implements WorkflowStep<ProxyUploadWorkflowContext> {
     private final StorageTrafficPublisher storageTrafficPublisher;
 
     ProxyUploadPublishTrafficStep(StorageTrafficPublisher storageTrafficPublisher) {

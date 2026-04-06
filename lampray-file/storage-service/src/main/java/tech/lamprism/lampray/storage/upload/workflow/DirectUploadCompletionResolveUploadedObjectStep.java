@@ -29,7 +29,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class DirectUploadCompletionResolveUploadedObjectStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
+public class DirectUploadCompletionResolveUploadedObjectStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private final BlobStoreLocator blobStoreLocator;
 
     DirectUploadCompletionResolveUploadedObjectStep(BlobStoreLocator blobStoreLocator) {

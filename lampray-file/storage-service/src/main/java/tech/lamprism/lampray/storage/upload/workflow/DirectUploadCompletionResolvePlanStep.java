@@ -28,7 +28,7 @@ import tech.rollw.common.web.DataErrorCode;
  * @author RollW
  */
 @Component
-final class DirectUploadCompletionResolvePlanStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
+public class DirectUploadCompletionResolvePlanStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private final StorageGroupRouter storageGroupRouter;
 
     DirectUploadCompletionResolvePlanStep(StorageGroupRouter storageGroupRouter) {

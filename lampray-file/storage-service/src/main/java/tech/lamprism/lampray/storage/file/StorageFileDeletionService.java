@@ -45,6 +45,7 @@ import java.util.Set;
 
 @Service
 public class StorageFileDeletionService {
+    // TODO: split to Router
     private final StorageFileRepository storageFileRepository;
     private final StorageBlobRepository storageBlobRepository;
     private final StorageBlobPlacementRepository storageBlobPlacementRepository;

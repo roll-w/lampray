@@ -28,7 +28,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class ProxyUploadPersistUploadStep implements WorkflowStep<ProxyUploadWorkflowContext> {
+public class ProxyUploadPersistUploadStep implements WorkflowStep<ProxyUploadWorkflowContext> {
     private final PersistSessionUploadWorkflow persistSessionUploadWorkflow;
 
     ProxyUploadPersistUploadStep(PersistSessionUploadWorkflow persistSessionUploadWorkflow) {

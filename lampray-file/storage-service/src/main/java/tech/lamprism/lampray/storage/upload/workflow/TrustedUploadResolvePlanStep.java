@@ -30,8 +30,7 @@ import tech.rollw.common.web.DataErrorCode;
  * @author RollW
  */
 @Component
-final class TrustedUploadResolvePlanStep implements WorkflowStep<TrustedUploadWorkflowContext> {
-    private static final StorageContentRules CONTENT_RULES = StorageContentRules.INSTANCE;
+public class TrustedUploadResolvePlanStep implements WorkflowStep<TrustedUploadWorkflowContext> {
 
     private final StorageGroupRouter storageGroupRouter;
     private final StorageRuntimeConfig runtimeSettings;
@@ -54,9 +53,9 @@ final class TrustedUploadResolvePlanStep implements WorkflowStep<TrustedUploadWo
         context.getState().setGroupName(groupName);
         context.getState().setWritePlan(writePlan);
         context.getState().setGroupSettings(writePlan.getGroupSettings());
-        String mimeType = CONTENT_RULES.requireMimeType("application/octet-stream");
+        String mimeType = StorageContentRules.requireMimeType("application/octet-stream");
         context.getState().setMimeType(mimeType);
-        context.getState().setFileType(CONTENT_RULES.resolveFileType(mimeType));
+        context.getState().setFileType(StorageContentRules.resolveFileType(mimeType));
     }
 
     private StorageWritePlan selectWritePlan(String groupName) {

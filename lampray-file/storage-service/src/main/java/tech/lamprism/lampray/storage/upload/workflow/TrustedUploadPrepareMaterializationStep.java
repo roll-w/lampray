@@ -31,7 +31,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class TrustedUploadPrepareMaterializationStep implements WorkflowStep<TrustedUploadWorkflowContext> {
+public class TrustedUploadPrepareMaterializationStep implements WorkflowStep<TrustedUploadWorkflowContext> {
     private final BlobMaterializationWorkflow blobMaterializationWorkflow;
 
     TrustedUploadPrepareMaterializationStep(BlobMaterializationWorkflow blobMaterializationWorkflow) {

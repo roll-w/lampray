@@ -29,19 +29,18 @@ import java.util.Locale;
  * @author RollW
  */
 public final class StorageContentRules {
-    public static final StorageContentRules INSTANCE = new StorageContentRules();
 
     private StorageContentRules() {
     }
 
-    public String requireMimeType(String mimeType) {
+    public static String requireMimeType(String mimeType) {
         if (StringUtils.isBlank(mimeType)) {
             throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "MIME type is required.");
         }
         return normalizeMimeType(mimeType);
     }
 
-    public String normalizeMimeType(String mimeType) {
+    public static String normalizeMimeType(String mimeType) {
         if (StringUtils.isBlank(mimeType)) {
             return "application/octet-stream";
         }
@@ -58,11 +57,11 @@ public final class StorageContentRules {
         return parameters.isEmpty() ? baseMimeType : baseMimeType + "; " + parameters;
     }
 
-    public FileType resolveFileType(String mimeType) {
+    public static FileType resolveFileType(String mimeType) {
         return FileType.fromMimeType(baseMimeType(mimeType));
     }
 
-    public boolean isUnsafeDirectMimeType(String mimeType) {
+    public static boolean isUnsafeDirectMimeType(String mimeType) {
         String normalizedMimeType = baseMimeType(mimeType);
         return "text/html".equals(normalizedMimeType)
                 || "application/xhtml+xml".equals(normalizedMimeType)
@@ -75,7 +74,7 @@ public final class StorageContentRules {
                 || "application/json".equals(normalizedMimeType);
     }
 
-    private String baseMimeType(String mimeType) {
+    private static String baseMimeType(String mimeType) {
         String normalizedMimeType = normalizeMimeType(mimeType);
         int parameterIndex = normalizedMimeType.indexOf(';');
         if (parameterIndex >= 0) {

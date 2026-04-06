@@ -45,8 +45,6 @@ import java.util.Map;
  */
 @Component
 public class DirectStorageReferenceResolver {
-    private static final StorageContentRules contentRules = StorageContentRules.INSTANCE;
-
     private final StorageRuntimeConfig runtimeSettings;
     private final StorageTransferModeResolver transferModeResolver;
     private final StorageTrafficPublisher storageTrafficPublisher;
@@ -90,14 +88,14 @@ public class DirectStorageReferenceResolver {
     }
 
     private StorageReference resolvePublicReference(StoredDownloadTarget target) throws IOException {
-        String mimeType = contentRules.normalizeMimeType(target.getFileStorage().getMimeType());
+        String mimeType = StorageContentRules.normalizeMimeType(target.getFileStorage().getMimeType());
         if (target.getVisibility() != StorageVisibility.PUBLIC) {
             return null;
         }
         if (!target.getBlobStore().supports(BlobStoreCapability.PUBLIC_DOWNLOAD_URL)) {
             return null;
         }
-        if (contentRules.isUnsafeDirectMimeType(mimeType)) {
+        if (StorageContentRules.isUnsafeDirectMimeType(mimeType)) {
             return null;
         }
         String url = target.getBlobStore().createPublicDownloadUrl(
@@ -114,11 +112,11 @@ public class DirectStorageReferenceResolver {
 
     private StorageReference resolveSignedReference(StoredDownloadTarget target,
                                                     Long ttlSeconds) throws IOException {
-        String mimeType = contentRules.normalizeMimeType(target.getFileStorage().getMimeType());
+        String mimeType = StorageContentRules.normalizeMimeType(target.getFileStorage().getMimeType());
         if (!target.getBlobStore().supports(BlobStoreCapability.DIRECT_DOWNLOAD)) {
             return null;
         }
-        if (contentRules.isUnsafeDirectMimeType(mimeType)) {
+        if (StorageContentRules.isUnsafeDirectMimeType(mimeType)) {
             return null;
         }
         StorageAccessRequest accessRequest = target.getBlobStore().createDirectDownload(

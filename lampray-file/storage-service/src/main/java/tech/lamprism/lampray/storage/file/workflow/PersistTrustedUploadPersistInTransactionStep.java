@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.storage.file.workflow;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.file.PersistedMaterialization;
 import tech.lamprism.lampray.storage.file.StorageFilePersistenceTransactionService;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
@@ -24,7 +25,7 @@ import tech.lamprism.lampray.storage.workflow.WorkflowStep;
  * @author RollW
  */
 @Component
-final class PersistTrustedUploadPersistInTransactionStep implements WorkflowStep<PersistTrustedUploadWorkflowContext> {
+public class PersistTrustedUploadPersistInTransactionStep implements WorkflowStep<PersistTrustedUploadWorkflowContext> {
     private final StorageFilePersistenceTransactionService storageFilePersistenceTransactionService;
 
     PersistTrustedUploadPersistInTransactionStep(StorageFilePersistenceTransactionService storageFilePersistenceTransactionService) {
@@ -38,7 +39,7 @@ final class PersistTrustedUploadPersistInTransactionStep implements WorkflowStep
 
     @Override
     public void execute(PersistTrustedUploadWorkflowContext context) {
-        var persistedMaterialization =
+        PersistedMaterialization persistedMaterialization =
                 storageFilePersistenceTransactionService.persistTrustedUpload(
                         context.getGroupName(),
                         context.getFileName(),

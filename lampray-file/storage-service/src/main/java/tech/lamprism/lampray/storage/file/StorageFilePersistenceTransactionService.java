@@ -21,6 +21,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.FileType;
+import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
+import tech.lamprism.lampray.storage.configuration.StorageTopology;
 import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
 import tech.lamprism.lampray.storage.materialization.persistence.BlobMaterializationPersistenceService;
@@ -41,17 +43,20 @@ public class StorageFilePersistenceTransactionService {
     private final StorageFileEntityFactory storageFileEntityFactory;
     private final StorageFileRepository storageFileRepository;
     private final StorageUploadSessionRepository storageUploadSessionRepository;
+    private final StorageTopology storageTopology;
     private final TransactionTemplate transactionTemplate;
 
     public StorageFilePersistenceTransactionService(BlobMaterializationPersistenceService blobMaterializationPersistenceService,
                                                     StorageFileEntityFactory storageFileEntityFactory,
                                                     StorageFileRepository storageFileRepository,
                                                     StorageUploadSessionRepository storageUploadSessionRepository,
+                                                    StorageTopology storageTopology,
                                                     PlatformTransactionManager transactionManager) {
         this.blobMaterializationPersistenceService = blobMaterializationPersistenceService;
         this.storageFileEntityFactory = storageFileEntityFactory;
         this.storageFileRepository = storageFileRepository;
         this.storageUploadSessionRepository = storageUploadSessionRepository;
+        this.storageTopology = storageTopology;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -60,10 +65,12 @@ public class StorageFilePersistenceTransactionService {
         return Objects.requireNonNull(transactionTemplate.execute(status -> {
             StorageBlobEntity blobEntity = blobMaterializationPersistenceService.persist(preparedBlob);
             OffsetDateTime now = OffsetDateTime.now();
+            StorageGroupConfig groupConfig = storageTopology.getGroup(uploadSession.getGroupName());
             StorageFileEntity fileEntity = storageFileEntityFactory.createSessionFile(
                     uploadSession,
                     blobEntity.getBlobId(),
                     preparedBlob,
+                    groupConfig.getVisibility(),
                     now
             );
             StorageFileEntity savedFileEntity = storageFileRepository.save(fileEntity);
@@ -82,6 +89,7 @@ public class StorageFilePersistenceTransactionService {
         return Objects.requireNonNull(transactionTemplate.execute(status -> {
             StorageBlobEntity blobEntity = blobMaterializationPersistenceService.persist(preparedBlob);
             OffsetDateTime now = OffsetDateTime.now();
+            StorageGroupConfig groupConfig = storageTopology.getGroup(groupName);
             StorageFileEntity fileEntity = storageFileEntityFactory.createTrustedFile(
                     groupName,
                     fileName,
@@ -90,6 +98,7 @@ public class StorageFilePersistenceTransactionService {
                     ownerUserId,
                     blobEntity.getBlobId(),
                     preparedBlob.getSize(),
+                    groupConfig.getVisibility(),
                     now
             );
             StorageFileEntity savedFileEntity = storageFileRepository.save(fileEntity);

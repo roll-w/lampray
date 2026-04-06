@@ -48,8 +48,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUploadSessionWorkflowContext> {
-    private static final StorageContentRules CONTENT_RULES = StorageContentRules.INSTANCE;
+public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUploadSessionWorkflowContext> {
 
     private final StorageRuntimeConfig runtimeSettings;
     private final StorageGroupRouter storageGroupRouter;
@@ -94,8 +93,8 @@ final class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUploadS
     private NormalizedUploadRequest normalizeRequest(StorageUploadRequest request,
                                                      StorageGroupConfig groupSettings) {
         String fileName = StorageUploadSessionModel.normalizeFileName(request.getFileName());
-        String mimeType = CONTENT_RULES.requireMimeType(request.getMimeType());
-        FileType fileType = CONTENT_RULES.resolveFileType(mimeType);
+        String mimeType = StorageContentRules.requireMimeType(request.getMimeType());
+        FileType fileType = StorageContentRules.resolveFileType(mimeType);
         StorageUploadSessionModel.validateUploadRequest(request, groupSettings, fileType);
         String contentChecksum = StorageUploadSessionModel.normalizeChecksum(request.getContentChecksum());
         return new NormalizedUploadRequest(fileName, mimeType, fileType, contentChecksum);

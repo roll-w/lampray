@@ -37,7 +37,6 @@ import java.time.Duration;
  */
 @Component
 public class DirectStoredAccessStrategy implements StoredAccessStrategy {
-    private static final StorageContentRules contentRules = StorageContentRules.INSTANCE;
 
     private final StorageRuntimeConfig runtimeSettings;
     private final DirectStorageReferenceResolver directStorageReferenceResolver;
@@ -58,8 +57,8 @@ public class DirectStoredAccessStrategy implements StoredAccessStrategy {
 
     @Override
     public StorageDownloadResult resolveDownload(StoredDownloadTarget target) throws IOException {
-        String mimeType = contentRules.normalizeMimeType(target.getFileStorage().getMimeType());
-        if (contentRules.isUnsafeDirectMimeType(mimeType)) {
+        String mimeType = StorageContentRules.normalizeMimeType(target.getFileStorage().getMimeType());
+        if (StorageContentRules.isUnsafeDirectMimeType(mimeType)) {
             return null;
         }
         StorageAccessRequest directRequest = target.getBlobStore().createDirectDownload(

@@ -28,7 +28,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class TrustedUploadWriteTempUploadStep implements WorkflowStep<TrustedUploadWorkflowContext> {
+public class TrustedUploadWriteTempUploadStep implements WorkflowStep<TrustedUploadWorkflowContext> {
     @Override
     public int getOrder() {
         return 200;

@@ -25,7 +25,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class DirectUploadCompletionValidateUploadedObjectStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
+public class DirectUploadCompletionValidateUploadedObjectStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     @Override
     public int getOrder() {
         return 300;

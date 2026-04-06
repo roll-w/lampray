@@ -18,8 +18,8 @@ package tech.lamprism.lampray.storage.upload.workflow;
 
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageUploadRequest;
-import tech.lamprism.lampray.storage.materialization.TempUpload;
 import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
+import tech.lamprism.lampray.storage.materialization.TempUpload;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
 import java.util.Objects;
@@ -28,7 +28,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class TrustedUploadValidateUploadStep implements WorkflowStep<TrustedUploadWorkflowContext> {
+public class TrustedUploadValidateUploadStep implements WorkflowStep<TrustedUploadWorkflowContext> {
     @Override
     public int getOrder() {
         return 500;

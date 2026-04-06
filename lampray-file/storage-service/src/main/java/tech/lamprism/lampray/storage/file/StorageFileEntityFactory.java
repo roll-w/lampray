@@ -20,10 +20,10 @@ import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.storage.FileType;
 import tech.lamprism.lampray.storage.StorageResourceKind;
-import tech.lamprism.lampray.storage.configuration.StorageTopology;
+import tech.lamprism.lampray.storage.StorageVisibility;
+import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
 import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
-import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
 
 import java.time.OffsetDateTime;
 
@@ -32,18 +32,17 @@ import java.time.OffsetDateTime;
  */
 @Service
 public class StorageFileEntityFactory {
-    private final StorageTopology storageTopology;
+    // TODO: inline all method in callers
     private final ResourceIdGenerator resourceIdGenerator;
 
-    public StorageFileEntityFactory(StorageTopology storageTopology,
-                                    ResourceIdGenerator resourceIdGenerator) {
-        this.storageTopology = storageTopology;
+    public StorageFileEntityFactory(ResourceIdGenerator resourceIdGenerator) {
         this.resourceIdGenerator = resourceIdGenerator;
     }
 
     public StorageFileEntity createSessionFile(StorageUploadSessionModel uploadSession,
                                                String blobId,
                                                PreparedBlobMaterialization preparedBlob,
+                                               StorageVisibility visibility,
                                                OffsetDateTime now) {
         return buildFileEntity(
                 uploadSession.getFileId(),
@@ -54,6 +53,7 @@ public class StorageFileEntityFactory {
                 preparedBlob.getSize(),
                 preparedBlob.getMimeType(),
                 preparedBlob.getFileType(),
+                visibility,
                 now
         );
     }
@@ -65,6 +65,7 @@ public class StorageFileEntityFactory {
                                                Long ownerUserId,
                                                String blobId,
                                                long size,
+                                               StorageVisibility visibility,
                                                OffsetDateTime now) {
         return buildFileEntity(
                 newId(),
@@ -75,6 +76,7 @@ public class StorageFileEntityFactory {
                 size,
                 mimeType,
                 fileType,
+                visibility,
                 now
         );
     }
@@ -87,6 +89,7 @@ public class StorageFileEntityFactory {
                                               long size,
                                               String mimeType,
                                               FileType fileType,
+                                              StorageVisibility visibility,
                                               OffsetDateTime now) {
         return new StorageFileEntity(
                 null,
@@ -98,7 +101,7 @@ public class StorageFileEntityFactory {
                 size,
                 mimeType,
                 fileType,
-                storageTopology.getGroup(groupName).getVisibility(),
+                visibility,
                 now,
                 now
         );

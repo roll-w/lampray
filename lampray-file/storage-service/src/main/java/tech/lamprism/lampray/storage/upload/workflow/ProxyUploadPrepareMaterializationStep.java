@@ -31,7 +31,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class ProxyUploadPrepareMaterializationStep implements WorkflowStep<ProxyUploadWorkflowContext> {
+public class ProxyUploadPrepareMaterializationStep implements WorkflowStep<ProxyUploadWorkflowContext> {
     private final BlobMaterializationWorkflow blobMaterializationWorkflow;
 
     ProxyUploadPrepareMaterializationStep(BlobMaterializationWorkflow blobMaterializationWorkflow) {

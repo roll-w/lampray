@@ -28,7 +28,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class DirectUploadCompletionPersistUploadStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
+public class DirectUploadCompletionPersistUploadStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private final PersistSessionUploadWorkflow persistSessionUploadWorkflow;
 
     DirectUploadCompletionPersistUploadStep(PersistSessionUploadWorkflow persistSessionUploadWorkflow) {

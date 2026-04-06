@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class TrustedUploadAssignDefaultFileNameStep implements WorkflowStep<TrustedUploadWorkflowContext> {
+public class TrustedUploadAssignDefaultFileNameStep implements WorkflowStep<TrustedUploadWorkflowContext> {
     @Override
     public int getOrder() {
         return 300;

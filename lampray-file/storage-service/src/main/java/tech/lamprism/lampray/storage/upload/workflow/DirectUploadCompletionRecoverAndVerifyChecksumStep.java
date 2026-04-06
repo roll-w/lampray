@@ -34,7 +34,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class DirectUploadCompletionRecoverAndVerifyChecksumStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
+public class DirectUploadCompletionRecoverAndVerifyChecksumStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private static final int BUFFER_SIZE = 8192;
 
     @Override

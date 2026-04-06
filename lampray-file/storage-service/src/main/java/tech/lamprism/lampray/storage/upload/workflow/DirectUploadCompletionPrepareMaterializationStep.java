@@ -30,7 +30,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class DirectUploadCompletionPrepareMaterializationStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
+public class DirectUploadCompletionPrepareMaterializationStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private final BlobMaterializationWorkflow blobMaterializationWorkflow;
 
     DirectUploadCompletionPrepareMaterializationStep(BlobMaterializationWorkflow blobMaterializationWorkflow) {

@@ -28,7 +28,7 @@ import java.util.Objects;
  * @author RollW
  */
 @Component
-final class TrustedUploadPersistUploadStep implements WorkflowStep<TrustedUploadWorkflowContext> {
+public class TrustedUploadPersistUploadStep implements WorkflowStep<TrustedUploadWorkflowContext> {
     private final PersistTrustedUploadWorkflow persistTrustedUploadWorkflow;
 
     TrustedUploadPersistUploadStep(PersistTrustedUploadWorkflow persistTrustedUploadWorkflow) {
