@@ -49,9 +49,7 @@ public class PersistSessionUploadRunPostPersistStep implements WorkflowStep<Pers
                         context.getUploadSession().getOwnerUserId()
                 );
         for (StorageMaterializationHook hook : storageMaterializationHooks) {
-            hook.afterMaterialized(
-                    materializationContext
-            );
+            hook.afterMaterialized(materializationContext);
         }
     }
 }

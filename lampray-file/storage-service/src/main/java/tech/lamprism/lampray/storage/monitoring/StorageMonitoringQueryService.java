@@ -22,6 +22,7 @@ import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
 import tech.lamprism.lampray.storage.configuration.StorageGroupBackend;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageTopology;
+import tech.lamprism.lampray.storage.store.BlobStoreCapability;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -103,16 +104,23 @@ public class StorageMonitoringQueryService implements StorageMonitoringService {
         for (String backendName : backendNames) {
             var backendConfig = storageTopology.getBackends().get(backendName);
             BlobStoreRegistration registration = registrationMap.get(backendName);
+            var backendType = backendConfig == null ? null : backendConfig.getType();
+            Set<BlobStoreCapability> capabilities = Set.of();
+            Map<String, Integer> groupWeights = Map.of();
+            if (registration != null) {
+                capabilities = registration.getBlobStore().getCapabilities();
+                groupWeights = registration.getGroupWeights();
+            }
             StorageBackendTotals totals = backendTotals.getOrDefault(
                     backendName,
                     new StorageBackendTotals(0L, 0L, 0L, 0L)
             );
             result.add(new StorageBackendMonitoringView(
                     backendName,
-                    backendConfig == null ? null : backendConfig.getType(),
+                    backendType,
                     registration != null,
-                    registration == null ? Set.of() : registration.getBlobStore().getCapabilities(),
-                    registration == null ? Map.of() : registration.getGroupWeights(),
+                    capabilities,
+                    groupWeights,
                     totals.getPrimaryBlobCount(),
                     totals.getPlacementCount(),
                     totals.getUniqueBytes(),
@@ -131,18 +139,24 @@ public class StorageMonitoringQueryService implements StorageMonitoringService {
         List<StorageGroupMonitoringView> result = new ArrayList<>();
         for (String groupName : groupNames) {
             StorageGroupConfig groupConfig = storageTopology.getGroups().get(groupName);
+            Long maxSizeBytes = null;
+            List<String> backends = List.of();
+            if (groupConfig != null) {
+                maxSizeBytes = groupConfig.getMaxSizeBytes();
+                backends = groupConfig.getBackends().stream().map(StorageGroupBackend::getBackendName).toList();
+            }
             StorageGroupTotals totals = groupTotals.getOrDefault(
                     groupName,
                     new StorageGroupTotals(0L, 0L, 0L, 0L)
             );
             result.add(new StorageGroupMonitoringView(
                     groupName,
-                    groupConfig == null ? null : groupConfig.getMaxSizeBytes(),
+                    maxSizeBytes,
                     totals.getFileCount(),
                     totals.getLogicalBytes(),
                     totals.getDistinctBlobCount(),
                     totals.getUniqueBytes(),
-                    groupConfig == null ? List.of() : groupConfig.getBackends().stream().map(StorageGroupBackend::getBackendName).toList(),
+                    backends,
                     getTrafficSnapshotForGroup(groupName)
             ));
         }

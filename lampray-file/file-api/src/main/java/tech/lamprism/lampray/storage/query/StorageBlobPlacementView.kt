@@ -22,7 +22,7 @@ import java.time.OffsetDateTime
  * @author RollW
  */
 data class StorageBlobPlacementView(
-    val placementId: String,
+    val id: Long,
     val backendName: String,
     val objectKey: String,
     val createTime: OffsetDateTime,

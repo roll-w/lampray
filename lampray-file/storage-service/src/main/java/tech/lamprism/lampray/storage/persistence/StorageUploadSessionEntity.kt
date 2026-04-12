@@ -33,6 +33,7 @@ import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.storage.FileType
 import tech.lamprism.lampray.storage.StorageResourceKind
 import tech.lamprism.lampray.storage.StorageUploadMode
+import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel
 import tech.lamprism.lampray.storage.session.UploadSessionStatus
 import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
@@ -119,6 +120,153 @@ class StorageUploadSessionEntity(
 
     fun setUpdateTime(updateTime: OffsetDateTime) {
         this.updateTime = updateTime
+    }
+
+    fun toBuilder(): Builder = Builder(this)
+
+    fun lock(): StorageUploadSessionEntity = toBuilder().build()
+
+    class Builder {
+        private var id: Long? = null
+        private var uploadId: String? = null
+        private var fileId: String = ""
+        private var groupName: String = ""
+        private var fileName: String = ""
+        private var fileSize: Long? = null
+        private var mimeType: String = "application/octet-stream"
+        private var fileType: FileType = FileType.OTHER
+        private var contentChecksum: String? = null
+        private var ownerUserId: Long? = null
+        private var primaryBackend: String = ""
+        private var objectKey: String? = null
+        private var uploadMode: StorageUploadMode = StorageUploadMode.PROXY
+        private var status: UploadSessionStatus = UploadSessionStatus.PENDING
+        private var expiresAt: OffsetDateTime = OffsetDateTime.now()
+        private var createTime: OffsetDateTime = OffsetDateTime.now()
+        private var updateTime: OffsetDateTime = OffsetDateTime.now()
+
+        constructor()
+
+        constructor(other: StorageUploadSessionEntity) {
+            this.id = other.id
+            this.uploadId = other.uploadId
+            this.fileId = other.fileId
+            this.groupName = other.groupName
+            this.fileName = other.fileName
+            this.fileSize = other.fileSize
+            this.mimeType = other.mimeType
+            this.fileType = other.fileType
+            this.contentChecksum = other.contentChecksum
+            this.ownerUserId = other.ownerUserId
+            this.primaryBackend = other.primaryBackend
+            this.objectKey = other.objectKey
+            this.uploadMode = other.uploadMode
+            this.status = other.status
+            this.expiresAt = other.expiresAt
+            this.createTime = other.createTime
+            this.updateTime = other.updateTime
+        }
+
+        fun setId(id: Long?) = apply {
+            this.id = id
+        }
+
+        fun setUploadId(uploadId: String) = apply {
+            this.uploadId = uploadId
+        }
+
+        fun setFileId(fileId: String) = apply {
+            this.fileId = fileId
+        }
+
+        fun setGroupName(groupName: String) = apply {
+            this.groupName = groupName
+        }
+
+        fun setFileName(fileName: String) = apply {
+            this.fileName = fileName
+        }
+
+        fun setFileSize(fileSize: Long?) = apply {
+            this.fileSize = fileSize
+        }
+
+        fun setMimeType(mimeType: String) = apply {
+            this.mimeType = mimeType
+        }
+
+        fun setFileType(fileType: FileType) = apply {
+            this.fileType = fileType
+        }
+
+        fun setContentChecksum(contentChecksum: String?) = apply {
+            this.contentChecksum = contentChecksum
+        }
+
+        fun setOwnerUserId(ownerUserId: Long?) = apply {
+            this.ownerUserId = ownerUserId
+        }
+
+        fun setPrimaryBackend(primaryBackend: String) = apply {
+            this.primaryBackend = primaryBackend
+        }
+
+        fun setObjectKey(objectKey: String?) = apply {
+            this.objectKey = objectKey
+        }
+
+        fun setUploadMode(uploadMode: StorageUploadMode) = apply {
+            this.uploadMode = uploadMode
+        }
+
+        fun setStatus(status: UploadSessionStatus) = apply {
+            this.status = status
+        }
+
+        fun setExpiresAt(expiresAt: OffsetDateTime) = apply {
+            this.expiresAt = expiresAt
+        }
+
+        fun setCreateTime(createTime: OffsetDateTime) = apply {
+            this.createTime = createTime
+        }
+
+        fun setUpdateTime(updateTime: OffsetDateTime) = apply {
+            this.updateTime = updateTime
+        }
+
+        fun build(): StorageUploadSessionEntity {
+            return StorageUploadSessionEntity(
+                id = id,
+                uploadId = uploadId!!,
+                fileId = fileId,
+                groupName = groupName,
+                fileName = fileName,
+                fileSize = fileSize,
+                mimeType = mimeType,
+                fileType = fileType,
+                contentChecksum = contentChecksum,
+                ownerUserId = ownerUserId,
+                primaryBackend = primaryBackend,
+                objectKey = objectKey,
+                uploadMode = uploadMode,
+                status = status,
+                expiresAt = expiresAt,
+                createTime = createTime,
+                updateTime = updateTime,
+            )
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        fun StorageUploadSessionEntity.toEntity(): StorageUploadSessionEntity = toBuilder().build()
+
+        @JvmStatic
+        fun StorageUploadSessionModel.toEntity(): StorageUploadSessionEntity = entity.toBuilder().build()
+
+        @JvmStatic
+        fun builder(): Builder = Builder()
     }
 
     final override fun equals(other: Any?): Boolean {

@@ -20,8 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import tech.lamprism.lampray.storage.FileStorage;
-import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
+import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageProvider;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
@@ -148,7 +148,7 @@ public class StorageProviderImpl implements StorageProvider {
     }
 
     private StorageFileEntity requireStoredFile(String fileId) {
-        return storageFileRepository.findById(fileId)
+        return storageFileRepository.findActiveById(fileId)
                 .orElseThrow(() -> new StorageException(
                         DataErrorCode.ERROR_DATA_NOT_EXIST,
                         "File not found: " + fileId

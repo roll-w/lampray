@@ -103,6 +103,108 @@ class StorageBlobEntity(
         this.updateTime = updateTime
     }
 
+    fun toBuilder(): Builder = Builder(this)
+
+    fun lock(): StorageBlobEntity = toBuilder().build()
+
+    class Builder {
+        private var id: Long? = null
+        private var blobId: String? = null
+        private var contentChecksum: String = ""
+        private var fileSize: Long = 0
+        private var mimeType: String = "application/octet-stream"
+        private var fileType: FileType = FileType.OTHER
+        private var primaryBackend: String = ""
+        private var primaryObjectKey: String = ""
+        private var orphanedAt: OffsetDateTime? = null
+        private var createTime: OffsetDateTime = OffsetDateTime.now()
+        private var updateTime: OffsetDateTime = OffsetDateTime.now()
+
+        constructor()
+
+        constructor(other: StorageBlobEntity) {
+            this.id = other.id
+            this.blobId = other.blobId
+            this.contentChecksum = other.contentChecksum
+            this.fileSize = other.fileSize
+            this.mimeType = other.mimeType
+            this.fileType = other.fileType
+            this.primaryBackend = other.primaryBackend
+            this.primaryObjectKey = other.primaryObjectKey
+            this.orphanedAt = other.orphanedAt
+            this.createTime = other.createTime
+            this.updateTime = other.updateTime
+        }
+
+        fun setId(id: Long?) = apply {
+            this.id = id
+        }
+
+        fun setBlobId(blobId: String) = apply {
+            this.blobId = blobId
+        }
+
+        fun setContentChecksum(contentChecksum: String) = apply {
+            this.contentChecksum = contentChecksum
+        }
+
+        fun setFileSize(fileSize: Long) = apply {
+            this.fileSize = fileSize
+        }
+
+        fun setMimeType(mimeType: String) = apply {
+            this.mimeType = mimeType
+        }
+
+        fun setFileType(fileType: FileType) = apply {
+            this.fileType = fileType
+        }
+
+        fun setPrimaryBackend(primaryBackend: String) = apply {
+            this.primaryBackend = primaryBackend
+        }
+
+        fun setPrimaryObjectKey(primaryObjectKey: String) = apply {
+            this.primaryObjectKey = primaryObjectKey
+        }
+
+        fun setOrphanedAt(orphanedAt: OffsetDateTime?) = apply {
+            this.orphanedAt = orphanedAt
+        }
+
+        fun setCreateTime(createTime: OffsetDateTime) = apply {
+            this.createTime = createTime
+        }
+
+        fun setUpdateTime(updateTime: OffsetDateTime) = apply {
+            this.updateTime = updateTime
+        }
+
+        fun build(): StorageBlobEntity {
+            return StorageBlobEntity(
+                id = id,
+                blobId = blobId!!,
+                contentChecksum = contentChecksum,
+                fileSize = fileSize,
+                mimeType = mimeType,
+                fileType = fileType,
+                primaryBackend = primaryBackend,
+                primaryObjectKey = primaryObjectKey,
+                orphanedAt = orphanedAt,
+                createTime = createTime,
+                updateTime = updateTime,
+            )
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        fun StorageBlobEntity.toEntity(): StorageBlobEntity = toBuilder().build()
+
+        @JvmStatic
+        fun builder(): Builder = Builder()
+    }
+
     final override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null) return false

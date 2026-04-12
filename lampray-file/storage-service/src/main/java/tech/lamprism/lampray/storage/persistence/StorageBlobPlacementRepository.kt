@@ -26,47 +26,74 @@ import java.util.Optional
  */
 @Repository
 class StorageBlobPlacementRepository(
-    private val storageBlobPlacementDao: StorageBlobPlacementDao,
-) : CommonRepository<StorageBlobPlacementEntity, String>(storageBlobPlacementDao) {
+    storageBlobPlacementDao: StorageBlobPlacementDao,
+) : CommonRepository<StorageBlobPlacementEntity, Long>(storageBlobPlacementDao) {
     fun findAllByBlobId(blobId: String): List<StorageBlobPlacementEntity> {
-        return storageBlobPlacementDao.findAll(createBlobIdSpecification(blobId))
+        return findAll(createBlobIdSpecification(blobId, false))
+    }
+
+    fun findAllIncludingDeletedByBlobId(blobId: String): List<StorageBlobPlacementEntity> {
+        return findAll(createBlobIdSpecification(blobId, null))
     }
 
     fun findByBlobIdAndBackendName(blobId: String, backendName: String): Optional<StorageBlobPlacementEntity> {
-        return storageBlobPlacementDao.findOne(createBlobAndBackendSpecification(blobId, backendName))
+        return findOne(createBlobAndBackendSpecification(blobId, backendName, false))
+    }
+
+    fun findAnyByBlobIdAndBackendName(blobId: String, backendName: String): Optional<StorageBlobPlacementEntity> {
+        return findOne(createBlobAndBackendSpecification(blobId, backendName, null))
     }
 
     fun existsByBackendNameAndObjectKey(backendName: String, objectKey: String): Boolean {
-        return storageBlobPlacementDao.findOne(createBackendAndObjectKeySpecification(backendName, objectKey)).isPresent
+        return findOne(createBackendAndObjectKeySpecification(backendName, objectKey, false)).isPresent
     }
 
-    private fun createBlobIdSpecification(blobId: String): Specification<StorageBlobPlacementEntity> {
+    private fun createBlobIdSpecification(
+        blobId: String,
+        deleted: Boolean?
+    ): Specification<StorageBlobPlacementEntity> {
         return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.blobId), blobId)
+            val predicates = mutableListOf(
+                criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.blobId), blobId),
+            )
+            if (deleted != null) {
+                predicates.add(criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.deleted), deleted))
+            }
+            criteriaBuilder.and(*predicates.toTypedArray())
         }
     }
 
     private fun createBlobAndBackendSpecification(
         blobId: String,
         backendName: String,
+        deleted: Boolean?,
     ): Specification<StorageBlobPlacementEntity> {
         return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.and(
+            val predicates = mutableListOf(
                 criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.blobId), blobId),
                 criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.backendName), backendName),
             )
+            if (deleted != null) {
+                predicates.add(criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.deleted), deleted))
+            }
+            criteriaBuilder.and(*predicates.toTypedArray())
         }
     }
 
     private fun createBackendAndObjectKeySpecification(
         backendName: String,
         objectKey: String,
+        deleted: Boolean?,
     ): Specification<StorageBlobPlacementEntity> {
         return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.and(
+            val predicates = mutableListOf(
                 criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.backendName), backendName),
                 criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.objectKey), objectKey),
             )
+            if (deleted != null) {
+                predicates.add(criteriaBuilder.equal(root.get(StorageBlobPlacementEntity_.deleted), deleted))
+            }
+            criteriaBuilder.and(*predicates.toTypedArray())
         }
     }
 }

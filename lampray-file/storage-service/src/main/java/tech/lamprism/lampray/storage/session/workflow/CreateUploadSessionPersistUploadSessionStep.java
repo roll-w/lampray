@@ -53,7 +53,7 @@ public class CreateUploadSessionPersistUploadSessionStep implements WorkflowStep
                 "uploadSession"
         );
         StorageUploadSessionEntity savedUploadSessionEntity = Objects.requireNonNull(
-                transactionTemplate.execute(status -> storageUploadSessionRepository.save(uploadSession.getEntity())),
+                transactionTemplate.execute(status -> storageUploadSessionRepository.save(StorageUploadSessionEntity.toEntity(uploadSession))),
                 "savedUploadSessionEntity"
         );
         StorageUploadSessionModel savedUploadSession = StorageUploadSessionModel.from(

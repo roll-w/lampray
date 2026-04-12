@@ -19,19 +19,45 @@ package tech.lamprism.lampray.storage.persistence
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
+import java.util.Optional
 
 /**
  * @author RollW
  */
 @Repository
 class StorageFileRepository(
-    private val storageFileDao: StorageFileDao,
+    storageFileDao: StorageFileDao,
 ) : CommonRepository<StorageFileEntity, String>(storageFileDao) {
-    fun existsByBlobId(blobId: String): Boolean =
-        storageFileDao.findOne(blobIdSpecification(blobId)).isPresent
+    fun findActiveById(fileId: String): Optional<StorageFileEntity> =
+        findOne(activeFileSpecification(fileId))
 
-    private fun blobIdSpecification(blobId: String): Specification<StorageFileEntity> =
+    fun existsActiveByBlobId(blobId: String): Boolean =
+        findOne(activeBlobIdSpecification(blobId)).isPresent
+
+    fun findDeletedByBlobId(blobId: String): List<StorageFileEntity> =
+        findAll(deletedBlobIdSpecification(blobId))
+
+    private fun activeFileSpecification(fileId: String): Specification<StorageFileEntity> =
         Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get(StorageFileEntity_.blobId), blobId)
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get(StorageFileEntity_.fileId), fileId),
+                criteriaBuilder.isFalse(root.get(StorageFileEntity_.deleted)),
+            )
+        }
+
+    private fun activeBlobIdSpecification(blobId: String): Specification<StorageFileEntity> =
+        Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get(StorageFileEntity_.blobId), blobId),
+                criteriaBuilder.isFalse(root.get(StorageFileEntity_.deleted)),
+            )
+        }
+
+    private fun deletedBlobIdSpecification(blobId: String): Specification<StorageFileEntity> =
+        Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get(StorageFileEntity_.blobId), blobId),
+                criteriaBuilder.isTrue(root.get(StorageFileEntity_.deleted)),
+            )
         }
 }

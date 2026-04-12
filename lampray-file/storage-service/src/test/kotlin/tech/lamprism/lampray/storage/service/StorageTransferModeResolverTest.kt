@@ -41,7 +41,6 @@ class StorageTransferModeResolverTest {
     fun `large upload with checksum uses direct mode when backend supports it`() {
         val resolver = StorageTransferModeResolver(runtimeSettings())
         val request = StorageUploadRequest(
-            groupName = "upload",
             fileName = "video.mp4",
             size = 32L * 1024L * 1024L,
             mimeType = "video/mp4",
@@ -61,7 +60,6 @@ class StorageTransferModeResolverTest {
     fun `small or unsupported upload falls back to proxy`() {
         val resolver = StorageTransferModeResolver(runtimeSettings())
         val request = StorageUploadRequest(
-            groupName = "upload",
             fileName = "avatar.png",
             size = 1024,
             mimeType = "image/png",

@@ -20,7 +20,6 @@ package tech.lamprism.lampray.web.controller.storage.model;
  * @author RollW
  */
 public record StorageUploadCreateRequest(
-        String groupName,
         String fileName,
         Long size,
         String mimeType,

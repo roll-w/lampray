@@ -16,8 +16,6 @@
 
 package tech.lamprism.lampray.storage.persistence
 
-import jakarta.persistence.EntityManager
-import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
@@ -29,21 +27,25 @@ import java.util.Optional
  */
 @Repository
 class StorageBlobRepository(
-    private val storageBlobDao: StorageBlobDao,
-    private val entityManager: EntityManager,
+    storageBlobDao: StorageBlobDao,
 ) : CommonRepository<StorageBlobEntity, String>(storageBlobDao) {
     fun findByContentChecksum(contentChecksum: String): Optional<StorageBlobEntity> {
-        return storageBlobDao.findOne(createChecksumSpecification(contentChecksum))
+        return findOne(createChecksumSpecification(contentChecksum))
     }
 
     fun findAllByOrphanedAtBefore(orphanedAt: OffsetDateTime): List<StorageBlobEntity> =
         findAll(orphanedAtBeforeSpecification(orphanedAt))
 
-    fun lockById(blobId: String): Optional<StorageBlobEntity> =
-        Optional.ofNullable(entityManager.find(StorageBlobEntity::class.java, blobId, LockModeType.PESSIMISTIC_WRITE))
-
     fun existsByPrimaryBackendAndPrimaryObjectKey(primaryBackend: String, objectKey: String): Boolean {
-        return storageBlobDao.findOne(createPrimaryPlacementSpecification(primaryBackend, objectKey)).isPresent
+        return findOne(createPrimaryPlacementSpecification(primaryBackend, objectKey)).isPresent
+    }
+
+    fun existsOtherByPrimaryBackendAndPrimaryObjectKey(
+        primaryBackend: String,
+        objectKey: String,
+        excludedBlobId: String,
+    ): Boolean {
+        return findOne(createOtherPrimaryPlacementSpecification(primaryBackend, objectKey, excludedBlobId)).isPresent
     }
 
     private fun createChecksumSpecification(contentChecksum: String): Specification<StorageBlobEntity> {
@@ -60,6 +62,20 @@ class StorageBlobRepository(
             criteriaBuilder.and(
                 criteriaBuilder.equal(root.get(StorageBlobEntity_.primaryBackend), primaryBackend),
                 criteriaBuilder.equal(root.get(StorageBlobEntity_.primaryObjectKey), objectKey),
+            )
+        }
+    }
+
+    private fun createOtherPrimaryPlacementSpecification(
+        primaryBackend: String,
+        objectKey: String,
+        excludedBlobId: String,
+    ): Specification<StorageBlobEntity> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get(StorageBlobEntity_.primaryBackend), primaryBackend),
+                criteriaBuilder.equal(root.get(StorageBlobEntity_.primaryObjectKey), objectKey),
+                criteriaBuilder.notEqual(root.get(StorageBlobEntity_.blobId), excludedBlobId),
             )
         }
     }

@@ -64,7 +64,6 @@ public class StorageController {
         Long userId = requireUserId();
         StorageUploadSession uploadSession = storageProvider.createUploadSession(
                 new StorageUploadRequest(
-                        request.groupName(),
                         request.fileName(),
                         request.size(),
                         request.mimeType(),

@@ -181,24 +181,24 @@ class StorageUploadSessionModel private constructor(
             directRequest: StorageAccessRequest? = null,
         ): StorageUploadSessionModel =
             StorageUploadSessionModel(
-                StorageUploadSessionEntity(
-                    uploadId = uploadId,
-                    fileId = fileId,
-                    groupName = groupName,
-                    fileName = fileName,
-                    fileSize = fileSize,
-                    mimeType = mimeType,
-                    fileType = fileType,
-                    contentChecksum = contentChecksum,
-                    ownerUserId = ownerUserId,
-                    primaryBackend = primaryBackend,
-                    objectKey = objectKey,
-                    uploadMode = uploadMode,
-                    status = UploadSessionStatus.PENDING,
-                    expiresAt = expiresAt,
-                    createTime = now,
-                    updateTime = now,
-                ),
+                StorageUploadSessionEntity.builder()
+                    .setUploadId(uploadId)
+                    .setFileId(fileId)
+                    .setGroupName(groupName)
+                    .setFileName(fileName)
+                    .setFileSize(fileSize)
+                    .setMimeType(mimeType)
+                    .setFileType(fileType)
+                    .setContentChecksum(contentChecksum)
+                    .setOwnerUserId(ownerUserId)
+                    .setPrimaryBackend(primaryBackend)
+                    .setObjectKey(objectKey)
+                    .setUploadMode(uploadMode)
+                    .setStatus(UploadSessionStatus.PENDING)
+                    .setExpiresAt(expiresAt)
+                    .setCreateTime(now)
+                    .setUpdateTime(now)
+                    .build(),
                 directRequest,
             )
 

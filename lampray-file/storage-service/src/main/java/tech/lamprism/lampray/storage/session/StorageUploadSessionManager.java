@@ -105,7 +105,7 @@ public class StorageUploadSessionManager {
         uploadSession.ensureQueryable(userId);
         OffsetDateTime now = OffsetDateTime.now();
         FileStorage fileStorage = uploadSession.trackedStateAt(now) == StorageUploadSessionState.COMPLETED
-                ? storageFileRepository.findById(uploadSession.getFileId())
+                ? storageFileRepository.findActiveById(uploadSession.getFileId())
                 .map(this::toFileStorage)
                 .orElse(null)
                 : null;

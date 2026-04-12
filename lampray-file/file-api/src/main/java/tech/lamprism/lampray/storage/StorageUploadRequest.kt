@@ -22,7 +22,6 @@ package tech.lamprism.lampray.storage
  * @author RollW
  */
 data class StorageUploadRequest(
-    val groupName: String,
     val fileName: String,
     val size: Long?,
     val mimeType: String,

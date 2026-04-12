@@ -35,23 +35,18 @@ import tech.rollw.common.web.DataErrorCode;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 @Service
 public class StorageFileDeletionService {
-    // TODO: split to Router
     private final StorageFileRepository storageFileRepository;
     private final StorageBlobRepository storageBlobRepository;
     private final StorageBlobPlacementRepository storageBlobPlacementRepository;
     private final StorageUploadSessionRepository storageUploadSessionRepository;
     private final BlobStoreLocator blobStoreLocator;
     private final StorageBlobLifecycleLockManager storageBlobLifecycleLockManager;
+    private final StorageBlobCleanupRouter storageBlobCleanupRouter;
     private final StorageRuntimeConfig storageRuntimeConfig;
     private final TransactionTemplate transactionTemplate;
 
@@ -61,6 +56,7 @@ public class StorageFileDeletionService {
                                       StorageUploadSessionRepository storageUploadSessionRepository,
                                       BlobStoreLocator blobStoreLocator,
                                       StorageBlobLifecycleLockManager storageBlobLifecycleLockManager,
+                                      StorageBlobCleanupRouter storageBlobCleanupRouter,
                                       StorageRuntimeConfig storageRuntimeConfig,
                                       PlatformTransactionManager transactionManager) {
         this.storageFileRepository = storageFileRepository;
@@ -69,6 +65,7 @@ public class StorageFileDeletionService {
         this.storageUploadSessionRepository = storageUploadSessionRepository;
         this.blobStoreLocator = blobStoreLocator;
         this.storageBlobLifecycleLockManager = storageBlobLifecycleLockManager;
+        this.storageBlobCleanupRouter = storageBlobCleanupRouter;
         this.storageRuntimeConfig = storageRuntimeConfig;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
@@ -76,49 +73,46 @@ public class StorageFileDeletionService {
     public void deleteFile(String fileId,
                            Long userId) throws IOException {
         try (StorageBlobLifecycleLockManager.LockedKey ignored = storageBlobLifecycleLockManager.acquire(resolveLockKey(fileId))) {
-            BlobCleanupPlan cleanupPlan = Objects.requireNonNull(
+            StorageBlobCleanupRouter.StorageBlobCleanupPlan cleanupPlan = Objects.requireNonNull(
                     transactionTemplate.execute(status -> deleteFileInTransaction(fileId, userId))
             );
             cleanupOrphanedObjects(cleanupPlan);
         }
     }
 
-    private BlobCleanupPlan deleteFileInTransaction(String fileId,
-                                                    Long userId) {
+    private StorageBlobCleanupRouter.StorageBlobCleanupPlan deleteFileInTransaction(String fileId,
+                                                                                    Long userId) {
         StorageFileEntity fileEntity = requireOwnedFile(fileId, userId);
         String blobId = fileEntity.getBlobId();
-        StorageBlobEntity blobEntity = storageBlobRepository.lockById(blobId).orElse(null);
+        StorageBlobEntity blobEntity = storageBlobRepository.findById(blobId).orElse(null);
+        OffsetDateTime now = OffsetDateTime.now();
 
-        storageFileRepository.delete(fileEntity);
+        StorageFileEntity deletedFile = fileEntity.toBuilder()
+                .setDeleted(true)
+                .setUpdateTime(now)
+                .build();
+        storageFileRepository.save(deletedFile);
         storageFileRepository.flush();
-        if (storageFileRepository.existsByBlobId(blobId)) {
-            return BlobCleanupPlan.empty();
+        if (storageFileRepository.existsActiveByBlobId(blobId)) {
+            return StorageBlobCleanupRouter.StorageBlobCleanupPlan.empty();
         }
 
         List<StorageBlobPlacementEntity> placements = storageBlobPlacementRepository.findAllByBlobId(blobId);
         if (blobEntity == null) {
             if (placements.isEmpty()) {
-                return BlobCleanupPlan.empty();
+                return StorageBlobCleanupRouter.StorageBlobCleanupPlan.empty();
             }
-            storageBlobPlacementRepository.deleteAll(placements);
-            return BlobCleanupPlan.fromPlacements(placements);
+            markPlacementsDeleted(placements, now);
+            return storageBlobCleanupRouter.routePlacements(placements);
         }
 
-        if (storageRuntimeConfig.getCleanupDeletedBlobRetainSeconds() > 0) {
-            markBlobOrphaned(blobEntity, OffsetDateTime.now());
-            return BlobCleanupPlan.empty();
-        }
-
-        storageBlobPlacementRepository.deleteAll(placements);
-        storageBlobRepository.delete(blobEntity);
-        if (placements.isEmpty()) {
-            return BlobCleanupPlan.from(blobEntity, List.of());
-        }
-        return BlobCleanupPlan.from(blobEntity, placements);
+        markPlacementsDeleted(placements, now);
+        markBlobOrphaned(blobEntity, now);
+        return StorageBlobCleanupRouter.StorageBlobCleanupPlan.empty();
     }
 
-    private void cleanupOrphanedObjects(BlobCleanupPlan cleanupPlan) throws IOException {
-        for (StoredBlobObject target : cleanupPlan.targets()) {
+    private void cleanupOrphanedObjects(StorageBlobCleanupRouter.StorageBlobCleanupPlan cleanupPlan) throws IOException {
+        for (StorageBlobCleanupRouter.StorageBlobCleanupTarget target : cleanupPlan.targets()) {
             if (isStillReferenced(target.backendName(), target.objectKey())) {
                 continue;
             }
@@ -135,7 +129,7 @@ public class StorageFileDeletionService {
 
     private StorageFileEntity requireOwnedFile(String fileId,
                                                Long userId) {
-        StorageFileEntity fileEntity = storageFileRepository.findById(fileId)
+        StorageFileEntity fileEntity = storageFileRepository.findActiveById(fileId)
                 .orElseThrow(() -> new StorageException(
                         DataErrorCode.ERROR_DATA_NOT_EXIST,
                         "File not found: " + fileId
@@ -150,11 +144,7 @@ public class StorageFileDeletionService {
     }
 
     public int purgeRetainedBlobs(OffsetDateTime now) throws IOException {
-        long retentionSeconds = storageRuntimeConfig.getCleanupDeletedBlobRetainSeconds();
-        if (retentionSeconds <= 0) {
-            return 0;
-        }
-        OffsetDateTime retentionCutoff = now.minusSeconds(retentionSeconds);
+        OffsetDateTime retentionCutoff = resolveRetentionCutoff(now);
         int purged = 0;
         for (StorageBlobEntity candidate : storageBlobRepository.findAllByOrphanedAtBefore(retentionCutoff)) {
             if (purgeRetainedBlob(candidate.getBlobId(), candidate.getContentChecksum(), retentionCutoff)) {
@@ -168,102 +158,163 @@ public class StorageFileDeletionService {
                                       String lockKey,
                                       OffsetDateTime retentionCutoff) throws IOException {
         try (StorageBlobLifecycleLockManager.LockedKey ignored = storageBlobLifecycleLockManager.acquire(lockKey)) {
-            BlobPurgeResult purgeResult = Objects.requireNonNull(
+            BlobPurgePlan purgePlan = Objects.requireNonNull(
                     transactionTemplate.execute(status -> purgeRetainedBlobInTransaction(blobId, retentionCutoff))
             );
-            if (!purgeResult.purged()) {
+            if (!purgePlan.ready()) {
                 return false;
             }
-            cleanupOrphanedObjects(purgeResult.cleanupPlan());
-            return true;
+            if (!cleanupRetainedBlobObjects(blobId, purgePlan.cleanupPlan())) {
+                return false;
+            }
+            return Objects.requireNonNull(
+                    transactionTemplate.execute(status -> finalizeRetainedBlobPurge(blobId, retentionCutoff))
+            );
         }
     }
 
-    private BlobPurgeResult purgeRetainedBlobInTransaction(String blobId,
-                                                           OffsetDateTime retentionCutoff) {
-        StorageBlobEntity blobEntity = storageBlobRepository.lockById(blobId).orElse(null);
+    private BlobPurgePlan purgeRetainedBlobInTransaction(String blobId,
+                                                         OffsetDateTime retentionCutoff) {
+        StorageBlobEntity blobEntity = storageBlobRepository.findById(blobId).orElse(null);
         if (blobEntity == null || blobEntity.getOrphanedAt() == null || blobEntity.getOrphanedAt().isAfter(retentionCutoff)) {
-            return BlobPurgeResult.notPurged();
+            return BlobPurgePlan.notReady();
         }
-        if (storageFileRepository.existsByBlobId(blobId)) {
-            blobEntity.setOrphanedAt(null);
-            blobEntity.setUpdateTime(OffsetDateTime.now());
-            storageBlobRepository.save(blobEntity);
-            return BlobPurgeResult.notPurged();
+        if (storageFileRepository.existsActiveByBlobId(blobId)) {
+            StorageBlobEntity restoredBlob = blobEntity.toBuilder()
+                    .setOrphanedAt(null)
+                    .setUpdateTime(OffsetDateTime.now())
+                    .build();
+            storageBlobRepository.save(restoredBlob);
+            return BlobPurgePlan.notReady();
         }
-        List<StorageBlobPlacementEntity> placements = storageBlobPlacementRepository.findAllByBlobId(blobId);
-        storageBlobPlacementRepository.deleteAll(placements);
+        List<StorageBlobPlacementEntity> placements = storageBlobPlacementRepository.findAllIncludingDeletedByBlobId(blobId);
+        return BlobPurgePlan.ready(storageBlobCleanupRouter.route(blobEntity, placements));
+    }
+
+    private boolean cleanupRetainedBlobObjects(String blobId,
+                                               StorageBlobCleanupRouter.StorageBlobCleanupPlan cleanupPlan) throws IOException {
+        for (StorageBlobCleanupRouter.StorageBlobCleanupTarget target : cleanupPlan.targets()) {
+            if (isStillReferencedForPurge(blobId, target.backendName(), target.objectKey())) {
+                continue;
+            }
+            var blobStore = blobStoreLocator.require(target.backendName());
+            if (!blobStore.exists(target.objectKey())) {
+                continue;
+            }
+            if (!blobStore.delete(target.objectKey()) && blobStore.exists(target.objectKey())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean finalizeRetainedBlobPurge(String blobId,
+                                              OffsetDateTime retentionCutoff) {
+        StorageBlobEntity blobEntity = storageBlobRepository.findById(blobId).orElse(null);
+        if (blobEntity == null || blobEntity.getOrphanedAt() == null || blobEntity.getOrphanedAt().isAfter(retentionCutoff)) {
+            return false;
+        }
+        if (storageFileRepository.existsActiveByBlobId(blobId)) {
+            StorageBlobEntity restoredBlob = blobEntity.toBuilder()
+                    .setOrphanedAt(null)
+                    .setUpdateTime(OffsetDateTime.now())
+                    .build();
+            storageBlobRepository.save(restoredBlob);
+            return false;
+        }
+        if (!storageBlobPlacementRepository.findAllByBlobId(blobId).isEmpty()) {
+            return false;
+        }
+        OffsetDateTime purgedAt = OffsetDateTime.now();
+        markFilesPurged(storageFileRepository.findDeletedByBlobId(blobId), purgedAt);
+        markPlacementsPurged(storageBlobPlacementRepository.findAllIncludingDeletedByBlobId(blobId), purgedAt);
         storageBlobRepository.delete(blobEntity);
-        return BlobPurgeResult.purged(BlobCleanupPlan.from(blobEntity, placements));
+        return true;
+    }
+
+    private boolean isStillReferencedForPurge(String blobId,
+                                              String backendName,
+                                              String objectKey) {
+        return storageBlobRepository.existsOtherByPrimaryBackendAndPrimaryObjectKey(backendName, objectKey, blobId)
+                || storageBlobPlacementRepository.existsByBackendNameAndObjectKey(backendName, objectKey)
+                || storageUploadSessionRepository.existsPendingSessionByPrimaryBackendAndObjectKey(backendName, objectKey);
+    }
+
+    private void markPlacementsDeleted(List<StorageBlobPlacementEntity> placements,
+                                       OffsetDateTime now) {
+        if (placements.isEmpty()) {
+            return;
+        }
+        List<StorageBlobPlacementEntity> updatedPlacements = placements.stream()
+                .map(placement -> placement.toBuilder()
+                        .setDeleted(true)
+                        .setUpdateTime(now)
+                        .build())
+                .toList();
+        storageBlobPlacementRepository.saveAll(updatedPlacements);
+    }
+
+    private void markPlacementsPurged(List<StorageBlobPlacementEntity> placements,
+                                      OffsetDateTime purgedAt) {
+        if (placements.isEmpty()) {
+            return;
+        }
+        List<StorageBlobPlacementEntity> purgedPlacements = placements.stream()
+                .map(placement -> placement.toBuilder()
+                        .setPurgedAt(purgedAt)
+                        .setUpdateTime(purgedAt)
+                        .build())
+                .toList();
+        storageBlobPlacementRepository.saveAll(purgedPlacements);
+    }
+
+    private void markFilesPurged(List<StorageFileEntity> files,
+                                 OffsetDateTime purgedAt) {
+        if (files.isEmpty()) {
+            return;
+        }
+        List<StorageFileEntity> purgedFiles = files.stream()
+                .map(file -> file.toBuilder()
+                        .setPurgedAt(purgedAt)
+                        .setUpdateTime(purgedAt)
+                        .build())
+                .toList();
+        storageFileRepository.saveAll(purgedFiles);
     }
 
     private void markBlobOrphaned(StorageBlobEntity blobEntity,
                                   OffsetDateTime now) {
-        blobEntity.setOrphanedAt(now);
-        blobEntity.setUpdateTime(now);
-        storageBlobRepository.save(blobEntity);
+        StorageBlobEntity orphanedBlob = blobEntity.toBuilder()
+                .setOrphanedAt(now)
+                .setUpdateTime(now)
+                .build();
+        storageBlobRepository.save(orphanedBlob);
+    }
+
+    private OffsetDateTime resolveRetentionCutoff(OffsetDateTime now) {
+        long retentionSeconds = storageRuntimeConfig.getCleanupDeletedBlobRetainSeconds();
+        if (retentionSeconds <= 0) {
+            return now;
+        }
+        return now.minusSeconds(retentionSeconds);
     }
 
     private String resolveLockKey(String fileId) {
-        return storageFileRepository.findById(fileId)
+        return storageFileRepository.findActiveById(fileId)
                 .flatMap(fileEntity -> storageBlobRepository.findById(fileEntity.getBlobId())
                         .map(StorageBlobEntity::getContentChecksum)
                         .or(() -> java.util.Optional.of(fileEntity.getBlobId())))
                 .orElse(fileId);
     }
 
-    private record StoredBlobObject(String backendName,
-                                    String objectKey) {
-    }
-
-    private record BlobCleanupPlan(List<StoredBlobObject> targets) {
-        private static BlobCleanupPlan empty() {
-            return new BlobCleanupPlan(List.of());
+    private record BlobPurgePlan(boolean ready,
+                                 StorageBlobCleanupRouter.StorageBlobCleanupPlan cleanupPlan) {
+        private static BlobPurgePlan notReady() {
+            return new BlobPurgePlan(false, StorageBlobCleanupRouter.StorageBlobCleanupPlan.empty());
         }
 
-        private static BlobCleanupPlan from(StorageBlobEntity blobEntity,
-                                            List<StorageBlobPlacementEntity> placements) {
-            Map<String, Set<String>> targets = new LinkedHashMap<>();
-            addTarget(targets, blobEntity.getPrimaryBackend(), blobEntity.getPrimaryObjectKey());
-            for (StorageBlobPlacementEntity placement : placements) {
-                addTarget(targets, placement.getBackendName(), placement.getObjectKey());
-            }
-            return fromTargetMap(targets);
-        }
-
-        private static BlobCleanupPlan fromPlacements(List<StorageBlobPlacementEntity> placements) {
-            Map<String, Set<String>> targets = new LinkedHashMap<>();
-            for (StorageBlobPlacementEntity placement : placements) {
-                addTarget(targets, placement.getBackendName(), placement.getObjectKey());
-            }
-            return fromTargetMap(targets);
-        }
-
-        private static BlobCleanupPlan fromTargetMap(Map<String, Set<String>> targets) {
-            List<StoredBlobObject> cleanupTargets = new ArrayList<>();
-            for (Map.Entry<String, Set<String>> entry : targets.entrySet()) {
-                for (String objectKey : entry.getValue()) {
-                    cleanupTargets.add(new StoredBlobObject(entry.getKey(), objectKey));
-                }
-            }
-            return new BlobCleanupPlan(List.copyOf(cleanupTargets));
-        }
-
-        private static void addTarget(Map<String, Set<String>> targets,
-                                      String backendName,
-                                      String objectKey) {
-            targets.computeIfAbsent(backendName, ignored -> new LinkedHashSet<>()).add(objectKey);
-        }
-    }
-
-    private record BlobPurgeResult(boolean purged,
-                                   BlobCleanupPlan cleanupPlan) {
-        private static BlobPurgeResult notPurged() {
-            return new BlobPurgeResult(false, BlobCleanupPlan.empty());
-        }
-
-        private static BlobPurgeResult purged(BlobCleanupPlan cleanupPlan) {
-            return new BlobPurgeResult(true, cleanupPlan);
+        private static BlobPurgePlan ready(StorageBlobCleanupRouter.StorageBlobCleanupPlan cleanupPlan) {
+            return new BlobPurgePlan(true, cleanupPlan);
         }
     }
 }

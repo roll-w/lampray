@@ -23,4 +23,4 @@ import tech.lamprism.lampray.common.data.Dao
  * @author RollW
  */
 @Dao
-interface StorageBlobPlacementDao : CommonDao<StorageBlobPlacementEntity, String>
+interface StorageBlobPlacementDao : CommonDao<StorageBlobPlacementEntity, Long>

@@ -11,3 +11,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/0.1.0/0.1.0-alpha1-15-storage-changelog.yaml
       context: incremental
+  - include:
+      file: db/changelog/0.1.0/0.1.0-alpha1-20-storage-logical-delete-changelog.yaml
+      context: incremental

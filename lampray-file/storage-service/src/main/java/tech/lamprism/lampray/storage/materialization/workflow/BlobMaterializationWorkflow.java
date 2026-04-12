@@ -18,6 +18,7 @@ package tech.lamprism.lampray.storage.materialization.workflow;
 
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
+import tech.lamprism.lampray.storage.support.StorageBlobLifecycleLockManager;
 import tech.lamprism.lampray.storage.workflow.Workflow;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
@@ -32,18 +33,25 @@ import java.util.Objects;
 @Component
 public class BlobMaterializationWorkflow implements Workflow<BlobMaterializationWorkflowContext, PreparedBlobMaterialization> {
     private final List<WorkflowStep<BlobMaterializationWorkflowContext>> steps;
+    private final StorageBlobLifecycleLockManager storageBlobLifecycleLockManager;
 
-    public BlobMaterializationWorkflow(List<WorkflowStep<BlobMaterializationWorkflowContext>> steps) {
+    public BlobMaterializationWorkflow(List<WorkflowStep<BlobMaterializationWorkflowContext>> steps,
+                                       StorageBlobLifecycleLockManager storageBlobLifecycleLockManager) {
         this.steps = steps.stream()
                 .sorted(Comparator.comparingInt(WorkflowStep::getOrder))
                 .toList();
+        this.storageBlobLifecycleLockManager = storageBlobLifecycleLockManager;
     }
 
     @Override
     public PreparedBlobMaterialization execute(BlobMaterializationWorkflowContext context) throws IOException {
-        for (WorkflowStep<BlobMaterializationWorkflowContext> step : steps) {
-            step.execute(context);
+        try (StorageBlobLifecycleLockManager.LockedKey ignored = storageBlobLifecycleLockManager.acquire(
+                context.getRequest().checksum()
+        )) {
+            for (WorkflowStep<BlobMaterializationWorkflowContext> step : steps) {
+                step.execute(context);
+            }
+            return Objects.requireNonNull(context.getState().getPreparedBlob(), "preparedBlob");
         }
-        return Objects.requireNonNull(context.getState().getPreparedBlob(), "preparedBlob");
     }
 }

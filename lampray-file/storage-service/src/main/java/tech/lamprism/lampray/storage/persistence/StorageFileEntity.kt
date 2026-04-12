@@ -85,6 +85,13 @@ class StorageFileEntity(
     @Column(name = "update_time", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private var updateTime: OffsetDateTime = OffsetDateTime.now(),
+
+    @Column(name = "deleted", nullable = false)
+    var deleted: Boolean = false,
+
+    @Column(name = "purged_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    var purgedAt: OffsetDateTime? = null,
 ) : DataEntity<String> {
     override fun getEntityId(): String = fileId
 
@@ -100,6 +107,133 @@ class StorageFileEntity(
 
     fun setUpdateTime(updateTime: OffsetDateTime) {
         this.updateTime = updateTime
+    }
+
+    fun isDeleted(): Boolean = deleted
+
+    fun isPurged(): Boolean = purgedAt != null
+
+    fun toBuilder(): Builder = Builder(this)
+
+    fun lock(): StorageFileEntity = toBuilder().build()
+
+    class Builder {
+        private var id: Long? = null
+        private var fileId: String? = null
+        private var blobId: String = ""
+        private var groupName: String = ""
+        private var ownerUserId: Long? = null
+        private var fileName: String = ""
+        private var fileSize: Long = 0
+        private var mimeType: String = "application/octet-stream"
+        private var fileType: FileType = FileType.OTHER
+        private var visibility: StorageVisibility = StorageVisibility.PRIVATE
+        private var createTime: OffsetDateTime = OffsetDateTime.now()
+        private var updateTime: OffsetDateTime = OffsetDateTime.now()
+        private var deleted: Boolean = false
+        private var purgedAt: OffsetDateTime? = null
+
+        constructor()
+
+        constructor(other: StorageFileEntity) {
+            this.id = other.id
+            this.fileId = other.fileId
+            this.blobId = other.blobId
+            this.groupName = other.groupName
+            this.ownerUserId = other.ownerUserId
+            this.fileName = other.fileName
+            this.fileSize = other.fileSize
+            this.mimeType = other.mimeType
+            this.fileType = other.fileType
+            this.visibility = other.visibility
+            this.createTime = other.createTime
+            this.updateTime = other.updateTime
+            this.deleted = other.deleted
+            this.purgedAt = other.purgedAt
+        }
+
+        fun setId(id: Long?) = apply {
+            this.id = id
+        }
+
+        fun setFileId(fileId: String) = apply {
+            this.fileId = fileId
+        }
+
+        fun setBlobId(blobId: String) = apply {
+            this.blobId = blobId
+        }
+
+        fun setGroupName(groupName: String) = apply {
+            this.groupName = groupName
+        }
+
+        fun setOwnerUserId(ownerUserId: Long?) = apply {
+            this.ownerUserId = ownerUserId
+        }
+
+        fun setFileName(fileName: String) = apply {
+            this.fileName = fileName
+        }
+
+        fun setFileSize(fileSize: Long) = apply {
+            this.fileSize = fileSize
+        }
+
+        fun setMimeType(mimeType: String) = apply {
+            this.mimeType = mimeType
+        }
+
+        fun setFileType(fileType: FileType) = apply {
+            this.fileType = fileType
+        }
+
+        fun setVisibility(visibility: StorageVisibility) = apply {
+            this.visibility = visibility
+        }
+
+        fun setCreateTime(createTime: OffsetDateTime) = apply {
+            this.createTime = createTime
+        }
+
+        fun setUpdateTime(updateTime: OffsetDateTime) = apply {
+            this.updateTime = updateTime
+        }
+
+        fun setDeleted(deleted: Boolean) = apply {
+            this.deleted = deleted
+        }
+
+        fun setPurgedAt(purgedAt: OffsetDateTime?) = apply {
+            this.purgedAt = purgedAt
+        }
+
+        fun build(): StorageFileEntity {
+            return StorageFileEntity(
+                id = id,
+                fileId = fileId!!,
+                blobId = blobId,
+                groupName = groupName,
+                ownerUserId = ownerUserId,
+                fileName = fileName,
+                fileSize = fileSize,
+                mimeType = mimeType,
+                fileType = fileType,
+                visibility = visibility,
+                createTime = createTime,
+                updateTime = updateTime,
+                deleted = deleted,
+                purgedAt = purgedAt,
+            )
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        fun StorageFileEntity.toEntity(): StorageFileEntity = toBuilder().build()
+
+        @JvmStatic
+        fun builder(): Builder = Builder()
     }
 
     final override fun equals(other: Any?): Boolean {

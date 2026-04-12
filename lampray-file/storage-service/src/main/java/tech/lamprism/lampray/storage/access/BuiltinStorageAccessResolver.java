@@ -16,6 +16,7 @@
 
 package tech.lamprism.lampray.storage.access;
 
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
@@ -33,7 +34,8 @@ import tech.rollw.common.web.CommonErrorCode;
  * @author RollW
  */
 @Component
-public class BuiltinStorageAccessResolver {
+@Order(0)
+public class BuiltinStorageAccessResolver implements StorageAccessResolver {
     private final BuiltinStorageRegistry builtinStorageRegistry;
     private final ProxyStorageReferenceFactory proxyStorageReferenceFactory;
 
@@ -43,7 +45,9 @@ public class BuiltinStorageAccessResolver {
         this.proxyStorageReferenceFactory = proxyStorageReferenceFactory;
     }
 
-    public StorageDownloadResult resolveDownload(String fileId) {
+    @Override
+    public StorageDownloadResult resolveDownload(String fileId,
+                                                 Long userId) {
         BuiltinStorageResource builtinResource = findBuiltinResource(fileId);
         if (builtinResource == null) {
             return null;
@@ -56,8 +60,10 @@ public class BuiltinStorageAccessResolver {
         );
     }
 
+    @Override
     public StorageReference resolveReference(String fileId,
-                                             StorageReferenceRequest request) {
+                                             StorageReferenceRequest request,
+                                             Long userId) {
         BuiltinStorageResource builtinResource = findBuiltinResource(fileId);
         if (builtinResource == null) {
             return null;

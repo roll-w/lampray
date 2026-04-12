@@ -25,6 +25,7 @@ import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
 import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementEntity;
 import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
 import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
+import tech.lamprism.lampray.storage.support.StorageBlobLifecycleLockManager;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -37,49 +38,53 @@ public class BlobMaterializationPersistenceService {
     private final StorageBlobRepository storageBlobRepository;
     private final StorageBlobPlacementRepository storageBlobPlacementRepository;
     private final ResourceIdGenerator resourceIdGenerator;
+    private final StorageBlobLifecycleLockManager storageBlobLifecycleLockManager;
 
     public BlobMaterializationPersistenceService(StorageBlobRepository storageBlobRepository,
                                                  StorageBlobPlacementRepository storageBlobPlacementRepository,
-                                                 ResourceIdGenerator resourceIdGenerator) {
+                                                 ResourceIdGenerator resourceIdGenerator,
+                                                 StorageBlobLifecycleLockManager storageBlobLifecycleLockManager) {
         this.storageBlobRepository = storageBlobRepository;
         this.storageBlobPlacementRepository = storageBlobPlacementRepository;
         this.resourceIdGenerator = resourceIdGenerator;
+        this.storageBlobLifecycleLockManager = storageBlobLifecycleLockManager;
     }
 
     public StorageBlobEntity persist(PreparedBlobMaterialization preparedBlob) {
-        StorageBlobEntity blobEntity = resolveExistingBlob(preparedBlob);
-        if (blobEntity == null) {
+        try (StorageBlobLifecycleLockManager.LockedKey ignored = storageBlobLifecycleLockManager.acquire(preparedBlob.getChecksum())) {
+            StorageBlobEntity blobEntity = resolveExistingBlob(preparedBlob);
             OffsetDateTime now = OffsetDateTime.now();
-            StorageBlobEntity candidate = new StorageBlobEntity(
-                    null,
-                    newBlobId(),
-                    preparedBlob.getChecksum(),
-                    preparedBlob.getSize(),
-                    preparedBlob.getMimeType(),
-                    preparedBlob.getFileType(),
-                    preparedBlob.getPrimaryBackend(),
-                    preparedBlob.getPrimaryObjectKey(),
-                    null,
-                    now,
-                    now
-            );
-            try {
-                blobEntity = storageBlobRepository.save(candidate);
-            } catch (DataIntegrityViolationException exception) {
-                blobEntity = storageBlobRepository.findByContentChecksum(preparedBlob.getChecksum())
-                        .orElseThrow(() -> exception);
+            if (blobEntity == null) {
+                StorageBlobEntity candidate = StorageBlobEntity.builder()
+                        .setBlobId(newBlobId())
+                        .setContentChecksum(preparedBlob.getChecksum())
+                        .setFileSize(preparedBlob.getSize())
+                        .setMimeType(preparedBlob.getMimeType())
+                        .setFileType(preparedBlob.getFileType())
+                        .setPrimaryBackend(preparedBlob.getPrimaryBackend())
+                        .setPrimaryObjectKey(preparedBlob.getPrimaryObjectKey())
+                        .setCreateTime(now)
+                        .setUpdateTime(now)
+                        .build();
+                try {
+                    blobEntity = storageBlobRepository.save(candidate);
+                } catch (DataIntegrityViolationException exception) {
+                    blobEntity = storageBlobRepository.findByContentChecksum(preparedBlob.getChecksum())
+                            .orElseThrow(() -> exception);
+                }
+            } else if (blobEntity.getOrphanedAt() != null) {
+                StorageBlobEntity revivedBlob = blobEntity.toBuilder()
+                        .setOrphanedAt(null)
+                        .setUpdateTime(now)
+                        .build();
+                blobEntity = storageBlobRepository.save(revivedBlob);
             }
-        } else if (blobEntity.getOrphanedAt() != null) {
-            blobEntity.setOrphanedAt(null);
-            blobEntity.setUpdateTime(OffsetDateTime.now());
-            blobEntity = storageBlobRepository.save(blobEntity);
-        }
 
-        OffsetDateTime now = OffsetDateTime.now();
-        for (Map.Entry<String, String> entry : preparedBlob.getPlacementsToPersist().entrySet()) {
-            persistPlacementIfAbsent(blobEntity.getBlobId(), entry.getKey(), entry.getValue(), now);
+            for (Map.Entry<String, String> entry : preparedBlob.getPlacementsToPersist().entrySet()) {
+                persistPlacementIfAbsent(blobEntity.getBlobId(), entry.getKey(), entry.getValue(), now);
+            }
+            return blobEntity;
         }
-        return blobEntity;
     }
 
     private StorageBlobEntity resolveExistingBlob(PreparedBlobMaterialization preparedBlob) {
@@ -87,7 +92,7 @@ public class BlobMaterializationPersistenceService {
         if (existingBlob == null) {
             return null;
         }
-        return storageBlobRepository.lockById(existingBlob.getBlobId())
+        return storageBlobRepository.findById(existingBlob.getBlobId())
                 .or(() -> storageBlobRepository.findByContentChecksum(preparedBlob.getChecksum()))
                 .orElse(null);
     }
@@ -99,19 +104,39 @@ public class BlobMaterializationPersistenceService {
         if (storageBlobPlacementRepository.findByBlobIdAndBackendName(blobId, backendName).isPresent()) {
             return;
         }
-        StorageBlobPlacementEntity placementEntity = new StorageBlobPlacementEntity(
-                null,
-                resourceIdGenerator.nextId(StorageResourceKind.INSTANCE),
-                blobId,
-                backendName,
-                objectKey,
-                now,
-                now
-        );
+        StorageBlobPlacementEntity existingPlacement = storageBlobPlacementRepository
+                .findAnyByBlobIdAndBackendName(blobId, backendName)
+                .orElse(null);
+        if (existingPlacement != null) {
+            StorageBlobPlacementEntity revivedPlacement = existingPlacement.toBuilder()
+                    .setObjectKey(objectKey)
+                    .setDeleted(false)
+                    .setUpdateTime(now)
+                    .build();
+            storageBlobPlacementRepository.save(revivedPlacement);
+            return;
+        }
+        StorageBlobPlacementEntity placementEntity = StorageBlobPlacementEntity.builder()
+                .setBlobId(blobId)
+                .setBackendName(backendName)
+                .setObjectKey(objectKey)
+                .setCreateTime(now)
+                .setUpdateTime(now)
+                .setDeleted(false)
+                .build();
         try {
             storageBlobPlacementRepository.save(placementEntity);
         } catch (DataIntegrityViolationException exception) {
-            if (storageBlobPlacementRepository.findByBlobIdAndBackendName(blobId, backendName).isPresent()) {
+            StorageBlobPlacementEntity conflictedPlacement = storageBlobPlacementRepository
+                    .findAnyByBlobIdAndBackendName(blobId, backendName)
+                    .orElse(null);
+            if (conflictedPlacement != null) {
+                StorageBlobPlacementEntity updatedPlacement = conflictedPlacement.toBuilder()
+                        .setObjectKey(objectKey)
+                        .setDeleted(false)
+                        .setUpdateTime(now)
+                        .build();
+                storageBlobPlacementRepository.save(updatedPlacement);
                 return;
             }
             throw exception;

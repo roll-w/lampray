@@ -22,14 +22,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import tech.lamprism.lampray.storage.FileType;
 import tech.lamprism.lampray.storage.StorageBackendType;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageUploadSessionState;
+import tech.lamprism.lampray.storage.StorageVisibility;
 import tech.lamprism.lampray.storage.backend.BlobStoreRegistration;
 import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
 import tech.lamprism.lampray.storage.configuration.StorageBackendConfig;
 import tech.lamprism.lampray.storage.configuration.StorageGroupBackend;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
+import tech.lamprism.lampray.storage.configuration.StorageGroupDownloadPolicy;
+import tech.lamprism.lampray.storage.configuration.StorageGroupLoadBalanceMode;
+import tech.lamprism.lampray.storage.configuration.StorageGroupPlacementMode;
 import tech.lamprism.lampray.storage.configuration.StorageTopology;
 import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
 import tech.lamprism.lampray.storage.monitoring.StorageBackendTotals;
@@ -55,6 +60,7 @@ import tech.lamprism.lampray.storage.query.StorageQueryProvider;
 import tech.lamprism.lampray.storage.query.StorageSessionDetails;
 import tech.lamprism.lampray.storage.query.StorageSessionView;
 import tech.lamprism.lampray.storage.session.UploadSessionStatus;
+import tech.lamprism.lampray.storage.store.BlobStoreCapability;
 import tech.rollw.common.web.DataErrorCode;
 import tech.rollw.common.web.page.ImmutablePage;
 import tech.rollw.common.web.page.Page;
@@ -161,7 +167,7 @@ public class StorageQueryService implements StorageQueryProvider {
         StorageUploadSessionModel uploadSession = storageUploadSessionRepository.findById(uploadId)
                 .map(StorageUploadSessionModel::from)
                 .orElseThrow(() -> new StorageException(DataErrorCode.ERROR_DATA_NOT_EXIST, "Upload session not found: " + uploadId));
-        StorageFileView file = storageFileRepository.findById(uploadSession.getFileId())
+        StorageFileView file = storageFileRepository.findActiveById(uploadSession.getFileId())
                 .map(this::toFileView)
                 .orElse(null);
         OffsetDateTime now = OffsetDateTime.now();
@@ -199,7 +205,32 @@ public class StorageQueryService implements StorageQueryProvider {
         for (String backendName : backendNames) {
             StorageBackendConfig config = storageTopology.getBackends().get(backendName);
             BlobStoreRegistration registration = registrationMap.get(backendName);
-            StorageBackendType backendType = config != null ? config.getType() : null;
+            StorageBackendType backendType = null;
+            Set<BlobStoreCapability> capabilities = Set.of();
+            Map<String, Integer> groupWeights = Map.of();
+            String endpoint = null;
+            String publicEndpoint = null;
+            String region = null;
+            String bucket = null;
+            String rootPrefix = null;
+            String rootPath = null;
+            boolean nativeChecksumEnabled = false;
+            boolean pathStyleAccess = false;
+            if (registration != null) {
+                capabilities = registration.getBlobStore().getCapabilities();
+                groupWeights = registration.getGroupWeights();
+            }
+            if (config != null) {
+                backendType = config.getType();
+                endpoint = config.getEndpoint();
+                publicEndpoint = config.getPublicEndpoint();
+                region = config.getRegion();
+                bucket = config.getBucket();
+                rootPrefix = config.getRootPrefix();
+                rootPath = config.getRootPath();
+                nativeChecksumEnabled = config.getNativeChecksumEnabled();
+                pathStyleAccess = config.getPathStyleAccess();
+            }
             StorageBackendTotals totals = backendTotals.getOrDefault(
                     backendName,
                     new StorageBackendTotals(0L, 0L, 0L, 0L)
@@ -208,16 +239,16 @@ public class StorageQueryService implements StorageQueryProvider {
                     backendName,
                     backendType,
                     registration != null,
-                    registration == null ? Set.of() : registration.getBlobStore().getCapabilities(),
-                    registration == null ? Map.of() : registration.getGroupWeights(),
-                    config == null ? null : config.getEndpoint(),
-                    config == null ? null : config.getPublicEndpoint(),
-                    config == null ? null : config.getRegion(),
-                    config == null ? null : config.getBucket(),
-                    config == null ? null : config.getRootPrefix(),
-                    config == null ? null : config.getRootPath(),
-                    config != null && config.getNativeChecksumEnabled(),
-                    config != null && config.getPathStyleAccess(),
+                    capabilities,
+                    groupWeights,
+                    endpoint,
+                    publicEndpoint,
+                    region,
+                    bucket,
+                    rootPrefix,
+                    rootPath,
+                    nativeChecksumEnabled,
+                    pathStyleAccess,
                     totals.getPrimaryBlobCount(),
                     totals.getPlacementCount(),
                     totals.getUniqueBytes(),
@@ -235,19 +266,35 @@ public class StorageQueryService implements StorageQueryProvider {
         List<StorageGroupView> result = new ArrayList<>();
         for (String groupName : groupNames) {
             StorageGroupConfig groupConfig = storageTopology.getGroups().get(groupName);
+            StorageVisibility visibility = null;
+            StorageGroupDownloadPolicy downloadPolicy = null;
+            StorageGroupPlacementMode placementMode = null;
+            StorageGroupLoadBalanceMode loadBalanceMode = null;
+            Long maxSizeBytes = null;
+            Set<FileType> allowedFileTypes = Set.of();
+            List<String> backends = List.of();
+            if (groupConfig != null) {
+                visibility = groupConfig.getVisibility();
+                downloadPolicy = groupConfig.getDownloadPolicy();
+                placementMode = groupConfig.getPlacementMode();
+                loadBalanceMode = groupConfig.getLoadBalanceMode();
+                maxSizeBytes = groupConfig.getMaxSizeBytes();
+                allowedFileTypes = groupConfig.getAllowedFileTypes();
+                backends = groupConfig.getBackends().stream().map(StorageGroupBackend::getBackendName).toList();
+            }
             StorageGroupTotals totals = groupTotals.getOrDefault(
                     groupName,
                     new StorageGroupTotals(0L, 0L, 0L, 0L)
             );
             result.add(new StorageGroupView(
                     groupName,
-                    groupConfig == null ? null : groupConfig.getVisibility(),
-                    groupConfig == null ? null : groupConfig.getDownloadPolicy(),
-                    groupConfig == null ? null : groupConfig.getPlacementMode(),
-                    groupConfig == null ? null : groupConfig.getLoadBalanceMode(),
-                    groupConfig == null ? null : groupConfig.getMaxSizeBytes(),
-                    groupConfig == null ? Set.of() : groupConfig.getAllowedFileTypes(),
-                    groupConfig == null ? List.of() : groupConfig.getBackends().stream().map(StorageGroupBackend::getBackendName).toList(),
+                    visibility,
+                    downloadPolicy,
+                    placementMode,
+                    loadBalanceMode,
+                    maxSizeBytes,
+                    allowedFileTypes,
+                    backends,
                     totals.getFileCount(),
                     totals.getLogicalBytes(),
                     totals.getDistinctBlobCount(),
@@ -258,7 +305,7 @@ public class StorageQueryService implements StorageQueryProvider {
     }
 
     private StorageFileEntity requireFile(String fileId) {
-        return storageFileRepository.findById(fileId)
+        return storageFileRepository.findActiveById(fileId)
                 .orElseThrow(() -> new StorageException(DataErrorCode.ERROR_DATA_NOT_EXIST, "File not found: " + fileId));
     }
 
@@ -280,7 +327,7 @@ public class StorageQueryService implements StorageQueryProvider {
 
     private StorageBlobPlacementView toBlobPlacementView(StorageBlobPlacementEntity placement) {
         return new StorageBlobPlacementView(
-                placement.getPlacementId(),
+                placement.getId(),
                 placement.getBackendName(),
                 placement.getObjectKey(),
                 placement.getCreateTime(),
@@ -309,10 +356,15 @@ public class StorageQueryService implements StorageQueryProvider {
                                                                Long ownerUserId,
                                                                String fileName) {
         return combine(
+                activeFileSpecification(),
                 eqIfPresent(StorageFileEntity_.groupName, StringUtils.trimToNull(groupName)),
                 eqIfPresent(StorageFileEntity_.ownerUserId, ownerUserId),
                 likeIfPresent(StorageFileEntity_.fileName, fileName)
         );
+    }
+
+    private Specification<StorageFileEntity> activeFileSpecification() {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.isFalse(root.get(StorageFileEntity_.deleted));
     }
 
     private Specification<StorageUploadSessionEntity> sessionSpecification(StorageUploadSessionState state,

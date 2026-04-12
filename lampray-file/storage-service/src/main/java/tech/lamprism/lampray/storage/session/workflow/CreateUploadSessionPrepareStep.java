@@ -16,7 +16,6 @@
 
 package tech.lamprism.lampray.storage.session.workflow;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.storage.FileType;
@@ -78,7 +77,7 @@ public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUpload
     @Override
     public void execute(CreateUploadSessionWorkflowContext context) throws IOException {
         StorageUploadRequest request = context.getRequest();
-        String groupName = resolveGroupName(request.getGroupName());
+        String groupName = resolveGroupName();
         StorageWritePlan writePlan = selectWritePlan(groupName);
         NormalizedUploadRequest normalizedRequest = normalizeRequest(request, writePlan.getGroupSettings());
         StorageUploadSessionModel uploadSession = prepareUploadSession(
@@ -161,9 +160,8 @@ public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUpload
         return new DirectUploadState(provision.getAccessRequest(), provision.getObjectKey());
     }
 
-    private String resolveGroupName(String requestedGroupName) {
-        String normalizedGroupName = StringUtils.trimToNull(requestedGroupName);
-        return normalizedGroupName != null ? normalizedGroupName : runtimeSettings.getDefaultGroup();
+    private String resolveGroupName() {
+        return runtimeSettings.getDefaultGroup();
     }
 
     private String newId() {

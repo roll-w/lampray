@@ -26,6 +26,7 @@ dependencies {
     api(project(":lampray-user:user-api"))
     // spring web mvc
     implementation("org.springframework:spring-webmvc")
+    testImplementation("com.h2database:h2")
 }
 
 description = "lampray-storage-service"

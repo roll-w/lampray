@@ -24,6 +24,7 @@ import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author RollW
@@ -31,38 +32,45 @@ import java.io.IOException;
 @Service
 @Transactional(readOnly = true)
 public class CompositeStorageAccessService implements StorageAccessService {
-    private final BuiltinStorageAccessResolver builtinStorageAccessResolver;
-    private final StoredStorageAccessResolver storedStorageAccessResolver;
+    private final List<StorageAccessResolver> storageAccessResolvers;
+    private final ProxyStorageReferenceFactory proxyStorageReferenceFactory;
 
-    public CompositeStorageAccessService(BuiltinStorageAccessResolver builtinStorageAccessResolver,
-                                         StoredStorageAccessResolver storedStorageAccessResolver) {
-        this.builtinStorageAccessResolver = builtinStorageAccessResolver;
-        this.storedStorageAccessResolver = storedStorageAccessResolver;
+    public CompositeStorageAccessService(List<StorageAccessResolver> storageAccessResolvers,
+                                         ProxyStorageReferenceFactory proxyStorageReferenceFactory) {
+        this.storageAccessResolvers = storageAccessResolvers;
+        this.proxyStorageReferenceFactory = proxyStorageReferenceFactory;
     }
 
     @Override
     public StorageDownloadResult resolveDownload(String fileId,
                                                  Long userId) throws IOException {
-        StorageDownloadResult builtinResult = builtinStorageAccessResolver.resolveDownload(fileId);
-        if (builtinResult != null) {
-            return builtinResult;
+        for (StorageAccessResolver resolver : storageAccessResolvers) {
+            StorageDownloadResult resolved = resolver.resolveDownload(fileId, userId);
+            if (resolved != null) {
+                return resolved;
+            }
         }
-        return storedStorageAccessResolver.resolveDownload(fileId, userId);
+        throw new IllegalStateException("No storage access resolver available for: " + fileId);
     }
 
     @Override
     public StorageReference resolveStorageReference(String id,
                                                     StorageReferenceRequest request,
                                                     Long userId) throws IOException {
-        StorageReferenceRequest normalizedRequest = request != null ? request : new StorageReferenceRequest();
+        StorageReferenceRequest normalizedRequest = request;
+        if (normalizedRequest == null) {
+            normalizedRequest = new StorageReferenceRequest();
+        }
         if (normalizedRequest.getMode() == StorageReferenceMode.PROXY) {
-            return storedStorageAccessResolver.proxyReference(id);
+            return proxyStorageReferenceFactory.create(id);
         }
 
-        StorageReference builtinReference = builtinStorageAccessResolver.resolveReference(id, normalizedRequest);
-        if (builtinReference != null) {
-            return builtinReference;
+        for (StorageAccessResolver resolver : storageAccessResolvers) {
+            StorageReference resolved = resolver.resolveReference(id, normalizedRequest, userId);
+            if (resolved != null) {
+                return resolved;
+            }
         }
-        return storedStorageAccessResolver.resolveReference(id, normalizedRequest, userId);
+        throw new IllegalStateException("No storage access resolver available for: " + id);
     }
 }

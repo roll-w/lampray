@@ -17,15 +17,16 @@
 package tech.lamprism.lampray.storage.access;
 
 import com.google.common.collect.Maps;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageException;
-import tech.lamprism.lampray.storage.StorageVisibility;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
+import tech.lamprism.lampray.storage.StorageVisibility;
 import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
@@ -38,8 +39,8 @@ import tech.lamprism.lampray.storage.policy.StorageTransferModeResolver;
 import tech.lamprism.lampray.storage.routing.StorageGroupRouter;
 import tech.lamprism.lampray.storage.store.BlobStore;
 import tech.rollw.common.web.AuthErrorCode;
-import tech.rollw.common.web.DataErrorCode;
 import tech.rollw.common.web.CommonErrorCode;
+import tech.rollw.common.web.DataErrorCode;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -53,7 +54,8 @@ import java.util.stream.Collectors;
  * @author RollW
  */
 @Component
-public class StoredStorageAccessResolver {
+@Order(1)
+public class StoredStorageAccessResolver implements StorageAccessResolver {
     private final StorageRuntimeConfig runtimeSettings;
     private final StorageTransferModeResolver transferModeResolver;
     private final StorageTopology storageTopology;
@@ -80,6 +82,7 @@ public class StoredStorageAccessResolver {
         this.accessStrategies = Maps.uniqueIndex(accessStrategies, StoredAccessStrategy::mode);
     }
 
+    @Override
     public StorageDownloadResult resolveDownload(String fileId,
                                                  Long userId) throws IOException {
         StoredDownloadTarget target = resolveTarget(fileId, userId);
@@ -96,6 +99,7 @@ public class StoredStorageAccessResolver {
         return accessStrategy(StorageDownloadMode.PROXY).resolveDownload(target);
     }
 
+    @Override
     public StorageReference resolveReference(String fileId,
                                              StorageReferenceRequest request,
                                              Long userId) throws IOException {
@@ -171,7 +175,7 @@ public class StoredStorageAccessResolver {
     }
 
     private StorageFileEntity requireFileEntity(String fileId) {
-        return storageFileRepository.findById(fileId)
+        return storageFileRepository.findActiveById(fileId)
                 .orElseThrow(() -> new StorageException(
                         DataErrorCode.ERROR_DATA_NOT_EXIST,
                         "File not found: " + fileId

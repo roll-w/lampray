@@ -39,7 +39,6 @@ public class TrustedUploadValidateUploadStep implements WorkflowStep<TrustedUplo
         TempUpload tempUpload = Objects.requireNonNull(context.getState().getTempUpload(), "tempUpload");
         StorageUploadSessionModel.validateUploadRequest(
                 new StorageUploadRequest(
-                        Objects.requireNonNull(context.getState().getGroupName(), "groupName"),
                         Objects.requireNonNull(context.getState().getFileName(), "fileName"),
                         tempUpload.getSize(),
                         Objects.requireNonNull(context.getState().getMimeType(), "mimeType"),

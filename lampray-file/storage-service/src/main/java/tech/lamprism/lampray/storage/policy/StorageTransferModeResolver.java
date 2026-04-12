@@ -45,7 +45,10 @@ public final class StorageTransferModeResolver {
         if (request.getSize() == null || request.getSize() <= runtimeSettings.getUploadProxyThresholdBytes()) {
             return StorageUploadMode.PROXY;
         }
-        return checksum != null ? StorageUploadMode.DIRECT : StorageUploadMode.PROXY;
+        if (checksum == null) {
+            return StorageUploadMode.PROXY;
+        }
+        return StorageUploadMode.DIRECT;
     }
 
     public StorageDownloadMode resolveDownloadMode(FileStorage fileStorage,
@@ -60,8 +63,9 @@ public final class StorageTransferModeResolver {
         if (groupSettings.getDownloadPolicy() == StorageGroupDownloadPolicy.DIRECT) {
             return StorageDownloadMode.DIRECT;
         }
-        return fileStorage.getFileSize() > runtimeSettings.getDownloadProxyThresholdBytes()
-                ? StorageDownloadMode.DIRECT
-                : StorageDownloadMode.PROXY;
+        if (fileStorage.getFileSize() > runtimeSettings.getDownloadProxyThresholdBytes()) {
+            return StorageDownloadMode.DIRECT;
+        }
+        return StorageDownloadMode.PROXY;
     }
 }
