@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.access;
+package tech.lamprism.lampray.storage.access.reference;
 
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageAccessRequest;
@@ -26,6 +26,7 @@ import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
 import tech.lamprism.lampray.storage.StorageReferenceSource;
 import tech.lamprism.lampray.storage.StorageVisibility;
+import tech.lamprism.lampray.storage.access.model.StoredDownloadTarget;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher;
 import tech.lamprism.lampray.storage.policy.StorageContentRules;

@@ -17,10 +17,10 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.lock.LockService;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.materialization.TempUpload;
 import tech.lamprism.lampray.storage.support.PathCleanupSupport;
-import tech.lamprism.lampray.storage.support.StorageBlobLifecycleLockManager;
 import tech.lamprism.lampray.storage.workflow.Workflow;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
@@ -35,25 +35,25 @@ import java.util.Objects;
 @Component
 public class TrustedUploadWorkflow implements Workflow<TrustedUploadWorkflowContext, FileStorage> {
     private final List<WorkflowStep<TrustedUploadWorkflowContext>> steps;
-    private final StorageBlobLifecycleLockManager storageBlobLifecycleLockManager;
+    private final LockService lockService;
 
     public TrustedUploadWorkflow(List<WorkflowStep<TrustedUploadWorkflowContext>> steps,
-                                 StorageBlobLifecycleLockManager storageBlobLifecycleLockManager) {
+                                 LockService lockService) {
         this.steps = steps.stream()
                 .sorted(Comparator.comparingInt(WorkflowStep::getOrder))
                 .toList();
-        this.storageBlobLifecycleLockManager = storageBlobLifecycleLockManager;
+        this.lockService = lockService;
     }
 
     @Override
     public FileStorage execute(TrustedUploadWorkflowContext context) throws IOException {
-        StorageBlobLifecycleLockManager.LockedKey contentLock = null;
+        LockService.AcquiredLock contentLock = null;
         try {
             for (WorkflowStep<TrustedUploadWorkflowContext> step : steps) {
                 if (contentLock == null) {
                     TempUpload tempUpload = context.getState().getTempUpload();
                     if (tempUpload != null) {
-                        contentLock = storageBlobLifecycleLockManager.acquire(tempUpload.getContentChecksum());
+                        contentLock = lockService.acquire(tempUpload.getContentChecksum());
                     }
                 }
                 step.execute(context);

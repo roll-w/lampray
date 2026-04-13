@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0.1.0-alpha1-21-shared-lock
+      author: RollW
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            tableName: shared_lock
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_shared_lock
+                  name: lock_key
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: owner_token
+                  type: VARCHAR(128)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expires_at
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME

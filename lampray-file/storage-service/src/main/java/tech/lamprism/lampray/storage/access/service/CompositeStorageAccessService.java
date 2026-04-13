@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.access;
+package tech.lamprism.lampray.storage.access.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +22,9 @@ import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
+import tech.lamprism.lampray.storage.access.StorageAccessResolver;
+import tech.lamprism.lampray.storage.access.StorageAccessService;
+import tech.lamprism.lampray.storage.access.reference.ProxyStorageReferenceFactory;
 
 import java.io.IOException;
 import java.util.List;

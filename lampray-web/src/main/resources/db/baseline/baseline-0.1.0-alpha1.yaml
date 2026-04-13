@@ -40,6 +40,8 @@ databaseChangeLog:
             tableName: storage_blob_placement
         - dropTable:
             tableName: storage_upload_session
+        - dropTable:
+            tableName: shared_lock
       changes:
         - createTable:
             columns:
@@ -958,3 +960,33 @@ databaseChangeLog:
                   name: status
               - column:
                   name: content_checksum
+        - createTable:
+            tableName: shared_lock
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_shared_lock
+                  name: lock_key
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: owner_token
+                  type: VARCHAR(128)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expires_at
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: create_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: update_time
+                  type: DATETIME

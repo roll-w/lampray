@@ -16,9 +16,10 @@
 
 package tech.lamprism.lampray.storage.monitoring;
 
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageUploadSessionState;
+import tech.lamprism.lampray.storage.session.UploadSessionStatus;
 
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
@@ -30,88 +31,88 @@ import java.util.Map;
  */
 @Component
 public class StorageStatisticsEngine {
-    private static final String BACKEND_NAME = "backend_name";
-    private static final String PRIMARY_BLOB_COUNT = "primary_blob_count";
-    private static final String UNIQUE_BYTES = "unique_bytes";
-    private static final String PLACEMENT_COUNT = "placement_count";
-    private static final String PHYSICAL_BYTES = "physical_bytes";
-    private static final String GROUP_NAME = "group_name";
-    private static final String FILE_COUNT = "file_count";
-    private static final String LOGICAL_BYTES = "logical_bytes";
-    private static final String DISTINCT_BLOB_COUNT = "distinct_blob_count";
+    private static final String ACTIVE_FILE_COUNT_JPQL =
+            "select count(fileEntity) from StorageFileEntity fileEntity where fileEntity.deleted = false";
+    private static final String ACTIVE_LOGICAL_BYTES_JPQL =
+            "select coalesce(sum(fileEntity.fileSize), 0) from StorageFileEntity fileEntity where fileEntity.deleted = false";
+    private static final String BLOB_COUNT_JPQL =
+            "select count(blob) from StorageBlobEntity blob";
+    private static final String BLOB_UNIQUE_BYTES_JPQL =
+            "select coalesce(sum(blob.fileSize), 0) from StorageBlobEntity blob";
+    private static final String PLACEMENT_COUNT_JPQL =
+            "select count(placement) from StorageBlobPlacementEntity placement, StorageBlobEntity blob where placement.blobId = blob.blobId";
+    private static final String PLACEMENT_PHYSICAL_BYTES_JPQL =
+            "select coalesce(sum(blob.fileSize), 0) from StorageBlobPlacementEntity placement, StorageBlobEntity blob where placement.blobId = blob.blobId";
+    private static final String SESSION_COUNT_BY_STATUS_JPQL =
+            "select count(sessionEntity) from StorageUploadSessionEntity sessionEntity where sessionEntity.status = :status";
+    private static final String PENDING_SESSION_COUNT_JPQL =
+            "select count(sessionEntity) from StorageUploadSessionEntity sessionEntity where sessionEntity.status = :status and sessionEntity.expiresAt >= :now";
+    private static final String EXPIRED_SESSION_COUNT_JPQL =
+            "select count(sessionEntity) from StorageUploadSessionEntity sessionEntity where sessionEntity.status = :expiredStatus or (sessionEntity.status = :pendingStatus and sessionEntity.expiresAt < :now)";
+    private static final String BACKEND_TOTALS_JPQL =
+            "select blob.primaryBackend, count(blob), coalesce(sum(blob.fileSize), 0) from StorageBlobEntity blob group by blob.primaryBackend";
+    private static final String BACKEND_PLACEMENT_TOTALS_JPQL =
+            "select placement.backendName, count(placement), coalesce(sum(blob.fileSize), 0) from StorageBlobPlacementEntity placement, StorageBlobEntity blob where placement.blobId = blob.blobId group by placement.backendName";
+    private static final String GROUP_TOTALS_JPQL =
+            "select fileEntity.groupName, count(fileEntity), coalesce(sum(fileEntity.fileSize), 0), count(distinct fileEntity.blobId) from StorageFileEntity fileEntity where fileEntity.deleted = false group by fileEntity.groupName";
+    private static final String GROUP_UNIQUE_ROWS_JPQL =
+            "select distinct fileEntity.groupName, blob.blobId, blob.fileSize from StorageFileEntity fileEntity, StorageBlobEntity blob where fileEntity.deleted = false and fileEntity.blobId = blob.blobId";
 
-    private static final String ACTIVE_FILE_COUNT_SQL =
-            "SELECT COUNT(*) FROM storage_file WHERE deleted = false";
-    private static final String ACTIVE_LOGICAL_BYTES_SQL =
-            "SELECT COALESCE(SUM(file_size), 0) FROM storage_file WHERE deleted = false";
-    private static final String BLOB_COUNT_SQL =
-            "SELECT COUNT(*) FROM storage_blob";
-    private static final String BLOB_UNIQUE_BYTES_SQL =
-            "SELECT COALESCE(SUM(file_size), 0) FROM storage_blob";
-    private static final String PLACEMENT_COUNT_SQL =
-            "SELECT COUNT(*) FROM storage_blob_placement p JOIN storage_blob b ON p.blob_id = b.blob_id";
-    private static final String PLACEMENT_PHYSICAL_BYTES_SQL =
-            "SELECT COALESCE(SUM(b.file_size), 0) FROM storage_blob_placement p JOIN storage_blob b ON p.blob_id = b.blob_id";
-    private static final String PENDING_SESSION_COUNT_SQL =
-            "SELECT COUNT(*) FROM storage_upload_session WHERE status = 'PENDING' AND expires_at >= :now";
-    private static final String COMPLETED_SESSION_COUNT_SQL =
-            "SELECT COUNT(*) FROM storage_upload_session WHERE status = 'COMPLETED'";
-    private static final String EXPIRED_SESSION_COUNT_SQL =
-            "SELECT COUNT(*) FROM storage_upload_session WHERE status = 'EXPIRED' OR (status = 'PENDING' AND expires_at < :now)";
-    private static final String BACKEND_TOTALS_SQL =
-            "SELECT primary_backend AS backend_name, COUNT(*) AS primary_blob_count, COALESCE(SUM(file_size), 0) AS unique_bytes " +
-                    "FROM storage_blob GROUP BY primary_backend";
-    private static final String BACKEND_PLACEMENT_TOTALS_SQL =
-            "SELECT p.backend_name AS backend_name, COUNT(*) AS placement_count, COALESCE(SUM(b.file_size), 0) AS physical_bytes " +
-                    "FROM storage_blob_placement p JOIN storage_blob b ON p.blob_id = b.blob_id GROUP BY p.backend_name";
-    private static final String GROUP_TOTALS_SQL =
-            "SELECT group_name AS group_name, COUNT(*) AS file_count, COALESCE(SUM(file_size), 0) AS logical_bytes, " +
-                    "COUNT(DISTINCT blob_id) AS distinct_blob_count FROM storage_file WHERE deleted = false GROUP BY group_name";
-    private static final String GROUP_UNIQUE_BYTES_SQL =
-            "SELECT grouped.group_name AS group_name, COALESCE(SUM(b.file_size), 0) AS unique_bytes FROM storage_blob b " +
-                    "JOIN (SELECT DISTINCT group_name, blob_id FROM storage_file WHERE deleted = false) grouped ON b.blob_id = grouped.blob_id " +
-                    "GROUP BY grouped.group_name";
+    private final EntityManager entityManager;
 
-    private final NamedParameterJdbcTemplate jdbcTemplate;
-
-    public StorageStatisticsEngine(NamedParameterJdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public StorageStatisticsEngine(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     public StorageOverviewTotals loadOverviewTotals(OffsetDateTime now) {
-        long fileCount = scalarLong(ACTIVE_FILE_COUNT_SQL);
-        long logicalBytes = scalarLong(ACTIVE_LOGICAL_BYTES_SQL);
-        long blobCount = scalarLong(BLOB_COUNT_SQL);
-        long uniqueBytes = scalarLong(BLOB_UNIQUE_BYTES_SQL);
-        long placementCount = scalarLong(PLACEMENT_COUNT_SQL);
-        long physicalBytes = scalarLong(PLACEMENT_PHYSICAL_BYTES_SQL);
-        Map<String, Object> parameters = Map.of("now", now);
+        long fileCount = scalarLong(ACTIVE_FILE_COUNT_JPQL);
+        long logicalBytes = scalarLong(ACTIVE_LOGICAL_BYTES_JPQL);
+        long blobCount = scalarLong(BLOB_COUNT_JPQL);
+        long uniqueBytes = scalarLong(BLOB_UNIQUE_BYTES_JPQL);
+        long placementCount = scalarLong(PLACEMENT_COUNT_JPQL);
+        long physicalBytes = scalarLong(PLACEMENT_PHYSICAL_BYTES_JPQL);
         Map<String, Long> sessionCounts = new LinkedHashMap<>();
-        sessionCounts.put(StorageUploadSessionState.PENDING.name(), scalarLong(PENDING_SESSION_COUNT_SQL, parameters));
-        sessionCounts.put(StorageUploadSessionState.COMPLETED.name(), scalarLong(COMPLETED_SESSION_COUNT_SQL));
-        sessionCounts.put(StorageUploadSessionState.EXPIRED.name(), scalarLong(EXPIRED_SESSION_COUNT_SQL, parameters));
+        sessionCounts.put(
+                StorageUploadSessionState.PENDING.name(),
+                scalarLong(PENDING_SESSION_COUNT_JPQL, Map.of("status", UploadSessionStatus.PENDING, "now", now))
+        );
+        sessionCounts.put(
+                StorageUploadSessionState.COMPLETED.name(),
+                scalarLong(SESSION_COUNT_BY_STATUS_JPQL, Map.of("status", UploadSessionStatus.COMPLETED))
+        );
+        sessionCounts.put(
+                StorageUploadSessionState.EXPIRED.name(),
+                scalarLong(
+                        EXPIRED_SESSION_COUNT_JPQL,
+                        Map.of(
+                                "expiredStatus", UploadSessionStatus.EXPIRED,
+                                "pendingStatus", UploadSessionStatus.PENDING,
+                                "now", now
+                        )
+                )
+        );
         return new StorageOverviewTotals(fileCount, logicalBytes, blobCount, uniqueBytes, placementCount, physicalBytes, sessionCounts);
     }
 
     public Map<String, StorageBackendTotals> loadBackendTotals() {
         Map<String, StorageBackendTotals> result = new LinkedHashMap<>();
-        for (Map<String, Object> row : rows(BACKEND_TOTALS_SQL)) {
-            String backendName = stringValue(row.get(BACKEND_NAME));
+        for (Object[] row : rows(BACKEND_TOTALS_JPQL)) {
+            String backendName = stringValue(row[0]);
             result.put(backendName, new StorageBackendTotals(
-                    longValue(row.get(PRIMARY_BLOB_COUNT)),
-                    longValue(row.get(UNIQUE_BYTES)),
+                    longValue(row[1]),
+                    longValue(row[2]),
                     0L,
                     0L
             ));
         }
-        for (Map<String, Object> row : rows(BACKEND_PLACEMENT_TOTALS_SQL)) {
-            String backendName = stringValue(row.get(BACKEND_NAME));
+        for (Object[] row : rows(BACKEND_PLACEMENT_TOTALS_JPQL)) {
+            String backendName = stringValue(row[0]);
             StorageBackendTotals previous = result.getOrDefault(backendName, new StorageBackendTotals(0L, 0L, 0L, 0L));
             result.put(backendName, new StorageBackendTotals(
                     previous.getPrimaryBlobCount(),
                     previous.getUniqueBytes(),
-                    longValue(row.get(PLACEMENT_COUNT)),
-                    longValue(row.get(PHYSICAL_BYTES))
+                    longValue(row[1]),
+                    longValue(row[2])
             ));
         }
         return result;
@@ -119,43 +120,45 @@ public class StorageStatisticsEngine {
 
     public Map<String, StorageGroupTotals> loadGroupTotals() {
         Map<String, StorageGroupTotals> result = new LinkedHashMap<>();
-        for (Map<String, Object> row : rows(GROUP_TOTALS_SQL)) {
-            String groupName = stringValue(row.get(GROUP_NAME));
+        for (Object[] row : rows(GROUP_TOTALS_JPQL)) {
+            String groupName = stringValue(row[0]);
             result.put(groupName, new StorageGroupTotals(
-                    longValue(row.get(FILE_COUNT)),
-                    longValue(row.get(LOGICAL_BYTES)),
-                    longValue(row.get(DISTINCT_BLOB_COUNT)),
+                    longValue(row[1]),
+                    longValue(row[2]),
+                    longValue(row[3]),
                     0L
             ));
         }
-        for (Map<String, Object> row : rows(GROUP_UNIQUE_BYTES_SQL)) {
-            String groupName = stringValue(row.get(GROUP_NAME));
+        for (Object[] row : rows(GROUP_UNIQUE_ROWS_JPQL)) {
+            String groupName = stringValue(row[0]);
             StorageGroupTotals previous = result.getOrDefault(groupName, new StorageGroupTotals(0L, 0L, 0L, 0L));
             result.put(groupName, new StorageGroupTotals(
                     previous.getFileCount(),
                     previous.getLogicalBytes(),
                     previous.getDistinctBlobCount(),
-                    longValue(row.get(UNIQUE_BYTES))
+                    previous.getUniqueBytes() + longValue(row[2])
             ));
         }
         return result;
     }
 
-    private long scalarLong(String sql) {
-        return scalarLong(sql, Map.of());
+    private long scalarLong(String jpql) {
+        return scalarLong(jpql, Map.of());
     }
 
-    private long scalarLong(String sql,
-                            Map<String, Object> parameters) {
-        Number value = jdbcTemplate.queryForObject(sql, parameters, Number.class);
+    private long scalarLong(String jpql,
+                             Map<String, Object> parameters) {
+        var query = entityManager.createQuery(jpql, Number.class);
+        parameters.forEach(query::setParameter);
+        Number value = query.getSingleResult();
         if (value == null) {
             return 0L;
         }
         return value.longValue();
     }
 
-    private List<Map<String, Object>> rows(String sql) {
-        return jdbcTemplate.queryForList(sql, Map.of());
+    private List<Object[]> rows(String jpql) {
+        return entityManager.createQuery(jpql, Object[].class).getResultList();
     }
 
     private String stringValue(Object value) {

@@ -16,9 +16,11 @@
 
 package tech.lamprism.lampray.storage.persistence
 
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
+import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization
 import java.time.OffsetDateTime
 import java.util.Optional
 
@@ -29,6 +31,30 @@ import java.util.Optional
 class StorageBlobRepository(
     storageBlobDao: StorageBlobDao,
 ) : CommonRepository<StorageBlobEntity, String>(storageBlobDao) {
+    fun materialize(
+        preparedBlob: PreparedBlobMaterialization,
+        newBlobId: String,
+        now: OffsetDateTime,
+    ): StorageBlobEntity {
+        val existingBlob = resolveExistingBlob(preparedBlob)
+        if (existingBlob == null) {
+            val candidate = createBlobCandidate(preparedBlob, newBlobId, now)
+            return try {
+                save(candidate)
+            } catch (exception: DataIntegrityViolationException) {
+                findByContentChecksum(preparedBlob.checksum).orElseThrow { exception }
+            }
+        }
+        if (existingBlob.orphanedAt == null) {
+            return existingBlob
+        }
+        val revivedBlob = existingBlob.toBuilder()
+            .setOrphanedAt(null)
+            .setUpdateTime(now)
+            .build()
+        return save(revivedBlob)
+    }
+
     fun findByContentChecksum(contentChecksum: String): Optional<StorageBlobEntity> {
         return findOne(createChecksumSpecification(contentChecksum))
     }
@@ -47,6 +73,33 @@ class StorageBlobRepository(
     ): Boolean {
         return findOne(createOtherPrimaryPlacementSpecification(primaryBackend, objectKey, excludedBlobId)).isPresent
     }
+
+    private fun resolveExistingBlob(preparedBlob: PreparedBlobMaterialization): StorageBlobEntity? {
+        val existingBlob = preparedBlob.existingBlob
+        if (existingBlob == null) {
+            return null
+        }
+        return findById(existingBlob.blobId)
+            .or { findByContentChecksum(preparedBlob.checksum) }
+            .orElse(null)
+    }
+
+    private fun createBlobCandidate(
+        preparedBlob: PreparedBlobMaterialization,
+        newBlobId: String,
+        now: OffsetDateTime,
+    ): StorageBlobEntity =
+        StorageBlobEntity.builder()
+            .setBlobId(newBlobId)
+            .setContentChecksum(preparedBlob.checksum)
+            .setFileSize(preparedBlob.size)
+            .setMimeType(preparedBlob.mimeType)
+            .setFileType(preparedBlob.fileType)
+            .setPrimaryBackend(preparedBlob.primaryBackend)
+            .setPrimaryObjectKey(preparedBlob.primaryObjectKey)
+            .setCreateTime(now)
+            .setUpdateTime(now)
+            .build()
 
     private fun createChecksumSpecification(contentChecksum: String): Specification<StorageBlobEntity> {
         return Specification { root, _, criteriaBuilder ->

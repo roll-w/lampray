@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.access;
+package tech.lamprism.lampray.storage.access.resolver;
 
 import com.google.common.collect.Maps;
 import org.springframework.core.annotation.Order;
@@ -27,6 +27,10 @@ import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
 import tech.lamprism.lampray.storage.StorageVisibility;
+import tech.lamprism.lampray.storage.access.StorageAccessResolver;
+import tech.lamprism.lampray.storage.access.model.StoredBlobPlacement;
+import tech.lamprism.lampray.storage.access.model.StoredDownloadTarget;
+import tech.lamprism.lampray.storage.access.strategy.StoredAccessStrategy;
 import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;

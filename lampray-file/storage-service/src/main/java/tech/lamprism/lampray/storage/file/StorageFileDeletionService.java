@@ -19,6 +19,7 @@ package tech.lamprism.lampray.storage.file;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import tech.lamprism.lampray.lock.LockService;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
@@ -29,7 +30,7 @@ import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
 import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
 import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionRepository;
-import tech.lamprism.lampray.storage.support.StorageBlobLifecycleLockManager;
+import tech.lamprism.lampray.storage.routing.StorageGroupRouter;
 import tech.rollw.common.web.AuthErrorCode;
 import tech.rollw.common.web.DataErrorCode;
 
@@ -45,8 +46,8 @@ public class StorageFileDeletionService {
     private final StorageBlobPlacementRepository storageBlobPlacementRepository;
     private final StorageUploadSessionRepository storageUploadSessionRepository;
     private final BlobStoreLocator blobStoreLocator;
-    private final StorageBlobLifecycleLockManager storageBlobLifecycleLockManager;
-    private final StorageBlobCleanupRouter storageBlobCleanupRouter;
+    private final LockService lockService;
+    private final StorageGroupRouter storageGroupRouter;
     private final StorageRuntimeConfig storageRuntimeConfig;
     private final TransactionTemplate transactionTemplate;
 
@@ -55,8 +56,8 @@ public class StorageFileDeletionService {
                                       StorageBlobPlacementRepository storageBlobPlacementRepository,
                                       StorageUploadSessionRepository storageUploadSessionRepository,
                                       BlobStoreLocator blobStoreLocator,
-                                      StorageBlobLifecycleLockManager storageBlobLifecycleLockManager,
-                                      StorageBlobCleanupRouter storageBlobCleanupRouter,
+                                      LockService lockService,
+                                      StorageGroupRouter storageGroupRouter,
                                       StorageRuntimeConfig storageRuntimeConfig,
                                       PlatformTransactionManager transactionManager) {
         this.storageFileRepository = storageFileRepository;
@@ -64,24 +65,24 @@ public class StorageFileDeletionService {
         this.storageBlobPlacementRepository = storageBlobPlacementRepository;
         this.storageUploadSessionRepository = storageUploadSessionRepository;
         this.blobStoreLocator = blobStoreLocator;
-        this.storageBlobLifecycleLockManager = storageBlobLifecycleLockManager;
-        this.storageBlobCleanupRouter = storageBlobCleanupRouter;
+        this.lockService = lockService;
+        this.storageGroupRouter = storageGroupRouter;
         this.storageRuntimeConfig = storageRuntimeConfig;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     public void deleteFile(String fileId,
                            Long userId) throws IOException {
-        try (StorageBlobLifecycleLockManager.LockedKey ignored = storageBlobLifecycleLockManager.acquire(resolveLockKey(fileId))) {
-            StorageBlobCleanupRouter.StorageBlobCleanupPlan cleanupPlan = Objects.requireNonNull(
+        try (LockService.AcquiredLock ignored = lockService.acquire(resolveLockKey(fileId))) {
+            StorageGroupRouter.StorageBlobCleanupPlan cleanupPlan = Objects.requireNonNull(
                     transactionTemplate.execute(status -> deleteFileInTransaction(fileId, userId))
             );
             cleanupOrphanedObjects(cleanupPlan);
         }
     }
 
-    private StorageBlobCleanupRouter.StorageBlobCleanupPlan deleteFileInTransaction(String fileId,
-                                                                                    Long userId) {
+    private StorageGroupRouter.StorageBlobCleanupPlan deleteFileInTransaction(String fileId,
+                                                                              Long userId) {
         StorageFileEntity fileEntity = requireOwnedFile(fileId, userId);
         String blobId = fileEntity.getBlobId();
         StorageBlobEntity blobEntity = storageBlobRepository.findById(blobId).orElse(null);
@@ -94,25 +95,25 @@ public class StorageFileDeletionService {
         storageFileRepository.save(deletedFile);
         storageFileRepository.flush();
         if (storageFileRepository.existsActiveByBlobId(blobId)) {
-            return StorageBlobCleanupRouter.StorageBlobCleanupPlan.empty();
+            return StorageGroupRouter.StorageBlobCleanupPlan.empty();
         }
 
         List<StorageBlobPlacementEntity> placements = storageBlobPlacementRepository.findAllByBlobId(blobId);
         if (blobEntity == null) {
             if (placements.isEmpty()) {
-                return StorageBlobCleanupRouter.StorageBlobCleanupPlan.empty();
+                return StorageGroupRouter.StorageBlobCleanupPlan.empty();
             }
             markPlacementsDeleted(placements, now);
-            return storageBlobCleanupRouter.routePlacements(placements);
+            return storageGroupRouter.routeCleanup(placements);
         }
 
         markPlacementsDeleted(placements, now);
         markBlobOrphaned(blobEntity, now);
-        return StorageBlobCleanupRouter.StorageBlobCleanupPlan.empty();
+        return StorageGroupRouter.StorageBlobCleanupPlan.empty();
     }
 
-    private void cleanupOrphanedObjects(StorageBlobCleanupRouter.StorageBlobCleanupPlan cleanupPlan) throws IOException {
-        for (StorageBlobCleanupRouter.StorageBlobCleanupTarget target : cleanupPlan.targets()) {
+    private void cleanupOrphanedObjects(StorageGroupRouter.StorageBlobCleanupPlan cleanupPlan) throws IOException {
+        for (StorageGroupRouter.StorageBlobCleanupTarget target : cleanupPlan.targets()) {
             if (isStillReferenced(target.backendName(), target.objectKey())) {
                 continue;
             }
@@ -157,7 +158,7 @@ public class StorageFileDeletionService {
     private boolean purgeRetainedBlob(String blobId,
                                       String lockKey,
                                       OffsetDateTime retentionCutoff) throws IOException {
-        try (StorageBlobLifecycleLockManager.LockedKey ignored = storageBlobLifecycleLockManager.acquire(lockKey)) {
+        try (LockService.AcquiredLock ignored = lockService.acquire(lockKey)) {
             BlobPurgePlan purgePlan = Objects.requireNonNull(
                     transactionTemplate.execute(status -> purgeRetainedBlobInTransaction(blobId, retentionCutoff))
             );
@@ -188,12 +189,12 @@ public class StorageFileDeletionService {
             return BlobPurgePlan.notReady();
         }
         List<StorageBlobPlacementEntity> placements = storageBlobPlacementRepository.findAllIncludingDeletedByBlobId(blobId);
-        return BlobPurgePlan.ready(storageBlobCleanupRouter.route(blobEntity, placements));
+        return BlobPurgePlan.ready(storageGroupRouter.routeCleanup(blobEntity, placements));
     }
 
     private boolean cleanupRetainedBlobObjects(String blobId,
-                                               StorageBlobCleanupRouter.StorageBlobCleanupPlan cleanupPlan) throws IOException {
-        for (StorageBlobCleanupRouter.StorageBlobCleanupTarget target : cleanupPlan.targets()) {
+                                               StorageGroupRouter.StorageBlobCleanupPlan cleanupPlan) throws IOException {
+        for (StorageGroupRouter.StorageBlobCleanupTarget target : cleanupPlan.targets()) {
             if (isStillReferencedForPurge(blobId, target.backendName(), target.objectKey())) {
                 continue;
             }
@@ -308,12 +309,12 @@ public class StorageFileDeletionService {
     }
 
     private record BlobPurgePlan(boolean ready,
-                                 StorageBlobCleanupRouter.StorageBlobCleanupPlan cleanupPlan) {
+                                 StorageGroupRouter.StorageBlobCleanupPlan cleanupPlan) {
         private static BlobPurgePlan notReady() {
-            return new BlobPurgePlan(false, StorageBlobCleanupRouter.StorageBlobCleanupPlan.empty());
+            return new BlobPurgePlan(false, StorageGroupRouter.StorageBlobCleanupPlan.empty());
         }
 
-        private static BlobPurgePlan ready(StorageBlobCleanupRouter.StorageBlobCleanupPlan cleanupPlan) {
+        private static BlobPurgePlan ready(StorageGroupRouter.StorageBlobCleanupPlan cleanupPlan) {
             return new BlobPurgePlan(true, cleanupPlan);
         }
     }

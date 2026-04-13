@@ -25,8 +25,9 @@ import tech.lamprism.lampray.storage.StorageResourceKind;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageTopology;
 import tech.lamprism.lampray.storage.file.PersistedMaterialization;
-import tech.lamprism.lampray.storage.materialization.persistence.BlobMaterializationPersistenceService;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
+import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
+import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
 import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
 import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
@@ -41,18 +42,21 @@ import java.util.Objects;
 public class PersistTrustedUploadPersistInTransactionStep implements WorkflowStep<PersistTrustedUploadWorkflowContext> {
     private static final int STEP_ORDER = 100;
 
-    private final BlobMaterializationPersistenceService blobMaterializationPersistenceService;
+    private final StorageBlobRepository storageBlobRepository;
+    private final StorageBlobPlacementRepository storageBlobPlacementRepository;
     private final StorageFileRepository storageFileRepository;
     private final StorageTopology storageTopology;
     private final ResourceIdGenerator resourceIdGenerator;
     private final TransactionTemplate transactionTemplate;
 
-    PersistTrustedUploadPersistInTransactionStep(BlobMaterializationPersistenceService blobMaterializationPersistenceService,
-                                                 StorageFileRepository storageFileRepository,
-                                                 StorageTopology storageTopology,
-                                                 ResourceIdGenerator resourceIdGenerator,
-                                                 PlatformTransactionManager transactionManager) {
-        this.blobMaterializationPersistenceService = blobMaterializationPersistenceService;
+    PersistTrustedUploadPersistInTransactionStep(StorageBlobRepository storageBlobRepository,
+                                                 StorageBlobPlacementRepository storageBlobPlacementRepository,
+                                                  StorageFileRepository storageFileRepository,
+                                                  StorageTopology storageTopology,
+                                                  ResourceIdGenerator resourceIdGenerator,
+                                                  PlatformTransactionManager transactionManager) {
+        this.storageBlobRepository = storageBlobRepository;
+        this.storageBlobPlacementRepository = storageBlobPlacementRepository;
         this.storageFileRepository = storageFileRepository;
         this.storageTopology = storageTopology;
         this.resourceIdGenerator = resourceIdGenerator;
@@ -75,8 +79,13 @@ public class PersistTrustedUploadPersistInTransactionStep implements WorkflowSte
     }
 
     private PersistedMaterialization persistTrustedUpload(PersistTrustedUploadWorkflowContext context) {
-        StorageBlobEntity blobEntity = blobMaterializationPersistenceService.persist(context.getPreparedBlob());
         OffsetDateTime now = OffsetDateTime.now();
+        StorageBlobEntity blobEntity = storageBlobRepository.materialize(context.getPreparedBlob(), newBlobId(), now);
+        storageBlobPlacementRepository.syncPlacements(
+                blobEntity.getBlobId(),
+                context.getPreparedBlob().getPlacementsToPersist(),
+                now
+        );
         StorageGroupConfig groupConfig = storageTopology.getGroup(context.getGroupName());
         StorageFileEntity fileEntity = StorageFileEntity.builder()
                 .setFileId(newFileId())
@@ -96,6 +105,10 @@ public class PersistTrustedUploadPersistInTransactionStep implements WorkflowSte
     }
 
     private String newFileId() {
+        return resourceIdGenerator.nextId(StorageResourceKind.INSTANCE);
+    }
+
+    private String newBlobId() {
         return resourceIdGenerator.nextId(StorageResourceKind.INSTANCE);
     }
 

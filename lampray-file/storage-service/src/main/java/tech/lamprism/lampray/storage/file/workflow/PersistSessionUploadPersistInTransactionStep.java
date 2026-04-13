@@ -19,12 +19,15 @@ package tech.lamprism.lampray.storage.file.workflow;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.storage.FileStorage;
+import tech.lamprism.lampray.storage.StorageResourceKind;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageTopology;
 import tech.lamprism.lampray.storage.file.PersistedMaterialization;
-import tech.lamprism.lampray.storage.materialization.persistence.BlobMaterializationPersistenceService;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
+import tech.lamprism.lampray.storage.persistence.StorageBlobPlacementRepository;
+import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
 import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
 import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity;
@@ -41,21 +44,27 @@ import java.util.Objects;
 public class PersistSessionUploadPersistInTransactionStep implements WorkflowStep<PersistSessionUploadWorkflowContext> {
     private static final int STEP_ORDER = 100;
 
-    private final BlobMaterializationPersistenceService blobMaterializationPersistenceService;
+    private final StorageBlobRepository storageBlobRepository;
+    private final StorageBlobPlacementRepository storageBlobPlacementRepository;
     private final StorageFileRepository storageFileRepository;
     private final StorageUploadSessionRepository storageUploadSessionRepository;
     private final StorageTopology storageTopology;
+    private final ResourceIdGenerator resourceIdGenerator;
     private final TransactionTemplate transactionTemplate;
 
-    PersistSessionUploadPersistInTransactionStep(BlobMaterializationPersistenceService blobMaterializationPersistenceService,
-                                                 StorageFileRepository storageFileRepository,
-                                                 StorageUploadSessionRepository storageUploadSessionRepository,
-                                                 StorageTopology storageTopology,
-                                                 PlatformTransactionManager transactionManager) {
-        this.blobMaterializationPersistenceService = blobMaterializationPersistenceService;
+    PersistSessionUploadPersistInTransactionStep(StorageBlobRepository storageBlobRepository,
+                                                 StorageBlobPlacementRepository storageBlobPlacementRepository,
+                                                  StorageFileRepository storageFileRepository,
+                                                  StorageUploadSessionRepository storageUploadSessionRepository,
+                                                  StorageTopology storageTopology,
+                                                 ResourceIdGenerator resourceIdGenerator,
+                                                  PlatformTransactionManager transactionManager) {
+        this.storageBlobRepository = storageBlobRepository;
+        this.storageBlobPlacementRepository = storageBlobPlacementRepository;
         this.storageFileRepository = storageFileRepository;
         this.storageUploadSessionRepository = storageUploadSessionRepository;
         this.storageTopology = storageTopology;
+        this.resourceIdGenerator = resourceIdGenerator;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -75,8 +84,13 @@ public class PersistSessionUploadPersistInTransactionStep implements WorkflowSte
     }
 
     private PersistedMaterialization persistSessionUpload(PersistSessionUploadWorkflowContext context) {
-        StorageBlobEntity blobEntity = blobMaterializationPersistenceService.persist(context.getPreparedBlob());
         OffsetDateTime now = OffsetDateTime.now();
+        StorageBlobEntity blobEntity = storageBlobRepository.materialize(context.getPreparedBlob(), newBlobId(), now);
+        storageBlobPlacementRepository.syncPlacements(
+                blobEntity.getBlobId(),
+                context.getPreparedBlob().getPlacementsToPersist(),
+                now
+        );
         StorageGroupConfig groupConfig = storageTopology.getGroup(context.getUploadSession().getGroupName());
         StorageFileEntity fileEntity = StorageFileEntity.builder()
                 .setFileId(context.getUploadSession().getFileId())
@@ -95,6 +109,10 @@ public class PersistSessionUploadPersistInTransactionStep implements WorkflowSte
         context.getUploadSession().markCompleted(now);
         storageUploadSessionRepository.save(StorageUploadSessionEntity.toEntity(context.getUploadSession()));
         return new PersistedMaterialization(toFileStorage(savedFileEntity), blobEntity.getBlobId());
+    }
+
+    private String newBlobId() {
+        return resourceIdGenerator.nextId(StorageResourceKind.INSTANCE);
     }
 
     private FileStorage toFileStorage(StorageFileEntity fileEntity) {

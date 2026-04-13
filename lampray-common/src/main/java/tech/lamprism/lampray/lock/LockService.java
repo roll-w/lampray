@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.access
+package tech.lamprism.lampray.lock;
 
 /**
+ * Shared lock contract for cross-instance critical sections.
+ *
  * @author RollW
  */
-data class StoredBlobPlacement(
-    val backendName: String,
-    val objectKey: String,
-)
+public interface LockService {
+    AcquiredLock acquire(String key);
+
+    interface AcquiredLock extends AutoCloseable {
+        @Override
+        void close();
+    }
+}

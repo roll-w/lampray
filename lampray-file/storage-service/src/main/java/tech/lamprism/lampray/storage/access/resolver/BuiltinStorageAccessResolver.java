@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.access;
+package tech.lamprism.lampray.storage.access.resolver;
 
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -24,6 +24,8 @@ import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
+import tech.lamprism.lampray.storage.access.StorageAccessResolver;
+import tech.lamprism.lampray.storage.access.reference.ProxyStorageReferenceFactory;
 import tech.lamprism.lampray.storage.builtin.BuiltinStorageRegistry;
 import tech.lamprism.lampray.storage.builtin.BuiltinStorageResource;
 import tech.rollw.common.web.CommonErrorCode;

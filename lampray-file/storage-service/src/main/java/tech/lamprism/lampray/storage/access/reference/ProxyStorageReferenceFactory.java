@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.access;
+package tech.lamprism.lampray.storage.access.reference;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;

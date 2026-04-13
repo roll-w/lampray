@@ -90,11 +90,6 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                  name: placement_id
-                  type: VARCHAR(64)
-              - column:
-                  constraints:
-                    nullable: false
                   name: blob_id
                   type: VARCHAR(64)
               - column:
@@ -117,10 +112,15 @@ databaseChangeLog:
                     nullable: false
                   name: update_time
                   type: DATETIME
-        - addUniqueConstraint:
-            columnNames: placement_id
-            constraintName: uc_storage_blob_placement_resource
-            tableName: storage_blob_placement
+              - column:
+                  constraints:
+                    nullable: false
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+              - column:
+                  name: purged_at
+                  type: DATETIME
         - addUniqueConstraint:
             columnNames: blob_id, backend_name
             constraintName: uc_storage_blob_backend
@@ -193,6 +193,15 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: update_time
+                  type: DATETIME
+              - column:
+                  constraints:
+                    nullable: false
+                  name: deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+              - column:
+                  name: purged_at
                   type: DATETIME
         - addUniqueConstraint:
             columnNames: file_id

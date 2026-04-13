@@ -17,8 +17,8 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.lock.LockService;
 import tech.lamprism.lampray.storage.FileStorage;
-import tech.lamprism.lampray.storage.support.StorageBlobLifecycleLockManager;
 import tech.lamprism.lampray.storage.workflow.Workflow;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
@@ -33,19 +33,19 @@ import java.util.Objects;
 @Component
 public class DirectUploadCompletionWorkflow implements Workflow<DirectUploadCompletionWorkflowContext, FileStorage> {
     private final List<WorkflowStep<DirectUploadCompletionWorkflowContext>> steps;
-    private final StorageBlobLifecycleLockManager storageBlobLifecycleLockManager;
+    private final LockService lockService;
 
     public DirectUploadCompletionWorkflow(List<WorkflowStep<DirectUploadCompletionWorkflowContext>> steps,
-                                          StorageBlobLifecycleLockManager storageBlobLifecycleLockManager) {
+                                          LockService lockService) {
         this.steps = steps.stream()
                 .sorted(Comparator.comparingInt(WorkflowStep::getOrder))
                 .toList();
-        this.storageBlobLifecycleLockManager = storageBlobLifecycleLockManager;
+        this.lockService = lockService;
     }
 
     @Override
     public FileStorage execute(DirectUploadCompletionWorkflowContext context) throws IOException {
-        try (StorageBlobLifecycleLockManager.LockedKey ignored = storageBlobLifecycleLockManager.acquire(
+        try (LockService.AcquiredLock ignored = lockService.acquire(
                 context.getUploadSession().requireChecksum()
         )) {
             for (WorkflowStep<DirectUploadCompletionWorkflowContext> step : steps) {

@@ -16,9 +16,11 @@
 
 package tech.lamprism.lampray.storage.persistence
 
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Repository
 import tech.lamprism.lampray.common.data.CommonRepository
+import java.time.OffsetDateTime
 import java.util.Optional
 
 /**
@@ -28,6 +30,16 @@ import java.util.Optional
 class StorageBlobPlacementRepository(
     storageBlobPlacementDao: StorageBlobPlacementDao,
 ) : CommonRepository<StorageBlobPlacementEntity, Long>(storageBlobPlacementDao) {
+    fun syncPlacements(
+        blobId: String,
+        placements: Map<String, String>,
+        now: OffsetDateTime,
+    ) {
+        placements.forEach { (backendName, objectKey) ->
+            upsertPlacement(blobId, backendName, objectKey, now)
+        }
+    }
+
     fun findAllByBlobId(blobId: String): List<StorageBlobPlacementEntity> {
         return findAll(createBlobIdSpecification(blobId, false))
     }
@@ -46,6 +58,48 @@ class StorageBlobPlacementRepository(
 
     fun existsByBackendNameAndObjectKey(backendName: String, objectKey: String): Boolean {
         return findOne(createBackendAndObjectKeySpecification(backendName, objectKey, false)).isPresent
+    }
+
+    private fun upsertPlacement(
+        blobId: String,
+        backendName: String,
+        objectKey: String,
+        now: OffsetDateTime,
+    ) {
+        if (findByBlobIdAndBackendName(blobId, backendName).isPresent) {
+            return
+        }
+        val existingPlacement = findAnyByBlobIdAndBackendName(blobId, backendName).orElse(null)
+        if (existingPlacement != null) {
+            save(
+                existingPlacement.toBuilder()
+                    .setObjectKey(objectKey)
+                    .setDeleted(false)
+                    .setUpdateTime(now)
+                    .build(),
+            )
+            return
+        }
+        val placementEntity = StorageBlobPlacementEntity.builder()
+            .setBlobId(blobId)
+            .setBackendName(backendName)
+            .setObjectKey(objectKey)
+            .setCreateTime(now)
+            .setUpdateTime(now)
+            .setDeleted(false)
+            .build()
+        try {
+            save(placementEntity)
+        } catch (exception: DataIntegrityViolationException) {
+            val conflictedPlacement = findAnyByBlobIdAndBackendName(blobId, backendName).orElse(null) ?: throw exception
+            save(
+                conflictedPlacement.toBuilder()
+                    .setObjectKey(objectKey)
+                    .setDeleted(false)
+                    .setUpdateTime(now)
+                    .build(),
+            )
+        }
     }
 
     private fun createBlobIdSpecification(
