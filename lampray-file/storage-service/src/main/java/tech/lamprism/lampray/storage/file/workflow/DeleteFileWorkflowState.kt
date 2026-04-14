@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.session
+package tech.lamprism.lampray.storage.file.workflow
 
-import tech.lamprism.lampray.storage.StorageAccessRequest
+import tech.lamprism.lampray.storage.routing.StorageGroupRouter
 
 /**
  * @author RollW
  */
-data class DirectUploadProvision(
-    val objectKey: String,
-    val accessRequest: StorageAccessRequest,
+data class DeleteFileWorkflowState(
+    var cleanupPlan: StorageGroupRouter.StorageBlobCleanupPlan = StorageGroupRouter.StorageBlobCleanupPlan.empty(),
 )

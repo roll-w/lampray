@@ -23,6 +23,7 @@ import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.StorageDownloadMode;
 import tech.lamprism.lampray.storage.StorageDownloadResult;
 import tech.lamprism.lampray.storage.StorageException;
+import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.StorageReference;
 import tech.lamprism.lampray.storage.StorageReferenceMode;
 import tech.lamprism.lampray.storage.StorageReferenceRequest;
@@ -228,14 +229,6 @@ public class StoredStorageAccessResolver implements StorageAccessResolver {
     }
 
     private FileStorage toFileStorage(StorageFileEntity fileEntity) {
-        return new FileStorage(
-                fileEntity.getFileId(),
-                fileEntity.getFileName(),
-                fileEntity.getFileSize(),
-                fileEntity.getMimeType(),
-                fileEntity.getFileType(),
-                fileEntity.getCreateTime()
-        );
+        return fileEntity.toFileStorage();
     }
-
 }

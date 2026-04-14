@@ -31,8 +31,10 @@ import org.hibernate.proxy.HibernateProxy
 import org.hibernate.type.SqlTypes
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.storage.FileType
+import tech.lamprism.lampray.storage.FileStorage
 import tech.lamprism.lampray.storage.StorageResourceKind
 import tech.lamprism.lampray.storage.StorageVisibility
+import tech.lamprism.lampray.storage.query.StorageFileView
 import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 
@@ -112,6 +114,31 @@ class StorageFileEntity(
     fun isDeleted(): Boolean = deleted
 
     fun isPurged(): Boolean = purgedAt != null
+
+    fun toFileStorage(): FileStorage =
+        FileStorage(
+            fileId = fileId,
+            fileName = fileName,
+            fileSize = fileSize,
+            mimeType = mimeType,
+            fileType = fileType,
+            createTime = createTime,
+        )
+
+    fun toFileView(): StorageFileView =
+        StorageFileView(
+            fileId = fileId,
+            blobId = blobId,
+            groupName = groupName,
+            ownerUserId = ownerUserId,
+            fileName = fileName,
+            fileSize = fileSize,
+            mimeType = mimeType,
+            fileType = fileType,
+            visibility = visibility,
+            createTime = createTime,
+            updateTime = updateTime,
+        )
 
     fun toBuilder(): Builder = Builder(this)
 

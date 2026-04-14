@@ -50,11 +50,11 @@ public class PersistTrustedUploadPersistInTransactionStep implements WorkflowSte
     private final TransactionTemplate transactionTemplate;
 
     PersistTrustedUploadPersistInTransactionStep(StorageBlobRepository storageBlobRepository,
-                                                 StorageBlobPlacementRepository storageBlobPlacementRepository,
-                                                  StorageFileRepository storageFileRepository,
-                                                  StorageTopology storageTopology,
-                                                  ResourceIdGenerator resourceIdGenerator,
-                                                  PlatformTransactionManager transactionManager) {
+                                                  StorageBlobPlacementRepository storageBlobPlacementRepository,
+                                                   StorageFileRepository storageFileRepository,
+                                                   StorageTopology storageTopology,
+                                                   ResourceIdGenerator resourceIdGenerator,
+                                                   PlatformTransactionManager transactionManager) {
         this.storageBlobRepository = storageBlobRepository;
         this.storageBlobPlacementRepository = storageBlobPlacementRepository;
         this.storageFileRepository = storageFileRepository;
@@ -113,13 +113,6 @@ public class PersistTrustedUploadPersistInTransactionStep implements WorkflowSte
     }
 
     private FileStorage toFileStorage(StorageFileEntity fileEntity) {
-        return new FileStorage(
-                fileEntity.getFileId(),
-                fileEntity.getFileName(),
-                fileEntity.getFileSize(),
-                fileEntity.getMimeType(),
-                fileEntity.getFileType(),
-                fileEntity.getCreateTime()
-        );
+        return fileEntity.toFileStorage();
     }
 }

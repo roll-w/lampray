@@ -310,46 +310,16 @@ public class StorageQueryService implements StorageQueryProvider {
     }
 
     private StorageFileView toFileView(StorageFileEntity entity) {
-        return new StorageFileView(
-                entity.getFileId(),
-                entity.getBlobId(),
-                entity.getGroupName(),
-                entity.getOwnerUserId(),
-                entity.getFileName(),
-                entity.getFileSize(),
-                entity.getMimeType(),
-                entity.getFileType(),
-                entity.getVisibility(),
-                entity.getCreateTime(),
-                entity.getUpdateTime()
-        );
+        return entity.toFileView();
     }
 
     private StorageBlobPlacementView toBlobPlacementView(StorageBlobPlacementEntity placement) {
-        return new StorageBlobPlacementView(
-                placement.getId(),
-                placement.getBackendName(),
-                placement.getObjectKey(),
-                placement.getCreateTime(),
-                placement.getUpdateTime()
-        );
+        return placement.toView();
     }
 
     private StorageSessionView toSessionView(StorageUploadSessionModel uploadSession,
                                              OffsetDateTime now) {
-        return new StorageSessionView(
-                uploadSession.getUploadId(),
-                uploadSession.getFileId(),
-                uploadSession.getGroupName(),
-                uploadSession.getFileName(),
-                uploadSession.getOwnerUserId(),
-                uploadSession.getPrimaryBackend(),
-                uploadSession.getUploadMode(),
-                uploadSession.trackedStateAt(now),
-                uploadSession.getExpiresAt(),
-                uploadSession.getCreateTime(),
-                uploadSession.getUpdateTime()
-        );
+        return uploadSession.toSessionView(now);
     }
 
     private Specification<StorageFileEntity> fileSpecification(String groupName,

@@ -17,11 +17,8 @@
 package tech.lamprism.lampray.storage.session;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageUploadRequest;
@@ -29,7 +26,6 @@ import tech.lamprism.lampray.storage.StorageUploadSession;
 import tech.lamprism.lampray.storage.StorageUploadSessionDetails;
 import tech.lamprism.lampray.storage.StorageUploadSessionState;
 import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
-import tech.lamprism.lampray.storage.persistence.StorageFileEntity;
 import tech.lamprism.lampray.storage.persistence.StorageFileRepository;
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionRepository;
 import tech.lamprism.lampray.storage.session.workflow.CreateUploadSessionWorkflow;
@@ -49,17 +45,16 @@ public class StorageUploadSessionManager {
     private final CreateUploadSessionWorkflow createUploadSessionWorkflow;
     private final StorageUploadSessionRepository storageUploadSessionRepository;
     private final StorageFileRepository storageFileRepository;
-    private final TransactionTemplate expireTransactionTemplate;
+    private final StorageUploadSessionExpirationService storageUploadSessionExpirationService;
 
     public StorageUploadSessionManager(CreateUploadSessionWorkflow createUploadSessionWorkflow,
                                        StorageUploadSessionRepository storageUploadSessionRepository,
                                        StorageFileRepository storageFileRepository,
-                                       PlatformTransactionManager transactionManager) {
+                                       StorageUploadSessionExpirationService storageUploadSessionExpirationService) {
         this.createUploadSessionWorkflow = createUploadSessionWorkflow;
         this.storageUploadSessionRepository = storageUploadSessionRepository;
         this.storageFileRepository = storageFileRepository;
-        this.expireTransactionTemplate = new TransactionTemplate(transactionManager);
-        this.expireTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this.storageUploadSessionExpirationService = storageUploadSessionExpirationService;
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -91,7 +86,7 @@ public class StorageUploadSessionManager {
         }
         OffsetDateTime now = OffsetDateTime.now();
         if (uploadSession.trackedStateAt(now) == StorageUploadSessionState.EXPIRED) {
-            expire(uploadSession.getUploadId(), now);
+            storageUploadSessionExpirationService.expirePendingUploadSession(uploadSession.getUploadId(), now);
             throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
                     "Upload session has expired: " + uploadSession.getUploadId());
         }
@@ -124,27 +119,11 @@ public class StorageUploadSessionManager {
     }
 
     public void expirePendingUploadSession(String uploadId) {
-        expire(uploadId, OffsetDateTime.now());
+        storageUploadSessionExpirationService.expirePendingUploadSession(uploadId, OffsetDateTime.now());
     }
 
-    private void expire(String uploadId,
-                        OffsetDateTime now) {
-        expireTransactionTemplate.executeWithoutResult(status -> storageUploadSessionRepository.findById(uploadId)
-                .filter(uploadSession -> uploadSession.getStatus() == UploadSessionStatus.PENDING)
-                .ifPresent(uploadSession -> {
-                    StorageUploadSessionModel.from(uploadSession).expire(now);
-                    storageUploadSessionRepository.save(uploadSession);
-                }));
+    private FileStorage toFileStorage(tech.lamprism.lampray.storage.persistence.StorageFileEntity fileEntity) {
+        return fileEntity.toFileStorage();
     }
 
-    private FileStorage toFileStorage(StorageFileEntity fileEntity) {
-        return new FileStorage(
-                fileEntity.getFileId(),
-                fileEntity.getFileName(),
-                fileEntity.getFileSize(),
-                fileEntity.getMimeType(),
-                fileEntity.getFileType(),
-                fileEntity.getCreateTime()
-        );
-    }
 }

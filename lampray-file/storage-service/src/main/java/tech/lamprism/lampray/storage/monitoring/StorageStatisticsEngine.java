@@ -55,8 +55,11 @@ public class StorageStatisticsEngine {
             "select placement.backendName, count(placement), coalesce(sum(blob.fileSize), 0) from StorageBlobPlacementEntity placement, StorageBlobEntity blob where placement.blobId = blob.blobId group by placement.backendName";
     private static final String GROUP_TOTALS_JPQL =
             "select fileEntity.groupName, count(fileEntity), coalesce(sum(fileEntity.fileSize), 0), count(distinct fileEntity.blobId) from StorageFileEntity fileEntity where fileEntity.deleted = false group by fileEntity.groupName";
-    private static final String GROUP_UNIQUE_ROWS_JPQL =
-            "select distinct fileEntity.groupName, blob.blobId, blob.fileSize from StorageFileEntity fileEntity, StorageBlobEntity blob where fileEntity.deleted = false and fileEntity.blobId = blob.blobId";
+    private static final String GROUP_UNIQUE_BYTES_JPQL =
+            "select fileEntity.groupName, coalesce(sum(blob.fileSize), 0) from StorageFileEntity fileEntity, StorageBlobEntity blob " +
+                    "where fileEntity.deleted = false and fileEntity.blobId = blob.blobId and fileEntity.id = (" +
+                    "select min(candidate.id) from StorageFileEntity candidate where candidate.deleted = false and candidate.groupName = fileEntity.groupName and candidate.blobId = fileEntity.blobId" +
+                    ") group by fileEntity.groupName";
 
     private final EntityManager entityManager;
 
@@ -129,14 +132,14 @@ public class StorageStatisticsEngine {
                     0L
             ));
         }
-        for (Object[] row : rows(GROUP_UNIQUE_ROWS_JPQL)) {
+        for (Object[] row : rows(GROUP_UNIQUE_BYTES_JPQL)) {
             String groupName = stringValue(row[0]);
             StorageGroupTotals previous = result.getOrDefault(groupName, new StorageGroupTotals(0L, 0L, 0L, 0L));
             result.put(groupName, new StorageGroupTotals(
                     previous.getFileCount(),
                     previous.getLogicalBytes(),
                     previous.getDistinctBlobCount(),
-                    previous.getUniqueBytes() + longValue(row[2])
+                    longValue(row[1])
             ));
         }
         return result;

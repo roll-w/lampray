@@ -17,7 +17,11 @@
 package tech.lamprism.lampray.storage.monitoring;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
+import tech.lamprism.lampray.storage.configuration.StorageTopology;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -25,9 +29,17 @@ import java.util.concurrent.ConcurrentMap;
  * @author RollW
  */
 @Component
-public class StorageTrafficAccumulator implements StorageMonitoringListener {
+public class StorageTrafficAccumulator implements StorageMonitoringListener, StorageLiveTrafficService {
     private final StorageTrafficBucket overall = new StorageTrafficBucket();
     private final ConcurrentMap<StorageTrafficScope, StorageTrafficBucket> buckets = new ConcurrentHashMap<>();
+    private final StorageTopology storageTopology;
+    private final BlobStoreRegistry blobStoreRegistry;
+
+    public StorageTrafficAccumulator(StorageTopology storageTopology,
+                                    BlobStoreRegistry blobStoreRegistry) {
+        this.storageTopology = storageTopology;
+        this.blobStoreRegistry = blobStoreRegistry;
+    }
 
     @Override
     public void onEvent(StorageTrafficEvent event) {
@@ -38,18 +50,27 @@ public class StorageTrafficAccumulator implements StorageMonitoringListener {
             overall.record(event);
             return;
         }
-        bucketFor(event.getScope()).record(event);
+        StorageTrafficBucket bucket = bucketFor(event.getScope());
+        if (bucket != null) {
+            bucket.record(event);
+        }
     }
 
-    public StorageTrafficSnapshot snapshot() {
+    @Override
+    public StorageTrafficSnapshot snapshotOverall() {
+        pruneStaleScopes();
         return overall.snapshot();
     }
 
+    @Override
     public StorageTrafficSnapshot snapshotForGroup(String groupName) {
+        pruneStaleScopes();
         return snapshotOf(buckets.get(StorageTrafficScope.group(groupName)));
     }
 
+    @Override
     public StorageTrafficSnapshot snapshotForBackend(String backendName) {
+        pruneStaleScopes();
         return snapshotOf(buckets.get(StorageTrafficScope.backend(backendName)));
     }
 
@@ -58,6 +79,31 @@ public class StorageTrafficAccumulator implements StorageMonitoringListener {
     }
 
     private StorageTrafficBucket bucketFor(StorageTrafficScope scope) {
+        if (!supportsScope(scope)) {
+            return null;
+        }
         return buckets.computeIfAbsent(scope, ignored -> new StorageTrafficBucket());
+    }
+
+    private boolean supportsScope(StorageTrafficScope scope) {
+        if (scope.getType() == StorageTrafficScopeType.OVERALL) {
+            return true;
+        }
+        if (scope.getType() == StorageTrafficScopeType.GROUP) {
+            return storageTopology.getGroups().containsKey(scope.getName());
+        }
+        return storageTopology.getBackends().containsKey(scope.getName()) || blobStoreRegistry.contains(scope.getName());
+    }
+
+    private void pruneStaleScopes() {
+        List<StorageTrafficScope> staleScopes = new ArrayList<>();
+        for (StorageTrafficScope scope : buckets.keySet()) {
+            if (!supportsScope(scope)) {
+                staleScopes.add(scope);
+            }
+        }
+        for (StorageTrafficScope scope : staleScopes) {
+            buckets.remove(scope);
+        }
     }
 }

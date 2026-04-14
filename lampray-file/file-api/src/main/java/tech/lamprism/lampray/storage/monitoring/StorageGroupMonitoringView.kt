@@ -27,5 +27,5 @@ data class StorageGroupMonitoringView(
     val distinctBlobCount: Long,
     val uniqueBytes: Long,
     val backends: List<String>,
-    val groupTraffic: StorageTrafficSnapshot,
+    val liveTraffic: StorageTrafficSnapshot,
 )

@@ -26,6 +26,7 @@ import tech.lamprism.lampray.storage.StorageUploadSessionState
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig
 import tech.lamprism.lampray.storage.materialization.TempUpload
 import tech.lamprism.lampray.storage.persistence.StorageUploadSessionEntity
+import tech.lamprism.lampray.storage.query.StorageSessionView
 import tech.lamprism.lampray.storage.session.UploadSessionStatus
 import tech.lamprism.lampray.storage.store.BlobObject
 import tech.rollw.common.web.AuthErrorCode
@@ -72,6 +73,21 @@ class StorageUploadSessionModel private constructor(
         get() = entity.createTime
     val updateTime: OffsetDateTime
         get() = entity.updateTime
+
+    fun toSessionView(now: OffsetDateTime): StorageSessionView =
+        StorageSessionView(
+            uploadId = uploadId,
+            fileId = fileId,
+            groupName = groupName,
+            fileName = fileName,
+            ownerUserId = ownerUserId,
+            primaryBackend = primaryBackend,
+            mode = uploadMode,
+            trackedState = trackedStateAt(now),
+            expiresAt = expiresAt,
+            createTime = createTime,
+            updateTime = updateTime,
+        )
 
     fun trackedStateAt(now: OffsetDateTime): StorageUploadSessionState {
         if (entity.status == UploadSessionStatus.PENDING && entity.expiresAt.isBefore(now)) {

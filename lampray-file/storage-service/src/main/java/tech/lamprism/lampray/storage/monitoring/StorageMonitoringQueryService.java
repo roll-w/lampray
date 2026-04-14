@@ -41,16 +41,16 @@ public class StorageMonitoringQueryService implements StorageMonitoringService {
     private final StorageTopology storageTopology;
     private final BlobStoreRegistry blobStoreRegistry;
     private final StorageStatisticsEngine storageStatisticsEngine;
-    private final StorageTrafficAccumulator storageTrafficAccumulator;
+    private final StorageLiveTrafficService storageLiveTrafficService;
 
     public StorageMonitoringQueryService(StorageTopology storageTopology,
                                          BlobStoreRegistry blobStoreRegistry,
                                          StorageStatisticsEngine storageStatisticsEngine,
-                                         StorageTrafficAccumulator storageTrafficAccumulator) {
+                                         StorageLiveTrafficService storageLiveTrafficService) {
         this.storageTopology = storageTopology;
         this.blobStoreRegistry = blobStoreRegistry;
         this.storageStatisticsEngine = storageStatisticsEngine;
-        this.storageTrafficAccumulator = storageTrafficAccumulator;
+        this.storageLiveTrafficService = storageLiveTrafficService;
     }
 
     @Override
@@ -79,17 +79,17 @@ public class StorageMonitoringQueryService implements StorageMonitoringService {
 
     @Override
     public StorageTrafficSnapshot getTrafficSnapshot() {
-        return storageTrafficAccumulator.snapshot();
+        return storageLiveTrafficService.snapshotOverall();
     }
 
     @Override
     public StorageTrafficSnapshot getTrafficSnapshotForBackend(String backendName) {
-        return storageTrafficAccumulator.snapshotForBackend(backendName);
+        return storageLiveTrafficService.snapshotForBackend(backendName);
     }
 
     @Override
     public StorageTrafficSnapshot getTrafficSnapshotForGroup(String groupName) {
-        return storageTrafficAccumulator.snapshotForGroup(groupName);
+        return storageLiveTrafficService.snapshotForGroup(groupName);
     }
 
     @Override

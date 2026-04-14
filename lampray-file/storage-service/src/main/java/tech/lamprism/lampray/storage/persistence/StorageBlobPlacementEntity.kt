@@ -28,6 +28,7 @@ import jakarta.persistence.UniqueConstraint
 import org.hibernate.proxy.HibernateProxy
 import tech.lamprism.lampray.DataEntity
 import tech.lamprism.lampray.storage.StorageResourceKind
+import tech.lamprism.lampray.storage.query.StorageBlobPlacementView
 import tech.rollw.common.web.system.SystemResourceKind
 import java.time.OffsetDateTime
 
@@ -90,6 +91,15 @@ class StorageBlobPlacementEntity(
     fun isDeleted(): Boolean = deleted
 
     fun isPurged(): Boolean = purgedAt != null
+
+    fun toView(): StorageBlobPlacementView =
+        StorageBlobPlacementView(
+            id = id ?: 0,
+            backendName = backendName,
+            objectKey = objectKey,
+            createTime = createTime,
+            updateTime = updateTime,
+        )
 
     fun toBuilder(): Builder = Builder(this)
 

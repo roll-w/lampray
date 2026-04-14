@@ -28,18 +28,21 @@ import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
 import tech.lamprism.lampray.storage.configuration.StorageGroupConfig;
 import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
+import tech.lamprism.lampray.storage.materialization.BlobObjectKeyFactory;
+import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher;
 import tech.lamprism.lampray.storage.policy.StorageContentRules;
 import tech.lamprism.lampray.storage.policy.StorageTransferModeResolver;
 import tech.lamprism.lampray.storage.routing.StorageGroupRouter;
 import tech.lamprism.lampray.storage.routing.StorageWritePlan;
-import tech.lamprism.lampray.storage.session.DirectUploadProvision;
-import tech.lamprism.lampray.storage.session.DirectUploadRequestCreator;
 import tech.lamprism.lampray.storage.store.BlobStore;
+import tech.lamprism.lampray.storage.store.BlobWriteRequest;
+import tech.lamprism.lampray.storage.support.BlobMetadataSupport;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 import tech.rollw.common.web.CommonErrorCode;
 import tech.rollw.common.web.DataErrorCode;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
@@ -53,19 +56,22 @@ public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUpload
     private final StorageGroupRouter storageGroupRouter;
     private final BlobStoreLocator blobStoreLocator;
     private final ResourceIdGenerator resourceIdGenerator;
-    private final DirectUploadRequestCreator directUploadRequestCreator;
+    private final BlobObjectKeyFactory blobObjectKeyFactory;
+    private final StorageTrafficPublisher storageTrafficPublisher;
     private final StorageTransferModeResolver transferModeResolver;
 
     CreateUploadSessionPrepareStep(StorageRuntimeConfig runtimeSettings,
                                    StorageGroupRouter storageGroupRouter,
                                    BlobStoreLocator blobStoreLocator,
                                    ResourceIdGenerator resourceIdGenerator,
-                                   DirectUploadRequestCreator directUploadRequestCreator) {
+                                   BlobObjectKeyFactory blobObjectKeyFactory,
+                                   StorageTrafficPublisher storageTrafficPublisher) {
         this.runtimeSettings = runtimeSettings;
         this.storageGroupRouter = storageGroupRouter;
         this.blobStoreLocator = blobStoreLocator;
         this.resourceIdGenerator = resourceIdGenerator;
-        this.directUploadRequestCreator = directUploadRequestCreator;
+        this.blobObjectKeyFactory = blobObjectKeyFactory;
+        this.storageTrafficPublisher = storageTrafficPublisher;
         this.transferModeResolver = new StorageTransferModeResolver(runtimeSettings);
     }
 
@@ -148,16 +154,20 @@ public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUpload
         if (uploadMode != StorageUploadMode.DIRECT) {
             return DirectUploadState.empty();
         }
-        DirectUploadProvision provision = directUploadRequestCreator.create(
-                groupName,
-                primaryBackend,
-                normalizedRequest.mimeType,
-                normalizedRequest.contentChecksum,
-                Objects.requireNonNull(request.getSize(), "Direct uploads require a declared size."),
-                primaryBlobStore,
-                runtimeSettings.getDirectAccessTtlSeconds()
+        long declaredSize = Objects.requireNonNull(request.getSize(), "Direct uploads require a declared size.");
+        String objectKey = blobObjectKeyFactory.createKey(Objects.requireNonNull(normalizedRequest.contentChecksum));
+        StorageAccessRequest accessRequest = primaryBlobStore.createDirectUpload(
+                new BlobWriteRequest(
+                        objectKey,
+                        declaredSize,
+                        normalizedRequest.mimeType,
+                        BlobMetadataSupport.contentChecksumMetadata(normalizedRequest.contentChecksum),
+                        normalizedRequest.contentChecksum
+                ),
+                Duration.ofSeconds(runtimeSettings.getDirectAccessTtlSeconds())
         );
-        return new DirectUploadState(provision.getAccessRequest(), provision.getObjectKey());
+        storageTrafficPublisher.publishDirectUploadRequest(groupName, primaryBackend, declaredSize);
+        return new DirectUploadState(accessRequest, objectKey);
     }
 
     private String resolveGroupName() {

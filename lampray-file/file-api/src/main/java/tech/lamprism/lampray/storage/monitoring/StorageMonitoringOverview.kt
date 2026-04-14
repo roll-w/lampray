@@ -29,5 +29,5 @@ data class StorageMonitoringOverview(
     val backendCount: Int,
     val groupCount: Int,
     val sessionCounts: Map<String, Long>,
-    val backendTraffic: StorageTrafficSnapshot,
+    val liveTraffic: StorageTrafficSnapshot,
 )

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import tech.lamprism.lampray.storage.file.StorageFileDeletionService;
+import tech.lamprism.lampray.storage.file.StorageBlobRetentionService;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -33,12 +33,12 @@ public class StorageUploadSessionCleanupRunner {
     private static final Logger logger = LoggerFactory.getLogger(StorageUploadSessionCleanupRunner.class);
 
     private final StorageUploadSessionRetentionService retentionService;
-    private final StorageFileDeletionService storageFileDeletionService;
+    private final StorageBlobRetentionService storageBlobRetentionService;
 
     public StorageUploadSessionCleanupRunner(StorageUploadSessionRetentionService retentionService,
-                                            StorageFileDeletionService storageFileDeletionService) {
+                                             StorageBlobRetentionService storageBlobRetentionService) {
         this.retentionService = retentionService;
-        this.storageFileDeletionService = storageFileDeletionService;
+        this.storageBlobRetentionService = storageBlobRetentionService;
     }
 
     @Scheduled(fixedDelayString = "#{@storageRuntimeConfig.getCleanupIntervalSeconds() * 1000}")
@@ -48,7 +48,7 @@ public class StorageUploadSessionCleanupRunner {
             int expired = retentionService.expireOverdueSessions(now);
             int purgedExpired = retentionService.purgeExpiredSessions(now);
             int purgedCompleted = retentionService.purgeCompletedSessions(now);
-            int purgedDeletedBlobs = storageFileDeletionService.purgeRetainedBlobs(now);
+            int purgedDeletedBlobs = storageBlobRetentionService.purgeRetainedBlobs(now);
             if (expired > 0 || purgedExpired > 0 || purgedCompleted > 0 || purgedDeletedBlobs > 0) {
                 logger.info(
                         "Storage upload session cleanup finished: expired={}, purgedExpired={}, purgedCompleted={}, purgedDeletedBlobs={}",

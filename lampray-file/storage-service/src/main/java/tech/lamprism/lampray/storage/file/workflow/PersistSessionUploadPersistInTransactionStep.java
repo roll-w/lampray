@@ -116,13 +116,6 @@ public class PersistSessionUploadPersistInTransactionStep implements WorkflowSte
     }
 
     private FileStorage toFileStorage(StorageFileEntity fileEntity) {
-        return new FileStorage(
-                fileEntity.getFileId(),
-                fileEntity.getFileName(),
-                fileEntity.getFileSize(),
-                fileEntity.getMimeType(),
-                fileEntity.getFileType(),
-                fileEntity.getCreateTime()
-        );
+        return fileEntity.toFileStorage();
     }
 }

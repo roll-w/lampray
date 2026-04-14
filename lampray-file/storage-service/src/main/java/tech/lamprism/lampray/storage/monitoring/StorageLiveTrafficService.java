@@ -14,23 +14,17 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.monitoring
-
-import tech.lamprism.lampray.storage.StorageBackendType
-import tech.lamprism.lampray.storage.store.BlobStoreCapability
+package tech.lamprism.lampray.storage.monitoring;
 
 /**
+ * Instance-local live traffic view for storage monitoring.
+ *
  * @author RollW
  */
-data class StorageBackendMonitoringView(
-    val backendName: String,
-    val backendType: StorageBackendType?,
-    val active: Boolean,
-    val capabilities: Set<BlobStoreCapability>,
-    val groupWeights: Map<String, Int>,
-    val primaryBlobCount: Long,
-    val placementCount: Long,
-    val uniqueBytes: Long,
-    val physicalBytes: Long,
-    val liveTraffic: StorageTrafficSnapshot,
-)
+public interface StorageLiveTrafficService {
+    StorageTrafficSnapshot snapshotOverall();
+
+    StorageTrafficSnapshot snapshotForBackend(String backendName);
+
+    StorageTrafficSnapshot snapshotForGroup(String groupName);
+}

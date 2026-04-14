@@ -41,13 +41,25 @@ public class CountingStorageDownloadSource implements StorageDownloadSource {
 
     @Override
     public InputStream openStream() throws IOException {
-        onOpen.run();
-        return new CountingInputStream(delegate.openStream(), onBytesRead);
+        InputStream inputStream = delegate.openStream();
+        try {
+            onOpen.run();
+            return new CountingInputStream(inputStream, onBytesRead);
+        } catch (RuntimeException exception) {
+            inputStream.close();
+            throw exception;
+        }
     }
 
     @Override
     public InputStream openStream(StorageByteRange range) throws IOException {
-        onOpen.run();
-        return new CountingInputStream(delegate.openStream(range), onBytesRead);
+        InputStream inputStream = delegate.openStream(range);
+        try {
+            onOpen.run();
+            return new CountingInputStream(inputStream, onBytesRead);
+        } catch (RuntimeException exception) {
+            inputStream.close();
+            throw exception;
+        }
     }
 }

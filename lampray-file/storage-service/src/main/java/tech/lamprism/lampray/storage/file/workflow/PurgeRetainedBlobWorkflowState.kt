@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.storage.monitoring
+package tech.lamprism.lampray.storage.file.workflow
 
-import tech.lamprism.lampray.storage.StorageBackendType
-import tech.lamprism.lampray.storage.store.BlobStoreCapability
+import tech.lamprism.lampray.storage.routing.StorageGroupRouter
 
 /**
  * @author RollW
  */
-data class StorageBackendMonitoringView(
-    val backendName: String,
-    val backendType: StorageBackendType?,
-    val active: Boolean,
-    val capabilities: Set<BlobStoreCapability>,
-    val groupWeights: Map<String, Int>,
-    val primaryBlobCount: Long,
-    val placementCount: Long,
-    val uniqueBytes: Long,
-    val physicalBytes: Long,
-    val liveTraffic: StorageTrafficSnapshot,
+data class PurgeRetainedBlobWorkflowState(
+    var ready: Boolean = false,
+    var cleanupPlan: StorageGroupRouter.StorageBlobCleanupPlan = StorageGroupRouter.StorageBlobCleanupPlan.empty(),
+    var result: Boolean = false,
 )
