@@ -53,6 +53,7 @@ public class ProxyUploadPrepareMaterializationStep implements WorkflowStep<Proxy
                         context.getUploadSession().getFileType(),
                         tempUpload.getSize(),
                         tempUpload.getContentChecksum(),
+                        context.getUploadSession().getUploadId(),
                         tempUpload.getPath()
                 )
         ));

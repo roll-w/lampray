@@ -23,7 +23,8 @@ package tech.lamprism.lampray.storage.materialization;
  */
 public interface BlobObjectKeyFactory {
     /**
-     * Creates the object key for a checksum.
+     * Creates the object key for a checksum and request-scoped seed.
      */
-    String createKey(String contentChecksum);
+    String createKey(String contentChecksum,
+                     String objectKeySeed);
 }

@@ -55,7 +55,7 @@ class StorageBlobEntity(
     @Column(name = "blob_id", nullable = false, length = 64, unique = true)
     var blobId: String = "",
 
-    @Column(name = "content_checksum", nullable = false, length = 64)
+    @Column(name = "content_checksum", nullable = false, length = 384)
     var contentChecksum: String = "",
 
     @Column(name = "file_size", nullable = false)

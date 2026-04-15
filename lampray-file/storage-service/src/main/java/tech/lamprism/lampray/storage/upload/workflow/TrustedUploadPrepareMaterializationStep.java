@@ -17,6 +17,8 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.common.data.ResourceIdGenerator;
+import tech.lamprism.lampray.storage.StorageResourceKind;
 import tech.lamprism.lampray.storage.materialization.BlobMaterializationRequest;
 import tech.lamprism.lampray.storage.materialization.PreparedBlobMaterialization;
 import tech.lamprism.lampray.storage.materialization.TempUpload;
@@ -33,9 +35,12 @@ import java.util.Objects;
 @Component
 public class TrustedUploadPrepareMaterializationStep implements WorkflowStep<TrustedUploadWorkflowContext> {
     private final BlobMaterializationWorkflow blobMaterializationWorkflow;
+    private final ResourceIdGenerator resourceIdGenerator;
 
-    TrustedUploadPrepareMaterializationStep(BlobMaterializationWorkflow blobMaterializationWorkflow) {
+    TrustedUploadPrepareMaterializationStep(BlobMaterializationWorkflow blobMaterializationWorkflow,
+                                           ResourceIdGenerator resourceIdGenerator) {
         this.blobMaterializationWorkflow = blobMaterializationWorkflow;
+        this.resourceIdGenerator = resourceIdGenerator;
     }
 
     @Override
@@ -53,9 +58,14 @@ public class TrustedUploadPrepareMaterializationStep implements WorkflowStep<Tru
                         Objects.requireNonNull(context.getState().getFileType(), "fileType"),
                         tempUpload.getSize(),
                         tempUpload.getContentChecksum(),
+                        newObjectKeySeed(),
                         tempUpload.getPath()
                 )
         ));
         context.getState().setPreparedBlob(preparedBlob);
+    }
+
+    private String newObjectKeySeed() {
+        return resourceIdGenerator.nextId(StorageResourceKind.INSTANCE);
     }
 }

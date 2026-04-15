@@ -19,6 +19,7 @@ package tech.lamprism.lampray.storage.upload.workflow;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.lock.LockService;
 import tech.lamprism.lampray.storage.FileStorage;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile;
 import tech.lamprism.lampray.storage.workflow.Workflow;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
@@ -34,19 +35,22 @@ import java.util.Objects;
 public class DirectUploadCompletionWorkflow implements Workflow<DirectUploadCompletionWorkflowContext, FileStorage> {
     private final List<WorkflowStep<DirectUploadCompletionWorkflowContext>> steps;
     private final LockService lockService;
+    private final ContentFingerprintProfile contentFingerprintProfile;
 
     public DirectUploadCompletionWorkflow(List<WorkflowStep<DirectUploadCompletionWorkflowContext>> steps,
-                                          LockService lockService) {
+                                          LockService lockService,
+                                          ContentFingerprintProfile contentFingerprintProfile) {
         this.steps = steps.stream()
                 .sorted(Comparator.comparingInt(WorkflowStep::getOrder))
                 .toList();
         this.lockService = lockService;
+        this.contentFingerprintProfile = contentFingerprintProfile;
     }
 
     @Override
     public FileStorage execute(DirectUploadCompletionWorkflowContext context) throws IOException {
         try (LockService.AcquiredLock ignored = lockService.acquire(
-                context.getUploadSession().requireChecksum()
+                context.getUploadSession().requireChecksum(contentFingerprintProfile)
         )) {
             for (WorkflowStep<DirectUploadCompletionWorkflowContext> step : steps) {
                 step.execute(context);

@@ -16,10 +16,13 @@
 
 package tech.lamprism.lampray.storage.materialization;
 
+import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
 import tech.lamprism.lampray.storage.materialization.placement.BlobPlacementWriter;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -37,8 +40,13 @@ public final class TempFileBlobSource implements BlobMaterializationSource {
 
     @Override
     public String resolvePrimaryObjectKey(BlobObjectKeyFactory blobObjectKeyFactory,
-                                          String checksum) {
-        return blobObjectKeyFactory.createKey(checksum);
+                                          BlobMaterializationRequest request) {
+        return blobObjectKeyFactory.createKey(request.checksum(), request.objectKeySeed());
+    }
+
+    @Override
+    public InputStream openSourceStream(BlobStoreLocator blobStoreLocator) throws IOException {
+        return Files.newInputStream(tempPath);
     }
 
     @Override

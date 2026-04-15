@@ -25,6 +25,7 @@ import tech.lamprism.lampray.storage.backend.BlobStoreRegistry;
 import tech.lamprism.lampray.storage.backend.DynamicBlobStoreRegistry;
 import tech.lamprism.lampray.storage.backend.MapBackedBlobStoreFactoryProvider;
 import tech.lamprism.lampray.storage.backend.MonitoringBlobStore;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile;
 import tech.lamprism.lampray.storage.monitoring.StorageTrafficPublisher;
 import tech.lamprism.lampray.storage.store.BlobStoreFactory;
 
@@ -39,6 +40,11 @@ import java.util.Map;
 @Configuration
 @EnableScheduling
 public class FileStoreConfiguration {
+    @Bean
+    public ContentFingerprintProfile contentFingerprintProfile() {
+        return ContentFingerprintProfile.defaultProfile();
+    }
+
     @Bean
     public StorageTopology storageTopology(StorageTopologyResolver storageTopologyResolver) {
         return storageTopologyResolver.resolve();

@@ -17,7 +17,6 @@
 package tech.lamprism.lampray.storage.materialization.workflow;
 
 import org.springframework.stereotype.Component;
-import tech.lamprism.lampray.storage.configuration.StorageRuntimeConfig;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
 import tech.lamprism.lampray.storage.persistence.StorageBlobRepository;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
@@ -29,12 +28,9 @@ import java.util.Optional;
  */
 @Component
 public class BlobMaterializationResolveExistingBlobStep implements WorkflowStep<BlobMaterializationWorkflowContext> {
-    private final StorageRuntimeConfig runtimeSettings;
     private final StorageBlobRepository storageBlobRepository;
 
-    BlobMaterializationResolveExistingBlobStep(StorageRuntimeConfig runtimeSettings,
-                                               StorageBlobRepository storageBlobRepository) {
-        this.runtimeSettings = runtimeSettings;
+    BlobMaterializationResolveExistingBlobStep(StorageBlobRepository storageBlobRepository) {
         this.storageBlobRepository = storageBlobRepository;
     }
 
@@ -45,9 +41,7 @@ public class BlobMaterializationResolveExistingBlobStep implements WorkflowStep<
 
     @Override
     public void execute(BlobMaterializationWorkflowContext context) {
-        Optional<StorageBlobEntity> existingBlob = runtimeSettings.getDeduplicationEnabled()
-                ? storageBlobRepository.findByContentChecksum(context.getRequest().checksum())
-                : Optional.empty();
+        Optional<StorageBlobEntity> existingBlob = storageBlobRepository.findByContentChecksum(context.getRequest().checksum());
         existingBlob.ifPresent(context.getState()::setExistingBlob);
     }
 }

@@ -17,14 +17,34 @@
 package tech.lamprism.lampray.storage.materialization;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprint;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile;
+
+import java.util.Objects;
 
 /**
  * @author RollW
  */
 @Component
 public class ChecksumBlobObjectKeyFactory implements BlobObjectKeyFactory {
+    private final ContentFingerprintProfile contentFingerprintProfile;
+
+    ChecksumBlobObjectKeyFactory(ContentFingerprintProfile contentFingerprintProfile) {
+        this.contentFingerprintProfile = contentFingerprintProfile;
+    }
+
     @Override
-    public String createKey(String contentChecksum) {
-        return contentChecksum.substring(0, 2) + "/" + contentChecksum.substring(2, 4) + "/" + contentChecksum;
+    public String createKey(String contentChecksum,
+                            String objectKeySeed) {
+        Objects.requireNonNull(contentChecksum, "contentChecksum must not be null");
+        Objects.requireNonNull(objectKeySeed, "objectKeySeed must not be null");
+        String primaryChecksum = ContentFingerprint.parse(contentChecksum, contentFingerprintProfile).primaryChecksum();
+        return primaryChecksum.substring(0, 2)
+                + "/"
+                + primaryChecksum.substring(2, 4)
+                + "/"
+                + primaryChecksum
+                + "/"
+                + objectKeySeed;
     }
 }

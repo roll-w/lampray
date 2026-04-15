@@ -656,7 +656,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: content_checksum
-                  type: VARCHAR(64)
+                  type: VARCHAR(384)
               - column:
                   constraints:
                     nullable: false
@@ -865,7 +865,7 @@ databaseChangeLog:
                   type: VARCHAR(40)
               - column:
                   name: content_checksum
-                  type: VARCHAR(64)
+                  type: VARCHAR(384)
               - column:
                   name: owner_user_id
                   type: BIGINT
@@ -907,10 +907,6 @@ databaseChangeLog:
             constraintName: uc_storage_upload_session_resource
             tableName: storage_upload_session
         - addUniqueConstraint:
-            columnNames: content_checksum
-            constraintName: uc_storage_blob_content_checksum
-            tableName: storage_blob
-        - addUniqueConstraint:
             columnNames: blob_id, backend_name
             constraintName: uc_storage_blob_backend
             tableName: storage_blob_placement
@@ -920,6 +916,10 @@ databaseChangeLog:
             columns:
               - column:
                   name: blob_id
+        - addUniqueConstraint:
+            columnNames: content_checksum
+            constraintName: uc_storage_blob_content_checksum
+            tableName: storage_blob
         - createIndex:
             indexName: idx_storage_blob_primary_object
             tableName: storage_blob

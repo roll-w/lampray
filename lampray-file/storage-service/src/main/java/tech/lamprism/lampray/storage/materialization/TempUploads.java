@@ -16,8 +16,8 @@
 
 package tech.lamprism.lampray.storage.materialization;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintHasher;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.support.PathCleanupSupport;
 import tech.rollw.common.web.CommonErrorCode;
@@ -41,8 +41,14 @@ public final class TempUploads {
 
     public static TempUpload write(InputStream inputStream,
                                    Long maxSizeBytes) throws IOException {
+        return write(inputStream, maxSizeBytes, ContentFingerprintProfile.defaultProfile());
+    }
+
+    public static TempUpload write(InputStream inputStream,
+                                   Long maxSizeBytes,
+                                   ContentFingerprintProfile profile) throws IOException {
         Path tempFile = createTempFilePath();
-        Hasher hasher = Hashing.sha256().newHasher();
+        ContentFingerprintHasher hasher = ContentFingerprintHasher.create(profile);
         long size = 0;
         try {
             try (InputStream source = inputStream;
@@ -63,7 +69,7 @@ public final class TempUploads {
             PathCleanupSupport.deleteIfExistsQuietly(tempFile);
             throw exception;
         }
-        return new TempUpload(tempFile, size, hasher.hash().toString());
+        return new TempUpload(tempFile, size, hasher.finish().encoded());
     }
 
     private static Path createTempFilePath() throws IOException {

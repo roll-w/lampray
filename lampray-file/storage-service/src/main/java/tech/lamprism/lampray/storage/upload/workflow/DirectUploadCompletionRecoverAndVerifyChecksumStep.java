@@ -16,15 +16,18 @@
 
 package tech.lamprism.lampray.storage.upload.workflow;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import tech.lamprism.lampray.storage.StorageException;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprint;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintHasher;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile;
 import tech.lamprism.lampray.storage.domain.StorageUploadSessionModel;
 import tech.lamprism.lampray.storage.store.BlobObject;
 import tech.lamprism.lampray.storage.store.BlobStore;
 import tech.lamprism.lampray.storage.support.BlobMetadataSupport;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
+import tech.rollw.common.web.CommonErrorCode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +40,12 @@ import java.util.Objects;
 public class DirectUploadCompletionRecoverAndVerifyChecksumStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private static final int BUFFER_SIZE = 8192;
 
+    private final ContentFingerprintProfile contentFingerprintProfile;
+
+    DirectUploadCompletionRecoverAndVerifyChecksumStep(ContentFingerprintProfile contentFingerprintProfile) {
+        this.contentFingerprintProfile = contentFingerprintProfile;
+    }
+
     @Override
     public int getOrder() {
         return 400;
@@ -46,26 +55,51 @@ public class DirectUploadCompletionRecoverAndVerifyChecksumStep implements Workf
     public void execute(DirectUploadCompletionWorkflowContext context) throws IOException {
         BlobStore blobStore = Objects.requireNonNull(context.getState().getPrimaryBlobStore(), "primaryBlobStore");
         BlobObject uploadedObject = Objects.requireNonNull(context.getState().getUploadedObject(), "uploadedObject");
-        String actualChecksum = uploadedObject.getContentChecksum();
-        if (!StringUtils.hasText(actualChecksum)) {
-            String metadataContentChecksum = BlobMetadataSupport.metadataContentChecksum(uploadedObject.getMetadata());
-            if (StringUtils.hasText(metadataContentChecksum)) {
-                actualChecksum = StorageUploadSessionModel.normalizeChecksum(metadataContentChecksum);
-            }
-        }
-        if (!StringUtils.hasText(actualChecksum)) {
-            actualChecksum = calculateChecksum(blobStore, uploadedObject.getKey());
-        }
+        ContentFingerprint actualChecksum = resolveFingerprint(blobStore, uploadedObject);
         StorageUploadSessionModel.validateChecksumMatch(
                 Objects.requireNonNull(context.getState().getExpectedChecksum(), "expectedChecksum"),
-                actualChecksum
+                actualChecksum.encoded(),
+                contentFingerprintProfile
         );
-        context.getState().setActualChecksum(actualChecksum);
+        context.getState().setActualChecksum(actualChecksum.encoded());
     }
 
-    private String calculateChecksum(BlobStore blobStore,
-                                     String objectKey) throws IOException {
-        Hasher hasher = Hashing.sha256().newHasher();
+    private ContentFingerprint resolveFingerprint(BlobStore blobStore,
+                                                  BlobObject uploadedObject) throws IOException {
+        String primaryChecksum = resolvePrimaryChecksum(uploadedObject);
+        ContentFingerprint actualFingerprint = calculateFingerprint(blobStore, uploadedObject.getKey(), primaryChecksum);
+        String metadataContentFingerprint = BlobMetadataSupport.metadataContentFingerprint(
+                uploadedObject.getMetadata(),
+                contentFingerprintProfile
+        );
+        if (StringUtils.hasText(metadataContentFingerprint)) {
+            ContentFingerprint declaredFingerprint = parseFingerprint(metadataContentFingerprint);
+            if (!actualFingerprint.equals(declaredFingerprint)) {
+                throw new StorageException(
+                        CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
+                        "Uploaded file fingerprint metadata does not match uploaded content."
+                );
+            }
+        }
+        return actualFingerprint;
+    }
+
+    private String resolvePrimaryChecksum(BlobObject uploadedObject) {
+        String primaryChecksum = uploadedObject.getContentChecksum();
+        if (!StringUtils.hasText(primaryChecksum)) {
+            primaryChecksum = BlobMetadataSupport.metadataContentChecksum(uploadedObject.getMetadata(), contentFingerprintProfile);
+        }
+        return StringUtils.hasText(primaryChecksum)
+                ? ContentFingerprint.normalizePrimaryChecksum(primaryChecksum, contentFingerprintProfile)
+                : null;
+    }
+
+    private ContentFingerprint calculateFingerprint(BlobStore blobStore,
+                                                    String objectKey,
+                                                    String primaryChecksum) throws IOException {
+        ContentFingerprintHasher hasher = StringUtils.hasText(primaryChecksum)
+                ? ContentFingerprintHasher.forKnownPrimaryChecksum(primaryChecksum, contentFingerprintProfile)
+                : ContentFingerprintHasher.create(contentFingerprintProfile);
         try (InputStream inputStream = blobStore.openDownload(objectKey).openStream()) {
             byte[] buffer = new byte[BUFFER_SIZE];
             int read;
@@ -73,6 +107,14 @@ public class DirectUploadCompletionRecoverAndVerifyChecksumStep implements Workf
                 hasher.putBytes(buffer, 0, read);
             }
         }
-        return hasher.hash().toString();
+        return hasher.finish();
+    }
+
+    private ContentFingerprint parseFingerprint(String rawValue) {
+        try {
+            return ContentFingerprint.parse(rawValue, contentFingerprintProfile);
+        } catch (IllegalArgumentException exception) {
+            throw new StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, exception.getMessage());
+        }
     }
 }

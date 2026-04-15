@@ -30,10 +30,6 @@ class StorageRuntimeConfig(
         get() =
             configReader[StorageConfigKeys.DEFAULT_GROUP, "default"]
 
-    val deduplicationEnabled: Boolean
-        get() =
-            configReader[StorageConfigKeys.DEDUPLICATION_ENABLED, true]
-
     val directAccessEnabled: Boolean
         get() =
             configReader[StorageConfigKeys.DIRECT_ACCESS_ENABLED, true]

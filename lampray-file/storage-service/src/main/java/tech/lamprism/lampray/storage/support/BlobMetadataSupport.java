@@ -16,25 +16,52 @@
 
 package tech.lamprism.lampray.storage.support;
 
+import tech.lamprism.lampray.storage.checksum.ContentFingerprint;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile;
+
 import java.util.Map;
 
 /**
  * @author RollW
  */
 public final class BlobMetadataSupport {
-    public static final String CONTENT_CHECKSUM_KEY = "checksum-sha256";
+    public static final String CONTENT_FINGERPRINT_KEY = ContentFingerprintProfile.defaultProfile().fingerprintMetadataKey();
+    public static final String CONTENT_CHECKSUM_KEY = ContentFingerprintProfile.defaultProfile().primaryChecksumMetadataKey();
 
     private BlobMetadataSupport() {
     }
 
-    public static Map<String, String> contentChecksumMetadata(String contentChecksum) {
+    public static Map<String, String> contentFingerprintMetadata(String contentChecksum) {
+        return contentFingerprintMetadata(contentChecksum, ContentFingerprintProfile.defaultProfile());
+    }
+
+    public static Map<String, String> contentFingerprintMetadata(String contentChecksum,
+                                                                 ContentFingerprintProfile profile) {
         if (contentChecksum == null) {
             return Map.of();
         }
-        return Map.of(CONTENT_CHECKSUM_KEY, contentChecksum);
+        ContentFingerprint contentFingerprint = ContentFingerprint.parse(contentChecksum, profile);
+        return Map.of(
+                profile.fingerprintMetadataKey(), contentFingerprint.encoded(),
+                profile.primaryChecksumMetadataKey(), contentFingerprint.primaryChecksum()
+        );
+    }
+
+    public static String metadataContentFingerprint(Map<String, String> metadata) {
+        return metadataContentFingerprint(metadata, ContentFingerprintProfile.defaultProfile());
+    }
+
+    public static String metadataContentFingerprint(Map<String, String> metadata,
+                                                    ContentFingerprintProfile profile) {
+        return metadata.get(profile.fingerprintMetadataKey());
     }
 
     public static String metadataContentChecksum(Map<String, String> metadata) {
-        return metadata.get(CONTENT_CHECKSUM_KEY);
+        return metadataContentChecksum(metadata, ContentFingerprintProfile.defaultProfile());
+    }
+
+    public static String metadataContentChecksum(Map<String, String> metadata,
+                                                 ContentFingerprintProfile profile) {
+        return metadata.get(profile.primaryChecksumMetadataKey());
     }
 }

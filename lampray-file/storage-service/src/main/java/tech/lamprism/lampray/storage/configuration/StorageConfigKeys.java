@@ -56,14 +56,6 @@ public class StorageConfigKeys implements SettingSpecificationSupplier {
                     .setSupportedSources(SettingSource.VALUES)
                     .build();
 
-    public static final AttributedSettingSpecification<Boolean, Boolean> DEDUPLICATION_ENABLED =
-            new SettingSpecificationBuilder<>(SettingKey.ofBoolean(PREFIX + "deduplication.enabled"))
-                    .setTextDescription("Whether to reuse existing blobs with the same checksum.")
-                    .setDefaultValue(true)
-                    .setRequired(true)
-                    .setSupportedSources(SettingSource.VALUES)
-                    .build();
-
     public static final AttributedSettingSpecification<Boolean, Boolean> DIRECT_ACCESS_ENABLED =
             new SettingSpecificationBuilder<>(SettingKey.ofBoolean(PREFIX + "presign.enabled"))
                     .setTextDescription("Whether direct upload and download access is enabled when the backend supports it.")
@@ -166,7 +158,6 @@ public class StorageConfigKeys implements SettingSpecificationSupplier {
             STORAGE_BACKENDS,
             STORAGE_GROUPS,
             DEFAULT_GROUP,
-            DEDUPLICATION_ENABLED,
             DIRECT_ACCESS_ENABLED,
             DIRECT_ACCESS_TTL_SECONDS,
             UPLOAD_PROXY_THRESHOLD_BYTES,

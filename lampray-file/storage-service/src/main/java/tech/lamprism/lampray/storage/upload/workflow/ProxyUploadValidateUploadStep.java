@@ -17,6 +17,7 @@
 package tech.lamprism.lampray.storage.upload.workflow;
 
 import org.springframework.stereotype.Component;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
 import java.util.Objects;
@@ -26,6 +27,12 @@ import java.util.Objects;
  */
 @Component
 public class ProxyUploadValidateUploadStep implements WorkflowStep<ProxyUploadWorkflowContext> {
+    private final ContentFingerprintProfile contentFingerprintProfile;
+
+    ProxyUploadValidateUploadStep(ContentFingerprintProfile contentFingerprintProfile) {
+        this.contentFingerprintProfile = contentFingerprintProfile;
+    }
+
     @Override
     public int getOrder() {
         return 400;
@@ -35,7 +42,8 @@ public class ProxyUploadValidateUploadStep implements WorkflowStep<ProxyUploadWo
     public void execute(ProxyUploadWorkflowContext context) {
         context.getUploadSession().validateUploadedContent(
                 Objects.requireNonNull(context.getState().getTempUpload(), "tempUpload"),
-                Objects.requireNonNull(context.getState().getGroupSettings(), "groupSettings")
+                Objects.requireNonNull(context.getState().getGroupSettings(), "groupSettings"),
+                contentFingerprintProfile
         );
     }
 }

@@ -16,11 +16,13 @@
 
 package tech.lamprism.lampray.storage.materialization;
 
+import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
 import tech.lamprism.lampray.storage.materialization.placement.BlobPlacementWriter;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
 import tech.lamprism.lampray.storage.store.BlobObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Objects;
 
 /**
@@ -37,8 +39,15 @@ public final class UploadedBlobSource implements BlobMaterializationSource {
 
     @Override
     public String resolvePrimaryObjectKey(BlobObjectKeyFactory blobObjectKeyFactory,
-                                          String checksum) {
+                                          BlobMaterializationRequest request) {
         return uploadedObject.getKey();
+    }
+
+    @Override
+    public InputStream openSourceStream(BlobStoreLocator blobStoreLocator) throws IOException {
+        return blobStoreLocator.require(uploadedObject.getBackendName())
+                .openDownload(uploadedObject.getKey())
+                .openStream();
     }
 
     @Override

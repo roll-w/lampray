@@ -18,6 +18,8 @@ package tech.lamprism.lampray.storage.materialization.placement;
 
 import org.springframework.stereotype.Service;
 import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprint;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile;
 import tech.lamprism.lampray.storage.store.BlobWriteRequest;
 import tech.lamprism.lampray.storage.support.BlobMetadataSupport;
 import tech.lamprism.lampray.storage.support.PathCleanupSupport;
@@ -36,9 +38,12 @@ import java.util.Objects;
 @Service
 public class BlobStorePlacementWriter implements BlobPlacementWriter {
     private final BlobStoreLocator blobStoreLocator;
+    private final ContentFingerprintProfile contentFingerprintProfile;
 
-    public BlobStorePlacementWriter(BlobStoreLocator blobStoreLocator) {
+    public BlobStorePlacementWriter(BlobStoreLocator blobStoreLocator,
+                                    ContentFingerprintProfile contentFingerprintProfile) {
         this.blobStoreLocator = blobStoreLocator;
+        this.contentFingerprintProfile = contentFingerprintProfile;
     }
 
     @Override
@@ -48,14 +53,15 @@ public class BlobStorePlacementWriter implements BlobPlacementWriter {
                                  long size,
                                  String mimeType,
                                  String contentChecksum) throws IOException {
+        ContentFingerprint contentFingerprint = ContentFingerprint.parse(contentChecksum, contentFingerprintProfile);
         try (InputStream inputStream = Files.newInputStream(Objects.requireNonNull(tempPath))) {
             blobStoreLocator.require(backendName).store(
                     new BlobWriteRequest(
                             objectKey,
                             size,
                             mimeType,
-                            BlobMetadataSupport.contentChecksumMetadata(contentChecksum),
-                            contentChecksum
+                            BlobMetadataSupport.contentFingerprintMetadata(contentChecksum, contentFingerprintProfile),
+                            contentFingerprint.primaryChecksum()
                     ),
                     inputStream
             );

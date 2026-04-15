@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.common.data.ResourceIdGenerator;
 import tech.lamprism.lampray.storage.FileType;
 import tech.lamprism.lampray.storage.StorageAccessRequest;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprint;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile;
 import tech.lamprism.lampray.storage.StorageException;
 import tech.lamprism.lampray.storage.StorageResourceKind;
 import tech.lamprism.lampray.storage.StorageUploadMode;
@@ -59,13 +61,15 @@ public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUpload
     private final BlobObjectKeyFactory blobObjectKeyFactory;
     private final StorageTrafficPublisher storageTrafficPublisher;
     private final StorageTransferModeResolver transferModeResolver;
+    private final ContentFingerprintProfile contentFingerprintProfile;
 
     CreateUploadSessionPrepareStep(StorageRuntimeConfig runtimeSettings,
                                    StorageGroupRouter storageGroupRouter,
-                                   BlobStoreLocator blobStoreLocator,
-                                   ResourceIdGenerator resourceIdGenerator,
-                                   BlobObjectKeyFactory blobObjectKeyFactory,
-                                   StorageTrafficPublisher storageTrafficPublisher) {
+                                    BlobStoreLocator blobStoreLocator,
+                                    ResourceIdGenerator resourceIdGenerator,
+                                    BlobObjectKeyFactory blobObjectKeyFactory,
+                                    StorageTrafficPublisher storageTrafficPublisher,
+                                    ContentFingerprintProfile contentFingerprintProfile) {
         this.runtimeSettings = runtimeSettings;
         this.storageGroupRouter = storageGroupRouter;
         this.blobStoreLocator = blobStoreLocator;
@@ -73,6 +77,7 @@ public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUpload
         this.blobObjectKeyFactory = blobObjectKeyFactory;
         this.storageTrafficPublisher = storageTrafficPublisher;
         this.transferModeResolver = new StorageTransferModeResolver(runtimeSettings);
+        this.contentFingerprintProfile = contentFingerprintProfile;
     }
 
     @Override
@@ -101,21 +106,26 @@ public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUpload
         String mimeType = StorageContentRules.requireMimeType(request.getMimeType());
         FileType fileType = StorageContentRules.resolveFileType(mimeType);
         StorageUploadSessionModel.validateUploadRequest(request, groupSettings, fileType);
-        String contentChecksum = StorageUploadSessionModel.normalizeChecksum(request.getContentChecksum());
+        String normalizedChecksum = StorageUploadSessionModel.normalizeChecksum(request.getContentChecksum(), contentFingerprintProfile);
+        ContentFingerprint contentChecksum = normalizedChecksum != null
+                ? ContentFingerprint.parse(normalizedChecksum, contentFingerprintProfile)
+                : null;
         return new NormalizedUploadRequest(fileName, mimeType, fileType, contentChecksum);
     }
 
     private StorageUploadSessionModel prepareUploadSession(CreateUploadSessionWorkflowContext context,
                                                            String groupName,
                                                            StorageWritePlan writePlan,
-                                                           NormalizedUploadRequest normalizedRequest) throws IOException {
+                                                            NormalizedUploadRequest normalizedRequest) throws IOException {
         String primaryBackend = writePlan.getPrimaryBackend();
         BlobStore primaryBlobStore = blobStoreLocator.require(primaryBackend);
         StorageUploadMode uploadMode = transferModeResolver.resolveUploadMode(
                 context.getRequest(),
-                normalizedRequest.contentChecksum,
+                normalizedRequest.contentChecksum != null ? normalizedRequest.contentChecksum.encoded() : null,
                 primaryBlobStore
         );
+        String uploadId = newId();
+        String fileId = newId();
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime expiresAt = now.plusSeconds(runtimeSettings.getPendingUploadExpireSeconds());
         DirectUploadState directUploadState = createDirectUploadIfNeeded(
@@ -124,17 +134,18 @@ public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUpload
                 primaryBackend,
                 normalizedRequest,
                 primaryBlobStore,
-                uploadMode
+                uploadMode,
+                uploadId
         );
         return StorageUploadSessionModel.pending(
-                newId(),
-                newId(),
+                uploadId,
+                fileId,
                 groupName,
                 normalizedRequest.fileName,
                 context.getRequest().getSize(),
                 normalizedRequest.mimeType,
                 normalizedRequest.fileType,
-                normalizedRequest.contentChecksum,
+                normalizedRequest.contentChecksum != null ? normalizedRequest.contentChecksum.encoded() : null,
                 context.getUserId(),
                 primaryBackend,
                 directUploadState.objectKey,
@@ -150,19 +161,26 @@ public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUpload
                                                          String primaryBackend,
                                                          NormalizedUploadRequest normalizedRequest,
                                                          BlobStore primaryBlobStore,
-                                                         StorageUploadMode uploadMode) throws IOException {
+                                                         StorageUploadMode uploadMode,
+                                                         String objectKeySeed) throws IOException {
         if (uploadMode != StorageUploadMode.DIRECT) {
             return DirectUploadState.empty();
         }
         long declaredSize = Objects.requireNonNull(request.getSize(), "Direct uploads require a declared size.");
-        String objectKey = blobObjectKeyFactory.createKey(Objects.requireNonNull(normalizedRequest.contentChecksum));
+        String objectKey = blobObjectKeyFactory.createKey(
+                Objects.requireNonNull(normalizedRequest.contentChecksum).encoded(),
+                objectKeySeed
+        );
         StorageAccessRequest accessRequest = primaryBlobStore.createDirectUpload(
                 new BlobWriteRequest(
                         objectKey,
                         declaredSize,
                         normalizedRequest.mimeType,
-                        BlobMetadataSupport.contentChecksumMetadata(normalizedRequest.contentChecksum),
-                        normalizedRequest.contentChecksum
+                        BlobMetadataSupport.contentFingerprintMetadata(
+                                normalizedRequest.contentChecksum.encoded(),
+                                contentFingerprintProfile
+                        ),
+                        normalizedRequest.contentChecksum.primaryChecksum()
                 ),
                 Duration.ofSeconds(runtimeSettings.getDirectAccessTtlSeconds())
         );
@@ -192,12 +210,12 @@ public class CreateUploadSessionPrepareStep implements WorkflowStep<CreateUpload
         private final String fileName;
         private final String mimeType;
         private final FileType fileType;
-        private final String contentChecksum;
+        private final ContentFingerprint contentChecksum;
 
         private NormalizedUploadRequest(String fileName,
                                         String mimeType,
                                         FileType fileType,
-                                        String contentChecksum) {
+                                        ContentFingerprint contentChecksum) {
             this.fileName = fileName;
             this.mimeType = mimeType;
             this.fileType = fileType;

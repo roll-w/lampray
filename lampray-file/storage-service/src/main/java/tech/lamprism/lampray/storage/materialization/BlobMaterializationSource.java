@@ -16,10 +16,12 @@
 
 package tech.lamprism.lampray.storage.materialization;
 
+import tech.lamprism.lampray.storage.backend.BlobStoreLocator;
 import tech.lamprism.lampray.storage.materialization.placement.BlobPlacementWriter;
 import tech.lamprism.lampray.storage.persistence.StorageBlobEntity;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Blob content source used during materialization.
@@ -31,7 +33,12 @@ public interface BlobMaterializationSource {
      * Resolves the primary object key for materialization.
      */
     String resolvePrimaryObjectKey(BlobObjectKeyFactory blobObjectKeyFactory,
-                                   String checksum);
+                                   BlobMaterializationRequest request);
+
+    /**
+     * Opens the source content stream for compatibility checks.
+     */
+    InputStream openSourceStream(BlobStoreLocator blobStoreLocator) throws IOException;
 
     /**
      * Materializes the primary blob object.

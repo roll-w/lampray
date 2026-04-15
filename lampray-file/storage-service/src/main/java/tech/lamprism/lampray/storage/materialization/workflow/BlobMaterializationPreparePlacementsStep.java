@@ -75,7 +75,7 @@ public class BlobMaterializationPreparePlacementsStep implements WorkflowStep<Bl
     private void materializeNewBlob(BlobMaterializationWorkflowContext context) throws IOException {
         BlobMaterializationRequest request = context.getRequest();
         BlobMaterializationSource source = request.source();
-        String primaryObjectKey = source.resolvePrimaryObjectKey(blobObjectKeyFactory, request.checksum());
+        String primaryObjectKey = source.resolvePrimaryObjectKey(blobObjectKeyFactory, request);
         context.getState().setPrimaryObjectKey(primaryObjectKey);
         try {
             source.materializePrimary(blobPlacementWriter, request, primaryObjectKey);
@@ -90,7 +90,7 @@ public class BlobMaterializationPreparePlacementsStep implements WorkflowStep<Bl
                             context.getState().getMaterializedPlacements(),
                             request,
                             mirrorBackend,
-                            blobObjectKeyFactory.createKey(request.checksum()),
+                            blobObjectKeyFactory.createKey(request.checksum(), request.objectKeySeed()),
                             request.primaryBackend(),
                             primaryObjectKey,
                             source
@@ -123,12 +123,15 @@ public class BlobMaterializationPreparePlacementsStep implements WorkflowStep<Bl
 
         try {
             for (String backendName : requiredBackends) {
+                if (backendName.equals(existingBlob.getPrimaryBackend())) {
+                    continue;
+                }
                 if (storageBlobPlacementRepository.findByBlobIdAndBackendName(existingBlob.getBlobId(), backendName).isPresent()) {
                     continue;
                 }
                 String objectKey = backendName.equals(sourceBackend)
                         ? sourceObjectKey
-                        : blobObjectKeyFactory.createKey(request.checksum());
+                        : blobObjectKeyFactory.createKey(existingBlob.getContentChecksum(), existingBlob.getBlobId());
                 materializePlacement(
                         placementsToPersist,
                         request,

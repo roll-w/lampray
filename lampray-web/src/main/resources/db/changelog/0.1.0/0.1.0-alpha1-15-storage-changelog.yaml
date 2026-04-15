@@ -24,7 +24,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: content_checksum
-                  type: VARCHAR(64)
+                  type: VARCHAR(384)
               - column:
                   constraints:
                     nullable: false
@@ -258,7 +258,7 @@ databaseChangeLog:
                   type: VARCHAR(40)
               - column:
                   name: content_checksum
-                  type: VARCHAR(64)
+                  type: VARCHAR(384)
               - column:
                   name: owner_user_id
                   type: BIGINT

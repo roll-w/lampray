@@ -55,9 +55,8 @@ class StorageBlobRepository(
         return save(revivedBlob)
     }
 
-    fun findByContentChecksum(contentChecksum: String): Optional<StorageBlobEntity> {
-        return findOne(createChecksumSpecification(contentChecksum))
-    }
+    fun findByContentChecksum(contentChecksum: String): Optional<StorageBlobEntity> =
+        findOne(createChecksumSpecification(contentChecksum))
 
     fun findAllByOrphanedAtBefore(orphanedAt: OffsetDateTime): List<StorageBlobEntity> =
         findAll(orphanedAtBeforeSpecification(orphanedAt))

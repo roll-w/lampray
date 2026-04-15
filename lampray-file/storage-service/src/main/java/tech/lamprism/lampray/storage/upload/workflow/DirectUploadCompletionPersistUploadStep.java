@@ -16,12 +16,16 @@
 
 package tech.lamprism.lampray.storage.upload.workflow;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.FileStorage;
 import tech.lamprism.lampray.storage.file.workflow.PersistSessionUploadWorkflow;
 import tech.lamprism.lampray.storage.file.workflow.PersistSessionUploadWorkflowContext;
+import tech.lamprism.lampray.storage.session.UploadObjectCleaner;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
 
+import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -29,10 +33,15 @@ import java.util.Objects;
  */
 @Component
 public class DirectUploadCompletionPersistUploadStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
-    private final PersistSessionUploadWorkflow persistSessionUploadWorkflow;
+    private static final Logger logger = LoggerFactory.getLogger(DirectUploadCompletionPersistUploadStep.class);
 
-    DirectUploadCompletionPersistUploadStep(PersistSessionUploadWorkflow persistSessionUploadWorkflow) {
+    private final PersistSessionUploadWorkflow persistSessionUploadWorkflow;
+    private final UploadObjectCleaner uploadObjectCleaner;
+
+    DirectUploadCompletionPersistUploadStep(PersistSessionUploadWorkflow persistSessionUploadWorkflow,
+                                           UploadObjectCleaner uploadObjectCleaner) {
         this.persistSessionUploadWorkflow = persistSessionUploadWorkflow;
+        this.uploadObjectCleaner = uploadObjectCleaner;
     }
 
     @Override
@@ -48,6 +57,19 @@ public class DirectUploadCompletionPersistUploadStep implements WorkflowStep<Dir
                         Objects.requireNonNull(context.getState().getPreparedBlob(), "preparedBlob")
                 )
         );
+        cleanupUnusedUploadedObject(context);
         context.getState().setResult(fileStorage);
+    }
+
+    private void cleanupUnusedUploadedObject(DirectUploadCompletionWorkflowContext context) {
+        try {
+            uploadObjectCleaner.cleanup(context.getUploadSession());
+        } catch (IOException exception) {
+            logger.warn(
+                    "Failed to cleanup unused direct upload object for session {}",
+                    context.getUploadSession().getUploadId(),
+                    exception
+            );
+        }
     }
 }

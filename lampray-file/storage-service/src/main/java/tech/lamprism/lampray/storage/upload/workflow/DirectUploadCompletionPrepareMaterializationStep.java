@@ -51,6 +51,7 @@ public class DirectUploadCompletionPrepareMaterializationStep implements Workflo
                         context.getUploadSession().getFileType(),
                         Objects.requireNonNull(context.getState().getUploadedObject(), "uploadedObject").getSize(),
                         Objects.requireNonNull(context.getState().getActualChecksum(), "actualChecksum"),
+                        context.getUploadSession().getUploadId(),
                         Objects.requireNonNull(context.getState().getUploadedObject(), "uploadedObject")
                 )
         ));

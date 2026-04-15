@@ -19,6 +19,8 @@ package tech.lamprism.lampray.storage.domain
 import org.apache.commons.lang3.StringUtils
 import tech.lamprism.lampray.storage.FileType
 import tech.lamprism.lampray.storage.StorageAccessRequest
+import tech.lamprism.lampray.storage.checksum.ContentFingerprint
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile
 import tech.lamprism.lampray.storage.StorageException
 import tech.lamprism.lampray.storage.StorageUploadMode
 import tech.lamprism.lampray.storage.StorageUploadRequest
@@ -32,7 +34,6 @@ import tech.lamprism.lampray.storage.store.BlobObject
 import tech.rollw.common.web.AuthErrorCode
 import tech.rollw.common.web.CommonErrorCode
 import java.time.OffsetDateTime
-import java.util.Locale
 
 /**
  * @author RollW
@@ -129,15 +130,26 @@ class StorageUploadSessionModel private constructor(
     }
 
     fun requireChecksum(): String =
-        normalizeChecksum(entity.contentChecksum)
+        requireChecksum(ContentFingerprintProfile.defaultProfile())
+
+    fun requireChecksum(profile: ContentFingerprintProfile): String =
+        normalizeChecksum(entity.contentChecksum, profile)
             ?: throw StorageException(CommonErrorCode.ERROR_ILLEGAL_ARGUMENT, "Direct uploads require a checksum.")
 
     fun validateUploadedContent(tempUpload: TempUpload, groupSettings: StorageGroupConfig) {
+        validateUploadedContent(tempUpload, groupSettings, ContentFingerprintProfile.defaultProfile())
+    }
+
+    fun validateUploadedContent(
+        tempUpload: TempUpload,
+        groupSettings: StorageGroupConfig,
+        profile: ContentFingerprintProfile,
+    ) {
         validateGroupSizeLimit(groupSettings.maxSizeBytes, tempUpload.size)
         validateDeclaredSize(entity.fileSize, tempUpload.size)
-        val expectedChecksum = normalizeChecksum(entity.contentChecksum)
+        val expectedChecksum = normalizeChecksum(entity.contentChecksum, profile)
         if (expectedChecksum != null) {
-            validateChecksumMatch(expectedChecksum, tempUpload.contentChecksum)
+            validateChecksumMatch(expectedChecksum, tempUpload.contentChecksum, profile)
         }
     }
 
@@ -243,32 +255,48 @@ class StorageUploadSessionModel private constructor(
 
         @JvmStatic
         fun normalizeChecksum(contentChecksum: String?): String? {
+            return normalizeChecksum(contentChecksum, ContentFingerprintProfile.defaultProfile())
+        }
+
+        @JvmStatic
+        fun normalizeChecksum(contentChecksum: String?, profile: ContentFingerprintProfile): String? {
             if (StringUtils.isBlank(contentChecksum)) {
                 return null
             }
-            val normalized = contentChecksum!!.trim().lowercase(Locale.ROOT)
-            if (normalized.length != 64) {
+            try {
+                return ContentFingerprint.parse(contentChecksum!!, profile).encoded()
+            } catch (exception: IllegalArgumentException) {
                 throw StorageException(
                     CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                    "Checksum must be a 64-character SHA-256 hex string.",
+                    exception.message ?: "Checksum format is invalid.",
                 )
             }
-            for (current in normalized) {
-                val numeric = current in '0'..'9'
-                val alphabetic = current in 'a'..'f'
-                if (!numeric && !alphabetic) {
-                    throw StorageException(
-                        CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
-                        "Checksum must be a lowercase SHA-256 hex string.",
-                    )
-                }
-            }
-            return normalized
         }
 
         @JvmStatic
         fun validateChecksumMatch(expectedChecksum: String, actualChecksum: String) {
-            if (expectedChecksum != actualChecksum) {
+            validateChecksumMatch(expectedChecksum, actualChecksum, ContentFingerprintProfile.defaultProfile())
+        }
+
+        @JvmStatic
+        fun validateChecksumMatch(expectedChecksum: String, actualChecksum: String, profile: ContentFingerprintProfile) {
+            val expectedFingerprint = try {
+                ContentFingerprint.parse(expectedChecksum, profile)
+            } catch (exception: IllegalArgumentException) {
+                throw StorageException(
+                    CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
+                    exception.message ?: "Checksum format is invalid.",
+                )
+            }
+            val actualFingerprint = try {
+                ContentFingerprint.parse(actualChecksum, profile)
+            } catch (exception: IllegalArgumentException) {
+                throw StorageException(
+                    CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
+                    exception.message ?: "Checksum format is invalid.",
+                )
+            }
+            if (expectedFingerprint != actualFingerprint) {
                 throw StorageException(
                     CommonErrorCode.ERROR_ILLEGAL_ARGUMENT,
                     "Uploaded file checksum does not match declared checksum.",

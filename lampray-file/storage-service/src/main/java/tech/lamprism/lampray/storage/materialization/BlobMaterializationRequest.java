@@ -35,6 +35,7 @@ public final class BlobMaterializationRequest {
     private final FileType fileType;
     private final long size;
     private final String checksum;
+    private final String objectKeySeed;
     private final BlobMaterializationSource source;
 
     private BlobMaterializationRequest(StorageWritePlan writePlan,
@@ -42,12 +43,14 @@ public final class BlobMaterializationRequest {
                                        FileType fileType,
                                        long size,
                                        String checksum,
+                                       String objectKeySeed,
                                        BlobMaterializationSource source) {
         this.writePlan = Objects.requireNonNull(writePlan, "writePlan must not be null");
         this.mimeType = Objects.requireNonNull(mimeType, "mimeType must not be null");
         this.fileType = Objects.requireNonNull(fileType, "fileType must not be null");
         this.size = size;
         this.checksum = Objects.requireNonNull(checksum, "checksum must not be null");
+        this.objectKeySeed = Objects.requireNonNull(objectKeySeed, "objectKeySeed must not be null");
         this.source = Objects.requireNonNull(source, "source must not be null");
     }
 
@@ -56,6 +59,7 @@ public final class BlobMaterializationRequest {
                                                            FileType fileType,
                                                            long size,
                                                            String checksum,
+                                                           String objectKeySeed,
                                                            Path tempPath) {
         return new BlobMaterializationRequest(
                 writePlan,
@@ -63,6 +67,7 @@ public final class BlobMaterializationRequest {
                 fileType,
                 size,
                 checksum,
+                objectKeySeed,
                 new TempFileBlobSource(tempPath)
         );
     }
@@ -72,6 +77,7 @@ public final class BlobMaterializationRequest {
                                                                FileType fileType,
                                                                long size,
                                                                String checksum,
+                                                               String objectKeySeed,
                                                                BlobObject uploadedObject) {
         return new BlobMaterializationRequest(
                 writePlan,
@@ -79,6 +85,7 @@ public final class BlobMaterializationRequest {
                 fileType,
                 size,
                 checksum,
+                objectKeySeed,
                 new UploadedBlobSource(uploadedObject)
         );
     }
@@ -101,6 +108,10 @@ public final class BlobMaterializationRequest {
 
     public String checksum() {
         return checksum;
+    }
+
+    public String objectKeySeed() {
+        return objectKeySeed;
     }
 
     public BlobMaterializationSource source() {

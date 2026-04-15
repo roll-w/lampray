@@ -18,6 +18,7 @@ package tech.lamprism.lampray.storage.upload.workflow;
 
 import org.springframework.stereotype.Component;
 import tech.lamprism.lampray.storage.StorageException;
+import tech.lamprism.lampray.storage.checksum.ContentFingerprintProfile;
 import tech.lamprism.lampray.storage.routing.StorageGroupRouter;
 import tech.lamprism.lampray.storage.routing.StorageWritePlan;
 import tech.lamprism.lampray.storage.workflow.WorkflowStep;
@@ -30,9 +31,12 @@ import tech.rollw.common.web.DataErrorCode;
 @Component
 public class DirectUploadCompletionResolvePlanStep implements WorkflowStep<DirectUploadCompletionWorkflowContext> {
     private final StorageGroupRouter storageGroupRouter;
+    private final ContentFingerprintProfile contentFingerprintProfile;
 
-    DirectUploadCompletionResolvePlanStep(StorageGroupRouter storageGroupRouter) {
+    DirectUploadCompletionResolvePlanStep(StorageGroupRouter storageGroupRouter,
+                                          ContentFingerprintProfile contentFingerprintProfile) {
         this.storageGroupRouter = storageGroupRouter;
+        this.contentFingerprintProfile = contentFingerprintProfile;
     }
 
     @Override
@@ -42,7 +46,7 @@ public class DirectUploadCompletionResolvePlanStep implements WorkflowStep<Direc
 
     @Override
     public void execute(DirectUploadCompletionWorkflowContext context) {
-        String checksum = context.getUploadSession().requireChecksum();
+        String checksum = context.getUploadSession().requireChecksum(contentFingerprintProfile);
         StorageWritePlan writePlan = restoreWritePlan(
                 context.getUploadSession().getGroupName(),
                 context.getUploadSession().getPrimaryBackend()
