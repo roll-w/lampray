@@ -358,7 +358,8 @@
       "editLink": "编辑链接",
       "openLink": "打开链接",
       "addLink": "添加链接",
-      "copy": "复制"
+      "copy": "复制",
+      "tableControls": "表格"
     },
     "modal": {
       "insertLink": "插入链接",
@@ -367,6 +368,7 @@
       "url": "链接地址",
       "urlPlaceholder": "https://example.com",
       "urlRequired": "链接地址不能为空",
+      "urlInvalid": "请输入有效的 http(s) 链接",
       "text": "链接文本",
       "textPlaceholder": "链接文本",
       "imageUrl": "图片地址",
@@ -390,7 +392,33 @@
       "copyCode": "复制代码",
       "copied": "已复制"
     },
+    "slash": {
+      "empty": "没有匹配的块或插入操作。",
+      "description": {
+        "paragraph": "以普通正文开始输入。",
+        "heading1": "插入较大的页面标题。",
+        "heading2": "插入清晰的章节标题。",
+        "heading3": "插入紧凑的小节标题。",
+        "bulletList": "创建简单的无序列表。",
+        "orderedList": "创建有序列表。",
+        "taskList": "创建带复选框的任务清单。",
+        "blockquote": "突出引用或提示性文本。",
+        "codeBlock": "插入格式化代码块。",
+        "divider": "用分隔线拆分内容区段。",
+        "table": "在当前 schema 内插入表格。",
+        "link": "不离开编辑器即可插入或编辑链接。",
+        "image": "通过 URL 插入远程图片。"
+      }
+    },
     "table": {
+      "insertDialogTitle": "插入表格",
+      "insertDialogDescription": "选择快捷预设，或先调整行列后再插入。",
+      "quickPresets": "快捷预设",
+      "customSize": "自定义大小",
+      "rows": "行数",
+      "columns": "列数",
+      "withHeaderRow": "包含表头行",
+      "moreActions": "更多表格操作",
       "insertColumnBefore": "在前面插入列",
       "insertColumnAfter": "在后面插入列",
       "deleteColumn": "删除列",

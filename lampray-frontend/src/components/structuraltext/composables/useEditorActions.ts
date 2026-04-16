@@ -18,6 +18,164 @@ import type {Editor} from "@tiptap/core";
 import {computed} from "vue";
 import {TextSelection} from "@tiptap/pm/state";
 
+const REMOTE_IMAGE_EXTENSIONS = [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".svg",
+    ".bmp",
+    ".avif",
+]
+
+function hasWhitespace(value: string) {
+    for (const character of value) {
+        if (character.trim() === "") {
+            return true
+        }
+    }
+
+    return false
+}
+
+export function parseHttpUrl(value: string) {
+    const trimmedValue = value.trim()
+
+    if (!trimmedValue || hasWhitespace(trimmedValue)) {
+        return null
+    }
+
+    try {
+        const parsedUrl = new URL(trimmedValue)
+        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+            return null
+        }
+
+        return parsedUrl
+    } catch {
+        return null
+    }
+}
+
+export function isBareHttpUrl(value: string) {
+    return parseHttpUrl(value) !== null
+}
+
+export function isRemoteImageUrl(value: string) {
+    const parsedUrl = parseHttpUrl(value)
+    if (!parsedUrl) {
+        return false
+    }
+
+    const pathname = parsedUrl.pathname.toLowerCase()
+    return REMOTE_IMAGE_EXTENSIONS.some(extension => pathname.endsWith(extension))
+}
+
+export function getSelectedText(editor: Editor): string {
+    const {from, to} = editor.state.selection
+    return editor.state.doc.textBetween(from, to, " ")
+}
+
+export function getLinkHref(editor: Editor): string {
+    return editor.getAttributes("link").href || ""
+}
+
+export function isSelectionInEmptyParagraph(editor: Editor) {
+    const {selection} = editor.state
+    if (!selection.empty) {
+        return false
+    }
+
+    const parentNode = selection.$from.parent
+    return parentNode.type.name === "paragraph" && parentNode.textContent.length === 0 && parentNode.childCount === 0
+}
+
+function moveCursorAfterSelection(editor: Editor) {
+    const {doc} = editor.state
+    const position = editor.state.selection.to
+    if (position > doc.content.size) {
+        return
+    }
+
+    const $position = doc.resolve(position)
+    editor.view.dispatch(editor.state.tr.setSelection(TextSelection.near($position, 1)))
+}
+
+export function insertLinkedText(editor: Editor, href: string, text: string) {
+    const linkText = text.trim() || href
+
+    return editor.chain()
+        .focus()
+        .insertContent({
+            type: "text",
+            text: linkText,
+            marks: [
+                {
+                    type: "link",
+                    attrs: {href},
+                }
+            ]
+        })
+        .run()
+}
+
+export function applyLink(editor: Editor, href: string, text?: string) {
+    if (!href) {
+        return editor.chain().focus().unsetLink().run()
+    }
+
+    const parsedUrl = parseHttpUrl(href)
+    if (!parsedUrl) {
+        return false
+    }
+
+    const normalizedHref = parsedUrl.toString()
+
+    const linkMark = editor.schema.marks.link
+    if (!linkMark) {
+        return false
+    }
+
+    const {empty} = editor.state.selection
+    const normalizedText = text?.trim()
+
+    if (empty && editor.isActive("link")) {
+        return editor.chain()
+            .focus()
+            .extendMarkRange("link")
+            .setLink({href: normalizedHref})
+            .command(({tr}) => {
+                tr.removeStoredMark(linkMark)
+                return true
+            })
+            .run()
+    }
+
+    if (empty) {
+        return insertLinkedText(editor, normalizedHref, normalizedText || normalizedHref)
+    }
+
+    const hasApplied = editor.chain()
+        .focus()
+        .setLink({href: normalizedHref})
+        .command(({tr}) => {
+            tr.removeStoredMark(linkMark)
+            return true
+        })
+        .run()
+
+    if (hasApplied) {
+        moveCursorAfterSelection(editor)
+    }
+
+    return hasApplied
+}
+
+export function unsetLink(editor: Editor) {
+    return editor.chain().focus().unsetLink().run()
+}
+
 export function useEditorActions(editor: Editor) {
     const toggleBold = () => {
         editor.chain().focus().toggleBold().run();
@@ -53,69 +211,24 @@ export function useEditorActions(editor: Editor) {
 
     const isCodeBlock = computed(() => editor.isActive("codeBlock"));
 
-    const setLink = (href: string) => {
-        if (!href) {
-            editor.chain().focus().unsetLink().run();
-            return;
-        }
-
-        const {from, to} = editor.state.selection;
-        const linkMark = editor.schema.marks.link;
-
-        if (!linkMark) {
-            return;
-        }
-
-        if (from === to) {
-            // No selection, just set link and ensure cursor moves out
-            editor
-                .chain()
-                .focus()
-                .extendMarkRange("link")
-                .setLink({href})
-                .command(({tr}) => {
-                    tr.removeStoredMark(linkMark);
-                    return true;
-                })
-                .run();
-        } else {
-            // Has selection, apply link to selected text
-            editor
-                .chain()
-                .focus()
-                .setLink({href})
-                .command(({tr, state}) => {
-                    // Move cursor after the link
-                    const {doc} = state;
-                    const pos = tr.selection.to;
-                    if (pos <= doc.content.size) {
-                        const $pos = doc.resolve(pos);
-                        tr.setSelection(
-                            TextSelection.near($pos, 1)
-                        );
-                    }
-                    tr.removeStoredMark(linkMark);
-                    return true;
-                })
-                .run();
-        }
+    const setLink = (href: string, text?: string) => {
+        return applyLink(editor, href, text)
     };
 
-    const unsetLink = () => {
-        editor.chain().focus().unsetLink().run();
+    const removeLink = () => {
+        return unsetLink(editor)
     };
 
-    const getLinkHref = (): string => {
-        return editor.getAttributes("link").href || "";
+    const getCurrentLinkHref = (): string => {
+        return getLinkHref(editor)
     };
 
-    const getSelectedText = (): string => {
-        const {from, to} = editor.state.selection;
-        return editor.state.doc.textBetween(from, to, " ");
+    const getCurrentSelectedText = (): string => {
+        return getSelectedText(editor)
     };
 
     const copySelectedText = async (): Promise<boolean> => {
-        const text = getSelectedText();
+        const text = getCurrentSelectedText();
         try {
             await navigator.clipboard.writeText(text);
             return true;
@@ -133,9 +246,9 @@ export function useEditorActions(editor: Editor) {
         toggleCode,
         toggleHighlight,
         setLink,
-        unsetLink,
-        getLinkHref,
-        getSelectedText,
+        unsetLink: removeLink,
+        getLinkHref: getCurrentLinkHref,
+        getSelectedText: getCurrentSelectedText,
         copySelectedText,
 
         isBold,
@@ -148,4 +261,3 @@ export function useEditorActions(editor: Editor) {
         isCodeBlock,
     };
 }
-

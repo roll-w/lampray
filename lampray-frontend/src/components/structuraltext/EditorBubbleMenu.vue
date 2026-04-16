@@ -18,9 +18,9 @@
 import {BubbleMenu} from "@tiptap/vue-3/menus";
 import type {Editor} from "@tiptap/core";
 import {ref} from "vue";
-import {useEditorActions} from "@/components/structuraltext/composables/useEditorActions";
+import {parseHttpUrl, useEditorActions} from "@/components/structuraltext/composables/useEditorActions";
+import {useStructuralTextInsertController} from "@/components/structuraltext/composables/useStructuralTextInsertController";
 import {useI18n} from "vue-i18n";
-import LinkModal from "@/components/structuraltext/modals/LinkModal.vue";
 
 interface Props {
     editor: Editor;
@@ -29,6 +29,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const {t} = useI18n();
+const insertController = useStructuralTextInsertController()
 
 const {
     toggleBold,
@@ -37,10 +38,7 @@ const {
     toggleCode,
     toggleHighlight,
     toggleUnderline,
-    setLink,
-    unsetLink,
     getLinkHref,
-    getSelectedText,
     copySelectedText,
     isBold,
     isItalic,
@@ -52,8 +50,6 @@ const {
     isCodeBlock,
 } = useEditorActions(props.editor);
 
-const isLinkModalOpen = ref(false);
-
 const isCopied = ref(false);
 
 const copyText = async () => {
@@ -63,25 +59,12 @@ const copyText = async () => {
         isCopied.value = false;
     }, 2000);
 };
-
-
-const openLinkModal = () => {
-    isLinkModalOpen.value = true;
-};
-
 const openLink = () => {
     const href = getLinkHref();
-    if (href) {
-        window.open(href, "_blank");
+    const parsedUrl = parseHttpUrl(href)
+    if (parsedUrl) {
+        window.open(parsedUrl.toString(), "_blank", "noopener,noreferrer");
     }
-};
-
-const handleLinkConfirm = ({url}: { url: string }) => {
-    setLink(url);
-};
-
-const handleLinkRemove = () => {
-    unsetLink();
 };
 
 const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: number }) => {
@@ -103,7 +86,7 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
                                  color="neutral"
                                  size="xs"
                                  icon="i-lucide-pencil"
-                                 @click="openLinkModal"/>
+                                 @click="insertController.openLinkModalFromSelection"/>
                     </UTooltip>
                     <UTooltip :text="t('editor.toolbar.openLink')">
                         <UButton variant="ghost"
@@ -172,8 +155,8 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
                              color="neutral"
                              size="xs"
                              icon="i-lucide-link"
-                             @click="openLinkModal"
-                    />
+                             @click="insertController.openLinkModalFromSelection"
+                     />
                 </UTooltip>
             </template>
             <UTooltip :text="t('editor.toolbar.copy')">
@@ -187,13 +170,4 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
             <slot name="end" />
         </div>
     </BubbleMenu>
-
-    <LinkModal
-            v-model:open="isLinkModalOpen"
-            :initial-url="getLinkHref()"
-            :initial-text="getSelectedText()"
-            :is-editing="isLink"
-            @confirm="handleLinkConfirm"
-            @remove="handleLinkRemove"
-    />
 </template>

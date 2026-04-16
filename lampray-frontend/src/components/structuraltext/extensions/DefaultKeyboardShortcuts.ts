@@ -20,11 +20,8 @@ export const DefaultKeyboardShortcuts = Extension.create({
     name: "defaultKeyboardShortcuts",
 
     addKeyboardShortcuts() {
-        return {
-            Tab: () => {
-                return this.editor.commands.insertContent("    ")
-            },
-        }
+        // Let specialized extensions own Tab so tables, lists, and code blocks
+        // can keep their expected navigation and indentation behavior.
+        return {}
     },
 })
-

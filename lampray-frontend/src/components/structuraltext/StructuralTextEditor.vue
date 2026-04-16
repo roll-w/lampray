@@ -25,10 +25,15 @@ import {ListKeyboardShortcuts} from "@/components/structuraltext/extensions/List
 import EditorToolbar from "@/components/structuraltext/EditorToolbar.vue";
 import EditorBubbleMenu from "@/components/structuraltext/EditorBubbleMenu.vue";
 import EditorContextMenu from "@/components/structuraltext/EditorContextMenu.vue";
+import TableEdgeAffordances from "@/components/structuraltext/TableEdgeAffordances.vue";
+import LinkModal from "@/components/structuraltext/modals/LinkModal.vue";
+import ImageModal from "@/components/structuraltext/modals/ImageModal.vue";
+import TableInsertModal from "@/components/structuraltext/modals/TableInsertModal.vue";
 import type {ContentLocationRange, StructuralText} from "@/components/structuraltext/types";
 import {convertFromStructuralText, convertToStructuralText} from "@/components/structuraltext/converter";
-import {computed, onBeforeUnmount, ref, watch} from "vue";
+import {computed, getCurrentInstance, onBeforeUnmount, ref, watch} from "vue";
 import {DefaultKeyboardShortcuts} from "@/components/structuraltext/extensions/DefaultKeyboardShortcuts.ts";
+import {createSlashCommandExtension} from "@/components/structuraltext/extensions/SlashCommand";
 import {Table, TableCell, TableHeader, TableRow} from "@/components/structuraltext/extensions/TableExtension.ts";
 import {HeadingWithId} from "@/components/structuraltext/extensions/HeadingWithId.ts";
 import {Plugin, PluginKey} from "@tiptap/pm/state";
@@ -37,6 +42,19 @@ import StructuralTextOutline from "@/components/structuraltext/StructuralTextOut
 import type {Editor} from "@tiptap/core";
 import {Extension} from "@tiptap/core";
 import {Decoration, DecorationSet} from "@tiptap/pm/view";
+import {useI18n} from "vue-i18n";
+import {
+    applyLink,
+    insertLinkedText,
+    isBareHttpUrl,
+    isRemoteImageUrl,
+    isSelectionInEmptyParagraph,
+} from "@/components/structuraltext/composables/useEditorActions";
+import {
+    createStructuralTextInsertController,
+    provideStructuralTextInsertController,
+    type StructuralTextInsertController,
+} from "@/components/structuraltext/composables/useStructuralTextInsertController";
 
 interface Props {
     modelValue?: StructuralText
@@ -75,6 +93,174 @@ const props = withDefaults(defineProps<Props>(), {
     showOutline: false,
     outlineTitle: "Outline",
 })
+
+const {t} = useI18n()
+const appContext = getCurrentInstance()?.appContext || null
+const editorSurface = ref<HTMLElement | null>(null)
+
+let insertController: StructuralTextInsertController | null = null
+
+function insertImageFromUrl(editor: Editor, url: string) {
+    return editor.chain().focus().setImage({src: url}).run()
+}
+
+function handleBareUrlPaste(editor: Editor, pastedText: string) {
+    if (!isBareHttpUrl(pastedText)) {
+        return false
+    }
+
+    if (!editor.state.selection.empty) {
+        return applyLink(editor, pastedText)
+    }
+
+    if (!isSelectionInEmptyParagraph(editor)) {
+        return false
+    }
+
+    if (isRemoteImageUrl(pastedText)) {
+        return insertImageFromUrl(editor, pastedText)
+    }
+
+    return insertLinkedText(editor, pastedText, pastedText)
+}
+
+function buildSlashCommandItems() {
+    return [
+        {
+            id: "paragraph",
+            label: t("editor.toolbar.paragraph"),
+            description: t("editor.slash.description.paragraph"),
+            icon: "i-lucide-pilcrow",
+            keywords: ["paragraph", "text", "normal"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).setParagraph().run()
+            },
+        },
+        {
+            id: "heading-1",
+            label: t("editor.toolbar.heading1"),
+            description: t("editor.slash.description.heading1"),
+            icon: "i-lucide-heading-1",
+            keywords: ["heading", "title", "h1"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).setHeading({level: 1}).run()
+            },
+        },
+        {
+            id: "heading-2",
+            label: t("editor.toolbar.heading2"),
+            description: t("editor.slash.description.heading2"),
+            icon: "i-lucide-heading-2",
+            keywords: ["heading", "section", "h2"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).setHeading({level: 2}).run()
+            },
+        },
+        {
+            id: "heading-3",
+            label: t("editor.toolbar.heading3"),
+            description: t("editor.slash.description.heading3"),
+            icon: "i-lucide-heading-3",
+            keywords: ["heading", "subsection", "h3"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).setHeading({level: 3}).run()
+            },
+        },
+        {
+            id: "bullet-list",
+            label: t("editor.toolbar.bulletList"),
+            description: t("editor.slash.description.bulletList"),
+            icon: "i-lucide-list",
+            keywords: ["bullet", "list", "unordered"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).toggleBulletList().run()
+            },
+        },
+        {
+            id: "ordered-list",
+            label: t("editor.toolbar.orderedList"),
+            description: t("editor.slash.description.orderedList"),
+            icon: "i-lucide-list-ordered",
+            keywords: ["numbered", "ordered", "list"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).toggleOrderedList().run()
+            },
+        },
+        {
+            id: "task-list",
+            label: t("editor.toolbar.taskList"),
+            description: t("editor.slash.description.taskList"),
+            icon: "i-lucide-list-checks",
+            keywords: ["task", "todo", "checklist"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).toggleTaskList().run()
+            },
+        },
+        {
+            id: "blockquote",
+            label: t("editor.toolbar.blockquote"),
+            description: t("editor.slash.description.blockquote"),
+            icon: "i-lucide-quote",
+            keywords: ["quote", "blockquote", "callout"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).toggleBlockquote().run()
+            },
+        },
+        {
+            id: "code-block",
+            label: t("editor.toolbar.codeBlock"),
+            description: t("editor.slash.description.codeBlock"),
+            icon: "i-lucide-code-2",
+            keywords: ["code", "snippet", "pre"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).setCodeBlock().run()
+            },
+        },
+        {
+            id: "divider",
+            label: t("editor.toolbar.horizontalRule"),
+            description: t("editor.slash.description.divider"),
+            icon: "i-lucide-minus",
+            keywords: ["divider", "separator", "rule"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).setHorizontalRule().run()
+            },
+        },
+        {
+            id: "table",
+            label: t("editor.toolbar.insertTable"),
+            description: t("editor.slash.description.table"),
+            icon: "i-lucide-table",
+            keywords: ["table", "grid", "columns", "rows"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).run()
+                insertController?.openTableInsertModal()
+            },
+        },
+        {
+            id: "link",
+            label: t("editor.toolbar.insertLink"),
+            description: t("editor.slash.description.link"),
+            icon: "i-lucide-link",
+            keywords: ["link", "url", "hyperlink"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).run()
+                insertController?.openLinkModalFromSelection()
+            },
+        },
+        {
+            id: "image",
+            label: t("editor.toolbar.insertImage"),
+            description: t("editor.slash.description.image"),
+            icon: "i-lucide-image",
+            keywords: ["image", "photo", "picture"],
+            onSelect: (editor: Editor, range: { from: number; to: number }) => {
+                editor.chain().focus().deleteRange(range).run()
+                insertController?.openImageModal()
+            },
+        },
+    ]
+}
 
 const emit = defineEmits<Emits>()
 
@@ -287,6 +473,10 @@ const editor = useEditor({
         TaskList,
         TaskItem,
         ListKeyboardShortcuts,
+        createSlashCommandExtension({
+            appContext,
+            items: buildSlashCommandItems(),
+        }),
         locationHighlightExtension,
         ...(props.extensions || [])
     ],
@@ -311,6 +501,25 @@ const editor = useEditor({
                 }
 
                 return false
+            },
+            paste: (_view, event) => {
+                const pastedText = event.clipboardData?.getData("text/plain")?.trim() || ""
+                if (!pastedText) {
+                    return false
+                }
+
+                const currentEditor = editor.value
+                if (!currentEditor) {
+                    return false
+                }
+
+                const handled = handleBareUrlPaste(currentEditor, pastedText)
+                if (!handled) {
+                    return false
+                }
+
+                event.preventDefault()
+                return true
             }
         }
     },
@@ -331,6 +540,8 @@ const editor = useEditor({
         emit("select-range", editor)
     }
 })
+
+insertController = provideStructuralTextInsertController(createStructuralTextInsertController(editor))
 
 
 watch(() => props.editable, (newVal) => {
@@ -420,8 +631,10 @@ defineExpose({
                 </EditorBubbleMenu>
                 <EditorDragHandle v-if="editor" :editor="editor"/>
                 <EditorContextMenu v-if="editor" :editable="editable" :editor="editor">
-                    <div :class="{[ui?.content?.root || '']: ui && ui!.content && ui!.content.root}">
+                    <div ref="editorSurface" class="relative"
+                         :class="{[ui?.content?.root || '']: ui && ui!.content && ui!.content.root}">
                         <EditorContent :editor="editor" class="editor"/>
+                        <TableEdgeAffordances v-if="editor" :editor="editor" :editable="editable" :surface="editorSurface"/>
                     </div>
                 </EditorContextMenu>
             </div>
@@ -440,6 +653,33 @@ defineExpose({
                 </StructuralTextOutline>
             </aside>
         </div>
+
+        <LinkModal
+                v-if="insertController"
+                v-model:open="insertController.isLinkModalOpen.value"
+                :initial-url="insertController.linkInitialUrl.value"
+                :initial-text="insertController.linkInitialText.value"
+                :is-editing="insertController.linkIsEditing.value"
+                @confirm="insertController.confirmLink"
+                @remove="insertController.removeLink"
+        />
+
+        <ImageModal
+                v-if="insertController"
+                v-model:open="insertController.isImageModalOpen.value"
+                :initial-url="insertController.imageInitialUrl.value"
+                :initial-alt="insertController.imageInitialAlt.value"
+                @confirm="insertController.confirmImage"
+        />
+
+        <TableInsertModal
+                v-if="insertController"
+                v-model:open="insertController.isTableInsertModalOpen.value"
+                :initial-rows="insertController.tableInitialRows.value"
+                :initial-cols="insertController.tableInitialCols.value"
+                :initial-with-header-row="insertController.tableInitialWithHeaderRow.value"
+                @confirm="insertController.confirmTableInsert"
+        />
 
     </div>
 </template>

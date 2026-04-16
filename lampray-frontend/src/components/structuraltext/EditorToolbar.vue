@@ -18,9 +18,10 @@
 import type {Editor} from "@tiptap/core";
 import {computed, nextTick, onBeforeUnmount, onMounted, ref} from "vue";
 import {useEditorActions} from "@/components/structuraltext/composables/useEditorActions";
+import {useStructuralTextInsertController} from "@/components/structuraltext/composables/useStructuralTextInsertController";
 import {useI18n} from "vue-i18n";
-import LinkModal from "@/components/structuraltext/modals/LinkModal.vue";
-import ImageModal from "@/components/structuraltext/modals/ImageModal.vue";
+import {useTableActions} from "@/components/structuraltext/composables/useTableActions";
+import type {AttributeColor} from "@/components/structuraltext/types";
 
 interface Props {
     editor: Editor;
@@ -35,6 +36,8 @@ const props = withDefaults(defineProps<Props>(), {
     sticky: false
 });
 const {t} = useI18n();
+const tableActions = useTableActions(props.editor, t)
+const insertController = useStructuralTextInsertController()
 
 const {
     toggleBold,
@@ -43,8 +46,6 @@ const {
     toggleUnderline,
     toggleCode,
     toggleHighlight,
-    setLink,
-    getLinkHref,
     isBold,
     isItalic,
     isStrike,
@@ -52,9 +53,6 @@ const {
     isCode,
     isHighlight,
 } = useEditorActions(props.editor);
-
-const isLinkModalOpen = ref(false);
-const isImageModalOpen = ref(false);
 
 const headingOptions = [
     {label: t("editor.toolbar.paragraph"), value: 0, icon: "i-lucide-pilcrow"},
@@ -117,32 +115,13 @@ const toggleCodeBlock = () => {
     }
 };
 
-const insertTable = () => {
-    props.editor.chain().focus().insertTable({rows: 3, cols: 3, withHeaderRow: true}).run();
-};
-
 const insertHorizontalRule = () => {
     props.editor.chain().focus().setHorizontalRule().run();
 };
 
-const openImageModal = () => {
-    isImageModalOpen.value = true;
-};
-
-const handleImageConfirm = ({url, alt}: { url: string; alt?: string }) => {
-    props.editor.chain().focus().setImage({
-        src: url,
-        alt: alt || undefined
-    }).run();
-};
-
-const openLinkModal = () => {
-    isLinkModalOpen.value = true;
-};
-
-const handleLinkConfirm = ({url}: { url: string }) => {
-    setLink(url);
-};
+const handleTableColorSelect = (color: AttributeColor | null) => {
+    tableActions.selectColor(color)
+}
 
 const isBulletList = computed(() => props.editor.isActive("bulletList"));
 const isOrderedList = computed(() => props.editor.isActive("orderedList"));
@@ -334,7 +313,7 @@ onBeforeUnmount(() => {
                         color="neutral"
                         size="sm"
                         icon="i-lucide-link"
-                        @click="openLinkModal"
+                        @click="insertController.openLinkModalFromSelection"
                 />
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.insertImage')">
@@ -343,7 +322,7 @@ onBeforeUnmount(() => {
                         color="neutral"
                         size="sm"
                         icon="i-lucide-image"
-                        @click="openImageModal"
+                        @click="insertController.openImageModal()"
                 />
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.insertTable')">
@@ -352,7 +331,7 @@ onBeforeUnmount(() => {
                         color="neutral"
                         size="sm"
                         icon="i-lucide-table"
-                        @click="insertTable"
+                        @click="insertController.openTableInsertModal()"
                 />
             </UTooltip>
             <UTooltip :text="t('editor.toolbar.horizontalRule')">
@@ -367,15 +346,81 @@ onBeforeUnmount(() => {
             <slot name="menu-end"/>
         </div>
 
-        <LinkModal
-                v-model:open="isLinkModalOpen"
-                :initial-url="getLinkHref()"
-                @confirm="handleLinkConfirm"
-        />
+        <div v-if="tableActions.isInTable" class="w-px h-6 bg-gray-300 dark:bg-gray-600"/>
 
-        <ImageModal
-                v-model:open="isImageModalOpen"
-                @confirm="handleImageConfirm"
-        />
+        <div v-if="tableActions.isInTable"
+             class="flex items-center gap-1 rounded-lg border border-default bg-default/60 px-2 py-1">
+            <div class="hidden md:flex items-center gap-1 pe-1 text-xs font-medium text-muted">
+                <UIcon name="i-lucide-table" class="h-3.5 w-3.5"/>
+                <span>{{ t('editor.toolbar.tableControls') }}</span>
+            </div>
+
+            <div class="hidden h-5 w-px bg-default md:block"/>
+
+            <UTooltip v-for="action in tableActions.primaryToolbarActions"
+                      :key="action.key"
+                      :text="action.label">
+                <UButton
+                        :variant="action.disabled ? 'ghost' : 'soft'"
+                        :color="action.disabled ? 'neutral' : 'primary'"
+                        size="sm"
+                        :icon="action.icon"
+                        :disabled="action.disabled"
+                        @click="action.onSelect"
+                />
+            </UTooltip>
+
+            <UPopover v-if="tableActions.isInCell">
+                <UButton
+                        variant="ghost"
+                        color="neutral"
+                        size="sm"
+                        icon="i-lucide-palette"
+                        :aria-label="t('editor.table.backgroundColor')"
+                />
+
+                <template #content>
+                    <div class="p-2 space-y-2">
+                        <div class="grid grid-cols-6 gap-2">
+                            <UButton
+                                    type="button"
+                                    class="flex h-6 w-6 items-center justify-center rounded-sm border border-default"
+                                    :aria-label="t('editor.table.noColor')"
+                                    variant="ghost"
+                                    color="neutral"
+                                    size="sm"
+                                    square
+                                    @click="handleTableColorSelect(null)">
+                                <span class="text-xs text-muted">×</span>
+                            </UButton>
+                            <UButton
+                                    v-for="color in tableActions.colors"
+                                    :key="color.name"
+                                    type="button"
+                                    :aria-label="color.name"
+                                    class="h-6 w-6 rounded-sm border border-default"
+                                    :class="[color.backgroundClass, color.hoverClass]"
+                                    variant="ghost"
+                                    color="neutral"
+                                    size="sm"
+                                    square
+                                    @click="handleTableColorSelect(color.name)">
+                            </UButton>
+                        </div>
+                    </div>
+                </template>
+            </UPopover>
+
+            <UDropdownMenu :items="tableActions.dropdownMenuItems">
+                <UButton
+                        variant="ghost"
+                        color="neutral"
+                        size="sm"
+                        icon="i-lucide-settings-2"
+                        :aria-label="t('editor.table.moreActions')"
+                />
+            </UDropdownMenu>
+        </div>
+
     </div>
 </template>

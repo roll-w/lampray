@@ -15,8 +15,9 @@
   -->
 
 <script setup lang="ts">
-import {ref, watch} from 'vue'
+import {computed, ref, watch} from 'vue'
 import {useI18n} from 'vue-i18n'
+import {parseHttpUrl} from '@/components/structuraltext/composables/useEditorActions'
 
 interface Props {
     open: boolean
@@ -45,6 +46,9 @@ const linkUrl = ref('')
 const linkText = ref('')
 const urlError = ref('')
 
+const showTextField = computed(() => !props.isEditing)
+const isTextDisabled = computed(() => !!props.initialText?.trim())
+
 watch(() => props.open, (newVal) => {
     if (newVal) {
         linkUrl.value = props.initialUrl || ''
@@ -58,10 +62,17 @@ const closeModal = () => {
 }
 
 const validateUrl = (): boolean => {
-    if (!linkUrl.value.trim()) {
+    const trimmedUrl = linkUrl.value.trim()
+    if (!trimmedUrl) {
         urlError.value = t('editor.modal.urlRequired')
         return false
     }
+
+    if (!parseHttpUrl(trimmedUrl)) {
+        urlError.value = t('editor.modal.urlInvalid')
+        return false
+    }
+
     urlError.value = ''
     return true
 }
@@ -74,12 +85,10 @@ const handleConfirm = () => {
         url: linkUrl.value.trim(),
         text: linkText.value.trim() || undefined
     })
-    closeModal()
 }
 
 const handleRemove = () => {
     emit('remove')
-    closeModal()
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -120,12 +129,13 @@ const handleKeydown = (event: KeyboardEvent) => {
                         />
                     </UFormField>
                     <UFormField
-                            v-if="linkText && !isEditing"
+                            v-if="showTextField"
                             :label="t('editor.modal.text')"
                     >
                         <UInput
                                 v-model="linkText"
-                                disabled
+                                :disabled="isTextDisabled"
+                                :placeholder="t('editor.modal.textPlaceholder')"
                                 class="w-full"
                         />
                     </UFormField>
@@ -161,4 +171,3 @@ const handleKeydown = (event: KeyboardEvent) => {
         </template>
     </UModal>
 </template>
-

@@ -17,6 +17,7 @@
 <script setup lang="ts">
 import {ref, watch} from "vue"
 import {useI18n} from "vue-i18n"
+import {parseHttpUrl} from "@/components/structuraltext/composables/useEditorActions"
 
 interface Props {
     open: boolean
@@ -55,10 +56,17 @@ const closeModal = () => {
 }
 
 const validateUrl = (): boolean => {
-    if (!imageUrl.value.trim()) {
+    const trimmedUrl = imageUrl.value.trim()
+    if (!trimmedUrl) {
         urlError.value = t("editor.modal.imageUrlRequired")
         return false
     }
+
+    if (!parseHttpUrl(trimmedUrl)) {
+        urlError.value = t("editor.modal.urlInvalid")
+        return false
+    }
+
     urlError.value = ""
     return true
 }
@@ -71,7 +79,6 @@ const handleConfirm = () => {
         url: imageUrl.value.trim(),
         alt: imageAlt.value.trim() || undefined
     })
-    closeModal()
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -140,4 +147,3 @@ const handleKeydown = (event: KeyboardEvent) => {
         </template>
     </UModal>
 </template>
-

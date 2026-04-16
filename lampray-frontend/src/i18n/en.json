@@ -360,7 +360,8 @@
       "editLink": "Edit Link",
       "openLink": "Open Link",
       "addLink": "Add Link",
-      "copy": "Copy"
+      "copy": "Copy",
+      "tableControls": "Table"
     },
     "modal": {
       "insertLink": "Insert Link",
@@ -369,6 +370,7 @@
       "url": "URL",
       "urlPlaceholder": "https://example.com",
       "urlRequired": "URL is required",
+      "urlInvalid": "Enter a valid http(s) URL",
       "text": "Text",
       "textPlaceholder": "Link text",
       "imageUrl": "Image URL",
@@ -392,7 +394,33 @@
       "copyCode": "Copy code",
       "copied": "Copied"
     },
+    "slash": {
+      "empty": "No matching blocks or inserts.",
+      "description": {
+        "paragraph": "Start writing with plain text.",
+        "heading1": "Add a large page heading.",
+        "heading2": "Add a strong section heading.",
+        "heading3": "Add a compact subsection heading.",
+        "bulletList": "Create a simple bulleted list.",
+        "orderedList": "Create a numbered list.",
+        "taskList": "Track a checklist with checkboxes.",
+        "blockquote": "Highlight quoted or callout text.",
+        "codeBlock": "Insert a formatted code block.",
+        "divider": "Separate sections with a divider.",
+        "table": "Insert a table using the current schema.",
+        "link": "Insert or edit a link without leaving the editor.",
+        "image": "Insert a remote image by URL."
+      }
+    },
     "table": {
+      "insertDialogTitle": "Insert table",
+      "insertDialogDescription": "Pick a preset or adjust the size before inserting.",
+      "quickPresets": "Quick presets",
+      "customSize": "Custom size",
+      "rows": "Rows",
+      "columns": "Columns",
+      "withHeaderRow": "Include header row",
+      "moreActions": "More table actions",
       "insertColumnBefore": "Insert Column Before",
       "insertColumnAfter": "Insert Column After",
       "deleteColumn": "Delete Column",
