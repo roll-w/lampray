@@ -15,6 +15,7 @@
  */
 
 import type {Editor} from "@tiptap/core";
+import type {Node as ProseMirrorNode} from "@tiptap/pm/model";
 import type {ContextMenuItem, DropdownMenuItem} from "@nuxt/ui";
 import {computed} from "vue";
 import {CellSelection, TableMap} from "@tiptap/pm/tables";
@@ -44,6 +45,14 @@ export interface TableActionGroup {
     actions: TableAction[]
 }
 
+export interface TableCellTarget {
+    tableNode: ProseMirrorNode
+    tableStart: number
+    cellPos: number
+    rowIndex: number
+    columnIndex: number
+}
+
 const MIN_TABLE_SIZE = 1
 const MAX_TABLE_SIZE = 10
 
@@ -71,45 +80,88 @@ function mapActionToDropdownMenuItem(action: TableAction): DropdownMenuItem {
     }
 }
 
-type TableEdge = "top" | "bottom" | "left" | "right"
+function getTableContextAtPos(editor: Editor, pos: number) {
+    const $pos = editor.state.doc.resolve(pos)
 
-function getTableContext(editor: Editor) {
-    const {$from} = editor.state.selection
-
-    for (let depth = $from.depth; depth > 0; depth--) {
-        const node = $from.node(depth)
+    for (let depth = $pos.depth; depth > 0; depth--) {
+        const node = $pos.node(depth)
         if (node.type.name !== "table") {
             continue
         }
 
         return {
             tableNode: node,
-            tableStart: $from.start(depth),
+            tableStart: $pos.start(depth),
         }
     }
 
     return null
 }
 
-function focusTableEdge(editor: Editor, edge: TableEdge) {
-    const tableContext = getTableContext(editor)
+function getCellPositionAtPos(editor: Editor, pos: number) {
+    const exactNode = editor.state.doc.nodeAt(pos)
+    if (exactNode && (exactNode.type.name === "tableCell" || exactNode.type.name === "tableHeader")) {
+        return pos
+    }
+
+    const $pos = editor.state.doc.resolve(pos)
+
+    for (let depth = $pos.depth; depth > 0; depth--) {
+        const node = $pos.node(depth)
+        if (node.type.name !== "tableCell" && node.type.name !== "tableHeader") {
+            continue
+        }
+
+        return $pos.before(depth)
+    }
+
+    return null
+}
+
+function createCellTarget(tableNode: ProseMirrorNode, tableStart: number, rowIndex: number, columnIndex: number) {
+    const tableMap = TableMap.get(tableNode)
+    if (rowIndex < 0 || rowIndex >= tableMap.height || columnIndex < 0 || columnIndex >= tableMap.width) {
+        return null
+    }
+
+    const mapIndex = rowIndex * tableMap.width + columnIndex
+    const relativeCellPos = tableMap.map[mapIndex]
+    if (relativeCellPos == null) {
+        return null
+    }
+
+    return {
+        tableNode,
+        tableStart,
+        cellPos: tableStart + relativeCellPos,
+        rowIndex,
+        columnIndex,
+    }
+}
+
+function getCurrentTableTarget(editor: Editor) {
+    const tableContext = getTableContextAtPos(editor, editor.state.selection.from)
     if (!tableContext) {
+        return null
+    }
+
+    const currentCellPos = getCellPositionAtPos(editor, editor.state.selection.from)
+    if (currentCellPos != null) {
+        const tableMap = TableMap.get(tableContext.tableNode)
+        const cellRect = tableMap.findCell(currentCellPos - tableContext.tableStart)
+
+        return createCellTarget(tableContext.tableNode, tableContext.tableStart, cellRect.top, cellRect.left)
+    }
+
+    return createCellTarget(tableContext.tableNode, tableContext.tableStart, 0, 0)
+}
+
+function focusCellTarget(editor: Editor, target: TableCellTarget | null) {
+    if (!target) {
         return false
     }
 
-    const tableMap = TableMap.get(tableContext.tableNode)
-
-    const targetRow = edge === "bottom" ? tableMap.height - 1 : 0
-    const targetColumn = edge === "right" ? tableMap.width - 1 : 0
-    const mapIndex = targetRow * tableMap.width + targetColumn
-    const targetCellStart = tableMap.map[mapIndex]
-    if (!targetCellStart) {
-        return false
-    }
-
-    const cellPosition = tableContext.tableStart + targetCellStart
-    const cellSelection = CellSelection.create(editor.state.doc, cellPosition)
-
+    const cellSelection = CellSelection.create(editor.state.doc, target.cellPos)
     editor.view.dispatch(editor.state.tr.setSelection(cellSelection))
     editor.commands.focus()
     return true
@@ -122,6 +174,40 @@ export function useTableActions(editor: Editor, t: Translate) {
     const canSplitCell = computed(() => editor.can().splitCell())
 
     const colors = BASIC_COLORS
+
+    const getCellTargetAtPos = (pos: number) => {
+        const tableContext = getTableContextAtPos(editor, pos)
+        if (!tableContext) {
+            return null
+        }
+
+        const cellPos = getCellPositionAtPos(editor, pos)
+        if (cellPos == null) {
+            return null
+        }
+
+        const tableMap = TableMap.get(tableContext.tableNode)
+        const cellRect = tableMap.findCell(cellPos - tableContext.tableStart)
+
+        return createCellTarget(tableContext.tableNode, tableContext.tableStart, cellRect.top, cellRect.left)
+    }
+
+    const getCurrentCellTarget = () => {
+        return getCurrentTableTarget(editor)
+    }
+
+    const resolveTarget = (target?: TableCellTarget | null) => {
+        return target ?? getCurrentCellTarget()
+    }
+
+    const runOnTarget = (target: TableCellTarget | null | undefined, command: () => boolean) => {
+        const resolvedTarget = resolveTarget(target)
+        if (!focusCellTarget(editor, resolvedTarget)) {
+            return false
+        }
+
+        return command()
+    }
 
     const insertTable = ({rows, cols, withHeaderRow}: TableInsertOptions) => {
         return editor.chain().focus().insertTable({
@@ -136,36 +222,106 @@ export function useTableActions(editor: Editor, t: Translate) {
         editor.chain().focus().updateAttributes("tableHeader", {backgroundColor: color}).run()
     }
 
-    const insertRowAtTop = () => {
-        if (!focusTableEdge(editor, "top")) {
-            return false
-        }
+    const insertRowBeforeAtTarget = (target?: TableCellTarget | null) => {
+        return runOnTarget(target, () => editor.chain().focus().addRowBefore().run())
+    }
 
+    const insertRowAfterAtTarget = (target?: TableCellTarget | null) => {
+        return runOnTarget(target, () => editor.chain().focus().addRowAfter().run())
+    }
+
+    const deleteRowAtTarget = (target?: TableCellTarget | null) => {
+        return runOnTarget(target, () => editor.chain().focus().deleteRow().run())
+    }
+
+    const insertColumnBeforeAtTarget = (target?: TableCellTarget | null) => {
+        return runOnTarget(target, () => editor.chain().focus().addColumnBefore().run())
+    }
+
+    const insertColumnAfterAtTarget = (target?: TableCellTarget | null) => {
+        return runOnTarget(target, () => editor.chain().focus().addColumnAfter().run())
+    }
+
+    const deleteColumnAtTarget = (target?: TableCellTarget | null) => {
+        return runOnTarget(target, () => editor.chain().focus().deleteColumn().run())
+    }
+
+    const insertRowBefore = () => {
         return editor.chain().focus().addRowBefore().run()
     }
 
-    const insertRowAtBottom = () => {
-        if (!focusTableEdge(editor, "bottom")) {
-            return false
-        }
-
+    const insertRowAfter = () => {
         return editor.chain().focus().addRowAfter().run()
     }
 
-    const insertColumnAtLeft = () => {
-        if (!focusTableEdge(editor, "left")) {
-            return false
-        }
+    const deleteRow = () => {
+        return editor.chain().focus().deleteRow().run()
+    }
 
+    const insertColumnBefore = () => {
         return editor.chain().focus().addColumnBefore().run()
     }
 
-    const insertColumnAtRight = () => {
-        if (!focusTableEdge(editor, "right")) {
-            return false
-        }
-
+    const insertColumnAfter = () => {
         return editor.chain().focus().addColumnAfter().run()
+    }
+
+    const deleteColumn = () => {
+        return editor.chain().focus().deleteColumn().run()
+    }
+
+    const getRowHandleActions = (target: TableCellTarget | null) => {
+        return [
+            {
+                key: "insert-row-before",
+                label: t("editor.table.insertRowBefore"),
+                icon: "i-lucide-arrow-up-to-line",
+                disabled: !target,
+                onSelect: () => insertRowBeforeAtTarget(target),
+            },
+            {
+                key: "insert-row-after",
+                label: t("editor.table.insertRowAfter"),
+                icon: "i-lucide-arrow-down-to-line",
+                disabled: !target,
+                onSelect: () => insertRowAfterAtTarget(target),
+            },
+            {
+                key: "delete-row",
+                label: t("editor.table.deleteRow"),
+                icon: "i-lucide-trash-2",
+                color: "error" as const,
+                disabled: !target,
+                onSelect: () => deleteRowAtTarget(target),
+            },
+        ] satisfies TableAction[]
+    }
+
+    const getColumnHandleActions = (target: TableCellTarget | null) => {
+        return [
+            {
+                key: "insert-column-before",
+                label: t("editor.table.insertColumnBefore"),
+                icon: "i-lucide-arrow-left-to-line",
+                disabled: !target,
+                onSelect: () => insertColumnBeforeAtTarget(target),
+            },
+            {
+                key: "insert-column-after",
+                label: t("editor.table.insertColumnAfter"),
+                icon: "i-lucide-arrow-right-to-line",
+                disabled: !target,
+                onSelect: () => insertColumnAfterAtTarget(target),
+            },
+            {
+                key: "delete-column",
+                label: t("editor.table.deleteColumn"),
+                icon: "i-lucide-trash-2",
+                color: "error" as const,
+                disabled: !target,
+                onSelect: () => deleteColumnAtTarget(target),
+            },
+        ] satisfies TableAction[]
     }
 
     const columnActions = computed<TableActionGroup>(() => ({
@@ -174,23 +330,23 @@ export function useTableActions(editor: Editor, t: Translate) {
             {
                 key: "insert-column-before",
                 label: t("editor.table.insertColumnBefore"),
-                icon: "i-lucide-columns-2",
-                onSelect: () => editor.chain().focus().addColumnBefore().run(),
+                icon: "i-lucide-arrow-left-to-line",
+                onSelect: insertColumnBefore,
             },
             {
                 key: "insert-column-after",
                 label: t("editor.table.insertColumnAfter"),
-                icon: "i-lucide-columns-2",
-                onSelect: () => editor.chain().focus().addColumnAfter().run(),
+                icon: "i-lucide-arrow-right-to-line",
+                onSelect: insertColumnAfter,
             },
             {
                 key: "delete-column",
                 label: t("editor.table.deleteColumn"),
                 icon: "i-lucide-trash-2",
                 color: "error",
-                onSelect: () => editor.chain().focus().deleteColumn().run(),
-            }
-        ]
+                onSelect: deleteColumn,
+            },
+        ],
     }))
 
     const rowActions = computed<TableActionGroup>(() => ({
@@ -199,23 +355,23 @@ export function useTableActions(editor: Editor, t: Translate) {
             {
                 key: "insert-row-before",
                 label: t("editor.table.insertRowBefore"),
-                icon: "i-lucide-rows-2",
-                onSelect: () => editor.chain().focus().addRowBefore().run(),
+                icon: "i-lucide-arrow-up-to-line",
+                onSelect: insertRowBefore,
             },
             {
                 key: "insert-row-after",
                 label: t("editor.table.insertRowAfter"),
-                icon: "i-lucide-rows-2",
-                onSelect: () => editor.chain().focus().addRowAfter().run(),
+                icon: "i-lucide-arrow-down-to-line",
+                onSelect: insertRowAfter,
             },
             {
                 key: "delete-row",
                 label: t("editor.table.deleteRow"),
                 icon: "i-lucide-trash-2",
                 color: "error",
-                onSelect: () => editor.chain().focus().deleteRow().run(),
-            }
-        ]
+                onSelect: deleteRow,
+            },
+        ],
     }))
 
     const cellActions = computed<TableActionGroup>(() => ({
@@ -244,13 +400,13 @@ export function useTableActions(editor: Editor, t: Translate) {
             {
                 key: "toggle-header-row",
                 label: t("editor.table.toggleHeaderRow"),
-                icon: "i-lucide-rows",
+                icon: "i-lucide-rows-2",
                 onSelect: () => editor.chain().focus().toggleHeaderRow().run(),
             },
             {
                 key: "toggle-header-column",
                 label: t("editor.table.toggleHeaderColumn"),
-                icon: "i-lucide-columns",
+                icon: "i-lucide-columns-2",
                 onSelect: () => editor.chain().focus().toggleHeaderColumn().run(),
             },
             {
@@ -291,7 +447,7 @@ export function useTableActions(editor: Editor, t: Translate) {
             actions.push(...cellActions.value.actions)
         }
 
-        return actions
+        return actions.filter((action): action is TableAction => !!action)
     })
 
     const overflowActionGroups = computed<TableActionGroup[]>(() => {
@@ -353,12 +509,12 @@ export function useTableActions(editor: Editor, t: Translate) {
         colors,
         insertTable,
         selectColor,
-        insertRowAtTop,
-        insertRowAtBottom,
-        insertColumnAtLeft,
-        insertColumnAtRight,
         isInTable,
         isInCell,
+        getCellTargetAtPos,
+        getCurrentCellTarget,
+        getRowHandleActions,
+        getColumnHandleActions,
         primaryToolbarActions,
         dropdownMenuItems,
         contextMenuItems,

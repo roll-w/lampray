@@ -55,6 +55,7 @@ import {
     provideStructuralTextInsertController,
     type StructuralTextInsertController,
 } from "@/components/structuraltext/composables/useStructuralTextInsertController";
+import {buildBlockTransformActions} from "@/components/structuraltext/blockActions";
 
 interface Props {
     modelValue?: StructuralText
@@ -125,107 +126,19 @@ function handleBareUrlPaste(editor: Editor, pastedText: string) {
 }
 
 function buildSlashCommandItems() {
+    const blockTransformItems = buildBlockTransformActions(t).map(action => ({
+        id: action.id,
+        label: action.label,
+        description: action.description,
+        icon: action.icon,
+        keywords: action.keywords,
+        onSelect: (editor: Editor, range: { from: number; to: number }) => {
+            action.execute(editor.chain().focus().deleteRange(range)).run()
+        },
+    }))
+
     return [
-        {
-            id: "paragraph",
-            label: t("editor.toolbar.paragraph"),
-            description: t("editor.slash.description.paragraph"),
-            icon: "i-lucide-pilcrow",
-            keywords: ["paragraph", "text", "normal"],
-            onSelect: (editor: Editor, range: { from: number; to: number }) => {
-                editor.chain().focus().deleteRange(range).setParagraph().run()
-            },
-        },
-        {
-            id: "heading-1",
-            label: t("editor.toolbar.heading1"),
-            description: t("editor.slash.description.heading1"),
-            icon: "i-lucide-heading-1",
-            keywords: ["heading", "title", "h1"],
-            onSelect: (editor: Editor, range: { from: number; to: number }) => {
-                editor.chain().focus().deleteRange(range).setHeading({level: 1}).run()
-            },
-        },
-        {
-            id: "heading-2",
-            label: t("editor.toolbar.heading2"),
-            description: t("editor.slash.description.heading2"),
-            icon: "i-lucide-heading-2",
-            keywords: ["heading", "section", "h2"],
-            onSelect: (editor: Editor, range: { from: number; to: number }) => {
-                editor.chain().focus().deleteRange(range).setHeading({level: 2}).run()
-            },
-        },
-        {
-            id: "heading-3",
-            label: t("editor.toolbar.heading3"),
-            description: t("editor.slash.description.heading3"),
-            icon: "i-lucide-heading-3",
-            keywords: ["heading", "subsection", "h3"],
-            onSelect: (editor: Editor, range: { from: number; to: number }) => {
-                editor.chain().focus().deleteRange(range).setHeading({level: 3}).run()
-            },
-        },
-        {
-            id: "bullet-list",
-            label: t("editor.toolbar.bulletList"),
-            description: t("editor.slash.description.bulletList"),
-            icon: "i-lucide-list",
-            keywords: ["bullet", "list", "unordered"],
-            onSelect: (editor: Editor, range: { from: number; to: number }) => {
-                editor.chain().focus().deleteRange(range).toggleBulletList().run()
-            },
-        },
-        {
-            id: "ordered-list",
-            label: t("editor.toolbar.orderedList"),
-            description: t("editor.slash.description.orderedList"),
-            icon: "i-lucide-list-ordered",
-            keywords: ["numbered", "ordered", "list"],
-            onSelect: (editor: Editor, range: { from: number; to: number }) => {
-                editor.chain().focus().deleteRange(range).toggleOrderedList().run()
-            },
-        },
-        {
-            id: "task-list",
-            label: t("editor.toolbar.taskList"),
-            description: t("editor.slash.description.taskList"),
-            icon: "i-lucide-list-checks",
-            keywords: ["task", "todo", "checklist"],
-            onSelect: (editor: Editor, range: { from: number; to: number }) => {
-                editor.chain().focus().deleteRange(range).toggleTaskList().run()
-            },
-        },
-        {
-            id: "blockquote",
-            label: t("editor.toolbar.blockquote"),
-            description: t("editor.slash.description.blockquote"),
-            icon: "i-lucide-quote",
-            keywords: ["quote", "blockquote", "callout"],
-            onSelect: (editor: Editor, range: { from: number; to: number }) => {
-                editor.chain().focus().deleteRange(range).toggleBlockquote().run()
-            },
-        },
-        {
-            id: "code-block",
-            label: t("editor.toolbar.codeBlock"),
-            description: t("editor.slash.description.codeBlock"),
-            icon: "i-lucide-code-2",
-            keywords: ["code", "snippet", "pre"],
-            onSelect: (editor: Editor, range: { from: number; to: number }) => {
-                editor.chain().focus().deleteRange(range).setCodeBlock().run()
-            },
-        },
-        {
-            id: "divider",
-            label: t("editor.toolbar.horizontalRule"),
-            description: t("editor.slash.description.divider"),
-            icon: "i-lucide-minus",
-            keywords: ["divider", "separator", "rule"],
-            onSelect: (editor: Editor, range: { from: number; to: number }) => {
-                editor.chain().focus().deleteRange(range).setHorizontalRule().run()
-            },
-        },
+        ...blockTransformItems,
         {
             id: "table",
             label: t("editor.toolbar.insertTable"),

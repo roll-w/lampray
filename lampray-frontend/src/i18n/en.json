@@ -412,6 +412,16 @@
         "image": "Insert a remote image by URL."
       }
     },
+    "blockMenu": {
+      "open": "Open block menu",
+      "turnInto": "Turn into",
+      "insertBelow": "Insert below",
+      "insertTable": "Table",
+      "insertImage": "Image",
+      "insertLink": "Link",
+      "duplicateBlock": "Duplicate block",
+      "deleteBlock": "Delete block"
+    },
     "table": {
       "insertDialogTitle": "Insert table",
       "insertDialogDescription": "Pick a preset or adjust the size before inserting.",
@@ -419,6 +429,8 @@
       "customSize": "Custom size",
       "rows": "Rows",
       "columns": "Columns",
+      "rowActions": "Row actions",
+      "columnActions": "Column actions",
       "withHeaderRow": "Include header row",
       "moreActions": "More table actions",
       "insertColumnBefore": "Insert Column Before",

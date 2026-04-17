@@ -410,6 +410,16 @@
         "image": "通过 URL 插入远程图片。"
       }
     },
+    "blockMenu": {
+      "open": "打开块菜单",
+      "turnInto": "转换为",
+      "insertBelow": "下方插入",
+      "insertTable": "表格",
+      "insertImage": "图片",
+      "insertLink": "链接",
+      "duplicateBlock": "复制块",
+      "deleteBlock": "删除块"
+    },
     "table": {
       "insertDialogTitle": "插入表格",
       "insertDialogDescription": "选择快捷预设，或先调整行列后再插入。",
@@ -417,6 +427,8 @@
       "customSize": "自定义大小",
       "rows": "行数",
       "columns": "列数",
+      "rowActions": "行操作",
+      "columnActions": "列操作",
       "withHeaderRow": "包含表头行",
       "moreActions": "更多表格操作",
       "insertColumnBefore": "在前面插入列",
