@@ -46,7 +46,7 @@ const groups = computed(() => {
 </script>
 
 <template>
-    <div class="w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-default bg-default shadow-xl">
+    <div class="w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-default bg-default/95 shadow-xl backdrop-blur-sm">
         <UCommandPalette
                 :groups="groups"
                 :autofocus="false"
@@ -55,7 +55,7 @@ const groups = computed(() => {
                 class="h-auto max-h-80"
                 :ui="{
                     root: 'border-0 bg-transparent shadow-none',
-                    content: 'p-2',
+                    content: 'p-1.5',
                     viewport: 'max-h-80',
                     group: 'space-y-1',
                     empty: 'px-3 py-4 text-sm text-muted'
@@ -64,15 +64,15 @@ const groups = computed(() => {
             <template #item="{ item }">
                 <button
                         type="button"
-                        class="flex w-full items-start gap-3 rounded-lg px-3 py-2 text-left transition-colors"
+                        class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors"
                         :class="item.index === selectedIndex
-                            ? 'bg-primary/12 text-highlighted'
+                            ? 'bg-elevated text-default ring-1 ring-inset ring-default/70'
                             : 'text-default hover:bg-elevated/70'"
                         @mouseenter="emit('highlight', item.index)"
                         @click.prevent="emit('select', props.items[item.index])"
                 >
-                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-default bg-elevated/70">
-                        <UIcon :name="item.icon" class="h-4 w-4"/>
+                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-default bg-elevated/80">
+                        <UIcon :name="item.icon" class="h-4 w-4" :class="item.index === selectedIndex ? 'text-primary' : 'text-muted'"/>
                     </div>
                     <div class="min-w-0 flex-1">
                         <div class="text-sm font-medium">

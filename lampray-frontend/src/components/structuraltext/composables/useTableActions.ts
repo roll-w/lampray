@@ -440,12 +440,7 @@ export function useTableActions(editor: Editor, t: Translate) {
         const actions = [
             rowActions.value.actions[1],
             columnActions.value.actions[1],
-            headerActions.value.actions[0],
         ]
-
-        if (cellActions.value.actions.length > 0) {
-            actions.push(...cellActions.value.actions)
-        }
 
         return actions.filter((action): action is TableAction => !!action)
     })
@@ -455,9 +450,18 @@ export function useTableActions(editor: Editor, t: Translate) {
             return []
         }
 
+        const columnOverflowActions = columnActions.value.actions.filter(action => action.key !== "insert-column-after")
+        const rowOverflowActions = rowActions.value.actions.filter(action => action.key !== "insert-row-after")
+
         return [
-            columnActions.value,
-            rowActions.value,
+            {
+                key: columnActions.value.key,
+                actions: columnOverflowActions,
+            },
+            {
+                key: rowActions.value.key,
+                actions: rowOverflowActions,
+            },
             ...(cellActions.value.actions.length > 0 ? [cellActions.value] : []),
             headerActions.value,
             destructiveActions.value,

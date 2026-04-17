@@ -65,6 +65,8 @@ const activeTarget = computed(() => {
 
 const rowHandleActions = computed(() => tableActions.getRowHandleActions(activeTarget.value))
 const columnHandleActions = computed(() => tableActions.getColumnHandleActions(activeTarget.value))
+const affordanceMenuClass = "min-w-48 rounded-xl border border-default bg-default/95 p-1.5 shadow-xl backdrop-blur-sm"
+const affordanceMenuItemClass = "justify-start rounded-lg px-2.5 py-1.5"
 
 const isVisible = computed(() => {
     return props.editable &&
@@ -329,7 +331,7 @@ watch(columnMenuOpen, handleMenuOpenChange)
             </div>
 
             <template #content>
-                <div class="min-w-44 p-1">
+                <div :class="affordanceMenuClass">
                     <div class="px-2 py-1 text-[11px] font-medium text-muted">
                         {{ t('editor.table.rowActions') }}
                     </div>
@@ -342,7 +344,7 @@ watch(columnMenuOpen, handleMenuOpenChange)
                                 variant="ghost"
                                 size="xs"
                                 :icon="action.icon"
-                                class="justify-start rounded-md px-2"
+                                :class="affordanceMenuItemClass"
                                 @click="handleActionSelect(action, () => rowMenuOpen = false)"
                         >
                             {{ action.label }}
@@ -375,7 +377,7 @@ watch(columnMenuOpen, handleMenuOpenChange)
             </div>
 
             <template #content>
-                <div class="min-w-44 p-1">
+                <div :class="affordanceMenuClass">
                     <div class="px-2 py-1 text-[11px] font-medium text-muted">
                         {{ t('editor.table.columnActions') }}
                     </div>
@@ -388,7 +390,7 @@ watch(columnMenuOpen, handleMenuOpenChange)
                                 variant="ghost"
                                 size="xs"
                                 :icon="action.icon"
-                                class="justify-start rounded-md px-2"
+                                :class="affordanceMenuItemClass"
                                 @click="handleActionSelect(action, () => columnMenuOpen = false)"
                         >
                             {{ action.label }}

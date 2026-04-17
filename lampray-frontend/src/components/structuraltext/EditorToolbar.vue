@@ -36,7 +36,22 @@ const props = withDefaults(defineProps<Props>(), {
     sticky: false
 });
 const {t} = useI18n();
-const tableActions = useTableActions(props.editor, t)
+type HeadingLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6
+
+interface HeadingOption {
+    label: string
+    value: HeadingLevel
+    icon: string
+}
+
+const {
+    colors: tableColors,
+    selectColor: selectTableColor,
+    isInTable,
+    isInCell,
+    primaryToolbarActions,
+    dropdownMenuItems,
+} = useTableActions(props.editor, t)
 const insertController = useStructuralTextInsertController()
 
 const {
@@ -54,7 +69,7 @@ const {
     isHighlight,
 } = useEditorActions(props.editor);
 
-const headingOptions = [
+const headingOptions: HeadingOption[] = [
     {label: t("editor.toolbar.paragraph"), value: 0, icon: "i-lucide-pilcrow"},
     {label: t("editor.toolbar.heading1"), value: 1, icon: "i-lucide-heading-1"},
     {label: t("editor.toolbar.heading2"), value: 2, icon: "i-lucide-heading-2"},
@@ -64,7 +79,7 @@ const headingOptions = [
     {label: t("editor.toolbar.heading6"), value: 6, icon: "i-lucide-heading-6"},
 ];
 
-const currentHeading = computed({
+const currentHeading = computed<HeadingOption>({
     get() {
         for (let level = 1; level <= 6; level++) {
             if (props.editor.isActive("heading", {level})) {
@@ -73,13 +88,15 @@ const currentHeading = computed({
         }
         return headingOptions[0];
     },
-    set(option: any) {
+    set(option) {
         // Delay to allow dropdown to close first, then apply heading
         setTimeout(() => {
-            if (option.value === 0) {
+            const headingLevel = option.value
+
+            if (headingLevel === 0) {
                 props.editor.chain().focus().setParagraph().run();
             } else {
-                props.editor.chain().focus().setHeading({level: option.value as 1 | 2 | 3 | 4 | 5 | 6}).run();
+                props.editor.chain().focus().setHeading({level: headingLevel}).run();
             }
         }, 10);
     }
@@ -120,7 +137,7 @@ const insertHorizontalRule = () => {
 };
 
 const handleTableColorSelect = (color: AttributeColor | null) => {
-    tableActions.selectColor(color)
+    selectTableColor(color)
 }
 
 const isBulletList = computed(() => props.editor.isActive("bulletList"));
@@ -131,10 +148,15 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
 
 const toolbarClasses = computed(() => {
     return [
-        "flex flex-wrap gap-1 p-2",
+        "flex flex-wrap items-center gap-2 px-2 py-2",
         {"justify-center": props.centered, "bg-default/75 backdrop-blur sticky z-40": props.sticky,}
     ];
 });
+
+const toolbarGroupClass = "flex items-center gap-1 rounded-xl border border-default bg-default/80 p-1 shadow-sm backdrop-blur-sm"
+const tableToolbarGroupClass = "flex items-center gap-1 rounded-xl border border-default bg-elevated/70 p-1 shadow-sm backdrop-blur-sm"
+const menuSurfaceClass = "rounded-xl border border-default bg-default/95 p-3 shadow-xl backdrop-blur-sm"
+const colorButtonClass = "h-7 w-7 rounded-lg border border-default transition-colors"
 
 const toolbarRoot = ref<HTMLElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
@@ -185,7 +207,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div :class="toolbarClasses" ref="toolbarRoot">
-        <div class="flex gap-1">
+        <div :class="toolbarGroupClass">
             <UTooltip :text="t('editor.toolbar.bold')">
                 <UButton
                         :variant="isBold ? 'soft' : 'ghost'"
@@ -247,7 +269,7 @@ onBeforeUnmount(() => {
                     size="sm"
                     color="neutral"
                     variant="ghost"
-                    class="w-36"
+                    class="w-36 rounded-lg"
             >
                 <template #default>
                     <div class="flex items-center gap-2">
@@ -304,9 +326,7 @@ onBeforeUnmount(() => {
             </UTooltip>
         </div>
 
-        <div class="w-px h-6 bg-gray-300 dark:bg-gray-600"/>
-
-        <div class="flex gap-1">
+        <div :class="toolbarGroupClass">
             <UTooltip :text="t('editor.toolbar.insertLink')">
                 <UButton
                         variant="ghost"
@@ -346,45 +366,42 @@ onBeforeUnmount(() => {
             <slot name="menu-end"/>
         </div>
 
-        <div v-if="tableActions.isInTable" class="w-px h-6 bg-gray-300 dark:bg-gray-600"/>
-
-        <div v-if="tableActions.isInTable"
-             class="flex items-center gap-1 rounded-lg border border-default bg-default/60 px-2 py-1">
-            <div class="hidden md:flex items-center gap-1 pe-1 text-xs font-medium text-muted">
-                <UIcon name="i-lucide-table" class="h-3.5 w-3.5"/>
-                <span>{{ t('editor.toolbar.tableControls') }}</span>
-            </div>
-
-            <div class="hidden h-5 w-px bg-default md:block"/>
-
-            <UTooltip v-for="action in tableActions.primaryToolbarActions"
-                      :key="action.key"
-                      :text="action.label">
+        <div v-if="isInTable" :class="tableToolbarGroupClass">
+            <UTooltip v-for="action in primaryToolbarActions"
+                       :key="action.key"
+                       :text="action.label">
                 <UButton
                         :variant="action.disabled ? 'ghost' : 'soft'"
                         :color="action.disabled ? 'neutral' : 'primary'"
                         size="sm"
                         :icon="action.icon"
                         :disabled="action.disabled"
+                        class="rounded-lg"
                         @click="action.onSelect"
                 />
             </UTooltip>
 
-            <UPopover v-if="tableActions.isInCell">
+            <UPopover v-if="isInCell">
                 <UButton
                         variant="ghost"
                         color="neutral"
                         size="sm"
                         icon="i-lucide-palette"
                         :aria-label="t('editor.table.backgroundColor')"
+                        class="rounded-lg"
                 />
 
                 <template #content>
-                    <div class="p-2 space-y-2">
-                        <div class="grid grid-cols-6 gap-2">
+                    <div :class="menuSurfaceClass">
+                        <div class="mb-2 flex items-center gap-2 px-1 text-[11px] font-medium text-muted">
+                            <UIcon name="i-lucide-palette" class="h-3.5 w-3.5"/>
+                            <span>{{ t('editor.table.backgroundColor') }}</span>
+                        </div>
+                        <div class="grid grid-cols-6 gap-1.5">
                             <UButton
                                     type="button"
-                                    class="flex h-6 w-6 items-center justify-center rounded-sm border border-default"
+                                    class="flex items-center justify-center"
+                                    :class="colorButtonClass"
                                     :aria-label="t('editor.table.noColor')"
                                     variant="ghost"
                                     color="neutral"
@@ -394,12 +411,11 @@ onBeforeUnmount(() => {
                                 <span class="text-xs text-muted">×</span>
                             </UButton>
                             <UButton
-                                    v-for="color in tableActions.colors"
+                                    v-for="color in tableColors"
                                     :key="color.name"
                                     type="button"
                                     :aria-label="color.name"
-                                    class="h-6 w-6 rounded-sm border border-default"
-                                    :class="[color.backgroundClass, color.hoverClass]"
+                                    :class="[colorButtonClass, color.backgroundClass, color.hoverClass]"
                                     variant="ghost"
                                     color="neutral"
                                     size="sm"
@@ -411,13 +427,14 @@ onBeforeUnmount(() => {
                 </template>
             </UPopover>
 
-            <UDropdownMenu :items="tableActions.dropdownMenuItems">
+            <UDropdownMenu :items="dropdownMenuItems" :content="{align: 'end'}">
                 <UButton
                         variant="ghost"
                         color="neutral"
                         size="sm"
                         icon="i-lucide-settings-2"
                         :aria-label="t('editor.table.moreActions')"
+                        class="rounded-lg"
                 />
             </UDropdownMenu>
         </div>

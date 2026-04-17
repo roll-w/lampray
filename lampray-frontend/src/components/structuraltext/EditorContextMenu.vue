@@ -31,12 +31,19 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const {t} = useI18n()
-const tableActions = useTableActions(props.editor, t)
+const {
+    colors: tableColors,
+    selectColor: selectTableColor,
+    isInTable,
+    contextMenuItems,
+} = useTableActions(props.editor, t)
 
 const menuOpen = ref(false)
+const colorMenuSurfaceClass = "rounded-xl border border-default bg-default/95 p-3 shadow-xl backdrop-blur-sm"
+const colorButtonClass = "h-7 w-7 rounded-lg border border-default transition-colors"
 
 function selectColor(color: AttributeColor | null) {
-    tableActions.selectColor(color)
+    selectTableColor(color)
     menuOpen.value = false
 }
 
@@ -45,19 +52,24 @@ const menuItems = computed(() => {
         return []
     }
 
-    return tableActions.contextMenuItems.value
+    return contextMenuItems.value
 })
 </script>
 
 <template>
-    <UContextMenu v-if="editable && tableActions.isInTable" :items="menuItems" v-model:open="menuOpen">
+    <UContextMenu v-if="editable && isInTable" :items="menuItems" v-model:open="menuOpen">
         <slot/>
         <template #color-grid>
-            <div class="p-2 space-y-2">
-                <div class="grid grid-cols-6 gap-2">
+            <div :class="colorMenuSurfaceClass">
+                <div class="mb-2 flex items-center gap-2 px-1 text-[11px] font-medium text-muted">
+                    <UIcon name="i-lucide-palette" class="h-3.5 w-3.5"/>
+                    <span>{{ t('editor.table.backgroundColor') }}</span>
+                </div>
+                <div class="grid grid-cols-6 gap-1.5">
                     <UButton
                             type="button"
-                            class="w-6 h-6 rounded-sm border border-default flex items-center justify-center"
+                            class="flex items-center justify-center"
+                            :class="colorButtonClass"
                             :aria-label="t('editor.table.noColor')"
                             variant="ghost"
                             color="neutral"
@@ -67,12 +79,11 @@ const menuItems = computed(() => {
                         <span class="text-xs text-muted">×</span>
                     </UButton>
                     <UButton
-                            v-for="color in tableActions.colors"
+                            v-for="color in tableColors"
                             :key="color.name"
                             type="button"
                             :aria-label="color.name"
-                            class="w-6 h-6 rounded-sm border border-default"
-                            :class="[color.backgroundClass, color.hoverClass]"
+                            :class="[colorButtonClass, color.backgroundClass, color.hoverClass]"
                             variant="ghost"
                             color="neutral"
                             size="sm"
