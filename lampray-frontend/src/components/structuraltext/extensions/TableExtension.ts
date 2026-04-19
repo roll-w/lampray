@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ export const TableCell = TiptapTableCell.extend({
         const attrs = mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)
 
         // Merge alignment and background color classes
-        const classes = ["border", "border-gray-300", "dark:border-gray-600", "px-4", "py-2"]
+        const classes = ["border", "border-gray-200", "dark:border-gray-700", "px-3", "py-2.5", "align-top"]
         if (attrs.class) {
             classes.push(attrs.class)
         }
@@ -291,7 +291,19 @@ export const TableHeader = TiptapTableHeader.extend({
         const attrs = mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)
 
         // Merge alignment and background color classes
-        const classes = ["border", "border-gray-300", "dark:border-gray-600", "px-4", "py-2", "bg-gray-100", "dark:bg-gray-800", "font-bold"]
+        const classes = [
+            "border",
+            "border-gray-200",
+            "dark:border-gray-700",
+            "px-3",
+            "py-2.5",
+            "align-top",
+            "bg-gray-50",
+            "dark:bg-gray-900",
+            "font-semibold",
+            "text-gray-700",
+            "dark:text-gray-200"
+        ]
         if (attrs.class) {
             classes.push(attrs.class)
         }

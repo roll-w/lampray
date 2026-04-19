@@ -17,7 +17,12 @@
 <script setup lang="ts">
 import {computed, ref, watch} from "vue"
 import {useI18n} from "vue-i18n"
-import type {TableInsertOptions} from "@/components/structuraltext/composables/useTableActions"
+import {
+    DEFAULT_TABLE_INSERT_OPTIONS,
+    normalizeTableInsertSize,
+    type TableInsertOptions,
+} from "@/components/structuraltext/composables/useStructuralTextInsertController"
+import {editorModalUi} from "@/components/structuraltext/editorUi"
 
 interface Props {
     open: boolean
@@ -31,43 +36,31 @@ interface Emits {
     (e: "confirm", value: TableInsertOptions): void
 }
 
-interface TablePreset {
-    label: string
-    rows: number
-    cols: number
-}
-
 const props = withDefaults(defineProps<Props>(), {
     open: false,
-    initialRows: 3,
-    initialCols: 3,
-    initialWithHeaderRow: true,
+    initialRows: DEFAULT_TABLE_INSERT_OPTIONS.rows,
+    initialCols: DEFAULT_TABLE_INSERT_OPTIONS.cols,
+    initialWithHeaderRow: DEFAULT_TABLE_INSERT_OPTIONS.withHeaderRow,
 })
 
 const emit = defineEmits<Emits>()
 const {t} = useI18n()
+const modalUi = editorModalUi
 
 const rows = ref(String(props.initialRows))
 const cols = ref(String(props.initialCols))
 const withHeaderRow = ref(props.initialWithHeaderRow)
+const hoveredGridRows = ref<number | null>(null)
+const hoveredGridCols = ref<number | null>(null)
 
-const presets: TablePreset[] = [
-    {label: "2 × 2", rows: 2, cols: 2},
-    {label: "3 × 3", rows: 3, cols: 3},
-    {label: "4 × 4", rows: 4, cols: 4},
-    {label: "3 × 5", rows: 3, cols: 5},
-]
+const gridLimit = 10
+const gridRows = Array.from({length: gridLimit}, (_value, index) => index + 1)
+const gridCols = Array.from({length: gridLimit}, (_value, index) => index + 1)
 
-function clampSize(value: string, fallback: number) {
-    const parsedValue = Number.parseInt(value, 10)
-    if (Number.isNaN(parsedValue)) {
-        return fallback
-    }
-    return Math.min(10, Math.max(1, parsedValue))
-}
-
-const normalizedRows = computed(() => clampSize(rows.value, props.initialRows))
-const normalizedCols = computed(() => clampSize(cols.value, props.initialCols))
+const normalizedRows = computed(() => normalizeTableInsertSize(rows.value, props.initialRows))
+const normalizedCols = computed(() => normalizeTableInsertSize(cols.value, props.initialCols))
+const previewRows = computed(() => hoveredGridRows.value ?? normalizedRows.value)
+const previewCols = computed(() => hoveredGridCols.value ?? normalizedCols.value)
 
 const closeModal = () => {
     emit("update:open", false)
@@ -77,15 +70,23 @@ const resetForm = () => {
     rows.value = String(props.initialRows)
     cols.value = String(props.initialCols)
     withHeaderRow.value = props.initialWithHeaderRow
+    hoveredGridRows.value = null
+    hoveredGridCols.value = null
 }
 
-const applyPreset = (preset: TablePreset) => {
-    rows.value = String(preset.rows)
-    cols.value = String(preset.cols)
+const previewGridSize = (gridRowsValue: number | null, gridColsValue: number | null) => {
+    hoveredGridRows.value = gridRowsValue
+    hoveredGridCols.value = gridColsValue
 }
 
-const isPresetActive = (preset: TablePreset) => {
-    return normalizedRows.value === preset.rows && normalizedCols.value === preset.cols
+const selectGridSize = (gridRowsValue: number, gridColsValue: number) => {
+    rows.value = String(gridRowsValue)
+    cols.value = String(gridColsValue)
+    previewGridSize(null, null)
+}
+
+const isGridCellActive = (gridRow: number, gridCol: number) => {
+    return gridRow <= previewRows.value && gridCol <= previewCols.value
 }
 
 const syncRows = () => {
@@ -122,12 +123,12 @@ watch(() => props.open, (newValue) => {
 </script>
 
 <template>
-    <UModal :open="open" @update:open="closeModal">
+    <UModal :open="open" :ui="modalUi" @update:open="closeModal">
         <template #content>
             <div class="p-6">
                 <div class="mb-6 flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold">
+                        <h3 class="text-base font-semibold tracking-[-0.01em] text-highlighted">
                             {{ t("editor.table.insertDialogTitle") }}
                         </h3>
                         <p class="mt-1 text-sm text-muted">
@@ -138,6 +139,7 @@ watch(() => props.open, (newValue) => {
                             color="neutral"
                             variant="ghost"
                             icon="i-lucide-x"
+                            :aria-label="t('common.close')"
                             @click="closeModal"
                     />
                 </div>
@@ -145,19 +147,29 @@ watch(() => props.open, (newValue) => {
                 <div class="space-y-5">
                     <div class="space-y-2">
                         <div class="text-sm font-medium text-highlighted">
-                            {{ t("editor.table.quickPresets") }}
+                            {{ t("editor.table.insertDialogDescription") }}
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <UButton
-                                    v-for="preset in presets"
-                                    :key="preset.label"
-                                    color="primary"
-                                    :variant="isPresetActive(preset) ? 'soft' : 'outline'"
-                                    class="justify-center"
-                                    @click="applyPreset(preset)"
-                            >
-                                {{ preset.label }}
-                            </UButton>
+                        <div class="rounded-md border border-default bg-default p-3">
+                            <div class="mb-3 text-sm font-medium text-highlighted">
+                                {{ previewRows }} × {{ previewCols }}
+                            </div>
+                            <div class="inline-grid gap-1"
+                                 :style="{ gridTemplateColumns: `repeat(${gridLimit}, minmax(0, 1fr))` }"
+                                 @mouseleave="previewGridSize(null, null)">
+                                <button
+                                        v-for="cellIndex in gridLimit * gridLimit"
+                                        :key="cellIndex"
+                                        type="button"
+                                        class="h-5 w-5 rounded-[4px] border transition-colors"
+                                        :class="isGridCellActive(Math.ceil(cellIndex / gridLimit), ((cellIndex - 1) % gridLimit) + 1)
+                                            ? 'border-primary/40 bg-primary/12'
+                                            : 'border-default bg-transparent hover:border-primary/30 hover:bg-elevated/30'"
+                                        :aria-label="`${Math.ceil(cellIndex / gridLimit)} x ${((cellIndex - 1) % gridLimit) + 1}`"
+                                        @focus="previewGridSize(Math.ceil(cellIndex / gridLimit), ((cellIndex - 1) % gridLimit) + 1)"
+                                        @mouseenter="previewGridSize(Math.ceil(cellIndex / gridLimit), ((cellIndex - 1) % gridLimit) + 1)"
+                                        @click="selectGridSize(Math.ceil(cellIndex / gridLimit), ((cellIndex - 1) % gridLimit) + 1)"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -172,6 +184,8 @@ watch(() => props.open, (newValue) => {
                                         type="number"
                                         min="1"
                                         max="10"
+                                        color="neutral"
+                                        variant="outline"
                                         class="w-full"
                                         @blur="syncRows"
                                         @keydown="handleKeydown"
@@ -183,6 +197,8 @@ watch(() => props.open, (newValue) => {
                                         type="number"
                                         min="1"
                                         max="10"
+                                        color="neutral"
+                                        variant="outline"
                                         class="w-full"
                                         @blur="syncCols"
                                         @keydown="handleKeydown"
@@ -190,7 +206,7 @@ watch(() => props.open, (newValue) => {
                             </UFormField>
                         </div>
 
-                        <div class="rounded-lg border border-default bg-default/40 px-3 py-3">
+                        <div class="rounded-md border border-default bg-elevated/30 px-3 py-3">
                             <div class="flex items-center justify-between gap-3">
                                 <div>
                                     <div class="text-sm font-medium text-highlighted">
@@ -209,13 +225,14 @@ watch(() => props.open, (newValue) => {
                 <div class="mt-6 flex justify-end gap-2">
                     <UButton
                             color="neutral"
-                            variant="ghost"
+                            variant="outline"
                             @click="closeModal"
                     >
                         {{ t("editor.modal.cancel") }}
                     </UButton>
                     <UButton
                             color="primary"
+                            variant="soft"
                             @click="handleConfirm"
                     >
                         {{ t("editor.modal.insert") }}

@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -17,10 +17,16 @@
 <script setup lang="ts">
 import {BubbleMenu} from "@tiptap/vue-3/menus";
 import type {Editor} from "@tiptap/core";
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import {parseHttpUrl, useEditorActions} from "@/components/structuraltext/composables/useEditorActions";
-import {useStructuralTextInsertController} from "@/components/structuraltext/composables/useStructuralTextInsertController";
+import {
+    useStructuralTextFloatingMenuState
+} from "@/components/structuraltext/composables/useStructuralTextFloatingMenuState";
+import {
+    useStructuralTextInsertController
+} from "@/components/structuraltext/composables/useStructuralTextInsertController";
 import {useI18n} from "vue-i18n";
+import {editorFloatingSurfaceClass, editorVerticalDividerClass} from "@/components/structuraltext/editorUi";
 
 interface Props {
     editor: Editor;
@@ -29,7 +35,11 @@ interface Props {
 
 const props = defineProps<Props>();
 const {t} = useI18n();
+const floatingMenuState = useStructuralTextFloatingMenuState()
 const insertController = useStructuralTextInsertController()
+const bubbleMenuClass = `flex gap-1 p-1.5 ${editorFloatingSurfaceClass}`
+const verticalDividerClass = editorVerticalDividerClass
+const shouldRenderBubbleMenu = computed(() => !floatingMenuState?.activeMenu.value)
 
 const {
     toggleBold,
@@ -68,6 +78,10 @@ const openLink = () => {
 };
 
 const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: number }) => {
+    if (floatingMenuState?.activeMenu.value) {
+        return false;
+    }
+
     return from !== to || editor.isActive("link");
 };
 
@@ -76,9 +90,10 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
 <template>
     <BubbleMenu :editor="editor"
                 class="z-20"
+                :class="{ 'hidden pointer-events-none': !shouldRenderBubbleMenu }"
                 :options="{ placement: 'bottom' }"
                 :should-show="shouldShow">
-        <div class="flex gap-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+        <div :class="bubbleMenuClass">
             <template v-if="editable">
                 <template v-if="isLink">
                     <UTooltip :text="t('editor.toolbar.editLink')">
@@ -96,7 +111,7 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
                                  @click="openLink"
                         />
                     </UTooltip>
-                    <div class="w-px h-6 bg-gray-300 dark:bg-gray-600"/>
+                    <div :class="verticalDividerClass"/>
                 </template>
                 <UTooltip :text="t('editor.toolbar.bold')">
                     <UButton :variant="isBold ? 'soft' : 'ghost'"
@@ -126,7 +141,7 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
                     <UButton
                             :variant="isUnderline ? 'soft' : 'ghost'"
                             :color="isUnderline ? 'primary' : 'neutral'"
-                            size="sm"
+                            size="xs"
                             icon="i-lucide-underline"
                             @click="toggleUnderline"
                     />
@@ -148,7 +163,7 @@ const shouldShow = ({editor, from, to}: { editor: Editor; from: number; to: numb
                     />
                 </UTooltip>
 
-                <div class="w-px h-6 bg-gray-300 dark:bg-gray-600"/>
+                <div :class="verticalDividerClass"/>
 
                 <UTooltip v-if="!isLink && !isCodeBlock" :text="t('editor.toolbar.addLink')">
                     <UButton variant="ghost"

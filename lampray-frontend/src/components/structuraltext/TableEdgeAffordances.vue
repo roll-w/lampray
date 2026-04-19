@@ -18,7 +18,16 @@
 import type {Editor} from "@tiptap/core"
 import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
 import {useI18n} from "vue-i18n"
-import {useTableActions} from "@/components/structuraltext/composables/useTableActions"
+import {
+    useStructuralTextFloatingMenuState
+} from "@/components/structuraltext/composables/useStructuralTextFloatingMenuState"
+import {type TableCellTargetReference, useTableActions} from "@/components/structuraltext/composables/useTableActions"
+import {
+    editorCompactFloatingSurfaceClass,
+    editorMenuItemClass,
+    editorRoundHandleButtonClass,
+    editorSectionLabelClass,
+} from "@/components/structuraltext/editorUi"
 
 interface Props {
     editor: Editor
@@ -34,43 +43,50 @@ interface HandlePosition {
 const props = defineProps<Props>()
 const {t} = useI18n()
 const tableActions = useTableActions(props.editor, t)
+const floatingMenuState = useStructuralTextFloatingMenuState()
 
-const hoveredCellPos = ref<number | null>(null)
-const pinnedCellPos = ref<number | null>(null)
+const hoveredTargetRef = ref<TableCellTargetReference | null>(null)
+const pinnedTargetRef = ref<TableCellTargetReference | null>(null)
 const rowHandlePosition = ref<HandlePosition | null>(null)
 const columnHandlePosition = ref<HandlePosition | null>(null)
 const rowMenuOpen = ref(false)
 const columnMenuOpen = ref(false)
 const supportsHoverHandles = ref(false)
+const editorStateVersion = ref(0)
+const rowHandleRef = ref<HTMLElement | null>(null)
+const columnHandleRef = ref<HTMLElement | null>(null)
 
 let frameId = 0
 let hoverCapabilityQuery: MediaQueryList | null = null
 
 const isMenuOpen = computed(() => rowMenuOpen.value || columnMenuOpen.value)
-const currentSelectionCellPos = computed(() => tableActions.getCurrentCellTarget()?.cellPos ?? null)
-const activeCellPos = computed(() => {
-    if (isMenuOpen.value) {
-        return pinnedCellPos.value ?? hoveredCellPos.value ?? currentSelectionCellPos.value
-    }
-
-    return hoveredCellPos.value ?? currentSelectionCellPos.value
+const currentSelectionTarget = computed(() => {
+    void editorStateVersion.value
+    return tableActions.getCurrentCellTarget()
 })
 const activeTarget = computed(() => {
-    if (activeCellPos.value == null) {
-        return null
+    void editorStateVersion.value
+
+    if (isMenuOpen.value) {
+        return tableActions.resolveTargetReference(pinnedTargetRef.value)
+                ?? tableActions.resolveTargetReference(hoveredTargetRef.value)
+                ?? currentSelectionTarget.value
     }
 
-    return tableActions.getCellTargetAtPos(activeCellPos.value)
+    return tableActions.resolveTargetReference(hoveredTargetRef.value) ?? currentSelectionTarget.value
 })
-
 const rowHandleActions = computed(() => tableActions.getRowHandleActions(activeTarget.value))
 const columnHandleActions = computed(() => tableActions.getColumnHandleActions(activeTarget.value))
-const affordanceMenuClass = "min-w-48 rounded-xl border border-default bg-default/95 p-1.5 shadow-xl backdrop-blur-sm"
-const affordanceMenuItemClass = "justify-start rounded-lg px-2.5 py-1.5"
+const affordanceMenuClass = `min-w-48 ${editorCompactFloatingSurfaceClass}`
+const affordanceMenuItemClass = editorMenuItemClass
+const handleButtonClass = editorRoundHandleButtonClass
+const sectionLabelClass = editorSectionLabelClass
+const hasConflictingMenuOpen = computed(() => floatingMenuState?.isAnotherMenuOpen(["table-row-menu", "table-column-menu"]) ?? false)
 
 const isVisible = computed(() => {
     return props.editable &&
         supportsHoverHandles.value &&
+            !hasConflictingMenuOpen.value &&
         !!props.surface &&
         !!activeTarget.value &&
         !!rowHandlePosition.value &&
@@ -96,10 +112,11 @@ function getCellElement(target: EventTarget | null) {
     return candidate instanceof HTMLTableCellElement ? candidate : null
 }
 
-function getCellPosFromElement(cellElement: HTMLTableCellElement) {
+function getTargetReferenceFromElement(cellElement: HTMLTableCellElement) {
     try {
         const domPos = props.editor.view.posAtDOM(cellElement, 0)
-        return tableActions.getCellTargetAtPos(domPos)?.cellPos ?? null
+        const target = tableActions.getCellTargetAtPos(domPos)
+        return tableActions.createTargetReference(target)
     } catch (_error) {
         return null
     }
@@ -111,9 +128,9 @@ function getCellElementAtPos(pos: number) {
 }
 
 function clearHoverTarget() {
-    hoveredCellPos.value = null
-    if (!isMenuOpen.value && currentSelectionCellPos.value == null) {
-        pinnedCellPos.value = null
+    hoveredTargetRef.value = null
+    if (!isMenuOpen.value && currentSelectionTarget.value == null) {
+        pinnedTargetRef.value = null
     }
 }
 
@@ -124,16 +141,15 @@ function updatePositions() {
         return
     }
 
-    const cellPos = activeCellPos.value
-    if (cellPos == null) {
+    const target = activeTarget.value
+    if (!target) {
         rowHandlePosition.value = null
         columnHandlePosition.value = null
         return
     }
 
-    const cellElement = getCellElementAtPos(cellPos)
-    const target = activeTarget.value
-    if (!cellElement || !target) {
+    const cellElement = getCellElementAtPos(target.cellPos)
+    if (!cellElement) {
         rowHandlePosition.value = null
         columnHandlePosition.value = null
         return
@@ -189,6 +205,12 @@ function handleSurfaceMouseMove(event: MouseEvent) {
         return
     }
 
+    if (hasConflictingMenuOpen.value) {
+        clearHoverTarget()
+        scheduleUpdate()
+        return
+    }
+
     if (isMenuOpen.value) {
         scheduleUpdate()
         return
@@ -211,10 +233,10 @@ function handleSurfaceMouseMove(event: MouseEvent) {
         return
     }
 
-    const cellPos = getCellPosFromElement(cellElement)
-    hoveredCellPos.value = cellPos
+    const targetReference = getTargetReferenceFromElement(cellElement)
+    hoveredTargetRef.value = targetReference
     if (!isMenuOpen.value) {
-        pinnedCellPos.value = cellPos
+        pinnedTargetRef.value = targetReference
     }
     scheduleUpdate()
 }
@@ -224,19 +246,60 @@ function handleSurfaceMouseLeave() {
     scheduleUpdate()
 }
 
+function handleEditorTransaction() {
+    editorStateVersion.value += 1
+    scheduleUpdate()
+}
+
 function handleSelectionChange() {
-    if (!isMenuOpen.value && hoveredCellPos.value == null) {
-        pinnedCellPos.value = currentSelectionCellPos.value
+    editorStateVersion.value += 1
+
+    if (!isMenuOpen.value && hoveredTargetRef.value == null) {
+        pinnedTargetRef.value = tableActions.createTargetReference(currentSelectionTarget.value)
     }
 
     scheduleUpdate()
 }
 
-function handleMenuOpenChange(isOpen: boolean) {
+function getStableTargetReference() {
+    return tableActions.createTargetReference(activeTarget.value ?? currentSelectionTarget.value)
+}
+
+function openRowMenu() {
+    const targetReference = getStableTargetReference()
+    if (!targetReference) {
+        return
+    }
+
+    floatingMenuState?.openMenu("table-row-menu")
+    pinnedTargetRef.value = targetReference
+    rowMenuOpen.value = true
+    columnMenuOpen.value = false
+    scheduleUpdate()
+}
+
+function openColumnMenu() {
+    const targetReference = getStableTargetReference()
+    if (!targetReference) {
+        return
+    }
+
+    floatingMenuState?.openMenu("table-column-menu")
+    pinnedTargetRef.value = targetReference
+    columnMenuOpen.value = true
+    rowMenuOpen.value = false
+    scheduleUpdate()
+}
+
+function handleMenuOpenChange(isOpen: boolean, menuId: "table-row-menu" | "table-column-menu") {
     if (isOpen) {
-        pinnedCellPos.value = activeCellPos.value ?? tableActions.getCurrentCellTarget()?.cellPos ?? null
-    } else if (!isMenuOpen.value && hoveredCellPos.value == null) {
-        pinnedCellPos.value = null
+        floatingMenuState?.openMenu(menuId)
+        pinnedTargetRef.value = getStableTargetReference()
+    } else if (!isMenuOpen.value && hoveredTargetRef.value == null) {
+        floatingMenuState?.closeMenu(menuId)
+        pinnedTargetRef.value = null
+    } else {
+        floatingMenuState?.closeMenu(menuId)
     }
 
     scheduleUpdate()
@@ -245,7 +308,7 @@ function handleMenuOpenChange(isOpen: boolean) {
 function handleActionSelect(action: { onSelect: () => void }, closeMenu: () => void) {
     action.onSelect()
     closeMenu()
-    pinnedCellPos.value = tableActions.getCurrentCellTarget()?.cellPos ?? pinnedCellPos.value
+    pinnedTargetRef.value = tableActions.createTargetReference(tableActions.getCurrentCellTarget()) ?? pinnedTargetRef.value
     scheduleUpdate()
 }
 
@@ -256,6 +319,7 @@ onMounted(() => {
     props.surface?.addEventListener("mousemove", handleSurfaceMouseMove)
     props.surface?.addEventListener("mouseleave", handleSurfaceMouseLeave)
     props.editor.on("selectionUpdate", handleSelectionChange)
+    props.editor.on("transaction", handleEditorTransaction)
     props.editor.on("focus", scheduleUpdate)
     props.editor.on("blur", scheduleUpdate)
 
@@ -272,6 +336,7 @@ onBeforeUnmount(() => {
     props.surface?.removeEventListener("mousemove", handleSurfaceMouseMove)
     props.surface?.removeEventListener("mouseleave", handleSurfaceMouseLeave)
     props.editor.off("selectionUpdate", handleSelectionChange)
+    props.editor.off("transaction", handleEditorTransaction)
     props.editor.off("focus", scheduleUpdate)
     props.editor.off("blur", scheduleUpdate)
 
@@ -295,44 +360,64 @@ watch(() => props.editable, () => {
 
 watch(() => tableActions.isInTable.value, inTable => {
     if (!inTable) {
-        hoveredCellPos.value = null
-        pinnedCellPos.value = null
+        hoveredTargetRef.value = null
+        pinnedTargetRef.value = null
     }
 
     scheduleUpdate()
 })
 
-watch(rowMenuOpen, handleMenuOpenChange)
-watch(columnMenuOpen, handleMenuOpenChange)
+watch(rowMenuOpen, isOpen => handleMenuOpenChange(isOpen, "table-row-menu"))
+watch(columnMenuOpen, isOpen => handleMenuOpenChange(isOpen, "table-column-menu"))
+watch(() => floatingMenuState?.activeMenu.value, activeMenu => {
+    if (!activeMenu || activeMenu === "table-row-menu" || activeMenu === "table-column-menu") {
+        return
+    }
+
+    if (rowMenuOpen.value || columnMenuOpen.value) {
+        rowMenuOpen.value = false
+        columnMenuOpen.value = false
+        clearHoverTarget()
+        scheduleUpdate()
+    }
+})
+watch(() => floatingMenuState?.closeSignal.value, () => {
+    rowMenuOpen.value = false
+    columnMenuOpen.value = false
+    clearHoverTarget()
+    scheduleUpdate()
+})
 </script>
 
 <template>
     <div v-if="isVisible" class="pointer-events-none absolute inset-0 z-20">
-        <UPopover v-model:open="rowMenuOpen">
-            <div
-                    v-if="rowHandlePosition"
-                    data-table-affordance-handle="true"
-                    class="pointer-events-auto absolute"
-                    :style="{
-                        top: `${rowHandlePosition.top}px`,
-                        left: `${rowHandlePosition.left}px`,
-                        transform: 'translate(-50%, -50%)'
-                    }"
-            >
-                <UButton
-                        color="neutral"
-                        variant="soft"
-                        size="xs"
-                        icon="i-lucide-grip-horizontal"
-                        class="rounded-full border border-default bg-default/90 shadow-sm"
-                        :aria-label="t('editor.table.rowActions')"
-                        @mousedown.prevent
-                />
-            </div>
+        <div
+                v-if="rowHandlePosition"
+                ref="rowHandleRef"
+                data-table-affordance-handle="true"
+                class="pointer-events-auto absolute"
+                :style="{
+                    top: `${rowHandlePosition.top}px`,
+                    left: `${rowHandlePosition.left}px`,
+                    transform: 'translate(-50%, -50%)'
+                }"
+        >
+            <UButton
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    icon="i-lucide-grip-horizontal"
+                    :class="handleButtonClass"
+                    :aria-label="t('editor.table.rowActions')"
+                    @mousedown.prevent
+                    @click.stop="openRowMenu"
+            />
+        </div>
 
+        <UPopover v-model:open="rowMenuOpen" :content="{sideOffset: 4}" :reference="rowHandleRef">
             <template #content>
                 <div :class="affordanceMenuClass">
-                    <div class="px-2 py-1 text-[11px] font-medium text-muted">
+                    <div :class="sectionLabelClass">
                         {{ t('editor.table.rowActions') }}
                     </div>
                     <div class="flex flex-col gap-0.5 p-1">
@@ -354,31 +439,33 @@ watch(columnMenuOpen, handleMenuOpenChange)
             </template>
         </UPopover>
 
-        <UPopover v-model:open="columnMenuOpen">
-            <div
-                    v-if="columnHandlePosition"
-                    data-table-affordance-handle="true"
-                    class="pointer-events-auto absolute"
-                    :style="{
-                        top: `${columnHandlePosition.top}px`,
-                        left: `${columnHandlePosition.left}px`,
-                        transform: 'translate(-50%, -50%)'
-                    }"
-            >
-                <UButton
-                        color="neutral"
-                        variant="soft"
-                        size="xs"
-                        icon="i-lucide-grip-vertical"
-                        class="rounded-full border border-default bg-default/90 shadow-sm"
-                        :aria-label="t('editor.table.columnActions')"
-                        @mousedown.prevent
-                />
-            </div>
+        <div
+                v-if="columnHandlePosition"
+                ref="columnHandleRef"
+                data-table-affordance-handle="true"
+                class="pointer-events-auto absolute"
+                :style="{
+                    top: `${columnHandlePosition.top}px`,
+                    left: `${columnHandlePosition.left}px`,
+                    transform: 'translate(-50%, -50%)'
+                }"
+        >
+            <UButton
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    icon="i-lucide-grip-vertical"
+                    :class="handleButtonClass"
+                    :aria-label="t('editor.table.columnActions')"
+                    @mousedown.prevent
+                    @click.stop="openColumnMenu"
+            />
+        </div>
 
+        <UPopover v-model:open="columnMenuOpen" :content="{sideOffset: 4}" :reference="columnHandleRef">
             <template #content>
                 <div :class="affordanceMenuClass">
-                    <div class="px-2 py-1 text-[11px] font-medium text-muted">
+                    <div :class="sectionLabelClass">
                         {{ t('editor.table.columnActions') }}
                     </div>
                     <div class="flex flex-col gap-0.5 p-1">

@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -18,10 +18,20 @@
 import type {Editor} from "@tiptap/core";
 import {computed, nextTick, onBeforeUnmount, onMounted, ref} from "vue";
 import {useEditorActions} from "@/components/structuraltext/composables/useEditorActions";
-import {useStructuralTextInsertController} from "@/components/structuraltext/composables/useStructuralTextInsertController";
+import {
+    useStructuralTextInsertController
+} from "@/components/structuraltext/composables/useStructuralTextInsertController";
 import {useI18n} from "vue-i18n";
 import {useTableActions} from "@/components/structuraltext/composables/useTableActions";
 import type {AttributeColor} from "@/components/structuraltext/types";
+import {
+    editorColorButtonClass,
+    editorDropdownMenuUi,
+    editorMenuSurfaceClass,
+    editorSelectMenuUi,
+    editorTableToolbarGroupClass,
+    editorToolbarGroupClass,
+} from "@/components/structuraltext/editorUi";
 
 interface Props {
     editor: Editor;
@@ -149,14 +159,16 @@ const isCodeBlock = computed(() => props.editor.isActive("codeBlock"));
 const toolbarClasses = computed(() => {
     return [
         "flex flex-wrap items-center gap-2 px-2 py-2",
-        {"justify-center": props.centered, "bg-default/75 backdrop-blur sticky z-40": props.sticky,}
+        {"justify-center": props.centered, "sticky z-40 bg-default": props.sticky,}
     ];
 });
 
-const toolbarGroupClass = "flex items-center gap-1 rounded-xl border border-default bg-default/80 p-1 shadow-sm backdrop-blur-sm"
-const tableToolbarGroupClass = "flex items-center gap-1 rounded-xl border border-default bg-elevated/70 p-1 shadow-sm backdrop-blur-sm"
-const menuSurfaceClass = "rounded-xl border border-default bg-default/95 p-3 shadow-xl backdrop-blur-sm"
-const colorButtonClass = "h-7 w-7 rounded-lg border border-default transition-colors"
+const toolbarGroupClass = editorToolbarGroupClass
+const tableToolbarGroupClass = editorTableToolbarGroupClass
+const menuSurfaceClass = editorMenuSurfaceClass
+const colorButtonClass = editorColorButtonClass
+const selectMenuUi = editorSelectMenuUi
+const dropdownMenuUi = editorDropdownMenuUi
 
 const toolbarRoot = ref<HTMLElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
@@ -266,10 +278,12 @@ onBeforeUnmount(() => {
             <USelectMenu
                     v-model="currentHeading"
                     :items="headingOptions"
+                    :content="{sideOffset: 6}"
+                    :ui="selectMenuUi"
                     size="sm"
                     color="neutral"
                     variant="ghost"
-                    class="w-36 rounded-lg"
+                    class="w-36"
             >
                 <template #default>
                     <div class="flex items-center gap-2">
@@ -381,14 +395,14 @@ onBeforeUnmount(() => {
                 />
             </UTooltip>
 
-            <UPopover v-if="isInCell">
+            <UPopover v-if="isInCell" :content="{sideOffset: 6}">
                 <UButton
                         variant="ghost"
                         color="neutral"
                         size="sm"
                         icon="i-lucide-palette"
                         :aria-label="t('editor.table.backgroundColor')"
-                        class="rounded-lg"
+                        class="rounded-md"
                 />
 
                 <template #content>
@@ -427,14 +441,18 @@ onBeforeUnmount(() => {
                 </template>
             </UPopover>
 
-            <UDropdownMenu :items="dropdownMenuItems" :content="{align: 'end'}">
+            <UDropdownMenu
+                    :items="dropdownMenuItems"
+                    :content="{align: 'end', sideOffset: 6}"
+                    :ui="dropdownMenuUi"
+                    size="sm">
                 <UButton
                         variant="ghost"
                         color="neutral"
                         size="sm"
                         icon="i-lucide-settings-2"
                         :aria-label="t('editor.table.moreActions')"
-                        class="rounded-lg"
+                        class="rounded-md"
                 />
             </UDropdownMenu>
         </div>

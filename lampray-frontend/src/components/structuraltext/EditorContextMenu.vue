@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -16,10 +16,20 @@
 
 <script setup lang="ts">
 import type {Editor} from "@tiptap/core";
-import {computed, ref} from "vue";
+import {computed, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
+import {CellSelection} from "@tiptap/pm/tables";
 import type {AttributeColor} from "@/components/structuraltext/types";
+import {
+    useStructuralTextFloatingMenuState
+} from "@/components/structuraltext/composables/useStructuralTextFloatingMenuState";
 import {useTableActions} from "@/components/structuraltext/composables/useTableActions";
+import {
+    editorColorButtonClass,
+    editorContextMenuUi,
+    editorMenuSurfaceClass,
+    editorSectionLabelClass,
+} from "@/components/structuraltext/editorUi";
 
 interface Props {
     editor: Editor
@@ -31,6 +41,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const {t} = useI18n()
+const floatingMenuState = useStructuralTextFloatingMenuState()
 const {
     colors: tableColors,
     selectColor: selectTableColor,
@@ -39,8 +50,15 @@ const {
 } = useTableActions(props.editor, t)
 
 const menuOpen = ref(false)
-const colorMenuSurfaceClass = "rounded-xl border border-default bg-default/95 p-3 shadow-xl backdrop-blur-sm"
-const colorButtonClass = "h-7 w-7 rounded-lg border border-default transition-colors"
+const colorMenuSurfaceClass = editorMenuSurfaceClass
+const colorButtonClass = editorColorButtonClass
+const contextMenuUi = editorContextMenuUi
+const sectionLabelClass = editorSectionLabelClass
+
+function isMultiCellSelection() {
+    const selection = props.editor.state.selection
+    return selection instanceof CellSelection && selection.$anchorCell.pos !== selection.$headCell.pos
+}
 
 function selectColor(color: AttributeColor | null) {
     selectTableColor(color)
@@ -54,18 +72,45 @@ const menuItems = computed(() => {
 
     return contextMenuItems.value
 })
+
+watch(menuOpen, isOpen => {
+    if (isOpen) {
+        if (isMultiCellSelection()) {
+            floatingMenuState?.preserveTableSelection(props.editor.state.selection)
+        }
+
+        floatingMenuState?.openMenu("context-menu")
+        return
+    }
+
+    floatingMenuState?.closeMenu("context-menu")
+})
+
+watch(() => floatingMenuState?.activeMenu.value, activeMenu => {
+    if (menuOpen.value && activeMenu && activeMenu !== "context-menu") {
+        menuOpen.value = false
+    }
+})
+
+watch(() => floatingMenuState?.closeSignal.value, () => {
+    menuOpen.value = false
+})
 </script>
 
 <template>
-    <UContextMenu v-if="editable && isInTable" :items="menuItems" v-model:open="menuOpen">
+    <UContextMenu v-if="editable && isInTable"
+                  :items="menuItems"
+                  :ui="contextMenuUi"
+                  :content="{collisionPadding: 12}"
+                  v-model:open="menuOpen">
         <slot/>
         <template #color-grid>
             <div :class="colorMenuSurfaceClass">
-                <div class="mb-2 flex items-center gap-2 px-1 text-[11px] font-medium text-muted">
+                <div class="mb-2 flex items-center gap-2" :class="sectionLabelClass">
                     <UIcon name="i-lucide-palette" class="h-3.5 w-3.5"/>
                     <span>{{ t('editor.table.backgroundColor') }}</span>
                 </div>
-                <div class="grid grid-cols-6 gap-1.5">
+                <div class="grid grid-cols-6 gap-1">
                     <UButton
                             type="button"
                             class="flex items-center justify-center"

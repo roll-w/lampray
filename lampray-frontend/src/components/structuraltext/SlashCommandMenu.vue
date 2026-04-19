@@ -18,6 +18,7 @@
 import {computed} from "vue"
 import {useI18n} from "vue-i18n"
 import type {SlashCommandItem} from "@/components/structuraltext/extensions/SlashCommand"
+import {editorFloatingSurfaceClass} from "@/components/structuraltext/editorUi"
 
 interface Props {
     items: SlashCommandItem[]
@@ -30,6 +31,7 @@ const emit = defineEmits<{
     (e: "highlight", index: number): void
 }>()
 const {t} = useI18n()
+const slashMenuClass = `w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden ${editorFloatingSurfaceClass}`
 
 const groups = computed(() => {
     return [
@@ -46,7 +48,7 @@ const groups = computed(() => {
 </script>
 
 <template>
-    <div class="w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-default bg-default/95 shadow-xl backdrop-blur-sm">
+    <div :class="slashMenuClass">
         <UCommandPalette
                 :groups="groups"
                 :autofocus="false"
@@ -55,30 +57,30 @@ const groups = computed(() => {
                 class="h-auto max-h-80"
                 :ui="{
                     root: 'border-0 bg-transparent shadow-none',
-                    content: 'p-1.5',
+                    content: 'p-1',
                     viewport: 'max-h-80',
-                    group: 'space-y-1',
+                    group: 'space-y-0.5',
                     empty: 'px-3 py-4 text-sm text-muted'
                 }"
         >
             <template #item="{ item }">
                 <button
                         type="button"
-                        class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors"
+                        class="flex w-full items-start gap-3 rounded-lg px-3 py-2 text-left transition-colors"
                         :class="item.index === selectedIndex
-                            ? 'bg-elevated text-default ring-1 ring-inset ring-default/70'
-                            : 'text-default hover:bg-elevated/70'"
+                            ? 'bg-elevated/60 text-default'
+                            : 'text-default hover:bg-elevated/40'"
                         @mouseenter="emit('highlight', item.index)"
                         @click.prevent="emit('select', props.items[item.index])"
                 >
-                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-default bg-elevated/80">
+                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-default bg-default">
                         <UIcon :name="item.icon" class="h-4 w-4" :class="item.index === selectedIndex ? 'text-primary' : 'text-muted'"/>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <div class="text-sm font-medium">
+                        <div class="text-[13px] font-medium tracking-[-0.01em]">
                             {{ item.label }}
                         </div>
-                        <div v-if="item.description" class="mt-0.5 text-xs text-muted">
+                        <div v-if="item.description" class="mt-0.5 text-[11px] leading-4 text-muted">
                             {{ item.description }}
                         </div>
                     </div>

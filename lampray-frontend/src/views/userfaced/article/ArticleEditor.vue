@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -120,9 +120,9 @@ const publishArticle = async () => {
                 :show-outline="true"
                 @change="handleChange"
                 :ui="{content: {
-                    root: 'w-full md:w-[85vw] lg:w-[50vw] mx-auto overflow-y-auto px-4'
+                    root: 'w-full max-w-[52rem] mx-auto overflow-y-auto px-5 md:px-8'
                 }, toolbar: {
-                    root: 'border-b border-gray-200 dark:border-gray-700 overflow-hidden top-[var(--ui-header-height)]',
+                    root: 'border-b border-default bg-default top-[var(--ui-header-height)]',
                     centered: true
                 }, outline:{
                     root: 'top-[calc(var(--ui-header-height)+var(--toolbar-height))]',
@@ -135,11 +135,11 @@ const publishArticle = async () => {
             </template>
 
             <template #before-content>
-                <div class="p-4 w-full md:w-[85vw] lg:w-[50vw] mx-auto">
+                <div class="w-full max-w-[52rem] mx-auto px-5 pt-5 md:px-8 md:pt-6">
                     <input v-model="title" type="text"
                            :placeholder="t('article.editor.placeholder.title')"
-                           class="w-full h-12 text-3xl font-bold outline-none border-none
-                           focus:ring-0 focus:outline-none bg-transparent"
+                           class="w-full h-14 border-none bg-transparent text-[2.5rem] font-semibold tracking-[-0.03em] text-gray-950 outline-none
+                            dark:text-gray-50 focus:ring-0 focus:outline-none"
                            :disabled="isPublishing"
                     />
                 </div>

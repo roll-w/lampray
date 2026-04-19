@@ -55,6 +55,10 @@ import {
     provideStructuralTextInsertController,
     type StructuralTextInsertController,
 } from "@/components/structuraltext/composables/useStructuralTextInsertController";
+import {
+    createStructuralTextFloatingMenuState,
+    provideStructuralTextFloatingMenuState,
+} from "@/components/structuraltext/composables/useStructuralTextFloatingMenuState";
 import {buildBlockTransformActions} from "@/components/structuraltext/blockActions";
 
 interface Props {
@@ -98,6 +102,7 @@ const props = withDefaults(defineProps<Props>(), {
 const {t} = useI18n()
 const appContext = getCurrentInstance()?.appContext || null
 const editorSurface = ref<HTMLElement | null>(null)
+const floatingMenuState = provideStructuralTextFloatingMenuState(createStructuralTextFloatingMenuState())
 
 let insertController: StructuralTextInsertController | null = null
 
@@ -186,24 +191,42 @@ interface Emits {
 }
 
 /**
- * Plugin to preserve table cell selection on context menu.
- * Prevents losing selection when right-clicking on selected cells.
+ * Keep multi-cell table selections stable when context menu is opened from selected cells.
  */
-const preserveSelectionPlugin = new Plugin({
-    key: new PluginKey("preserveSelection"),
-    props: {
-        handleDOMEvents: {
-            contextmenu: (view, event) => {
-                // Check if we have a cell selection
-                const {selection} = view.state
-                if (selection instanceof CellSelection) {
-                    // Prevent default editor behavior that might clear selection
-                    event.preventDefault()
-                    return true
+function isMultiCellSelection(selection: unknown): selection is CellSelection {
+    return selection instanceof CellSelection && selection.$anchorCell.pos !== selection.$headCell.pos
+}
+
+function isContextMenuInsideSelectedTableCell(target: EventTarget | null) {
+    if (!(target instanceof Element)) {
+        return false
+    }
+
+    return !!target.closest("td.selectedCell, th.selectedCell")
+}
+
+const preserveSelectionExtension = Extension.create({
+    name: "preserveSelection",
+    addProseMirrorPlugins() {
+        return [
+            new Plugin({
+                key: new PluginKey("preserveSelection"),
+                props: {
+                    handleDOMEvents: {
+                        contextmenu: (view, event) => {
+                            const {selection} = view.state
+                            if (!isMultiCellSelection(selection) || !isContextMenuInsideSelectedTableCell(event.target)) {
+                                return false
+                            }
+
+                            floatingMenuState.preserveTableSelection(selection)
+                            event.preventDefault()
+                            return true
+                        }
+                    }
                 }
-                return false
-            }
-        }
+            })
+        ]
     }
 })
 
@@ -390,6 +413,7 @@ const editor = useEditor({
             appContext,
             items: buildSlashCommandItems(),
         }),
+        preserveSelectionExtension,
         locationHighlightExtension,
         ...(props.extensions || [])
     ],
@@ -443,11 +467,11 @@ const editor = useEditor({
         emit("update:modelValue", structuralText)
         emit("change", structuralText)
     },
-    onCreate: ({editor}) => {
-        const state = editor.state
-        const plugins = [preserveSelectionPlugin, ...state.plugins]
-        editor.view.updateState(state.reconfigure({plugins}))
+    onCreate: () => {
         refreshMappings()
+    },
+    onTransaction: ({transaction}) => {
+        floatingMenuState.mapPreservedTableSelection(transaction.mapping)
     },
     onSelectionUpdate: ({editor}) => {
         emit("select-range", editor)
@@ -455,6 +479,16 @@ const editor = useEditor({
 })
 
 insertController = provideStructuralTextInsertController(createStructuralTextInsertController(editor))
+
+watch([
+    insertController.isLinkModalOpen,
+    insertController.isImageModalOpen,
+    insertController.isTableInsertModalOpen,
+], ([isLinkModalOpen, isImageModalOpen, isTableInsertModalOpen]) => {
+    if (isLinkModalOpen || isImageModalOpen || isTableInsertModalOpen) {
+        floatingMenuState.closeAllMenus()
+    }
+})
 
 
 watch(() => props.editable, (newVal) => {
@@ -523,11 +557,11 @@ defineExpose({
 </script>
 
 <template>
-    <div :class="{'border border-gray-300 dark:border-gray-700 rounded-md': variant === 'outline'}">
+    <div :class="{'rounded-lg border border-default bg-default': variant === 'outline'}">
         <EditorToolbar v-if="showToolbar && editor" :centered="ui && ui.toolbar ? ui.toolbar.centered : false"
                        :class="{[ui?.toolbar?.root || '']: ui && ui!.toolbar && ui!.toolbar.root,
-                       'rounded-md border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900': variant === 'outline'
-                       }"
+                        'rounded-t-lg border-b border-default bg-default': variant === 'outline'
+                        }"
                        :editor="editor"
                        :sticky="true">
             <template #menu-end>
@@ -544,7 +578,7 @@ defineExpose({
                 </EditorBubbleMenu>
                 <EditorDragHandle v-if="editor" :editor="editor"/>
                 <EditorContextMenu v-if="editor" :editable="editable" :editor="editor">
-                    <div ref="editorSurface" class="relative"
+                    <div ref="editorSurface" class="relative text-[15px] leading-7 text-default antialiased"
                          :class="{[ui?.content?.root || '']: ui && ui!.content && ui!.content.root}">
                         <EditorContent :editor="editor" class="editor"/>
                         <TableEdgeAffordances v-if="editor" :editor="editor" :editable="editable" :surface="editorSurface"/>
@@ -601,7 +635,7 @@ defineExpose({
 @reference "@/assets/main.css"
 
 .editor .ProseMirror {
-    @apply min-h-[300px];
+    @apply min-h-[300px] text-[15px] leading-7 text-default antialiased;
 }
 
 .editor .ProseMirror:focus {
@@ -609,36 +643,36 @@ defineExpose({
 }
 
 .editor h1 {
-    @apply text-4xl font-bold mt-6 mb-4;
+    @apply mt-10 mb-4 text-4xl font-semibold tracking-[-0.03em] text-gray-950 dark:text-gray-50;
 }
 
 .editor h2 {
-    @apply text-3xl font-bold mt-5 mb-3;
+    @apply mt-8 mb-3 text-3xl font-semibold tracking-[-0.025em] text-gray-950 dark:text-gray-50;
 }
 
 .editor h3 {
-    @apply text-2xl font-bold mt-4 mb-3;
+    @apply mt-7 mb-3 text-2xl font-semibold tracking-[-0.02em] text-gray-950 dark:text-gray-50;
 }
 
 .editor h4 {
-    @apply text-xl font-bold mt-3 mb-2;
+    @apply mt-6 mb-2 text-xl font-semibold tracking-[-0.015em] text-gray-950 dark:text-gray-50;
 }
 
 .editor h5 {
-    @apply text-lg font-bold mt-3 mb-2;
+    @apply mt-5 mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100;
 }
 
 .editor h6 {
-    @apply text-base font-bold mt-2 mb-2;
+    @apply mt-4 mb-2 text-base font-semibold text-gray-900 dark:text-gray-100;
 }
 
 .editor p {
-    @apply mb-4;
+    @apply mb-3 text-gray-700 dark:text-gray-300;
 }
 
 .editor ul,
 .editor ol {
-    @apply pl-6 mb-2;
+    @apply mb-3 pl-5;
 }
 
 .editor ul {
@@ -650,7 +684,7 @@ defineExpose({
 }
 
 .editor li {
-    @apply mb-1;
+    @apply mb-1.5 text-gray-700 dark:text-gray-300;
 }
 
 .editor ul[data-type="taskList"] {
@@ -658,11 +692,11 @@ defineExpose({
 }
 
 .editor blockquote {
-    @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 text-gray-600 dark:text-gray-400 my-4;
+    @apply my-5 border-l-2 border-gray-200 pl-4 text-gray-500 dark:border-gray-700 dark:text-gray-400;
 }
 
 .editor code {
-    @apply bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 text-sm font-mono;
+    @apply rounded-md bg-gray-100 px-1.5 py-0.5 text-sm font-mono dark:bg-gray-800;
 }
 
 .editor pre code {
@@ -686,32 +720,32 @@ defineExpose({
 }
 
 .editor mark {
-    @apply bg-yellow-200 dark:bg-yellow-800 px-1 rounded;
+    @apply rounded-md bg-yellow-200 px-1 dark:bg-yellow-800;
 }
 
 .editor hr {
-    @apply border-t border-gray-300 dark:border-gray-600 my-6;
+    @apply my-8 border-t border-gray-200 dark:border-gray-700;
 }
 
 .editor img {
-    @apply max-w-full h-auto rounded-lg my-4;
+    @apply my-6 h-auto max-w-full rounded-md;
 }
 
 .editor table {
-    @apply border-collapse w-full mb-4 relative;
+    @apply relative mb-6 w-full border-collapse text-[0.95rem];
 }
 
 .editor th,
 .editor td {
-    @apply border border-gray-300 dark:border-gray-600 px-4 py-2 relative;
+    @apply relative border border-gray-200 px-3 py-2.5 align-top dark:border-gray-700;
 }
 
 .editor th {
-    @apply bg-gray-100 dark:bg-gray-800 font-bold;
+    @apply bg-gray-50 font-semibold text-gray-700 dark:bg-gray-900 dark:text-gray-200;
 }
 
 .editor .selectedCell {
-    @apply bg-blue-100 dark:bg-blue-900;
+    @apply bg-primary/10;
 }
 
 .column-resize-handle {

@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 import {computed, ref, watch} from 'vue'
 import {useI18n} from 'vue-i18n'
 import {parseHttpUrl} from '@/components/structuraltext/composables/useEditorActions'
+import {editorModalUi} from '@/components/structuraltext/editorUi'
 
 interface Props {
     open: boolean
@@ -41,6 +42,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 const {t} = useI18n()
+const modalUi = editorModalUi
 
 const linkUrl = ref('')
 const linkText = ref('')
@@ -100,17 +102,18 @@ const handleKeydown = (event: KeyboardEvent) => {
 </script>
 
 <template>
-    <UModal :open="open" @update:open="closeModal">
+    <UModal :open="open" :ui="modalUi" @update:open="closeModal">
         <template #content>
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-semibold">
+                    <h3 class="text-base font-semibold tracking-[-0.01em] text-highlighted">
                         {{ isEditing ? t('editor.modal.editLink') : t('editor.modal.insertLink') }}
                     </h3>
                     <UButton
                             color="neutral"
                             variant="ghost"
                             icon="i-lucide-x"
+                            :aria-label="t('common.close')"
                             @click="closeModal"
                     />
                 </div>
@@ -123,6 +126,8 @@ const handleKeydown = (event: KeyboardEvent) => {
                         <UInput
                                 v-model="linkUrl"
                                 :placeholder="t('editor.modal.urlPlaceholder')"
+                                color="neutral"
+                                variant="outline"
                                 autofocus
                                 @keydown="handleKeydown"
                                 class="w-full"
@@ -136,6 +141,8 @@ const handleKeydown = (event: KeyboardEvent) => {
                                 v-model="linkText"
                                 :disabled="isTextDisabled"
                                 :placeholder="t('editor.modal.textPlaceholder')"
+                                color="neutral"
+                                variant="outline"
                                 class="w-full"
                         />
                     </UFormField>
@@ -145,7 +152,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                     <UButton
                             v-if="isEditing"
                             color="error"
-                            variant="ghost"
+                            variant="soft"
                             @click="handleRemove"
                     >
                         {{ t('editor.modal.removeLink') }}
@@ -154,13 +161,14 @@ const handleKeydown = (event: KeyboardEvent) => {
                     <div class="flex gap-2">
                         <UButton
                                 color="neutral"
-                                variant="ghost"
+                                variant="outline"
                                 @click="closeModal"
                         >
                             {{ t('editor.modal.cancel') }}
                         </UButton>
                         <UButton
                                 color="primary"
+                                variant="soft"
                                 @click="handleConfirm"
                         >
                             {{ isEditing ? t('editor.modal.update') : t('editor.modal.insert') }}

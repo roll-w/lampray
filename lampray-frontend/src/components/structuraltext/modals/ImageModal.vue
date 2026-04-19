@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 import {ref, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {parseHttpUrl} from "@/components/structuraltext/composables/useEditorActions"
+import {editorModalUi} from "@/components/structuraltext/editorUi"
 
 interface Props {
     open: boolean
@@ -38,6 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 const {t} = useI18n()
+const modalUi = editorModalUi
 
 const imageUrl = ref("")
 const imageAlt = ref("")
@@ -90,17 +92,18 @@ const handleKeydown = (event: KeyboardEvent) => {
 </script>
 
 <template>
-    <UModal :open="open" @update:open="closeModal">
+    <UModal :open="open" :ui="modalUi" @update:open="closeModal">
         <template #content>
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-semibold">
+                    <h3 class="text-base font-semibold tracking-[-0.01em] text-highlighted">
                         {{ t("editor.modal.insertImage") }}
                     </h3>
                     <UButton
                             color="neutral"
                             variant="ghost"
                             icon="i-lucide-x"
+                            :aria-label="t('common.close')"
                             @click="closeModal"
                     />
                 </div>
@@ -113,6 +116,8 @@ const handleKeydown = (event: KeyboardEvent) => {
                         <UInput
                                 v-model="imageUrl"
                                 :placeholder="t('editor.modal.imageUrlPlaceholder')"
+                                color="neutral"
+                                variant="outline"
                                 autofocus
                                 @keydown="handleKeydown"
                                 class="w-full"
@@ -122,6 +127,8 @@ const handleKeydown = (event: KeyboardEvent) => {
                         <UInput
                                 v-model="imageAlt"
                                 :placeholder="t('editor.modal.altTextPlaceholder')"
+                                color="neutral"
+                                variant="outline"
                                 @keydown="handleKeydown"
                                 class="w-full"
                         />
@@ -131,13 +138,14 @@ const handleKeydown = (event: KeyboardEvent) => {
                 <div class="flex justify-end gap-2">
                     <UButton
                             color="neutral"
-                            variant="ghost"
+                            variant="outline"
                             @click="closeModal"
                     >
                         {{ t("editor.modal.cancel") }}
                     </UButton>
                     <UButton
                             color="primary"
+                            variant="soft"
                             @click="handleConfirm"
                     >
                         {{ t("editor.modal.insert") }}

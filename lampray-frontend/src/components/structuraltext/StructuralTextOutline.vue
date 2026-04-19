@@ -1,5 +1,5 @@
 <!--
-  - Copyright (C) 2023-2025 RollW
+  - Copyright (C) 2023-2026 RollW
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ watch(outline, () => {
 <template>
     <div class="flex flex-col">
         <div class="pb-3">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3"
+            <h3 class="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted"
                 :class="[props.ui?.title || '']">
                 {{ title }}
             </h3>
@@ -250,7 +250,7 @@ watch(outline, () => {
         <nav v-if="links.length > 0" class="flex-1 overflow-y-auto min-h-0 max-h-[70vh] pr-2"
              :class="[props.ui?.container || '']">
             <div class="relative">
-                <div class="absolute left-0 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800"/>
+                <div class="absolute left-0 top-0 bottom-0 w-px bg-default"/>
                 <div class="absolute left-0 w-px transition-all duration-200 ease-out"
                      :class="colorClasses?.indicator || 'bg-primary'"
                      :style="indicatorStyle"
@@ -265,9 +265,9 @@ watch(outline, () => {
                                 :to="`#${link.id}`"
                                 :active="activeId === link.id"
                                 raw
-                                class="block py-1 pl-4 pr-2 text-sm transition-colors duration-200 rounded-r-md"
+                                class="block rounded-md py-1.5 pl-4 pr-2 text-[13px] leading-5 transition-colors duration-200"
                                 :active-class="[colorClasses?.text || 'text-primary', 'font-medium'].join(' ')"
-                                inactive-class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                                inactive-class="text-muted hover:text-default"
                                 @click.prevent="scrollToHeading(link.id)">
                             <span class="block truncate">{{ link.text }}</span>
                         </ULink>

@@ -17,8 +17,24 @@
 import type {Editor, JSONContent} from "@tiptap/core"
 import type {InjectionKey, Ref} from "vue"
 import {inject, provide, ref, watch} from "vue"
-import {applyLink, getLinkHref, getSelectedText, parseHttpUrl} from "@/components/structuraltext/composables/useEditorActions"
-import type {TableInsertOptions} from "@/components/structuraltext/composables/useTableActions"
+import {
+    applyLink,
+    getLinkHref,
+    getSelectedText,
+    parseHttpUrl
+} from "@/components/structuraltext/composables/useEditorActions"
+
+export interface TableInsertOptions {
+    rows: number
+    cols: number
+    withHeaderRow: boolean
+}
+
+export const DEFAULT_TABLE_INSERT_OPTIONS: TableInsertOptions = {
+    rows: 3,
+    cols: 3,
+    withHeaderRow: true,
+}
 
 type PendingInsertionKind = "link" | "image" | "table"
 
@@ -66,9 +82,18 @@ export interface StructuralTextInsertController {
 
 const structuralTextInsertControllerKey = Symbol("structuralTextInsertController") as InjectionKey<StructuralTextInsertController>
 
-function clampTableSize(value: number, fallback: number) {
-    const normalizedValue = Number.isFinite(value) ? value : fallback
+export function normalizeTableInsertSize(value: number | string | undefined, fallback: number) {
+    const parsedValue = typeof value === "string" ? Number.parseInt(value, 10) : value
+    const normalizedValue = Number.isFinite(parsedValue) ? parsedValue : fallback
     return Math.min(10, Math.max(1, normalizedValue))
+}
+
+export function normalizeTableInsertOptions(options?: Partial<TableInsertOptions>): TableInsertOptions {
+    return {
+        rows: normalizeTableInsertSize(options?.rows, DEFAULT_TABLE_INSERT_OPTIONS.rows),
+        cols: normalizeTableInsertSize(options?.cols, DEFAULT_TABLE_INSERT_OPTIONS.cols),
+        withHeaderRow: options?.withHeaderRow ?? DEFAULT_TABLE_INSERT_OPTIONS.withHeaderRow,
+    }
 }
 
 export function createStructuralTextInsertController(editor: Ref<Editor | null>): StructuralTextInsertController {
@@ -83,9 +108,9 @@ export function createStructuralTextInsertController(editor: Ref<Editor | null>)
     const imageInitialUrl = ref("")
     const imageInitialAlt = ref("")
 
-    const tableInitialRows = ref(3)
-    const tableInitialCols = ref(3)
-    const tableInitialWithHeaderRow = ref(true)
+    const tableInitialRows = ref(DEFAULT_TABLE_INSERT_OPTIONS.rows)
+    const tableInitialCols = ref(DEFAULT_TABLE_INSERT_OPTIONS.cols)
+    const tableInitialWithHeaderRow = ref(DEFAULT_TABLE_INSERT_OPTIONS.withHeaderRow)
     const pendingInsertionTarget = ref<PendingInsertionTarget | null>(null)
 
     const clearPendingInsertionTarget = () => {
@@ -164,20 +189,18 @@ export function createStructuralTextInsertController(editor: Ref<Editor | null>)
             return null
         }
 
-        const normalizedRows = clampTableSize(options.rows, 3)
-        const normalizedCols = clampTableSize(options.cols, 3)
         const emptyParagraph = {
             type: paragraphNode.name,
         }
 
         return {
             type: tableNode.name,
-            content: Array.from({length: normalizedRows}, (_rowValue, rowIndex) => {
+            content: Array.from({length: options.rows}, (_rowValue, rowIndex) => {
                 const cellType = options.withHeaderRow && rowIndex === 0 ? tableHeaderNode.name : tableCellNode.name
 
                 return {
                     type: tableRowNode.name,
-                    content: Array.from({length: normalizedCols}, () => ({
+                    content: Array.from({length: options.cols}, () => ({
                         type: cellType,
                         content: [emptyParagraph],
                     })),
@@ -348,9 +371,10 @@ export function createStructuralTextInsertController(editor: Ref<Editor | null>)
     }
 
     const openTableInsertModal = (options?: Partial<TableInsertOptions>) => {
-        tableInitialRows.value = clampTableSize(options?.rows ?? 3, 3)
-        tableInitialCols.value = clampTableSize(options?.cols ?? 3, 3)
-        tableInitialWithHeaderRow.value = options?.withHeaderRow ?? true
+        const normalizedOptions = normalizeTableInsertOptions(options)
+        tableInitialRows.value = normalizedOptions.rows
+        tableInitialCols.value = normalizedOptions.cols
+        tableInitialWithHeaderRow.value = normalizedOptions.withHeaderRow
         isTableInsertModalOpen.value = true
     }
 
@@ -369,7 +393,8 @@ export function createStructuralTextInsertController(editor: Ref<Editor | null>)
             return false
         }
 
-        const tableContent = buildTableNodeContent(currentEditor, options)
+        const normalizedOptions = normalizeTableInsertOptions(options)
+        const tableContent = buildTableNodeContent(currentEditor, normalizedOptions)
         if (!tableContent) {
             return false
         }
@@ -386,11 +411,7 @@ export function createStructuralTextInsertController(editor: Ref<Editor | null>)
             return hasInsertedBelow
         }
 
-        const hasInserted = currentEditor.chain().focus().insertTable({
-            rows: clampTableSize(options.rows, 3),
-            cols: clampTableSize(options.cols, 3),
-            withHeaderRow: options.withHeaderRow,
-        }).run()
+        const hasInserted = currentEditor.chain().focus().insertTable(normalizedOptions).run()
 
         if (hasInserted) {
             clearPendingInsertionTarget()

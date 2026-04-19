@@ -20,16 +20,11 @@ import type {ContextMenuItem, DropdownMenuItem} from "@nuxt/ui";
 import {computed} from "vue";
 import {CellSelection, TableMap} from "@tiptap/pm/tables";
 import type {AttributeColor} from "@/components/structuraltext/types";
+import {useStructuralTextFloatingMenuState} from "@/components/structuraltext/composables/useStructuralTextFloatingMenuState";
 import {BASIC_COLORS} from "@/components/structuraltext/utils/color.ts";
 
 type Translate = (key: string) => string
 type TableActionColor = "neutral" | "primary" | "error"
-
-export interface TableInsertOptions {
-    rows: number
-    cols: number
-    withHeaderRow: boolean
-}
 
 export interface TableAction {
     key: string
@@ -53,11 +48,10 @@ export interface TableCellTarget {
     columnIndex: number
 }
 
-const MIN_TABLE_SIZE = 1
-const MAX_TABLE_SIZE = 10
-
-function clampTableSize(value: number) {
-    return Math.min(MAX_TABLE_SIZE, Math.max(MIN_TABLE_SIZE, value))
+export interface TableCellTargetReference {
+    tableStart: number
+    rowIndex: number
+    columnIndex: number
 }
 
 function mapActionToContextMenuItem(action: TableAction): ContextMenuItem {
@@ -118,6 +112,32 @@ function getCellPositionAtPos(editor: Editor, pos: number) {
     return null
 }
 
+function getTableContextAtTableStart(editor: Editor, tableStart: number) {
+    if (tableStart < 1) {
+        return null
+    }
+
+    const tableNodePos = tableStart - 1
+    const tableNode = editor.state.doc.nodeAt(tableNodePos)
+    if (!tableNode || tableNode.type.name !== "table") {
+        return null
+    }
+
+    return {
+        tableNode,
+        tableStart: tableNodePos + 1,
+    }
+}
+
+function clampCellIndices(tableNode: ProseMirrorNode, rowIndex: number, columnIndex: number) {
+    const tableMap = TableMap.get(tableNode)
+
+    return {
+        rowIndex: Math.min(Math.max(rowIndex, 0), tableMap.height - 1),
+        columnIndex: Math.min(Math.max(columnIndex, 0), tableMap.width - 1),
+    }
+}
+
 function createCellTarget(tableNode: ProseMirrorNode, tableStart: number, rowIndex: number, columnIndex: number) {
     const tableMap = TableMap.get(tableNode)
     if (rowIndex < 0 || rowIndex >= tableMap.height || columnIndex < 0 || columnIndex >= tableMap.width) {
@@ -139,6 +159,33 @@ function createCellTarget(tableNode: ProseMirrorNode, tableStart: number, rowInd
     }
 }
 
+function createCellTargetReference(target: TableCellTarget | null): TableCellTargetReference | null {
+    if (!target) {
+        return null
+    }
+
+    return {
+        tableStart: target.tableStart,
+        rowIndex: target.rowIndex,
+        columnIndex: target.columnIndex,
+    }
+}
+
+function resolveCellTargetReference(editor: Editor, reference: TableCellTargetReference | null): TableCellTarget | null {
+    if (!reference) {
+        return null
+    }
+
+    const tableContext = getTableContextAtTableStart(editor, reference.tableStart)
+        ?? getTableContextAtPos(editor, reference.tableStart)
+    if (!tableContext) {
+        return null
+    }
+
+    const clampedIndices = clampCellIndices(tableContext.tableNode, reference.rowIndex, reference.columnIndex)
+    return createCellTarget(tableContext.tableNode, tableContext.tableStart, clampedIndices.rowIndex, clampedIndices.columnIndex)
+}
+
 function getCurrentTableTarget(editor: Editor) {
     const tableContext = getTableContextAtPos(editor, editor.state.selection.from)
     if (!tableContext) {
@@ -156,6 +203,10 @@ function getCurrentTableTarget(editor: Editor) {
     return createCellTarget(tableContext.tableNode, tableContext.tableStart, 0, 0)
 }
 
+function isTableCellTarget(target: TableCellTarget | TableCellTargetReference): target is TableCellTarget {
+    return "tableNode" in target
+}
+
 function focusCellTarget(editor: Editor, target: TableCellTarget | null) {
     if (!target) {
         return false
@@ -168,6 +219,7 @@ function focusCellTarget(editor: Editor, target: TableCellTarget | null) {
 }
 
 export function useTableActions(editor: Editor, t: Translate) {
+    const floatingMenuState = useStructuralTextFloatingMenuState()
     const isInTable = computed(() => editor.isActive("table"))
     const isInCell = computed(() => editor.isActive("tableCell") || editor.isActive("tableHeader"))
     const canMergeCells = computed(() => editor.can().mergeCells())
@@ -196,11 +248,33 @@ export function useTableActions(editor: Editor, t: Translate) {
         return getCurrentTableTarget(editor)
     }
 
-    const resolveTarget = (target?: TableCellTarget | null) => {
-        return target ?? getCurrentCellTarget()
+    const createTargetReference = (target: TableCellTarget | null) => {
+        return createCellTargetReference(target)
     }
 
-    const runOnTarget = (target: TableCellTarget | null | undefined, command: () => boolean) => {
+    const resolveTargetReference = (reference: TableCellTargetReference | null) => {
+        return resolveCellTargetReference(editor, reference)
+    }
+
+    const resolveTarget = (target?: TableCellTarget | TableCellTargetReference | null) => {
+        if (!target) {
+            return getCurrentCellTarget()
+        }
+
+        if (isTableCellTarget(target)) {
+            return resolveTargetReference(createTargetReference(target))
+        }
+
+        return resolveTargetReference(target)
+    }
+
+    const runOnTarget = (target: TableCellTarget | TableCellTargetReference | null | undefined, command: () => boolean) => {
+        if (!target && floatingMenuState?.restorePreservedTableSelection(editor)) {
+            const commandResult = command()
+            floatingMenuState.clearPreservedTableSelection()
+            return commandResult
+        }
+
         const resolvedTarget = resolveTarget(target)
         if (!focusCellTarget(editor, resolvedTarget)) {
             return false
@@ -209,68 +283,72 @@ export function useTableActions(editor: Editor, t: Translate) {
         return command()
     }
 
-    const insertTable = ({rows, cols, withHeaderRow}: TableInsertOptions) => {
-        return editor.chain().focus().insertTable({
-            rows: clampTableSize(rows),
-            cols: clampTableSize(cols),
-            withHeaderRow,
-        }).run()
+    const runOnCurrentSelection = (command: () => boolean) => {
+        if (floatingMenuState?.restorePreservedTableSelection(editor)) {
+            const commandResult = command()
+            floatingMenuState.clearPreservedTableSelection()
+            return commandResult
+        }
+
+        return command()
     }
 
     const selectColor = (color: AttributeColor | null) => {
-        editor.chain().focus().updateAttributes("tableCell", {backgroundColor: color}).run()
-        editor.chain().focus().updateAttributes("tableHeader", {backgroundColor: color}).run()
+        runOnCurrentSelection(() => {
+            editor.chain().focus().updateAttributes("tableCell", {backgroundColor: color}).run()
+            return editor.chain().focus().updateAttributes("tableHeader", {backgroundColor: color}).run()
+        })
     }
 
-    const insertRowBeforeAtTarget = (target?: TableCellTarget | null) => {
+    const insertRowBeforeAtTarget = (target?: TableCellTarget | TableCellTargetReference | null) => {
         return runOnTarget(target, () => editor.chain().focus().addRowBefore().run())
     }
 
-    const insertRowAfterAtTarget = (target?: TableCellTarget | null) => {
+    const insertRowAfterAtTarget = (target?: TableCellTarget | TableCellTargetReference | null) => {
         return runOnTarget(target, () => editor.chain().focus().addRowAfter().run())
     }
 
-    const deleteRowAtTarget = (target?: TableCellTarget | null) => {
+    const deleteRowAtTarget = (target?: TableCellTarget | TableCellTargetReference | null) => {
         return runOnTarget(target, () => editor.chain().focus().deleteRow().run())
     }
 
-    const insertColumnBeforeAtTarget = (target?: TableCellTarget | null) => {
+    const insertColumnBeforeAtTarget = (target?: TableCellTarget | TableCellTargetReference | null) => {
         return runOnTarget(target, () => editor.chain().focus().addColumnBefore().run())
     }
 
-    const insertColumnAfterAtTarget = (target?: TableCellTarget | null) => {
+    const insertColumnAfterAtTarget = (target?: TableCellTarget | TableCellTargetReference | null) => {
         return runOnTarget(target, () => editor.chain().focus().addColumnAfter().run())
     }
 
-    const deleteColumnAtTarget = (target?: TableCellTarget | null) => {
+    const deleteColumnAtTarget = (target?: TableCellTarget | TableCellTargetReference | null) => {
         return runOnTarget(target, () => editor.chain().focus().deleteColumn().run())
     }
 
     const insertRowBefore = () => {
-        return editor.chain().focus().addRowBefore().run()
+        return runOnCurrentSelection(() => editor.chain().focus().addRowBefore().run())
     }
 
     const insertRowAfter = () => {
-        return editor.chain().focus().addRowAfter().run()
+        return runOnCurrentSelection(() => editor.chain().focus().addRowAfter().run())
     }
 
     const deleteRow = () => {
-        return editor.chain().focus().deleteRow().run()
+        return runOnCurrentSelection(() => editor.chain().focus().deleteRow().run())
     }
 
     const insertColumnBefore = () => {
-        return editor.chain().focus().addColumnBefore().run()
+        return runOnCurrentSelection(() => editor.chain().focus().addColumnBefore().run())
     }
 
     const insertColumnAfter = () => {
-        return editor.chain().focus().addColumnAfter().run()
+        return runOnCurrentSelection(() => editor.chain().focus().addColumnAfter().run())
     }
 
     const deleteColumn = () => {
-        return editor.chain().focus().deleteColumn().run()
+        return runOnCurrentSelection(() => editor.chain().focus().deleteColumn().run())
     }
 
-    const getRowHandleActions = (target: TableCellTarget | null) => {
+    const getRowHandleActions = (target: TableCellTarget | TableCellTargetReference | null) => {
         return [
             {
                 key: "insert-row-before",
@@ -297,7 +375,7 @@ export function useTableActions(editor: Editor, t: Translate) {
         ] satisfies TableAction[]
     }
 
-    const getColumnHandleActions = (target: TableCellTarget | null) => {
+    const getColumnHandleActions = (target: TableCellTarget | TableCellTargetReference | null) => {
         return [
             {
                 key: "insert-column-before",
@@ -382,14 +460,14 @@ export function useTableActions(editor: Editor, t: Translate) {
                 label: t("editor.table.mergeCells"),
                 icon: "i-lucide-merge",
                 disabled: !canMergeCells.value,
-                onSelect: () => editor.chain().focus().mergeCells().run(),
+                onSelect: () => runOnCurrentSelection(() => editor.chain().focus().mergeCells().run()),
             },
             {
                 key: "split-cell",
                 label: t("editor.table.splitCell"),
                 icon: "i-lucide-ungroup",
                 disabled: !canSplitCell.value,
-                onSelect: () => editor.chain().focus().splitCell().run(),
+                onSelect: () => runOnCurrentSelection(() => editor.chain().focus().splitCell().run()),
             }
         ] : []
     }))
@@ -401,20 +479,20 @@ export function useTableActions(editor: Editor, t: Translate) {
                 key: "toggle-header-row",
                 label: t("editor.table.toggleHeaderRow"),
                 icon: "i-lucide-rows-2",
-                onSelect: () => editor.chain().focus().toggleHeaderRow().run(),
+                onSelect: () => runOnCurrentSelection(() => editor.chain().focus().toggleHeaderRow().run()),
             },
             {
                 key: "toggle-header-column",
                 label: t("editor.table.toggleHeaderColumn"),
                 icon: "i-lucide-columns-2",
-                onSelect: () => editor.chain().focus().toggleHeaderColumn().run(),
+                onSelect: () => runOnCurrentSelection(() => editor.chain().focus().toggleHeaderColumn().run()),
             },
             {
                 key: "toggle-header-cell",
                 label: t("editor.table.toggleHeaderCell"),
                 icon: "i-lucide-square-stack",
                 disabled: !isInCell.value,
-                onSelect: () => editor.chain().focus().toggleHeaderCell().run(),
+                onSelect: () => runOnCurrentSelection(() => editor.chain().focus().toggleHeaderCell().run()),
             }
         ]
     }))
@@ -427,7 +505,7 @@ export function useTableActions(editor: Editor, t: Translate) {
                 label: t("editor.table.deleteTable"),
                 icon: "i-lucide-trash-2",
                 color: "error",
-                onSelect: () => editor.chain().focus().deleteTable().run(),
+                onSelect: () => runOnCurrentSelection(() => editor.chain().focus().deleteTable().run()),
             }
         ]
     }))
@@ -511,12 +589,13 @@ export function useTableActions(editor: Editor, t: Translate) {
 
     return {
         colors,
-        insertTable,
         selectColor,
         isInTable,
         isInCell,
         getCellTargetAtPos,
         getCurrentCellTarget,
+        createTargetReference,
+        resolveTargetReference,
         getRowHandleActions,
         getColumnHandleActions,
         primaryToolbarActions,

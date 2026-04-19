@@ -19,8 +19,24 @@ import {computed, ref, watch} from "vue";
 import type {Editor} from "@tiptap/core";
 import {DragHandle} from "@tiptap/extension-drag-handle-vue-3";
 import {useI18n} from "vue-i18n";
-import {useStructuralTextInsertController} from "@/components/structuraltext/composables/useStructuralTextInsertController";
-import {buildBlockTransformActions, canRunBlockTransformAt, runBlockTransformAt} from "@/components/structuraltext/blockActions";
+import {
+    useStructuralTextFloatingMenuState
+} from "@/components/structuraltext/composables/useStructuralTextFloatingMenuState";
+import {
+    useStructuralTextInsertController
+} from "@/components/structuraltext/composables/useStructuralTextInsertController";
+import {
+    buildBlockTransformActions,
+    canRunBlockTransformAt,
+    runBlockTransformAt
+} from "@/components/structuraltext/blockActions";
+import {
+    editorCompactFloatingSurfaceClass,
+    editorDividerClass,
+    editorHandleButtonClass,
+    editorMenuItemClass,
+    editorSectionLabelClass,
+} from "@/components/structuraltext/editorUi";
 
 interface BlockMenuAction {
     key: string
@@ -40,10 +56,17 @@ const emit = defineEmits<{
 }>();
 
 const {t} = useI18n()
+const floatingMenuState = useStructuralTextFloatingMenuState()
 const insertController = useStructuralTextInsertController()
 const currentNodePos = ref<number | null>(null)
 const pinnedNodePos = ref<number | null>(null)
 const menuOpen = ref(false)
+const handleRef = ref<HTMLElement | null>(null)
+const popoverMenuClass = `w-60 ${editorCompactFloatingSurfaceClass}`
+const sectionLabelClass = editorSectionLabelClass
+const menuItemClass = editorMenuItemClass
+const dividerClass = editorDividerClass
+const handleButtonClass = editorHandleButtonClass
 
 const activeNodePos = computed(() => menuOpen.value ? pinnedNodePos.value : currentNodePos.value)
 
@@ -67,8 +90,20 @@ function onNodeChange({pos}: { pos: number }) {
     currentNodePos.value = pos >= 0 ? pos : null
 }
 
-function handleHandleClick() {
-    selectBlockAt(activeNodePos.value ?? currentNodePos.value)
+function getStableNodePos() {
+    return activeNodePos.value ?? currentNodePos.value
+}
+
+function openMenu() {
+    const stableNodePos = getStableNodePos()
+    if (stableNodePos == null) {
+        return
+    }
+
+    floatingMenuState?.openMenu("drag-handle-menu")
+    pinnedNodePos.value = stableNodePos
+    selectBlockAt(stableNodePos)
+    menuOpen.value = true
 }
 
 function closeMenu() {
@@ -236,12 +271,24 @@ const utilityActions = computed(() => {
 
 watch(menuOpen, isOpen => {
     if (isOpen) {
-        pinnedNodePos.value = currentNodePos.value
-        selectBlockAt(pinnedNodePos.value)
+        floatingMenuState?.openMenu("drag-handle-menu")
         return
     }
 
-    pinnedNodePos.value = null
+    floatingMenuState?.closeMenu("drag-handle-menu")
+    if (!isOpen) {
+        pinnedNodePos.value = null
+    }
+})
+
+watch(() => floatingMenuState?.activeMenu.value, activeMenu => {
+    if (menuOpen.value && activeMenu && activeMenu !== "drag-handle-menu") {
+        menuOpen.value = false
+    }
+})
+
+watch(() => floatingMenuState?.closeSignal.value, () => {
+    menuOpen.value = false
 })
 </script>
 
@@ -252,23 +299,28 @@ watch(menuOpen, isOpen => {
                 :nested="true"
                 class="hidden sm:flex items-center justify-center pe-4 transition-all duration-200 ease-out"
     >
-        <UPopover v-model:open="menuOpen">
+        <div ref="handleRef">
             <UButton
                     type="button"
                     variant="ghost"
                     color="neutral"
                     size="sm"
                     square
-                    class="cursor-grab rounded-full"
+                    :class="['cursor-grab', handleButtonClass]"
                     icon="i-lucide-grip-vertical"
                     :aria-label="t('editor.blockMenu.open')"
-                    @click.stop="handleHandleClick"
+                    @mousedown.prevent
+                    @click.stop="openMenu"
             />
 
+        </div>
+
+        <UPopover v-model:open="menuOpen" :content="{sideOffset: 6}" :reference="handleRef">
+
             <template #content>
-                <div class="w-60 p-1.5">
+                <div :class="popoverMenuClass">
                     <template v-if="transformActions.length > 0">
-                        <div class="px-2 py-1 text-[11px] font-medium text-muted">
+                        <div :class="sectionLabelClass">
                             {{ t('editor.blockMenu.turnInto') }}
                         </div>
                         <div class="grid gap-0.5 p-1">
@@ -280,17 +332,17 @@ watch(menuOpen, isOpen => {
                                  size="xs"
                                  :icon="action.icon"
                                  :disabled="action.disabled"
-                                 class="justify-start rounded-md px-2"
-                                 @click="runMenuAction(action)"
-                         >
+                                    :class="menuItemClass"
+                                    @click="runMenuAction(action)"
+                            >
                                 {{ action.label }}
                             </UButton>
                         </div>
 
-                        <div class="my-1 h-px bg-default"/>
+                        <div :class="dividerClass"/>
                     </template>
 
-                    <div class="px-2 py-1 text-[11px] font-medium text-muted">
+                    <div :class="sectionLabelClass">
                         {{ t('editor.blockMenu.insertBelow') }}
                     </div>
                     <div class="grid gap-0.5 p-1">
@@ -302,14 +354,14 @@ watch(menuOpen, isOpen => {
                                 size="xs"
                                 :icon="action.icon"
                                 :disabled="action.disabled"
-                                class="justify-start rounded-md px-2"
+                                :class="menuItemClass"
                                 @click="runMenuAction(action)"
                         >
                             {{ action.label }}
                         </UButton>
                     </div>
 
-                    <div class="my-1 h-px bg-default"/>
+                    <div :class="dividerClass"/>
 
                     <div class="grid gap-0.5 p-1">
                         <UButton
@@ -319,7 +371,7 @@ watch(menuOpen, isOpen => {
                                 variant="ghost"
                                 size="xs"
                                 :icon="action.icon"
-                                class="justify-start rounded-md px-2"
+                                :class="menuItemClass"
                                 @click="runMenuAction(action)"
                         >
                             {{ action.label }}
