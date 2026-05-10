@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
-import tech.lamprism.lampray.system.database.DatabaseSslArtifacts
-import tech.lamprism.lampray.system.database.DatabaseSslSupport
 import tech.lamprism.lampray.system.database.DatabaseType
 import tech.lamprism.lampray.system.database.addResourceCleanupSuppressed
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslArtifacts
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslSupport
 
 /**
  * URL builder for MySQL and MariaDB databases.
@@ -93,19 +94,19 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
 
     private fun mapMySqlSslMode(config: DatabaseConfig): String {
         return when (config.ssl.mode) {
-            tech.lamprism.lampray.system.database.DatabaseSslMode.DISABLED -> "DISABLED"
-            tech.lamprism.lampray.system.database.DatabaseSslMode.REQUIRED -> "REQUIRED"
-            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_CA -> "VERIFY_CA"
-            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_IDENTITY -> "VERIFY_IDENTITY"
+            DatabaseSslMode.DISABLED -> "DISABLED"
+            DatabaseSslMode.REQUIRED -> "REQUIRED"
+            DatabaseSslMode.VERIFY_CA -> "VERIFY_CA"
+            DatabaseSslMode.VERIFY_IDENTITY -> "VERIFY_IDENTITY"
         }
     }
 
     private fun mapMariaDbSslMode(config: DatabaseConfig): String {
         return when (config.ssl.mode) {
-            tech.lamprism.lampray.system.database.DatabaseSslMode.DISABLED -> "disable"
-            tech.lamprism.lampray.system.database.DatabaseSslMode.REQUIRED -> "trust"
-            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_CA -> "verify-ca"
-            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_IDENTITY -> "verify-full"
+            DatabaseSslMode.DISABLED -> "disable"
+            DatabaseSslMode.REQUIRED -> "trust"
+            DatabaseSslMode.VERIFY_CA -> "verify-ca"
+            DatabaseSslMode.VERIFY_IDENTITY -> "verify-full"
         }
     }
 

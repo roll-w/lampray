@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package tech.lamprism.lampray.system.database
 
 import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import org.slf4j.logger
+import org.slf4j.warn
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties
@@ -29,6 +29,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import tech.lamprism.lampray.setting.ConfigProvider
 import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslConfig
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMaterial
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
 import tech.lamprism.lampray.web.ServerInitializeException
 import tech.lamprism.lampray.web.configuration.LocalConfigConfiguration
 import javax.sql.DataSource
@@ -76,7 +79,7 @@ class DataSourceConfiguration(
         logger.info("Database URL configured: $url")
     }
 
-    @Bean(destroyMethod = "close")
+    @Bean
     @Primary
     fun dataSource(
         databaseConfig: DatabaseConfig,

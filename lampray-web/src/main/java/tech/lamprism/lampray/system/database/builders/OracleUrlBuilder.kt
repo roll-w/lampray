@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
 
 /**
  * URL builder for Oracle databases.
@@ -77,7 +78,7 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
             )
         }
 
-        if (config.ssl.mode == tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_CA) {
+        if (config.ssl.mode == DatabaseSslMode.VERIFY_CA) {
             throw IllegalArgumentException(
                 "Oracle does not support a managed verify-ca mode without identity matching. " +
                         "Use 'required', 'verify-identity', or supplemental driver properties in database.options."
@@ -85,10 +86,10 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
         }
 
         val dnMatch = when (config.ssl.mode) {
-            tech.lamprism.lampray.system.database.DatabaseSslMode.DISABLED -> "false"
-            tech.lamprism.lampray.system.database.DatabaseSslMode.REQUIRED -> "false"
-            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_IDENTITY -> "true"
-            tech.lamprism.lampray.system.database.DatabaseSslMode.VERIFY_CA -> "false"
+            DatabaseSslMode.DISABLED -> "false"
+            DatabaseSslMode.REQUIRED -> "false"
+            DatabaseSslMode.VERIFY_IDENTITY -> "true"
+            DatabaseSslMode.VERIFY_CA -> "false"
         }
 
         return mapOf("oracle.net.ssl_server_dn_match" to dnMatch)

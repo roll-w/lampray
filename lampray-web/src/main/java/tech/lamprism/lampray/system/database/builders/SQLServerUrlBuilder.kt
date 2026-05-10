@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
-import tech.lamprism.lampray.system.database.DatabaseSslArtifacts
-import tech.lamprism.lampray.system.database.DatabaseSslMode
-import tech.lamprism.lampray.system.database.DatabaseSslSupport
 import tech.lamprism.lampray.system.database.DatabaseType
 import tech.lamprism.lampray.system.database.addResourceCleanupSuppressed
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslArtifacts
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslSupport
 
 /**
  * URL builder for SQL Server databases.

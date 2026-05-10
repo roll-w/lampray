@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
 import java.io.File
 
 /**
@@ -38,7 +39,7 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
         }
 
         if (target.isNetwork() && config.ssl.isEnabled() &&
-            config.ssl.mode != tech.lamprism.lampray.system.database.DatabaseSslMode.REQUIRED
+            config.ssl.mode != DatabaseSslMode.REQUIRED
         ) {
             throw IllegalArgumentException(
                 "H2 network SSL only supports the managed 'required' mode. " +
