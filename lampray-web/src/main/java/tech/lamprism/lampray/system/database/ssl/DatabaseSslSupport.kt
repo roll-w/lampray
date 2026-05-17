@@ -26,14 +26,14 @@ object DatabaseSslSupport {
         return when (material.source) {
             DatabaseSslMaterialSource.FILE -> DatabaseSslFileArtifact(Path.of(material.value))
             DatabaseSslMaterialSource.VALUE -> {
-                val path = createTempFile(prefix, ".pem")
+                val path = DatabaseSslTempFiles.createTempFile(prefix, ".pem")
                 try {
                     Files.writeString(path, material.value, StandardCharsets.UTF_8)
                 } catch (e: Exception) {
-                    cleanupTempPath(path, e)
+                    DatabaseSslTempFiles.cleanupTempPath(path, e)
                     throw e
                 }
-                DatabaseSslFileArtifact(path, listOf(TemporaryPathResource(path)))
+                DatabaseSslFileArtifact(path, listOf(DatabaseSslTempFiles.TemporaryPathResource(path)))
             }
         }
     }
@@ -43,8 +43,8 @@ object DatabaseSslSupport {
         material: DatabaseSslMaterial,
         type: String = "PKCS12"
     ): DatabaseSslKeyStoreArtifact {
-        val storePassword = newPassword()
-        val certificates = readCertificates(material)
+        val storePassword = DatabaseSslTempFiles.newPassword()
+        val certificates = DatabaseSslParsing.readCertificates(material)
         val keyStore = KeyStore.getInstance(type)
         keyStore.load(null, storePassword.toCharArray())
         certificates.forEachIndexed { index, certificate ->
@@ -59,9 +59,9 @@ object DatabaseSslSupport {
         key: DatabaseSslMaterial,
         type: String = "PKCS12"
     ): DatabaseSslKeyStoreArtifact {
-        val storePassword = newPassword()
-        val certificates = readCertificates(certificate)
-        val privateKey = readPrivateKey(key)
+        val storePassword = DatabaseSslTempFiles.newPassword()
+        val certificates = DatabaseSslParsing.readCertificates(certificate)
+        val privateKey = DatabaseSslParsing.readPrivateKey(key)
         val keyStore = KeyStore.getInstance(type)
         keyStore.load(null, storePassword.toCharArray())
         keyStore.setKeyEntry("$prefix-client", privateKey, storePassword.toCharArray(), certificates)
@@ -75,15 +75,20 @@ object DatabaseSslSupport {
         type: String
     ): DatabaseSslKeyStoreArtifact {
         val extension = if (type.equals("JKS", ignoreCase = true)) ".jks" else ".p12"
-        val path = createTempFile(prefix, extension)
+        val path = DatabaseSslTempFiles.createTempFile(prefix, extension)
         try {
             Files.newOutputStream(path).use { outputStream ->
                 keyStore.store(outputStream, password.toCharArray())
             }
         } catch (e: Exception) {
-            cleanupTempPath(path, e)
+            DatabaseSslTempFiles.cleanupTempPath(path, e)
             throw e
         }
-        return DatabaseSslKeyStoreArtifact(path, password, type, listOf(TemporaryPathResource(path)))
+        return DatabaseSslKeyStoreArtifact(
+            path,
+            password,
+            type,
+            listOf(DatabaseSslTempFiles.TemporaryPathResource(path))
+        )
     }
 }

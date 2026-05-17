@@ -17,8 +17,8 @@
 package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
+import tech.lamprism.lampray.system.database.DatabaseResourceCleanup
 import tech.lamprism.lampray.system.database.DatabaseType
-import tech.lamprism.lampray.system.database.addResourceCleanupSuppressed
 import tech.lamprism.lampray.system.database.ssl.DatabaseSslArtifacts
 import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
 import tech.lamprism.lampray.system.database.ssl.DatabaseSslSupport
@@ -84,7 +84,7 @@ class PostgreSQLUrlBuilder : AbstractDatabaseUrlBuilder() {
                 resources.addAll(keyArtifact.resources)
             }
         } catch (e: Exception) {
-            addResourceCleanupSuppressed(resources, e)
+            DatabaseResourceCleanup.addSuppressed(resources, e)
             throw e
         }
 

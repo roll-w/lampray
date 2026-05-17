@@ -36,8 +36,6 @@ import tech.lamprism.lampray.web.ServerInitializeException
 import tech.lamprism.lampray.web.configuration.LocalConfigConfiguration
 import javax.sql.DataSource
 
-private val logger = logger<DataSourceConfiguration>()
-
 /**
  * Data source configuration with HikariCP connection pool support for multiple database types.
  *
@@ -51,6 +49,9 @@ class DataSourceConfiguration(
     @param:Qualifier(LocalConfigConfiguration.LOCAL_CONFIG_PROVIDER)
     private val configProvider: ConfigProvider
 ) {
+    companion object {
+        private val logger = logger<DataSourceConfiguration>()
+    }
 
     /**
      * @throws ServerInitializeException if the database URL cannot be built
@@ -208,7 +209,31 @@ class DataSourceConfiguration(
             )
         }
 
+        if (isValidatingSslMode(sslMode) && ca == null) {
+            if (requiresConfiguredCa(databaseType)) {
+                throw ServerInitializeException(
+                    ServerInitializeException.Detail(
+                        "Database SSL validation requires a configured CA certificate.",
+                        "Set 'database.ssl.ca' when using '${sslMode.value}' with '${databaseType.typeName}' " +
+                                "so the driver can validate the server certificate during startup."
+                    )
+                )
+            }
+            logger.warn {
+                "Database SSL mode '${sslMode.value}' is configured without database.ssl.ca. " +
+                        "Database type '${databaseType.typeName}' will use the driver or JVM default trust material."
+            }
+        }
+
         return DatabaseSslConfig(sslMode, ca, certificate, key)
+    }
+
+    private fun isValidatingSslMode(sslMode: DatabaseSslMode): Boolean {
+        return sslMode == DatabaseSslMode.VERIFY_CA || sslMode == DatabaseSslMode.VERIFY_IDENTITY
+    }
+
+    private fun requiresConfiguredCa(databaseType: DatabaseType): Boolean {
+        return databaseType == DatabaseType.POSTGRESQL
     }
 
     private fun isSslUnsupportedDatabaseType(databaseType: DatabaseType): Boolean {

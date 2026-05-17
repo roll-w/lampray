@@ -17,8 +17,8 @@
 package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
+import tech.lamprism.lampray.system.database.DatabaseResourceCleanup
 import tech.lamprism.lampray.system.database.DatabaseType
-import tech.lamprism.lampray.system.database.addResourceCleanupSuppressed
 import tech.lamprism.lampray.system.database.ssl.DatabaseSslArtifacts
 import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
 import tech.lamprism.lampray.system.database.ssl.DatabaseSslSupport
@@ -104,6 +104,7 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
     private fun mapMariaDbSslMode(config: DatabaseConfig): String {
         return when (config.ssl.mode) {
             DatabaseSslMode.DISABLED -> "disable"
+            // MariaDB Connector/J treats REQUIRED as the TRUST mode: encrypted transport without certificate verification.
             DatabaseSslMode.REQUIRED -> "trust"
             DatabaseSslMode.VERIFY_CA -> "verify-ca"
             DatabaseSslMode.VERIFY_IDENTITY -> "verify-full"
@@ -135,7 +136,7 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
                 resources.addAll(keyStore.resources)
             }
         } catch (e: Exception) {
-            addResourceCleanupSuppressed(resources, e)
+            DatabaseResourceCleanup.addSuppressed(resources, e)
             throw e
         }
 
@@ -168,7 +169,7 @@ class MySQLUrlBuilder : AbstractDatabaseUrlBuilder() {
                 resources.addAll(keyStore.resources)
             }
         } catch (e: Exception) {
-            addResourceCleanupSuppressed(resources, e)
+            DatabaseResourceCleanup.addSuppressed(resources, e)
             throw e
         }
 

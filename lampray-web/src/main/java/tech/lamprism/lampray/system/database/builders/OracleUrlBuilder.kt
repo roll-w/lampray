@@ -37,15 +37,23 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
             val service = config.databaseName.ifBlank {
                 throw IllegalArgumentException("Database name must be specified for Oracle")
             }
-            val protocolPrefix = if (config.ssl.isEnabled()) {
-                "jdbc:oracle:thin:@tcps://"
-            } else {
-                config.type.urlPrefix
-            }
+            val protocolPrefix = buildProtocolPrefix(config)
             "$protocolPrefix${target.getNetworkAddress()}/$service"
         } else {
             throw IllegalArgumentException("Oracle requires network target format (host:port or host)")
         }
+    }
+
+    private fun buildProtocolPrefix(config: DatabaseConfig): String {
+        if (!config.ssl.isEnabled()) {
+            return config.type.urlPrefix
+        }
+
+        val networkPrefixSuffix = "@//"
+        require(config.type.urlPrefix.endsWith(networkPrefixSuffix)) {
+            "Cannot derive Oracle TCPS JDBC URL prefix from configured prefix: ${config.type.urlPrefix}"
+        }
+        return config.type.urlPrefix.removeSuffix(networkPrefixSuffix) + "@tcps://"
     }
 
     override fun addCharsetParameter(params: MutableMap<String, String>, charset: String) {

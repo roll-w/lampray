@@ -17,10 +17,10 @@
 package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
+import tech.lamprism.lampray.system.database.DatabaseResourceCleanup
 import tech.lamprism.lampray.system.database.DatabaseType
 import tech.lamprism.lampray.system.database.DatabaseUrl
 import tech.lamprism.lampray.system.database.DatabaseUrlBuilder
-import tech.lamprism.lampray.system.database.addResourceCleanupSuppressed
 import tech.lamprism.lampray.system.database.ssl.DatabaseSslArtifacts
 
 /**
@@ -46,7 +46,7 @@ abstract class AbstractDatabaseUrlBuilder : DatabaseUrlBuilder {
         val parameters = try {
             buildAdditionalProperties(config, sslArtifacts.properties)
         } catch (e: Exception) {
-            addResourceCleanupSuppressed(sslArtifacts.resources, e)
+            DatabaseResourceCleanup.addSuppressed(sslArtifacts.resources, e)
             throw e
         }
 
