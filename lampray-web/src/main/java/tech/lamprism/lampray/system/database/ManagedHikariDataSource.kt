@@ -31,8 +31,14 @@ class ManagedHikariDataSource(
     override fun close() {
         try {
             super.close()
-        } finally {
-            databaseUrl.closeResources()
+        } catch (e: Exception) {
+            try {
+                databaseUrl.closeResources()
+            } catch (cleanupException: Exception) {
+                e.addSuppressed(cleanupException)
+            }
+            throw e
         }
+        databaseUrl.closeResources()
     }
 }
