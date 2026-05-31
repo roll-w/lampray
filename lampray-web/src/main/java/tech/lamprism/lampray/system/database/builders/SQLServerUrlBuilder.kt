@@ -85,10 +85,21 @@ class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
 
         try {
             config.ssl.ca?.let { ca ->
-                if (config.ssl.mode != DatabaseSslMode.VERIFY_IDENTITY) {
-                    throw IllegalArgumentException(
-                        "SQL Server custom CA material requires 'database.ssl.mode=verify-identity'."
-                    )
+                when (config.ssl.mode) {
+                    DatabaseSslMode.REQUIRED -> {
+                        // REQUIRED + CA: trust specific CA but don't verify hostname
+                        properties["trustServerCertificate"] = "false"
+                    }
+
+                    DatabaseSslMode.VERIFY_IDENTITY -> {
+                        // VERIFY_IDENTITY + CA: full certificate validation
+                    }
+
+                    else -> {
+                        throw IllegalArgumentException(
+                            "SQL Server custom CA material requires database.ssl.mode= 'required' or 'verify-identity'."
+                        )
+                    }
                 }
                 val trustStore = DatabaseSslSupport.materializeTrustStore("sqlserver-trust", ca)
                 properties["trustStore"] = trustStore.path.toAbsolutePath().toString()

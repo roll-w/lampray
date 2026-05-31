@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
                             - '[random]': Generates a new random secret key on each startup (development only)
                             
                             Key source formats:
-                            - Direct value: 'memory:<base64-secret>' or 'memory:<pem-private-key>'
+                            - Direct value: 'value:<base64-secret>' or 'value:<pem-private-key>'
                             - File reference: 'file:<path-to-key-file>'
                             
                             Note: Random keys are not suitable for production as they invalidate
@@ -237,8 +237,12 @@ public class AuthorizationTokenConfigKeys implements SettingSpecificationSupplie
             return readFromFile(value.substring("file:".length()).trim());
         }
 
+        if (value.startsWith("value:")) {
+            return value.substring("value:".length()).trim();
+        }
+
         if (value.startsWith("memory:")) {
-            return value.substring("memory:".length()).trim();
+            throw new IllegalArgumentException("Invalid key prefix 'memory:'. Use 'value:' instead for inline content.");
         }
 
         // Direct value
