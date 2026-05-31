@@ -16,13 +16,23 @@
 
 package tech.lamprism.lampray.system.database.ssl
 
-data class DatabaseSslConfig(
-    val mode: DatabaseSslMode = DatabaseSslMode.DISABLED,
-    val ca: DatabaseSslMaterial? = null,
-    val certificate: DatabaseSslMaterial? = null,
-    val key: DatabaseSslMaterial? = null
+/**
+ * @author RollW
+ */
+enum class DatabaseSslMode(
+    val value: String
 ) {
-    fun isEnabled(): Boolean = mode != DatabaseSslMode.DISABLED
+    DISABLED("disabled"),
+    REQUIRED("required"),
+    VERIFY_CA("verify-ca"),
+    VERIFY_IDENTITY("verify-identity");
 
-    fun hasCustomMaterial(): Boolean = ca != null || certificate != null || key != null
+    companion object {
+        fun fromString(value: String): DatabaseSslMode {
+            return entries.find { it.value.equals(value, ignoreCase = true) }
+                ?: throw IllegalArgumentException(
+                    "Unsupported database SSL mode: $value. Supported values: ${entries.joinToString(", ") { it.value }}"
+                )
+        }
+    }
 }

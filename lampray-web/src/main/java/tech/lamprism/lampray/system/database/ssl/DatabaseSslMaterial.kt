@@ -16,35 +16,65 @@
 
 package tech.lamprism.lampray.system.database.ssl
 
+/**
+ * Represents SSL certificate material from a specific source.
+ *
+ * @param source the material source type (FILE or VALUE)
+ * @param value the file path or inline content
+ *
+ * @author RollW
+ */
 data class DatabaseSslMaterial(
-    val source: DatabaseSslMaterialSource,
+    val source: Source,
     val value: String
 ) {
+
+    /**
+     * The source type of SSL material.
+     */
+    enum class Source {
+        /**
+         * Material is stored in a file. The [value] is the file path.
+         */
+        FILE,
+
+        /**
+         * Material is provided inline. The [value] is the content.
+         */
+        VALUE
+    }
+
     companion object {
+        /**
+         * Parses a raw configuration value into a [DatabaseSslMaterial].
+         *
+         * @param rawValue the raw configuration string
+         * @param keyName the configuration key name (for error messages)
+         * @return the parsed material
+         * @throws IllegalArgumentException if the format is invalid
+         */
+        @JvmStatic
         fun parse(rawValue: String, keyName: String): DatabaseSslMaterial {
             val separatorIndex = rawValue.indexOf(':')
             require(separatorIndex > 0) {
                 "Invalid $keyName format. Use 'file:/path/to/file.pem' or 'value:<pem-content>'."
             }
 
-            val source = rawValue.substring(0, separatorIndex).trim().lowercase()
+            val sourceName = rawValue.substring(0, separatorIndex).trim().lowercase()
             val value = rawValue.substring(separatorIndex + 1).trim()
             require(value.isNotEmpty()) {
                 "$keyName cannot be empty."
             }
 
-            return when (source) {
-                "file" -> DatabaseSslMaterial(DatabaseSslMaterialSource.FILE, value)
-                "value" -> DatabaseSslMaterial(DatabaseSslMaterialSource.VALUE, value)
+            val source = when (sourceName) {
+                "file" -> Source.FILE
+                "value" -> Source.VALUE
                 else -> throw IllegalArgumentException(
-                    "Unsupported $keyName source '$source'. Supported sources: file, value."
+                    "Unsupported $keyName source '$sourceName'. Supported sources: file, value."
                 )
             }
+
+            return DatabaseSslMaterial(source, value)
         }
     }
-}
-
-enum class DatabaseSslMaterialSource {
-    FILE,
-    VALUE
 }

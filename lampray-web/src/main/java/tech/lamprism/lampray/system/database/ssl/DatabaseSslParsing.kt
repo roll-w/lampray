@@ -229,8 +229,8 @@ internal object DatabaseSslParsing {
 
     private fun decodeBase64Material(material: DatabaseSslMaterial, bytes: ByteArray): ByteArray? {
         return when (material.source) {
-            DatabaseSslMaterialSource.VALUE -> decodeBase64Bytes(String(bytes, StandardCharsets.UTF_8).trim())
-            DatabaseSslMaterialSource.FILE -> {
+            DatabaseSslMaterial.Source.VALUE -> decodeBase64Bytes(String(bytes, StandardCharsets.UTF_8).trim())
+            DatabaseSslMaterial.Source.FILE -> {
                 val text = String(bytes, StandardCharsets.UTF_8).trim()
                 if (looksLikeBase64Text(text)) decodeBase64Bytes(text) else null
             }
@@ -277,8 +277,8 @@ internal object DatabaseSslParsing {
 
     private fun readBytes(material: DatabaseSslMaterial): ByteArray {
         return when (material.source) {
-            DatabaseSslMaterialSource.FILE -> Files.readAllBytes(Path.of(material.value))
-            DatabaseSslMaterialSource.VALUE -> material.value.toByteArray(StandardCharsets.UTF_8)
+            DatabaseSslMaterial.Source.FILE -> Files.readAllBytes(Path.of(material.value))
+            DatabaseSslMaterial.Source.VALUE -> material.value.toByteArray(StandardCharsets.UTF_8)
         }
     }
 }
