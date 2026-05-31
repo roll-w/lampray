@@ -17,9 +17,12 @@
 package tech.lamprism.lampray.system.database.ssl
 
 import org.apache.commons.lang3.RandomStringUtils
+import org.slf4j.LoggerFactory
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
 import java.security.KeyStore
 
 /**
@@ -32,7 +35,7 @@ import java.security.KeyStore
  */
 object DatabaseSslSupport {
 
-    private val fileHandler = DatabaseSslFileHandler()
+    private val logger = LoggerFactory.getLogger(DatabaseSslSupport::class.java)
 
     /**
      * Materializes PEM content to a file. If the material source is a file,
@@ -49,7 +52,7 @@ object DatabaseSslSupport {
             }
 
             DatabaseSslMaterial.Source.VALUE -> {
-                val path = fileHandler.createTempFile(prefix, ".pem")
+                val path = createTempFile(prefix, ".pem")
                 try {
                     Files.writeString(path, material.value, StandardCharsets.UTF_8)
                 } catch (e: Exception) {
@@ -123,7 +126,7 @@ object DatabaseSslSupport {
         type: String
     ): DatabaseSslKeyStoreArtifact {
         val extension = if (type.equals("JKS", ignoreCase = true)) ".jks" else ".p12"
-        val path = fileHandler.createTempFile(prefix, extension)
+        val path = createTempFile(prefix, extension)
         try {
             Files.newOutputStream(path).use { outputStream ->
                 keyStore.store(outputStream, password.toCharArray())
@@ -140,17 +143,57 @@ object DatabaseSslSupport {
         )
     }
 
+    private fun createTempFile(prefix: String, suffix: String): Path {
+        val path = Files.createTempFile(TEMP_FILE_PREFIX + prefix, suffix)
+        setOwnerOnlyPermissions(path)
+        return path
+    }
+
+    private fun setOwnerOnlyPermissions(path: Path) {
+        try {
+            val permissions = setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE
+            )
+            Files.setPosixFilePermissions(path, permissions)
+        } catch (_: UnsupportedOperationException) {
+            logger.debug("POSIX permissions not supported, falling back to File API for: {}", path)
+            trySetOwnerOnlyPermissionsWithFileApi(path)
+        } catch (e: IOException) {
+            logger.warn("Failed to restrict file permissions due to IO error: {}", path, e)
+        } catch (e: SecurityException) {
+            logger.warn("Failed to restrict file permissions due to security policy: {}", path, e)
+        }
+    }
+
+    private fun trySetOwnerOnlyPermissionsWithFileApi(path: Path) {
+        try {
+            val file = path.toFile()
+            file.setReadable(false, false)
+            file.setWritable(false, false)
+            file.setExecutable(false, false)
+            val ownerRead = file.setReadable(true, true)
+            val ownerWrite = file.setWritable(true, true)
+            if (!ownerRead || !ownerWrite) {
+                logger.warn(
+                    "Failed to restrict database SSL temporary file permissions with the file API: {}",
+                    path
+                )
+            }
+        } catch (e: SecurityException) {
+            logger.warn("Failed to restrict file permissions with File API: {}", path, e)
+        }
+    }
+
     private fun generatePassword(): String {
         return RandomStringUtils.secure().nextAlphanumeric(PASSWORD_LENGTH)
     }
 
-    /**
-     * Creates an [AutoCloseable] resource that deletes the specified file on close.
-     */
     private fun createCleanupResource(path: Path): List<AutoCloseable> {
         return listOf(AutoCloseable { Files.deleteIfExists(path) })
     }
 
+    private const val TEMP_FILE_PREFIX = "lampray-db-"
     private const val DEFAULT_KEYSTORE_TYPE = "PKCS12"
     private const val PASSWORD_LENGTH = 32
 }

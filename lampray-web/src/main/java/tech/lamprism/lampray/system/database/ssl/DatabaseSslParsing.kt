@@ -191,22 +191,16 @@ internal object DatabaseSslParsing {
     }
 
     private fun looksLikePem(bytes: ByteArray): Boolean {
-        if (bytes.size < pemBeginMarker.size) {
-            return false
-        }
+        // PEM markers are always at the beginning of the file
+        return bytes.startsWith(pemBeginMarker)
+    }
 
-        val lastStartIndex = bytes.size - pemBeginMarker.size
-        for (startIndex in 0..lastStartIndex) {
-            var markerIndex = 0
-            while (markerIndex < pemBeginMarker.size && bytes[startIndex + markerIndex] == pemBeginMarker[markerIndex]) {
-                markerIndex++
-            }
-            if (markerIndex == pemBeginMarker.size) {
-                return true
-            }
+    private fun ByteArray.startsWith(prefix: ByteArray): Boolean {
+        if (size < prefix.size) return false
+        for (i in prefix.indices) {
+            if (this[i] != prefix[i]) return false
         }
-
-        return false
+        return true
     }
 
     private fun <T> parseBinaryOrBase64Material(

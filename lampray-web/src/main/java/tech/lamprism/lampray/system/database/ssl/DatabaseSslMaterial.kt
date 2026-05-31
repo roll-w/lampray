@@ -19,6 +19,10 @@ package tech.lamprism.lampray.system.database.ssl
 /**
  * Represents SSL certificate material from a specific source.
  *
+ * Source prefixes:
+ * - `file:<path>` - material is stored in a file
+ * - `value:<content>` - material is provided inline
+ *
  * @param source the material source type (FILE or VALUE)
  * @param value the file path or inline content
  *
@@ -28,7 +32,6 @@ data class DatabaseSslMaterial(
     val source: Source,
     val value: String
 ) {
-
     /**
      * The source type of SSL material.
      */
@@ -47,6 +50,10 @@ data class DatabaseSslMaterial(
     companion object {
         /**
          * Parses a raw configuration value into a [DatabaseSslMaterial].
+         *
+         * Supported formats:
+         * - `file:/path/to/file.pem`
+         * - `value:<pem-content>`
          *
          * @param rawValue the raw configuration string
          * @param keyName the configuration key name (for error messages)

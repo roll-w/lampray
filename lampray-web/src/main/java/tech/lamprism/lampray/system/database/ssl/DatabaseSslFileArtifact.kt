@@ -16,23 +16,21 @@
 
 package tech.lamprism.lampray.system.database.ssl
 
+import java.nio.file.Path
+
 /**
- * Represents materialized SSL artifacts containing driver-specific properties
- * and resources that need cleanup.
+ * Represents a materialized SSL file artifact.
  *
- * @param properties driver-specific SSL properties to add to the connection
- * @param resources resources to clean up when the connection is closed
+ * For file-based material, the path references the original file.
+ * For inline material, the path references a temporary file that will be
+ * cleaned up via [resources].
+ *
+ * @param path the path to the certificate/key file
+ * @param resources resources to clean up (empty for file-based material)
  *
  * @author RollW
  */
-data class DatabaseSslArtifacts(
-    val properties: Map<String, String> = emptyMap(),
+data class DatabaseSslFileArtifact(
+    val path: Path,
     val resources: List<AutoCloseable> = emptyList()
-) {
-    companion object {
-        /**
-         * Empty artifacts with no properties or resources.
-         */
-        val EMPTY = DatabaseSslArtifacts()
-    }
-}
+)
