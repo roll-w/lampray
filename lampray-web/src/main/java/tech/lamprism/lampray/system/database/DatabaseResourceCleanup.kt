@@ -16,18 +16,24 @@
 
 package tech.lamprism.lampray.system.database
 
-/**
- * @author RollW
- */
-data class DatabaseUrl(
-    val url: String,
-    val properties: Map<String, String>,
-    val resources: List<AutoCloseable> = emptyList()
-) {
-    fun closeResources() {
-        val failure = DatabaseResourceCleanup.closeResources(resources)
-        if (failure != null) {
-            throw IllegalStateException("Failed to release database SSL resources.", failure)
+internal object DatabaseResourceCleanup {
+    fun closeResources(resources: Iterable<AutoCloseable>): Exception? {
+        var failure: Exception? = null
+        resources.toList().asReversed().forEach { resource ->
+            try {
+                resource.close()
+            } catch (e: Exception) {
+                if (failure == null) {
+                    failure = e
+                } else {
+                    failure.addSuppressed(e)
+                }
+            }
         }
+        return failure
+    }
+
+    fun addSuppressed(resources: Iterable<AutoCloseable>, cause: Exception) {
+        closeResources(resources)?.let(cause::addSuppressed)
     }
 }

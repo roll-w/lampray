@@ -25,9 +25,12 @@ import liquibase.changelog.ChangeLogHistoryServiceFactory;
 import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
+import liquibase.database.ObjectQuotingStrategy;
 import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.DatabaseException;
 import liquibase.integration.spring.SpringLiquibase;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import liquibase.resource.ResourceAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -97,7 +100,14 @@ public class LiquibaseInitializeConfiguration {
      * @return Configured SpringLiquibase instance
      */
     private SpringLiquibase createSpringLiquibase(DataSource dataSource) {
-        SpringLiquibase liquibase = new SpringLiquibase();
+        SpringLiquibase liquibase = new SpringLiquibase() {
+            @Override
+            protected Database createDatabase(Connection c, ResourceAccessor resourceAccessor) throws DatabaseException {
+                Database db = super.createDatabase(c, resourceAccessor);
+                db.setObjectQuotingStrategy(ObjectQuotingStrategy.QUOTE_ONLY_RESERVED_WORDS);
+                return db;
+            }
+        };
         liquibase.setDataSource(dataSource);
         liquibase.setChangeLog(CHANGELOG_PATH);
         liquibase.setShouldRun(true);

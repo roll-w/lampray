@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.system.database
+package tech.lamprism.lampray.system.database.ssl
+
+import java.nio.file.Path
 
 /**
+ * Represents a materialized SSL file artifact.
+ *
+ * For file-based material, the path references the original file.
+ * For inline material, the path references a temporary file that will be
+ * cleaned up via [resources].
+ *
+ * @param path the path to the certificate/key file
+ * @param resources resources to clean up (empty for file-based material)
+ *
  * @author RollW
  */
-data class DatabaseUrl(
-    val url: String,
-    val properties: Map<String, String>,
+data class DatabaseSslFileArtifact(
+    val path: Path,
     val resources: List<AutoCloseable> = emptyList()
-) {
-    fun closeResources() {
-        val failure = DatabaseResourceCleanup.closeResources(resources)
-        if (failure != null) {
-            throw IllegalStateException("Failed to release database SSL resources.", failure)
-        }
-    }
-}
+)

@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.system.database
+package tech.lamprism.lampray.system.database.ssl
 
 /**
  * @author RollW
  */
-data class DatabaseUrl(
-    val url: String,
-    val properties: Map<String, String>,
-    val resources: List<AutoCloseable> = emptyList()
+enum class DatabaseSslMode(
+    val value: String
 ) {
-    fun closeResources() {
-        val failure = DatabaseResourceCleanup.closeResources(resources)
-        if (failure != null) {
-            throw IllegalStateException("Failed to release database SSL resources.", failure)
+    DISABLED("disabled"),
+    REQUIRED("required"),
+    VERIFY_CA("verify-ca"),
+    VERIFY_IDENTITY("verify-identity");
+
+    companion object {
+        fun fromString(value: String): DatabaseSslMode {
+            return entries.find { it.value.equals(value, ignoreCase = true) }
+                ?: throw IllegalArgumentException(
+                    "Unsupported database SSL mode: $value. Supported values: ${entries.joinToString(", ") { it.value }}"
+                )
         }
     }
 }

@@ -174,6 +174,61 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         .setAllowAnyValue(true)
         .build()
 
+    @JvmField
+    val DATABASE_SSL_MODE = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.mode"))
+        .setDescription(
+            SettingDescription.text(
+                "Managed database SSL mode. Use 'disabled' for no managed SSL configuration, " +
+                        "'required' for encrypted transport, 'verify-ca' for certificate validation, " +
+                        "and 'verify-identity' for certificate and server identity validation."
+            )
+        )
+        .setSupportedSources(LOCAL_SOURCE)
+        .setValueEntries(listOf("disabled", "required", "verify-ca", "verify-identity"))
+        .setDefaultValue("disabled")
+        .setRequired(false)
+        .build()
+
+    @JvmField
+    val DATABASE_SSL_CA = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.ca"))
+        .setDescription(
+            SettingDescription.text(
+                "Server CA certificate source for managed database SSL. Use a PEM/plain-text source like " +
+                        "'file:/path/to/ca.pem' or 'value:<pem-content>'."
+            )
+        )
+        .setSupportedSources(LOCAL_SOURCE)
+        .setRequired(false)
+        .setAllowAnyValue(true)
+        .build()
+
+    @JvmField
+    val DATABASE_SSL_CERT = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.cert"))
+        .setDescription(
+            SettingDescription.text(
+                "Client certificate source for managed database SSL. Use a PEM/plain-text source like " +
+                        "'file:/path/to/client-cert.pem' or 'value:<pem-content>'."
+            )
+        )
+        .setSupportedSources(LOCAL_SOURCE)
+        .setRequired(false)
+        .setAllowAnyValue(true)
+        .build()
+
+    @JvmField
+    val DATABASE_SSL_KEY = SettingSpecificationBuilder(SettingKey.ofString("database.ssl.key"))
+        .setDescription(
+            SettingDescription.text(
+                "Client private key source for managed database SSL. Use a PEM/plain-text source like " +
+                        "'file:/path/to/client-key.pem' or 'value:<pem-content>'."
+            )
+        )
+        .setSupportedSources(LOCAL_SOURCE)
+        .setRequired(false)
+        .setSecret(true)
+        .setAllowAnyValue(true)
+        .build()
+
     // Custom Options
 
     /**
@@ -337,6 +392,10 @@ object DatabaseConfigKeys : SettingSpecificationSupplier {
         DATABASE_PASSWORD,
         DATABASE_NAME,
         DATABASE_CHARSET,
+        DATABASE_SSL_MODE,
+        DATABASE_SSL_CA,
+        DATABASE_SSL_CERT,
+        DATABASE_SSL_KEY,
         DATABASE_OPTIONS,
         DATABASE_POOL_MAX_SIZE,
         DATABASE_POOL_MIN_IDLE,

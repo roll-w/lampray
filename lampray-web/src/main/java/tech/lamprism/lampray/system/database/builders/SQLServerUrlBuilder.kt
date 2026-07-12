@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,11 @@
 package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
+import tech.lamprism.lampray.system.database.DatabaseResourceCleanup
 import tech.lamprism.lampray.system.database.DatabaseType
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslArtifacts
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslSupport
 
 /**
  * URL builder for SQL Server databases.
@@ -50,6 +54,76 @@ class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
         }
     }
 
+    override fun buildSslArtifacts(config: DatabaseConfig): DatabaseSslArtifacts {
+        if (config.ssl.certificate != null || config.ssl.key != null) {
+            throw IllegalArgumentException(
+                "SQL Server managed SSL does not support client certificate material in this implementation."
+            )
+        }
+
+        val properties = linkedMapOf<String, String>()
+        val resources = mutableListOf<AutoCloseable>()
+
+        when (config.ssl.mode) {
+            DatabaseSslMode.DISABLED -> properties["encrypt"] = "false"
+            DatabaseSslMode.REQUIRED -> {
+                properties["encrypt"] = "true"
+                properties["trustServerCertificate"] = "true"
+            }
+            DatabaseSslMode.VERIFY_IDENTITY -> {
+                properties["encrypt"] = "true"
+                properties["trustServerCertificate"] = "false"
+                properties["hostNameInCertificate"] = certificateHostName(config)
+            }
+            DatabaseSslMode.VERIFY_CA -> {
+                throw IllegalArgumentException(
+                    "SQL Server does not support a managed verify-ca mode without hostname validation. " +
+                            "Use 'required', 'verify-identity', or supplemental driver properties in database.options if you need custom trust behavior."
+                )
+            }
+        }
+
+        try {
+            config.ssl.ca?.let { ca ->
+                when (config.ssl.mode) {
+                    DatabaseSslMode.REQUIRED -> {
+                        // REQUIRED + CA: trust specific CA but don't verify hostname
+                        properties["trustServerCertificate"] = "false"
+                    }
+
+                    DatabaseSslMode.VERIFY_IDENTITY -> {
+                        // VERIFY_IDENTITY + CA: full certificate validation
+                    }
+
+                    else -> {
+                        throw IllegalArgumentException(
+                            "SQL Server custom CA material requires database.ssl.mode= 'required' or 'verify-identity'."
+                        )
+                    }
+                }
+                val trustStore = DatabaseSslSupport.materializeTrustStore("sqlserver-trust", ca)
+                properties["trustStore"] = trustStore.path.toAbsolutePath().toString()
+                properties["trustStoreType"] = trustStore.type
+                properties["trustStorePassword"] = trustStore.password
+                resources.addAll(trustStore.resources)
+            }
+        } catch (e: Exception) {
+            DatabaseResourceCleanup.addSuppressed(resources, e)
+            throw e
+        }
+
+        return DatabaseSslArtifacts(properties, resources)
+    }
+
+    override fun getReservedSslOptionKeys(): Set<String> = setOf(
+        "encrypt",
+        "trustServerCertificate",
+        "hostNameInCertificate",
+        "trustStore",
+        "trustStoreType",
+        "trustStorePassword"
+    )
+
     override fun getDefaultValidationQuery(): String = "SELECT 1"
 
     override fun validateConfig(config: DatabaseConfig) {
@@ -60,5 +134,9 @@ class SQLServerUrlBuilder : AbstractDatabaseUrlBuilder() {
             "SQL Server requires network target format (host:port or host), got: ${config.target}"
         }
     }
-}
 
+    private fun certificateHostName(config: DatabaseConfig): String {
+        return config.target.host?.takeIf { it.isNotBlank() }
+            ?: throw IllegalArgumentException("SQL Server verify-identity mode requires a non-empty network host.")
+    }
+}

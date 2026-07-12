@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.system.database
+package tech.lamprism.lampray.system.database.ssl
 
-/**
- * @author RollW
- */
-data class DatabaseUrl(
-    val url: String,
-    val properties: Map<String, String>,
-    val resources: List<AutoCloseable> = emptyList()
+data class DatabaseSslConfig(
+    val mode: DatabaseSslMode = DatabaseSslMode.DISABLED,
+    val ca: DatabaseSslMaterial? = null,
+    val certificate: DatabaseSslMaterial? = null,
+    val key: DatabaseSslMaterial? = null
 ) {
-    fun closeResources() {
-        val failure = DatabaseResourceCleanup.closeResources(resources)
-        if (failure != null) {
-            throw IllegalStateException("Failed to release database SSL resources.", failure)
-        }
-    }
+    fun isEnabled(): Boolean = mode != DatabaseSslMode.DISABLED
+
+    fun hasCustomMaterial(): Boolean = ca != null || certificate != null || key != null
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
 
 /**
  * URL builder for Oracle databases.
@@ -36,10 +37,23 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
             val service = config.databaseName.ifBlank {
                 throw IllegalArgumentException("Database name must be specified for Oracle")
             }
-            "${config.type.urlPrefix}${target.getNetworkAddress()}/$service"
+            val protocolPrefix = buildProtocolPrefix(config)
+            "$protocolPrefix${target.getNetworkAddress()}/$service"
         } else {
             throw IllegalArgumentException("Oracle requires network target format (host:port or host)")
         }
+    }
+
+    private fun buildProtocolPrefix(config: DatabaseConfig): String {
+        if (!config.ssl.isEnabled()) {
+            return config.type.urlPrefix
+        }
+
+        val networkPrefixSuffix = "@//"
+        require(config.type.urlPrefix.endsWith(networkPrefixSuffix)) {
+            "Cannot derive Oracle TCPS JDBC URL prefix from configured prefix: ${config.type.urlPrefix}"
+        }
+        return config.type.urlPrefix.removeSuffix(networkPrefixSuffix) + "@tcps://"
     }
 
     override fun addCharsetParameter(params: MutableMap<String, String>, charset: String) {
@@ -60,6 +74,36 @@ class OracleUrlBuilder : AbstractDatabaseUrlBuilder() {
             }
         }
     }
+
+    override fun buildSslProperties(config: DatabaseConfig): Map<String, String> {
+        if (!config.ssl.isEnabled()) {
+            return emptyMap()
+        }
+
+        if (config.ssl.hasCustomMaterial()) {
+            throw IllegalArgumentException(
+                "Oracle managed SSL does not support custom certificate material in this implementation."
+            )
+        }
+
+        if (config.ssl.mode == DatabaseSslMode.VERIFY_CA) {
+            throw IllegalArgumentException(
+                "Oracle does not support a managed verify-ca mode without identity matching. " +
+                        "Use 'required', 'verify-identity', or supplemental driver properties in database.options."
+            )
+        }
+
+        val dnMatch = when (config.ssl.mode) {
+            DatabaseSslMode.DISABLED -> "false"
+            DatabaseSslMode.REQUIRED -> "false"
+            DatabaseSslMode.VERIFY_IDENTITY -> "true"
+            DatabaseSslMode.VERIFY_CA -> "false"
+        }
+
+        return mapOf("oracle.net.ssl_server_dn_match" to dnMatch)
+    }
+
+    override fun getReservedSslOptionKeys(): Set<String> = setOf("oracle.net.ssl_server_dn_match")
 
     override fun getDefaultValidationQuery(): String = "SELECT 1 FROM DUAL"
 

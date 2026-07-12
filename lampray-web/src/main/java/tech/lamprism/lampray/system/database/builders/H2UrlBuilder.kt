@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package tech.lamprism.lampray.system.database.builders
 
 import tech.lamprism.lampray.system.database.DatabaseConfig
 import tech.lamprism.lampray.system.database.DatabaseType
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
 import java.io.File
 
 /**
@@ -33,8 +34,24 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
     override fun buildBaseUrl(config: DatabaseConfig): String {
         val target = config.target
 
+        require(!config.ssl.hasCustomMaterial()) {
+            "H2 managed SSL does not support custom certificate material in this implementation."
+        }
+
+        if (target.isNetwork() && config.ssl.isEnabled() &&
+            config.ssl.mode != DatabaseSslMode.REQUIRED
+        ) {
+            throw IllegalArgumentException(
+                "H2 network SSL only supports the managed 'required' mode. " +
+                        "Use 'required' or disable managed SSL for H2."
+            )
+        }
+
         return when {
             target.isMemory() -> {
+                require(!config.ssl.isEnabled()) {
+                    "H2 SSL is only supported for network targets. Disable database SSL or use a network H2 target."
+                }
                 "jdbc:h2:mem:lampray;DB_CLOSE_DELAY=-1"
             }
 
@@ -43,10 +60,18 @@ class H2UrlBuilder : AbstractDatabaseUrlBuilder() {
                 val database = config.databaseName.ifBlank {
                     throw IllegalArgumentException("Database name must be specified for H2 TCP server mode")
                 }
-                "jdbc:h2:tcp://${target.getNetworkAddress()}/$database"
+                val prefix = if (config.ssl.isEnabled()) {
+                    "jdbc:h2:ssl://"
+                } else {
+                    "jdbc:h2:tcp://"
+                }
+                "$prefix${target.getNetworkAddress()}/$database"
             }
 
             target.isFile() -> {
+                require(!config.ssl.isEnabled()) {
+                    "H2 SSL is only supported for network targets. Disable database SSL or use a network H2 target."
+                }
                 // File-based database
                 val filePath = target.getFilePath()!!
                 val file = File(filePath)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package tech.lamprism.lampray.system.database
 
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslConfig
+
 /**
  * Database connection configuration data class.
  *
@@ -26,6 +28,7 @@ data class DatabaseConfig(
     val databaseName: String,
     val type: DatabaseType,
     val charset: String?,
+    val ssl: DatabaseSslConfig,
     val customOptions: Collection<String>,
     val connectionPoolConfig: ConnectionPoolConfig
 )

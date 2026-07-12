@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 RollW
+ * Copyright (C) 2023-2026 RollW
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package tech.lamprism.lampray.system.database
 
 import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import org.slf4j.logger
+import org.slf4j.warn
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties
@@ -28,11 +28,13 @@ import org.springframework.context.annotation.Primary
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import tech.lamprism.lampray.setting.ConfigProvider
+import tech.lamprism.lampray.setting.SettingSpecification.Companion.keyName
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslConfig
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMaterial
+import tech.lamprism.lampray.system.database.ssl.DatabaseSslMode
 import tech.lamprism.lampray.web.ServerInitializeException
 import tech.lamprism.lampray.web.configuration.LocalConfigConfiguration
 import javax.sql.DataSource
-
-private val logger = logger<DataSourceConfiguration>()
 
 /**
  * Data source configuration with HikariCP connection pool support for multiple database types.
@@ -47,6 +49,9 @@ class DataSourceConfiguration(
     @param:Qualifier(LocalConfigConfiguration.LOCAL_CONFIG_PROVIDER)
     private val configProvider: ConfigProvider
 ) {
+    companion object {
+        private val logger = logger<DataSourceConfiguration>()
+    }
 
     /**
      * @throws ServerInitializeException if the database URL cannot be built
@@ -82,18 +87,22 @@ class DataSourceConfiguration(
         dataSourceProperties: DataSourceProperties,
         databaseUrl: DatabaseUrl
     ): DataSource {
-
-        return HikariDataSource(HikariConfig().apply {
-            // Basic connection properties
-            jdbcUrl = dataSourceProperties.url
-            username = dataSourceProperties.username
-            password = dataSourceProperties.password
-
-            this.dataSourceProperties.putAll(databaseUrl.properties)
-
-            // Apply HikariCP connection pool configuration
-            configureHikariCP(this, databaseConfig.connectionPoolConfig, databaseConfig.type)
-        })
+        return try {
+            ManagedHikariDataSource(HikariConfig().apply {
+                jdbcUrl = dataSourceProperties.url
+                username = dataSourceProperties.username
+                password = dataSourceProperties.password
+                this.dataSourceProperties.putAll(databaseUrl.properties)
+                configureHikariCP(this, databaseConfig.connectionPoolConfig, databaseConfig.type)
+            }, databaseUrl)
+        } catch (e: Exception) {
+            try {
+                databaseUrl.closeResources()
+            } catch (cleanupException: Exception) {
+                e.addSuppressed(cleanupException)
+            }
+            throw e
+        }
     }
 
     /**
@@ -134,9 +143,126 @@ class DataSourceConfiguration(
             databaseName = configProvider[DatabaseConfigKeys.DATABASE_NAME]
                 ?: DatabaseConfigKeys.DATABASE_NAME.defaultValue!!,
             charset = configProvider[DatabaseConfigKeys.DATABASE_CHARSET],
+            ssl = buildSslConfig(databaseType),
             customOptions = configProvider[DatabaseConfigKeys.DATABASE_OPTIONS] ?: emptySet(),
             connectionPoolConfig = buildConnectionPoolConfig()
         )
+    }
+
+    private fun buildSslConfig(databaseType: DatabaseType): DatabaseSslConfig {
+        val configuredSslMode = readRawConfig(DatabaseConfigKeys.DATABASE_SSL_MODE.keyName)
+        val configuredCa = readRawConfig(DatabaseConfigKeys.DATABASE_SSL_CA.keyName)
+        val configuredCertificate = readRawConfig(DatabaseConfigKeys.DATABASE_SSL_CERT.keyName)
+        val configuredKey = readRawConfig(DatabaseConfigKeys.DATABASE_SSL_KEY.keyName)
+
+        if (isSslUnsupportedDatabaseType(databaseType)) {
+            if (hasExplicitSslConfiguration(configuredSslMode, configuredCa, configuredCertificate, configuredKey)) {
+                logger.warn {
+                    "Database type '${databaseType.typeName}' does not support SSL. Ignoring configured database.ssl.* settings."
+                }
+            }
+            return DatabaseSslConfig()
+        }
+
+        val sslModeValue = configuredSslMode ?: DatabaseConfigKeys.DATABASE_SSL_MODE.defaultValue!!
+        val sslMode = try {
+            DatabaseSslMode.fromString(sslModeValue)
+        } catch (e: IllegalArgumentException) {
+            throw ServerInitializeException(
+                ServerInitializeException.Detail(
+                    "Invalid database SSL mode configuration. ${e.message}",
+                    "The 'database.ssl.mode' config must be one of: ${
+                        DatabaseSslMode.entries.joinToString(", ") { it.value }
+                    }. Please check your configuration file or environment variables."
+                ), e
+            )
+        }
+
+        val ca = parseSslMaterial(DatabaseConfigKeys.DATABASE_SSL_CA)
+        val certificate = parseSslMaterial(DatabaseConfigKeys.DATABASE_SSL_CERT)
+        val key = parseSslMaterial(DatabaseConfigKeys.DATABASE_SSL_KEY)
+
+        if (sslMode == DatabaseSslMode.DISABLED && (ca != null || certificate != null || key != null)) {
+            throw ServerInitializeException(
+                ServerInitializeException.Detail(
+                    "Database SSL material requires managed SSL mode.",
+                    "Set 'database.ssl.mode' to 'required', 'verify-ca', or 'verify-identity' before providing database SSL certificate material."
+                )
+            )
+        }
+
+        if ((certificate == null) != (key == null)) {
+            throw ServerInitializeException(
+                ServerInitializeException.Detail(
+                    "Database client certificate configuration is incomplete.",
+                    "Both 'database.ssl.cert' and 'database.ssl.key' must be configured together."
+                )
+            )
+        }
+
+        if (ca != null && sslMode != DatabaseSslMode.VERIFY_CA && sslMode != DatabaseSslMode.VERIFY_IDENTITY) {
+            throw ServerInitializeException(
+                ServerInitializeException.Detail(
+                    "Database CA certificate requires a validating SSL mode.",
+                    "Use 'database.ssl.mode=verify-ca' or 'database.ssl.mode=verify-identity' when 'database.ssl.ca' is configured."
+                )
+            )
+        }
+
+        if (isValidatingSslMode(sslMode) && ca == null) {
+            if (requiresConfiguredCa(databaseType)) {
+                throw ServerInitializeException(
+                    ServerInitializeException.Detail(
+                        "Database SSL validation requires a configured CA certificate.",
+                        "Set 'database.ssl.ca' when using '${sslMode.value}' with '${databaseType.typeName}' " +
+                                "so the driver can validate the server certificate during startup."
+                    )
+                )
+            }
+            logger.warn {
+                "Database SSL mode '${sslMode.value}' is configured without database.ssl.ca. " +
+                        "Database type '${databaseType.typeName}' will use the driver or JVM default trust material."
+            }
+        }
+
+        return DatabaseSslConfig(sslMode, ca, certificate, key)
+    }
+
+    private fun isValidatingSslMode(sslMode: DatabaseSslMode): Boolean {
+        return sslMode == DatabaseSslMode.VERIFY_CA || sslMode == DatabaseSslMode.VERIFY_IDENTITY
+    }
+
+    private fun requiresConfiguredCa(databaseType: DatabaseType): Boolean {
+        return databaseType == DatabaseType.POSTGRESQL
+    }
+
+    private fun isSslUnsupportedDatabaseType(databaseType: DatabaseType): Boolean {
+        return databaseType == DatabaseType.SQLITE
+    }
+
+    private fun hasExplicitSslConfiguration(
+        sslMode: String?,
+        ca: String?,
+        certificate: String?,
+        key: String?
+    ): Boolean {
+        return sslMode != null || ca != null || certificate != null || key != null
+    }
+
+    private fun readRawConfig(keyName: String): String? = configProvider[keyName]
+
+    private fun parseSslMaterial(specification: tech.lamprism.lampray.setting.SettingSpecification<String, String>): DatabaseSslMaterial? {
+        val rawValue = configProvider[specification] ?: return null
+        return try {
+            DatabaseSslMaterial.parse(rawValue, specification.keyName)
+        } catch (e: IllegalArgumentException) {
+            throw ServerInitializeException(
+                ServerInitializeException.Detail(
+                    "Invalid database SSL material configuration. ${e.message}",
+                    "Please use a PEM/plain-text source like 'file:/path/to/file.pem' or 'value:<pem-content>' for ${specification.keyName}."
+                ), e
+            )
+        }
     }
 
     /**

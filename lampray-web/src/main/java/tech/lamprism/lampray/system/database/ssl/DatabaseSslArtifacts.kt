@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package tech.lamprism.lampray.system.database
+package tech.lamprism.lampray.system.database.ssl
 
 /**
+ * Represents materialized SSL artifacts containing driver-specific properties
+ * and resources that need cleanup.
+ *
+ * @param properties driver-specific SSL properties to add to the connection
+ * @param resources resources to clean up when the connection is closed
+ *
  * @author RollW
  */
-data class DatabaseUrl(
-    val url: String,
-    val properties: Map<String, String>,
+data class DatabaseSslArtifacts(
+    val properties: Map<String, String> = emptyMap(),
     val resources: List<AutoCloseable> = emptyList()
 ) {
-    fun closeResources() {
-        val failure = DatabaseResourceCleanup.closeResources(resources)
-        if (failure != null) {
-            throw IllegalStateException("Failed to release database SSL resources.", failure)
-        }
+    companion object {
+        /**
+         * Empty artifacts with no properties or resources.
+         */
+        val EMPTY = DatabaseSslArtifacts()
     }
 }
